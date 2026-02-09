@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    function userDoc(uid) {
+      return firestore.exists(/databases/(default)/documents/users/$(uid))
+        ? firestore.get(/databases/(default)/documents/users/$(uid)).data
+        : {};
+    }
+
+    function isContractor() {
+      return isSignedIn()
+        && (userDoc(request.auth.uid).role is string)
+        && (
+          userDoc(request.auth.uid).role.matches('^\\s*contractor\\s*$')
+          || userDoc(request.auth.uid).role.matches('^\\s*Contractor\\s*$')
+          || userDoc(request.auth.uid).role.matches('^\\s*CONTRACTOR\\s*$')
+        );
+    }
+
+    function isConversationParticipant(conversationId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/conversations/$(conversationId))
+        && request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participantIds;
+    }
+
+    function isJobRequester(jobId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/job_requests/$(jobId))
+        && firestore.get(/databases/(default)/documents/job_requests/$(jobId)).data.requesterUid == request.auth.uid;
+    }
+
+    function isJobParticipant(jobId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/job_requests/$(jobId))
+        && (
+          isAdmin()
+          || firestore.get(/databases/(default)/documents/job_requests/$(jobId)).data.requesterUid == request.auth.uid
+          || firestore.get(/databases/(default)/documents/job_requests/$(jobId)).data.claimedBy == request.auth.uid
+        );
+    }
+
+    // Customer job images used for AI estimates.
+    // Stored at: job_images/{jobId}/{uid}/{fileName}
+    match /job_images/{jobId}/{uid}/{fileName} {
+      // Allow write if signed in, uploading to their own uid path, under 5MB, and is an image
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      // Allow read if signed in and uid matches (owner can read their own uploads)
+      allow read: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Customer estimator images (draft estimates).
+    // Stored at: estimate_images/{estimateId}/{uid}/{fileName}
+    match /estimate_images/{estimateId}/{uid}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Chat images
+    // Stored at: chat_images/{conversationId}/{fileName}
+    match /chat_images/{conversationId}/{fileName} {
+      allow write: if isConversationParticipant(conversationId)
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow read: if isConversationParticipant(conversationId);
+    }
+
+    // Chat files
+    // Stored at: chat_files/{conversationId}/{fileName}
+    match /chat_files/{conversationId}/{fileName} {
+      allow write: if isConversationParticipant(conversationId)
+        && request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && (
+          request.resource.contentType == 'application/pdf'
+          || request.resource.contentType == 'text/plain'
+          || request.resource.contentType == 'application/zip'
+          || request.resource.contentType == 'application/x-zip-compressed'
+          || request.resource.contentType == 'application/msword'
+          || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+      allow read: if isConversationParticipant(conversationId);
+    }
+
+    // Review photos (customer uploads only)
+    // Stored at: review_photos/{jobId}/{fileName}
+    match /review_photos/{jobId}/{fileName} {
+      allow write: if isJobRequester(jobId)
+        && firestore.get(/databases/(default)/documents/job_requests/$(jobId)).data.status == 'completed'
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow read: if isSignedIn();
+    }
+
+    // Contractor logos
+    // Stored at: contractor_logos/{uid}/{fileName}
+    match /contractor_logos/{uid}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn();
+    }
+
+    // Contractor subcontract job photos
+    // Stored at: contractor_jobs/{uid}/{jobId}/{fileName}
+    match /contractor_jobs/{uid}/{jobId}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn() && (isAdmin() || isContractor());
+    }
+
+    // Community post images
+    // Stored at: community_posts/{uid}/{postId}/{fileName}
+    match /community_posts/{uid}/{postId}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn();
+    }
+
+    // Verification uploads (ID/license/insurance)
+    // Stored at: verifications/{uid}/{fileName}
+    match /verifications/{uid}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn();
+    }
+
+    // Job receipts & expenses
+    // Stored at: job_expenses/{jobId}/{expenseId}.jpg
+    match /job_expenses/{jobId}/{fileName} {
+      allow write: if isJobParticipant(jobId)
+        && request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isJobParticipant(jobId);
+    }
+
+    // Default deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

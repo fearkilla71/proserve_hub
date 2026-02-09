@@ -1,0 +1,77 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "npm install (functions)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"functions",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "firebase deploy draftInvoiceHttp",
+			"type": "shell",
+			"command": "firebase",
+			"args": [
+				"deploy",
+				"--only",
+				"functions:draftInvoiceHttp",
+				"--project",
+				"proserve-hub-ada0e"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "firebase deploy draftInvoiceHttp (retry)",
+			"type": "shell",
+			"command": "firebase",
+			"args": [
+				"deploy",
+				"--only",
+				"functions:draftInvoiceHttp",
+				"--project",
+				"proserve-hub-ada0e"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "firebase deploy draftInvoiceHttp (debug)",
+			"type": "shell",
+			"command": "firebase",
+			"args": [
+				"deploy",
+				"--only",
+				"functions:draftInvoiceHttp",
+				"--project",
+				"proserve-hub-ada0e",
+				"--debug"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "firebase deploy debug to log",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"firebase deploy --only functions:draftInvoiceHttp --project proserve-hub-ada0e --debug *>&1 | Tee-Object -FilePath deploy_draftInvoiceHttp.log"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

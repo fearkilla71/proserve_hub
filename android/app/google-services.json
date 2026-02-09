@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841248185002",
+    "project_id": "proserve-hub-ada0e",
+    "storage_bucket": "proserve-hub-ada0e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841248185002:android:d6aa63d9a0a982f2b48ed3",
+        "android_client_info": {
+          "package_name": "com.proservehub.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUY2-ys3k4-hB7pgJyjpJsLQCDPTmIrN0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

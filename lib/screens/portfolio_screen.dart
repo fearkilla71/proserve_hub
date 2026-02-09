@@ -1,0 +1,418 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:typed_data';
+
+class PortfolioScreen extends StatefulWidget {
+  final String? contractorId;
+  final bool isEditable;
+
+  const PortfolioScreen({
+    super.key,
+    this.contractorId,
+    this.isEditable = false,
+  });
+
+  @override
+  State<PortfolioScreen> createState() => _PortfolioScreenState();
+}
+
+class _PortfolioScreenState extends State<PortfolioScreen> {
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = true;
+  bool _isUploading = false;
+  List<Map<String, dynamic>> _portfolioItems = [];
+
+  String get _userId =>
+      widget.contractorId ?? FirebaseAuth.instance.currentUser!.uid;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPortfolio();
+  }
+
+  Future<void> _loadPortfolio() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(_userId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final portfolio = data['portfolio'] as List<dynamic>?;
+
+        if (portfolio != null) {
+          setState(() {
+            _portfolioItems = List<Map<String, dynamic>>.from(
+              portfolio.map((item) => Map<String, dynamic>.from(item)),
+            );
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading portfolio: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _addPhoto() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+
+    if (image == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      var imageData = await image.readAsBytes();
+
+      // Compress if > 1MB
+      if (imageData.length > 1024 * 1024) {
+        final result = await FlutterImageCompress.compressWithList(
+          imageData,
+          minWidth: 1920,
+          minHeight: 1920,
+          quality: 75,
+        );
+        imageData = Uint8List.fromList(result);
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'portfolio/$_userId/$timestamp.jpg',
+      );
+
+      await storageRef.putData(imageData);
+      final url = await storageRef.getDownloadURL();
+
+      if (!mounted) return;
+
+      // Show dialog for title and description
+      final result = await showDialog<Map<String, String>>(
+        context: context,
+        builder: (context) => _AddPhotoDialog(),
+      );
+
+      if (result != null) {
+        final newItem = {
+          'url': url,
+          'title': result['title'] ?? '',
+          'description': result['description'] ?? '',
+          'uploadedAt': FieldValue.serverTimestamp(),
+        };
+
+        await FirebaseFirestore.instance
+            .collection('contractors')
+            .doc(_userId)
+            .update({
+              'portfolio': FieldValue.arrayUnion([newItem]),
+            });
+
+        await _loadPortfolio();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Photo added to portfolio!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading photo: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _deletePhoto(Map<String, dynamic> item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Photo'),
+        content: const Text('Are you sure you want to delete this photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(_userId)
+          .update({
+            'portfolio': FieldValue.arrayRemove([item]),
+          });
+
+      await _loadPortfolio();
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Photo deleted')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting photo: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Portfolio')),
+      floatingActionButton: widget.isEditable && !_isUploading
+          ? FloatingActionButton.extended(
+              onPressed: _addPhoto,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: const Text('Add Photo'),
+            )
+          : null,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _portfolioItems.isEmpty
+          ? _buildEmptyState()
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.75,
+              ),
+              itemCount: _portfolioItems.length,
+              itemBuilder: (context, index) {
+                final item = _portfolioItems[index];
+                return _buildPortfolioCard(item);
+              },
+            ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.isEditable
+                  ? 'No portfolio photos yet'
+                  : 'No photos available',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.isEditable
+                  ? 'Showcase your work by adding before/after photos'
+                  : 'This contractor hasn\'t added any portfolio photos yet',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (widget.isEditable) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _addPhoto,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: const Text('Add First Photo'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortfolioCard(Map<String, dynamic> item) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _showFullImage(item),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    item['url'],
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+                  if (widget.isEditable)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton.filled(
+                        icon: const Icon(Icons.delete),
+                        iconSize: 20,
+                        onPressed: () => _deletePhoto(item),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.red.withValues(alpha: 0.9),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (item['title'] != null && item['title'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  item['title'],
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFullImage(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppBar(
+              title: Text(item['title'] ?? 'Photo'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            Flexible(
+              child: InteractiveViewer(
+                child: Image.network(item['url'], fit: BoxFit.contain),
+              ),
+            ),
+            if (item['description'] != null &&
+                item['description'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(item['description']),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddPhotoDialog extends StatefulWidget {
+  @override
+  State<_AddPhotoDialog> createState() => _AddPhotoDialogState();
+}
+
+class _AddPhotoDialogState extends State<_AddPhotoDialog> {
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Photo Details'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _titleController,
+            decoration: const InputDecoration(
+              labelText: 'Title',
+              hintText: 'Kitchen Remodel - Before',
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              labelText: 'Description (optional)',
+              hintText: 'Complete kitchen renovation...',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(context, {
+              'title': _titleController.text.trim(),
+              'description': _descriptionController.text.trim(),
+            });
+          },
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+}

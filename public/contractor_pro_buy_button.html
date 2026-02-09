@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contractor Pro Subscription</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #0b1220;
+        --card: #111b2e;
+        --text: #eef3ff;
+        --muted: rgba(238, 243, 255, 0.75);
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1200px 700px at 20% 0%, #162447 0%, var(--bg) 55%);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 28px 16px 40px;
+      }
+      .card {
+        background: rgba(17, 27, 46, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+      }
+      p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .price {
+        font-weight: 800;
+        font-size: 28px;
+        margin: 10px 0 16px;
+      }
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.10);
+        margin: 16px 0;
+      }
+      .footer {
+        margin-top: 14px;
+        font-size: 12px;
+        color: rgba(238, 243, 255, 0.65);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Contractor Pro</h1>
+        <p>Unlock the Pricing Calculator and Cost Estimator tools.</p>
+        <div class="price">$11.99 / month</div>
+
+        <div class="divider"></div>
+
+        <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+        <stripe-buy-button
+          buy-button-id="buy_btn_1SqQ7EQQmWSHzwPhqgNY42G3"
+          publishable-key="pk_test_51SjliaQQmWSHzwPhfVByl8hqmddnvQRbsdz31BwIxKpCYMnJi5reaLQAzbXSraPGHwlonKzSSLiRetyAqYSatd8F000B4wbxH6"
+        >
+        </stripe-buy-button>
+
+        <div class="footer">
+          This page is hosted by ProServe Hub and uses Stripe’s secure checkout.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

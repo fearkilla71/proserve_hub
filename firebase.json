@@ -1,0 +1,66 @@
+{
+	"functions": {
+		"source": "functions"
+	},
+	"hosting": {
+		"public": "public",
+		"ignore": [
+			"firebase.json",
+			"**/.*",
+			"**/node_modules/**"
+		],
+		"rewrites": [
+			{ "source": "/admin/**", "destination": "/admin/index.html" },
+			{ "source": "/connect/return", "destination": "/connect/return.html" },
+			{ "source": "/connect/refresh", "destination": "/connect/refresh.html" }
+		]
+	},
+	"firestore": {
+		"rules": "firestore.rules",
+		"indexes": "firestore.indexes.json"
+	},
+	"storage": {
+		"rules": "storage.rules"
+	},
+	"emulators": {
+		"auth": {
+			"port": 9099
+		},
+		"firestore": {
+			"port": 8080
+		},
+		"functions": {
+			"port": 5001
+		},
+		"storage": {
+			"port": 9199
+		},
+		"ui": {
+			"enabled": true,
+			"port": 4000
+		}
+	},
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "proserve-hub-ada0e",
+					"appId": "1:841248185002:android:d6aa63d9a0a982f2b48ed3",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "proserve-hub-ada0e",
+					"configurations": {
+						"android": "1:841248185002:android:d6aa63d9a0a982f2b48ed3",
+						"ios": "1:841248185002:ios:2b2b6b19a537dd6fb48ed3",
+						"macos": "1:841248185002:ios:2b2b6b19a537dd6fb48ed3",
+						"web": "1:841248185002:web:fbbbf58ec2834204b48ed3",
+						"windows": "1:841248185002:web:9d07112d7e864860b48ed3"
+					}
+				}
+			}
+		}
+	}
+}

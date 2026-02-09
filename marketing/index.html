@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ProServe Hub - Built for crews who show up</title>
+    <meta
+      name="description"
+      content="ProServe Hub turns contractor work into visible proof with a community feed, smart workflows, and verified profiles."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #071022;
+        --bg-deep: #050b18;
+        --ink: #e6f1ff;
+        --muted: #9fb2d4;
+        --accent: #22e39b;
+        --accent-2: #36b3ff;
+        --card: rgba(12, 23, 44, 0.78);
+        --line: rgba(255, 255, 255, 0.08);
+        --shadow: 0 18px 60px rgba(5, 12, 26, 0.65);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Manrope", system-ui, -apple-system, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(
+            circle at top left,
+            rgba(54, 179, 255, 0.18),
+            transparent 45%
+          ),
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(34, 227, 155, 0.14),
+            transparent 50%
+          ),
+          linear-gradient(180deg, #0a1731 0%, #071022 55%, #050b18 100%);
+        min-height: 100vh;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.05) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        opacity: 0.2;
+        z-index: 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(5, 10, 24, 0.78);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(16px);
+      }
+
+      .nav {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+
+      .brand-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(130deg, #1b2b5c, #0c1430);
+        border: 1px solid rgba(54, 179, 255, 0.6);
+        display: grid;
+        place-items: center;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.4rem;
+        color: var(--accent);
+        box-shadow: inset 0 0 18px rgba(54, 179, 255, 0.25);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 18px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, #22e39b, #36b3ff);
+        color: #041016;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+      }
+
+      .ghost {
+        padding: 12px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(12, 23, 44, 0.6);
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 86px 0 40px;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(54, 179, 255, 0.3),
+          transparent 65%
+        );
+        top: -220px;
+        right: -140px;
+        filter: blur(10px);
+      }
+
+      .hero-grid {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 32px;
+        position: relative;
+        z-index: 1;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(34, 227, 155, 0.15);
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+      }
+
+      h1 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(3rem, 6vw + 1rem, 5.8rem);
+        margin: 16px 0 18px;
+        line-height: 0.95;
+        letter-spacing: 1px;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .hero-panel {
+        background: var(--card);
+        border-radius: 26px;
+        padding: 26px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(54, 179, 255, 0.2);
+      }
+
+      .hero-panel h3 {
+        margin: 0 0 10px;
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 1px;
+      }
+
+      .metrics {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(6, 14, 30, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        font-weight: 600;
+      }
+
+      .ribbon {
+        max-width: 1180px;
+        margin: 24px auto 0;
+        padding: 14px 24px;
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .section {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 64px 24px;
+      }
+
+      .section h2 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(2.4rem, 3vw + 1rem, 3.6rem);
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        margin-top: 28px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        box-shadow: 0 18px 40px rgba(4, 10, 26, 0.5);
+        min-height: 180px;
+      }
+
+      .card h3 {
+        margin-top: 0;
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 0.8px;
+      }
+
+      .feature-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: rgba(54, 179, 255, 0.12);
+        border: 1px solid rgba(54, 179, 255, 0.5);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        color: var(--accent-2);
+        margin-bottom: 12px;
+      }
+
+      .strip {
+        margin-top: 40px;
+        padding: 28px;
+        border-radius: 26px;
+        background: linear-gradient(130deg, rgba(9, 22, 48, 0.85), #061126);
+        border: 1px solid rgba(54, 179, 255, 0.18);
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .pill-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(6, 14, 30, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .testimonial {
+        background: #040914;
+        border-radius: 26px;
+        padding: 24px;
+        border: 1px solid rgba(34, 227, 155, 0.2);
+      }
+
+      .stats {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        margin-top: 20px;
+      }
+
+      .stat {
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(6, 14, 30, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-weight: 600;
+      }
+
+      .cta-band {
+        margin-top: 40px;
+        padding: 28px;
+        border-radius: 28px;
+        background: linear-gradient(140deg, #0e1c3a, #0a1428);
+        border: 1px solid rgba(54, 179, 255, 0.18);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 40px 24px 60px;
+        color: var(--muted);
+      }
+
+      .footer-grid {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.7s ease;
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 720px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hero {
+          padding-top: 60px;
+        }
+
+        .hero-actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .cta-band {
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="nav">
+        <div class="brand">
+          <div class="brand-badge">PH</div>
+          ProServe Hub
+        </div>
+        <nav class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#proof">Proof</a>
+          <a href="#workflow">Workflow</a>
+        </nav>
+        <a class="cta" href="#start">Get Early Access</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="start">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Built for crews who show up</span>
+            <h1>Proof, progress, and payouts in one feed.</h1>
+            <p>
+              ProServe Hub keeps your jobs moving with a real-time community
+              feed, clean client portals, and profiles that close deals for you.
+            </p>
+            <div class="hero-actions">
+              <button class="cta">Request access</button>
+              <button class="ghost">Watch a demo</button>
+            </div>
+          </div>
+          <div class="hero-panel">
+            <h3>Live job signal</h3>
+            <p>Every post builds proof and brings new leads.</p>
+            <div class="metrics">
+              <div class="metric">
+                <span>Avg. response time</span>
+                <span>11 min</span>
+              </div>
+              <div class="metric">
+                <span>Client rebook rate</span>
+                <span>42%</span>
+              </div>
+              <div class="metric">
+                <span>Profile trust score</span>
+                <span>4.9</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ribbon">
+          <span>Feed updates</span>
+          <span>Client approvals</span>
+          <span>Smart estimates</span>
+          <span>Verified profiles</span>
+          <span>Referral boosts</span>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <h2>Everything you need to look elite.</h2>
+        <p>
+          Built for speed on the jobsite and clarity for clients. Your work
+          looks premium by default.
+        </p>
+        <div class="grid">
+          <div class="card reveal">
+            <div class="feature-icon">01</div>
+            <h3>Community feed</h3>
+            <p>Post progress photos and updates that double as marketing.</p>
+          </div>
+          <div class="card reveal">
+            <div class="feature-icon">02</div>
+            <h3>Client portal</h3>
+            <p>Centralize approvals, timelines, and documents in one place.</p>
+          </div>
+          <div class="card reveal">
+            <div class="feature-icon">03</div>
+            <h3>Smart estimates</h3>
+            <p>Send polished quotes in minutes and lock in scope fast.</p>
+          </div>
+          <div class="card reveal">
+            <div class="feature-icon">04</div>
+            <h3>Verified profiles</h3>
+            <p>Showcase licenses, badges, and reviews that win trust.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section strip" id="proof">
+        <div>
+          <span class="eyebrow">Proof drives growth</span>
+          <h2>Turn every job into a referral engine.</h2>
+          <p>
+            Clients watch progress, react in real time, and share your work.
+            You get visibility without extra marketing spend.
+          </p>
+          <div class="pill-row">
+            <span class="pill">Before and after stories</span>
+            <span class="pill">Instant reactions</span>
+            <span class="pill">Verified reviews</span>
+          </div>
+        </div>
+        <div class="testimonial">
+          <h3>Booked three new jobs in two days.</h3>
+          <p>
+            Posting a single renovation update brought two referrals and a
+            repeat client. The feed sells for us.
+          </p>
+          <span>- Summit Builders Co.</span>
+        </div>
+      </section>
+
+      <section class="section" id="workflow">
+        <h2>Workflow that keeps crews moving.</h2>
+        <p>
+          From first message to final invoice, everything stays visible and
+          professional for your client.
+        </p>
+        <div class="grid">
+          <div class="card reveal">
+            <h3>Step 1 - Intake</h3>
+            <p>Capture job details quickly with a branded request flow.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Step 2 - Progress</h3>
+            <p>Share milestones, photos, and approvals in a clean timeline.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Step 3 - Close</h3>
+            <p>Collect feedback, lock reviews, and keep repeat work coming.</p>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat">+58% faster approvals</div>
+          <div class="stat">2x repeat work rate</div>
+          <div class="stat">24/7 client visibility</div>
+          <div class="stat">Proof on every job</div>
+        </div>
+        <div class="cta-band">
+          <div>
+            <h3>Ready to launch your ProServe profile?</h3>
+            <p>Claim your spot and get early access.</p>
+          </div>
+          <button class="cta">Join the waitlist</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-grid">
+        <div>
+          <strong>ProServe Hub</strong>
+          <p>Built for contractors who care about craft and reputation.</p>
+        </div>
+        <div>
+          <p>Contact: hello@proservehub.app</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.2 }
+      );
+
+      document.querySelectorAll(".reveal").forEach((el, index) => {
+        el.style.transitionDelay = `${index * 120}ms`;
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

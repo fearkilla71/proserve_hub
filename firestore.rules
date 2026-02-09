@@ -1,0 +1,1097 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function userDoc(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        ? get(/databases/$(database)/documents/users/$(uid)).data
+        : {};
+    }
+
+    function myRole() {
+      return isSignedIn() ? (userDoc(request.auth.uid).role) : null;
+    }
+
+    function isCustomer() {
+      return isSignedIn()
+        && (myRole() is string)
+        && (
+          myRole().matches('^\\s*customer\\s*$')
+          || myRole().matches('^\\s*Customer\\s*$')
+          || myRole().matches('^\\s*CUSTOMER\\s*$')
+        );
+    }
+
+    function isContractor() {
+      return isSignedIn()
+        && (myRole() is string)
+        && (
+          myRole().matches('^\\s*contractor\\s*$')
+          || myRole().matches('^\\s*Contractor\\s*$')
+          || myRole().matches('^\\s*CONTRACTOR\\s*$')
+        );
+    }
+
+    function job(jobId) {
+      return get(/databases/$(database)/documents/job_requests/$(jobId)).data;
+    }
+
+    function hasAcceptedQuote(jobId) {
+      let j = job(jobId);
+      return ('acceptedQuoteId' in j)
+        && (j.acceptedQuoteId is string)
+        && j.acceptedQuoteId.size() > 0
+        && exists(/databases/$(database)/documents/quotes/$(j.acceptedQuoteId))
+        && get(/databases/$(database)/documents/quotes/$(j.acceptedQuoteId)).data.jobId == jobId
+        && get(/databases/$(database)/documents/quotes/$(j.acceptedQuoteId)).data.status == 'accepted';
+    }
+
+    function hasAcceptedBid(jobId) {
+      let j = job(jobId);
+      return ('acceptedBidId' in j)
+        && (j.acceptedBidId is string)
+        && j.acceptedBidId.size() > 0
+        && exists(/databases/$(database)/documents/bids/$(j.acceptedBidId))
+        && get(/databases/$(database)/documents/bids/$(j.acceptedBidId)).data.jobId == jobId;
+    }
+
+    function hasMutualAgreement(jobId) {
+      // "Mutual acceptance" means: contractor submitted a bid/quote,
+      // and customer accepted it (recorded on job via acceptedQuoteId/acceptedBidId).
+      return hasAcceptedQuote(jobId) || hasAcceptedBid(jobId);
+    }
+
+    function jobAfter(jobId) {
+      return getAfter(/databases/$(database)/documents/job_requests/$(jobId)).data;
+    }
+
+    function canSeeJobContact(jobId) {
+      let j = job(jobId);
+      let isExclusive = ('leadUnlockedBy' in j) && (j.leadUnlockedBy != null);
+      return isSignedIn() && (
+        isAdmin() ||
+        j.requesterUid == request.auth.uid ||
+        j.claimedBy == request.auth.uid ||
+        (
+          // If lead is exclusive, ONLY the exclusive owner can see contact.
+          (isExclusive && j.leadUnlockedBy == request.auth.uid)
+          // Otherwise any paying contractor can see contact.
+          || (!isExclusive && (j.paidBy is list && j.paidBy.hasAny([request.auth.uid])))
+        )
+      );
+    }
+
+    function myCredits() {
+      let u = userDoc(request.auth.uid);
+      let nonExclusive = (
+        'leadCredits' in u
+        && (u.leadCredits is int || u.leadCredits is float)
+      ) ? u.leadCredits : (
+        ('credits' in u && (u.credits is int || u.credits is float)) ? u.credits : 0
+      );
+
+      let exclusive = (
+        'exclusiveLeadCredits' in u
+        && (u.exclusiveLeadCredits is int || u.exclusiveLeadCredits is float)
+      ) ? u.exclusiveLeadCredits : 0;
+
+      return nonExclusive + exclusive;
+    }
+
+    function hasLeadCredits() {
+      return isSignedIn() && myCredits() > 0;
+    }
+
+    function bidInvite(jobId) {
+      return get(/databases/$(database)/documents/bid_invites/$(jobId + '_' + request.auth.uid)).data;
+    }
+
+    function isInvitedToBid(jobId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/bid_invites/$(jobId + '_' + request.auth.uid))
+        && (
+          !('expiresAt' in bidInvite(jobId))
+          || bidInvite(jobId).expiresAt > request.time
+        )
+        && (
+          !('status' in bidInvite(jobId))
+          || bidInvite(jobId).status in ['pending', 'viewed']
+        );
+    }
+
+    function chatIsUnlocked(jobId) {
+      let j = job(jobId);
+      return (j.claimed == true)
+        && (j.claimedBy is string)
+        && (j.claimedBy != '');
+    }
+
+    function isChatParticipantFromJob(jobId) {
+      let j = job(jobId);
+      return isSignedIn()
+        && (request.auth.uid == j.requesterUid
+          || request.auth.uid == j.claimedBy);
+    }
+
+    function isValidNewChatDoc(jobId) {
+      let j = job(jobId);
+      return (request.resource.data.keys().hasOnly(['participants', 'unread']))
+        && (request.resource.data.participants is list)
+        && request.resource.data.participants.size() == 2
+        && request.resource.data.participants.hasAll([j.requesterUid, j.claimedBy])
+        && (request.resource.data.unread is map)
+        && request.resource.data.unread.keys().hasOnly([j.requesterUid, j.claimedBy])
+        && (request.resource.data.unread[j.requesterUid] is int)
+        && (request.resource.data.unread[j.claimedBy] is int)
+        && request.resource.data.unread[j.requesterUid] == 0
+        && request.resource.data.unread[j.claimedBy] == 0;
+    }
+
+    function isValidChatUnreadClearUpdate() {
+      return (request.resource.data.participants == resource.data.participants)
+        && (resource.data.unread is map)
+        && (request.resource.data.unread is map)
+        // Only the 'unread' top-level field may change.
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['unread'])
+        // Only my own unread entry may change.
+        && request.resource.data.unread.diff(resource.data.unread).changedKeys().hasOnly([request.auth.uid])
+        // And it must be cleared to 0.
+        && request.resource.data.unread[request.auth.uid] == 0;
+    }
+
+    // --- USERS ---
+    match /users/{uid} {
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow update: if isAdmin() || (
+        isSignedIn() && request.auth.uid == uid
+        // Users can update their own profile fields, but cannot change
+        // privileges, credits, or payout connectivity.
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny([
+          'role',
+          'approved',
+          'featured',
+          'credits',
+          'stripeAccountId',
+          'stripeAccountCreatedAt',
+          'stripePayoutsEnabled',
+          'stripeDetailsSubmitted',
+          // Ratings are server-aggregated.
+          'avgRating',
+          'reviewCount',
+          'averageRating',
+          'totalReviews'
+        ])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // --- INVOICE MAKER (user-owned) ---
+    // Drafts live in a per-user subcollection.
+    match /users/{uid}/invoice_drafts/{draftId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Finalized invoices are also stored per-user.
+    match /users/{uid}/invoices/{invoiceId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Payments are a subcollection under each invoice.
+    match /users/{uid}/invoices/{invoiceId}/payments/{paymentId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- ADMINS ---
+    match /admins/{uid} {
+      // Allow a user to read only their own admin marker doc.
+      // This enables client-side admin detection via doc(user.uid).get()
+      // without allowing discovery of other admin UIDs.
+      allow get: if isSignedIn() && request.auth.uid == uid;
+      allow list: if false;
+
+      // Writes are managed by Firebase Console / Admin SDK (bypasses rules).
+      allow create, update, delete: if false;
+    }
+
+    // --- CONTRACTORS (public-ish profile used by customers) ---
+    match /contractors/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || (
+        isSignedIn() && request.auth.uid == uid
+        // Do not allow a contractor to self-verify or claim a Stripe account.
+        && request.resource.data.get('verified', false) == false
+        && request.resource.data.get('stripeAccountId', '') == ''
+      );
+      allow update: if isAdmin() || (
+        isSignedIn() && request.auth.uid == uid
+        // Prevent spoofing verification / payout linkage.
+        && request.resource.data.get('verified', false) == resource.data.get('verified', false)
+        && request.resource.data.get('stripeAccountId', '') == resource.data.get('stripeAccountId', '')
+        // Ratings are server-aggregated.
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny([
+          'avgRating',
+          'reviewCount',
+          'averageRating',
+          'totalReviews'
+        ])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // --- REVIEWS ---
+    // --- PRICING CONFIG (editable without redeploying app) ---
+    match /pricing_rules/{serviceType} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /zip_costs/{zip} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- APP CONFIG ---
+    // Used for non-sensitive runtime config, like billing links.
+    match /app_config/{docId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- PAYMENTS ---
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.contractorId == request.auth.uid);
+      allow write: if false; // written by server (Admin SDK)
+    }
+
+    // --- CHATS (one chat per jobId) ---
+    match /chats/{jobId} {
+      allow read: if chatIsUnlocked(jobId)
+        && isChatParticipantFromJob(jobId)
+        && (resource.data.participants is list)
+        && resource.data.participants.hasAny([request.auth.uid]);
+
+      allow create: if chatIsUnlocked(jobId)
+        && isChatParticipantFromJob(jobId)
+        && isValidNewChatDoc(jobId);
+
+      allow update: if chatIsUnlocked(jobId)
+        && isChatParticipantFromJob(jobId)
+        && (resource.data.participants is list)
+        && resource.data.participants.hasAny([request.auth.uid])
+        && isValidChatUnreadClearUpdate();
+
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if chatIsUnlocked(jobId)
+          && isChatParticipantFromJob(jobId);
+
+        allow create: if chatIsUnlocked(jobId)
+          && isChatParticipantFromJob(jobId)
+          && exists(/databases/$(database)/documents/chats/$(jobId))
+          && request.resource.data.senderId == request.auth.uid
+          && (request.resource.data.text is string)
+          && request.resource.data.text.size() > 0
+          && request.resource.data.keys().hasOnly(['senderId', 'text', 'timestamp']);
+
+        allow update, delete: if false;
+      }
+    }
+
+    // --- CUSTOMER ESTIMATES (draft AI estimates, private to requester) ---
+    match /customer_estimates/{estimateId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || resource.data.requesterUid == request.auth.uid
+      );
+
+      allow create: if isCustomer()
+        && request.resource.data.requesterUid == request.auth.uid;
+
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          isCustomer()
+          && resource.data.requesterUid == request.auth.uid
+          && request.resource.data.requesterUid == resource.data.requesterUid
+        )
+      );
+
+      allow delete: if isAdmin() || (
+        isCustomer() && resource.data.requesterUid == request.auth.uid
+      );
+    }
+
+    // --- JOB REQUESTS (public job info, NO contact fields) ---
+    match /job_requests/{jobId} {
+      // Enhanced privacy: 
+      // - Customers can read their own jobs
+      // - Contractors can read unclaimed jobs or jobs they've claimed
+      // - Admins can read all jobs
+      allow read: if isSignedIn() && (
+        isAdmin() 
+        || resource.data.requesterUid == request.auth.uid  // Customer's own job
+        || resource.data.claimedBy == request.auth.uid     // Contractor's claimed job
+        || (resource.data.paidBy is list && resource.data.paidBy.hasAny([request.auth.uid]))
+        || (
+          isContractor()
+          && resource.data.claimed != true
+          // Contractors must have credits (or be invited) to view the open job feed.
+          && (hasLeadCredits() || isInvitedToBid(jobId))
+          // Exclusive leads: once unlocked by someone else, it should not appear in the feed.
+          && (
+            !('leadUnlockedBy' in resource.data)
+            || resource.data.leadUnlockedBy == null
+            || resource.data.leadUnlockedBy == request.auth.uid
+            || isInvitedToBid(jobId)
+          )
+        )
+      );
+
+      // Customers create jobs. Disallow storing contact info on the public doc.
+      allow create: if isCustomer()
+        && request.resource.data.requesterUid == request.auth.uid
+        && !(request.resource.data.keys().hasAny(['requesterEmail', 'requesterPhone']))
+        && !(request.resource.data.keys().hasAny(['paymentIntentId', 'fundedAt', 'completedAt', 'escrowStatus', 'escrowReleasedAt', 'escrowStatusHistory']));
+
+      // Admins can manage jobs.
+      allow delete: if isAdmin();
+
+      // Updates: either admin, requester (limited), or contractor claiming (limited).
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+
+        // Requester can update their own job, but still cannot add contact fields.
+        (
+          resource.data.requesterUid == request.auth.uid
+          && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
+          // Escrow fields are server-controlled (if they exist, they can't change)
+          && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
+          && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
+          && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
+          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
+          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
+          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
+          // Requester can only move status to a small set of lifecycle states.
+          && (
+            !(request.resource.data.diff(resource.data).changedKeys().hasAny(['status']))
+            || (request.resource.data.status in ['open', 'cancelled', 'completion_approved'])
+          )
+          && !(request.resource.data.status in ['funded', 'completed', 'funding'])
+        ) ||
+
+        // Requester can assign a job to a contractor by accepting a bid/quote.
+        // This is the only time the requester may set claimed/claimedBy and acceptance ids.
+        (
+          isCustomer()
+          && resource.data.requesterUid == request.auth.uid
+          && resource.data.claimed != true
+          && request.resource.data.claimed == true
+          && (request.resource.data.claimedBy is string)
+          && request.resource.data.claimedBy.size() > 0
+          && (request.resource.data.status in ['accepted', 'claimed'])
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'claimed',
+            'claimedBy',
+            'claimedAt',
+            'status',
+            'price',
+            'contractorId',
+            'acceptedBidId',
+            'acceptedQuoteId',
+            'quoteAcceptedAt'
+          ])
+          // Prevent adding contact fields.
+          && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
+          // Escrow fields remain server-controlled.
+          && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
+          && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
+          && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
+          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
+          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
+          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
+          // If a quote is being accepted, it must already be accepted and match this job.
+          && (
+            !('acceptedQuoteId' in request.resource.data)
+            || (
+              (request.resource.data.acceptedQuoteId is string)
+              && request.resource.data.acceptedQuoteId.size() > 0
+              && exists(/databases/$(database)/documents/quotes/$(request.resource.data.acceptedQuoteId))
+              && get(/databases/$(database)/documents/quotes/$(request.resource.data.acceptedQuoteId)).data.jobId == jobId
+              && get(/databases/$(database)/documents/quotes/$(request.resource.data.acceptedQuoteId)).data.status == 'accepted'
+              && get(/databases/$(database)/documents/quotes/$(request.resource.data.acceptedQuoteId)).data.contractorId == request.resource.data.claimedBy
+            )
+          )
+          // If a bid is being accepted, it must match this job and contractor.
+          && (
+            !('acceptedBidId' in request.resource.data)
+            || (
+              (request.resource.data.acceptedBidId is string)
+              && request.resource.data.acceptedBidId.size() > 0
+              && exists(/databases/$(database)/documents/bids/$(request.resource.data.acceptedBidId))
+              && get(/databases/$(database)/documents/bids/$(request.resource.data.acceptedBidId)).data.jobId == jobId
+              && get(/databases/$(database)/documents/bids/$(request.resource.data.acceptedBidId)).data.contractorId == request.resource.data.claimedBy
+              && get(/databases/$(database)/documents/bids/$(request.resource.data.acceptedBidId)).data.customerId == request.auth.uid
+            )
+          )
+        ) ||
+
+        // Contractor can accept (claim) a job.
+        (
+          isContractor()
+          && resource.data.claimed != true
+          // Prevent free claiming of leads: only claim after mutual agreement.
+          && hasMutualAgreement(jobId)
+          // Must be claiming as themselves.
+          && request.resource.data.claimed == true
+          && request.resource.data.claimedBy == request.auth.uid
+          && (request.resource.data.status in ['accepted', 'claimed'])
+          // Only allow the minimal set of fields to change.
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'claimed',
+            'claimedBy',
+            'claimedByName',
+            'claimedAt',
+            'status'
+          ])
+          // Disallow changing contact fields (legacy docs may still contain them).
+          && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
+          // Escrow fields are server-controlled (if they exist, they can't change; if absent, OK)
+          && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
+          && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
+          && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
+          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
+          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
+          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
+        ) ||
+
+        // Contractor can progress a claimed job (state machine).
+        (
+          isContractor()
+          && resource.data.claimed == true
+          && resource.data.claimedBy == request.auth.uid
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'status',
+            'statusHistory',
+            'startedAt',
+            'completionRequested'
+          ])
+          && (request.resource.data.status in ['in_progress', 'completion_requested'])
+          // Escrow fields are server-controlled
+          && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
+          && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
+          && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
+          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
+          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
+          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
+        ) ||
+
+        // Contractor can bump quote counters/lastQuoteAt when submitting a quote.
+        (
+          isContractor()
+          && resource.data.requesterUid != request.auth.uid
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['quoteCount', 'lastQuoteAt'])
+          // Prevent decreasing quoteCount.
+          && (
+            !(resource.data.quoteCount is int)
+            || !(request.resource.data.quoteCount is int)
+            || request.resource.data.quoteCount >= resource.data.quoteCount
+          )
+        )
+      );
+
+      // Private subcollection for contact details.
+      match /private/contact {
+        allow read: if canSeeJobContact(jobId);
+
+        // Allow creating contact doc in the same batch as job creation.
+        // Must belong to the job requester.
+        allow create: if isSignedIn()
+          && existsAfter(/databases/$(database)/documents/job_requests/$(jobId))
+          && jobAfter(jobId).requesterUid == request.auth.uid;
+
+        allow update: if isAdmin() || (isSignedIn() && job(jobId).requesterUid == request.auth.uid);
+        allow delete: if isAdmin();
+      }
+    }
+
+    // --- DISPUTES ---
+    // One active dispute per job (disputeId == jobId).
+    match /disputes/{disputeId} {
+      function canReadDispute() {
+        return isSignedIn() && (
+          isAdmin()
+          || resource.data.requesterUid == request.auth.uid
+          || resource.data.contractorUid == request.auth.uid
+          || resource.data.reportedBy == request.auth.uid
+        );
+      }
+
+      allow read: if canReadDispute();
+
+      allow create: if isSignedIn()
+        && disputeId == request.resource.data.jobId
+        && exists(/databases/$(database)/documents/job_requests/$(disputeId))
+        && hasMutualAgreement(disputeId)
+        // Parties must match the job assignment.
+        && request.resource.data.requesterUid == job(disputeId).requesterUid
+        && request.resource.data.contractorUid == job(disputeId).claimedBy
+        && (request.auth.uid == request.resource.data.requesterUid
+          || request.auth.uid == request.resource.data.contractorUid)
+        && request.resource.data.reportedBy == request.auth.uid
+        && (request.resource.data.reportedAgainst is string)
+        && request.resource.data.reportedAgainst.size() > 0
+        && request.resource.data.reportedAgainst != request.auth.uid
+        && request.resource.data.status == 'open'
+        && (request.resource.data.category is string)
+        && (request.resource.data.reason is string)
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 100
+        && (request.resource.data.details is string)
+        && request.resource.data.details.size() > 0
+        && request.resource.data.details.size() <= 1000
+        && (request.resource.data.messages is list)
+        && request.resource.data.keys().hasOnly([
+          'jobId',
+          'requesterUid',
+          'contractorUid',
+          'category',
+          'reason',
+          'details',
+          'reportedBy',
+          'reportedAgainst',
+          'status',
+          'createdAt',
+          'messages'
+        ]);
+
+      // Dispute lifecycle is admin-managed.
+      allow update, delete: if isAdmin();
+    }
+
+    // --- QUOTES (competitive bidding for jobs) ---
+    match /quotes/{quoteId} {
+      function quoteJobId() {
+        return resource.data.jobId;
+      }
+
+      function canReadQuote() {
+        return isSignedIn() && (
+          isAdmin() ||
+          (resource.data.contractorId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/job_requests/$(quoteJobId()))
+            && job(quoteJobId()).requesterUid == request.auth.uid)
+        );
+      }
+
+      allow read: if canReadQuote();
+
+      allow create: if isContractor()
+        && request.resource.data.contractorId == request.auth.uid
+        && (request.resource.data.jobId is string)
+        && exists(/databases/$(database)/documents/job_requests/$(request.resource.data.jobId))
+        && job(request.resource.data.jobId).requesterUid != request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'jobId',
+          'contractorId',
+          'price',
+          'estimatedDuration',
+          'notes',
+          'status',
+          'submittedAt'
+        ])
+        && (request.resource.data.price is number)
+        && request.resource.data.price > 0
+        && (request.resource.data.status == 'pending');
+
+      // Customers can accept/decline quotes for their own job.
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isCustomer()
+          && (resource.data.jobId is string)
+          && exists(/databases/$(database)/documents/job_requests/$(resource.data.jobId))
+          && job(resource.data.jobId).requesterUid == request.auth.uid
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'status',
+            'acceptedAt',
+            'declinedAt'
+          ])
+          && (request.resource.data.status in ['accepted', 'declined', 'pending'])
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // --- JOB MATCHES (precomputed candidates for a job) ---
+    match /job_matches/{jobId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || (
+          exists(/databases/$(database)/documents/job_requests/$(jobId))
+          && job(jobId).requesterUid == request.auth.uid
+        )
+      );
+      allow write: if false;
+
+      match /candidates/{contractorId} {
+        allow read: if isSignedIn() && (
+          isAdmin() || (
+            exists(/databases/$(database)/documents/job_requests/$(jobId))
+            && job(jobId).requesterUid == request.auth.uid
+          )
+        );
+        allow write: if false;
+      }
+    }
+
+    // --- BIDS ---
+    match /bids/{bidId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.contractorId ||
+        request.auth.uid == resource.data.customerId ||
+        isAdmin()
+      );
+
+      allow create: if isContractor()
+        && request.resource.data.contractorId == request.auth.uid
+        && (request.resource.data.jobId is string)
+        && exists(/databases/$(database)/documents/job_requests/$(request.resource.data.jobId))
+        && request.resource.data.customerId == job(request.resource.data.jobId).requesterUid
+        && (request.resource.data.amount is number)
+        && request.resource.data.amount > 0
+        && (request.resource.data.currency is string)
+        && (request.resource.data.description is string)
+        && request.resource.data.description.size() > 0
+        && (request.resource.data.estimatedDays is int)
+        && request.resource.data.estimatedDays > 0
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'jobId',
+          'contractorId',
+          'contractorName',
+          'customerId',
+          'amount',
+          'currency',
+          'description',
+          'estimatedDays',
+          'status',
+          'createdAt',
+          'expiresAt',
+          'counterOfferId'
+        ]);
+
+      // Customers can change bid status for their own job (accept/reject/counter).
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          isCustomer()
+          && request.auth.uid == resource.data.customerId
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
+          && (request.resource.data.status in ['pending', 'accepted', 'rejected', 'countered'])
+        )
+      );
+    }
+
+    // --- JOB EXPENSES / RECEIPTS ---
+    match /job_expenses/{expenseId} {
+      function expenseJobId() {
+        return resource.data.jobId;
+      }
+
+      function canReadExpense() {
+        return isSignedIn() && (
+          isAdmin()
+          || (resource.data.createdByUid == request.auth.uid)
+          || (
+            (expenseJobId() is string)
+            && exists(/databases/$(database)/documents/job_requests/$(expenseJobId()))
+            && (
+              job(expenseJobId()).requesterUid == request.auth.uid
+              || job(expenseJobId()).claimedBy == request.auth.uid
+            )
+          )
+        );
+      }
+
+      allow read: if canReadExpense();
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdByUid == request.auth.uid
+        && (request.resource.data.jobId is string)
+        && exists(/databases/$(database)/documents/job_requests/$(request.resource.data.jobId))
+        && (
+          isAdmin()
+          || job(request.resource.data.jobId).requesterUid == request.auth.uid
+          || job(request.resource.data.jobId).claimedBy == request.auth.uid
+        )
+        && (request.resource.data.createdAt is timestamp)
+        && (request.resource.data.createdByRole is string)
+        && (request.resource.data.currency is string)
+        && (request.resource.data.imageUrl is string)
+        && request.resource.data.keys().hasOnly([
+          'jobId',
+          'createdByUid',
+          'createdByRole',
+          'createdAt',
+          'vendor',
+          'receiptDate',
+          'total',
+          'tax',
+          'currency',
+          'notes',
+          'imageUrl',
+          'ocrText'
+        ])
+        && (!('vendor' in request.resource.data) || request.resource.data.vendor is string || request.resource.data.vendor == null)
+        && (!('receiptDate' in request.resource.data) || request.resource.data.receiptDate is timestamp || request.resource.data.receiptDate == null)
+        && (!('total' in request.resource.data) || request.resource.data.total is number || request.resource.data.total == null)
+        && (!('tax' in request.resource.data) || request.resource.data.tax is number || request.resource.data.tax == null)
+        && (!('notes' in request.resource.data) || request.resource.data.notes is string || request.resource.data.notes == null)
+        && (!('ocrText' in request.resource.data) || request.resource.data.ocrText is string || request.resource.data.ocrText == null);
+
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.createdByUid == request.auth.uid);
+      allow update: if false;
+    }
+
+    // --- BID INVITES (customer -> contractor) ---
+    match /bid_invites/{inviteId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.contractorId ||
+        request.auth.uid == resource.data.customerId
+      );
+
+      allow create: if isCustomer()
+        && request.resource.data.customerId == request.auth.uid
+        && (request.resource.data.jobId is string)
+        && (request.resource.data.contractorId is string)
+        && exists(/databases/$(database)/documents/job_requests/$(request.resource.data.jobId))
+        && job(request.resource.data.jobId).requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'jobId',
+          'contractorId',
+          'customerId',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'expiresAt'
+        ]);
+
+      // Contractor can decline; customer can cancel. Keep status-only changes.
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          request.auth.uid == resource.data.contractorId
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status', 'updatedAt'])
+          && (request.resource.data.status in ['pending', 'declined', 'viewed'])
+        ) || (
+          request.auth.uid == resource.data.customerId
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status', 'updatedAt'])
+          && (request.resource.data.status in ['pending', 'cancelled'])
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    // --- CONVERSATIONS ---
+    match /conversations/{conversationId} {
+      function isConversationParticipant() {
+        return isSignedIn() && (request.auth.uid in resource.data.participantIds);
+      }
+
+      function isValidConversationLastReadUpdate() {
+        // Allow a participant to update only their own lastRead timestamp.
+        // lastRead is stored as a map: { uid: timestamp }
+        return (request.resource.data.lastRead is map)
+          && (resource.data.lastRead is map || !('lastRead' in resource.data))
+          && request.resource.data.lastRead.diff(
+              ('lastRead' in resource.data) ? resource.data.lastRead : {}
+            ).changedKeys().hasOnly([request.auth.uid])
+          && (request.resource.data.lastRead[request.auth.uid] is timestamp);
+      }
+
+      function isValidConversationTypingUpdate() {
+        // Allow a participant to update only their own typing boolean.
+        // typing is stored as a map: { uid: bool }
+        return (request.resource.data.typing is map)
+          && (resource.data.typing is map || !('typing' in resource.data))
+          && request.resource.data.typing.diff(
+              ('typing' in resource.data) ? resource.data.typing : {}
+            ).changedKeys().hasOnly([request.auth.uid])
+          && (request.resource.data.typing[request.auth.uid] is bool);
+      }
+
+      function isValidConversationCreate() {
+        return isSignedIn()
+          && (request.resource.data.participantIds is list)
+          && request.resource.data.participantIds.size() == 2
+          && request.auth.uid in request.resource.data.participantIds
+          && (request.resource.data.participantNames is map)
+          && (request.resource.data.unreadCount is map)
+          && request.resource.data.unreadCount.keys().hasAll(request.resource.data.participantIds)
+          && (request.resource.data.unreadCount[request.auth.uid] is int)
+          && request.resource.data.unreadCount[request.auth.uid] == 0
+          && request.resource.data.keys().hasOnly([
+            'participantIds',
+            'participantNames',
+            'jobId',
+            'lastMessage',
+            'lastMessageTime',
+            'unreadCount'
+          ]);
+      }
+
+      function isValidConversationMetadataUpdate() {
+        // Allow updating lastMessage/lastMessageTime/unreadCount plus:
+        // - lastRead (per-user last read timestamp)
+        // - typing (per-user typing indicator)
+        // Participant lists/names and jobId must remain unchanged.
+        return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'lastMessage',
+          'lastMessageTime',
+          'unreadCount',
+          'lastRead',
+          'typing'
+        ])
+          && request.resource.data.participantIds == resource.data.participantIds
+          && request.resource.data.participantNames == resource.data.participantNames
+          && request.resource.data.jobId == resource.data.jobId
+          && (!('unreadCount' in request.resource.data) || (request.resource.data.unreadCount is map))
+          && (!('lastRead' in request.resource.data) || isValidConversationLastReadUpdate())
+          && (!('typing' in request.resource.data) || isValidConversationTypingUpdate());
+      }
+
+      allow read: if isConversationParticipant();
+      allow create: if isValidConversationCreate();
+      allow update: if isConversationParticipant() && isValidConversationMetadataUpdate();
+      allow delete: if isAdmin();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        function canAccessConversation() {
+          return isSignedIn()
+            && exists(/databases/$(database)/documents/conversations/$(conversationId))
+            && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        }
+
+        allow read: if canAccessConversation();
+
+        allow create: if canAccessConversation()
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.conversationId == conversationId
+          && (request.resource.data.text is string)
+          && (request.resource.data.senderName is string)
+          && (request.resource.data.readBy is map)
+          && request.resource.data.keys().hasOnly([
+            'conversationId',
+            'senderId',
+            'senderName',
+            'text',
+            'imageUrl',
+            'fileUrl',
+            'fileName',
+            'timestamp',
+            'isRead',
+            'readBy'
+          ]);
+
+        // Prevent editing messages after creation.
+        allow update, delete: if false;
+      }
+    }
+
+    // --- CONTRACTOR SUBCONTRACT JOB BOARD ---
+    match /contractor_jobs/{jobId} {
+      allow read: if isSignedIn() && (isAdmin() || isContractor());
+
+      allow create: if isContractor()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'open';
+
+      allow update: if isAdmin() || (
+        isContractor()
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdBy == resource.data.createdBy
+      );
+
+      allow delete: if isAdmin() || (
+        isContractor()
+        && resource.data.createdBy == request.auth.uid
+      );
+
+      match /offers/{offerId} {
+        allow read: if isSignedIn() && (isAdmin() || isContractor());
+
+        allow create: if isContractor()
+          && request.resource.data.contractorId == request.auth.uid
+          && get(/databases/$(database)/documents/contractor_jobs/$(jobId)).data.status == 'open'
+          && request.resource.data.status == 'pending';
+
+        allow update: if isAdmin() || (
+          isContractor()
+          && request.auth.uid == get(/databases/$(database)/documents/contractor_jobs/$(jobId)).data.createdBy
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status', 'updatedAt'])
+          && request.resource.data.status in ['accepted', 'rejected']
+        );
+
+        allow delete: if isAdmin() || (
+          isContractor() && request.auth.uid == resource.data.contractorId
+        );
+      }
+    }
+
+    // --- REVIEWS ---
+    match /reviews/{reviewId} {
+      // Public read is OK (contractor profile pages).
+      allow read: if true;
+
+      function isRating1to5(v) {
+        return (v is int || v is float) && v >= 1 && v <= 5;
+      }
+
+      // Customer can create a review only for their completed job.
+      allow create: if isCustomer()
+        && (request.resource.data.jobId is string)
+        && (request.resource.data.contractorId is string)
+        && isRating1to5(request.resource.data.rating)
+        && (
+          !('qualityRating' in request.resource.data)
+          || isRating1to5(request.resource.data.qualityRating)
+        )
+        && (
+          !('timelinessRating' in request.resource.data)
+          || isRating1to5(request.resource.data.timelinessRating)
+        )
+        && (
+          !('communicationRating' in request.resource.data)
+          || isRating1to5(request.resource.data.communicationRating)
+        )
+        && (request.resource.data.comment is string)
+        && request.resource.data.comment.size() <= 2000
+        // Author identity (support both legacy and current field names).
+        && (
+          request.resource.data.get('customerId', '') == request.auth.uid
+          || request.resource.data.get('reviewerUid', '') == request.auth.uid
+        )
+        // Deterministic id: <jobId>_<uid> to prevent duplicates.
+        && reviewId == request.resource.data.jobId + '_' + request.auth.uid
+        && exists(/databases/$(database)/documents/job_requests/$(request.resource.data.jobId))
+        && job(request.resource.data.jobId).requesterUid == request.auth.uid
+        && (job(request.resource.data.jobId).status == 'completed');
+
+      // Only allow updates by admin (keeps reviews immutable once posted).
+      allow update, delete: if isAdmin();
+    }
+
+    // --- COMMUNITY POSTS ---
+    match /community_posts/{postId} {
+      allow read: if isSignedIn();
+
+      function validStatus(s) {
+        return s is string && s in ['active', 'removed'];
+      }
+
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.authorName is string
+        && request.resource.data.caption is string
+        && request.resource.data.caption.size() <= 2000
+        && request.resource.data.mediaUrls is list
+        && request.resource.data.mediaUrls.size() <= 8
+        && request.resource.data.likeCount is int
+        && request.resource.data.reportCount is int
+        && validStatus(request.resource.data.moderationStatus)
+        && request.resource.data.createdAt is timestamp;
+
+      allow update: if isAdmin() || (
+        isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'caption',
+          'mediaUrls'
+        ])
+        && resource.data.authorId == request.auth.uid
+      ) || (
+        isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'likeCount',
+          'reportCount',
+          'lastReportedAt'
+        ])
+        && request.resource.data.likeCount is int
+        && request.resource.data.likeCount >= 0
+        && request.resource.data.reportCount is int
+        && request.resource.data.reportCount >= 0
+      ) || (
+        isAdmin()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'moderationStatus'
+        ])
+        && validStatus(request.resource.data.moderationStatus)
+      );
+
+      allow delete: if isAdmin() || (
+        isSignedIn() && resource.data.authorId == request.auth.uid
+      );
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName is string
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 800
+          && request.resource.data.createdAt is timestamp;
+
+        allow update: if isAdmin();
+        allow delete: if isAdmin() || (
+          isSignedIn() && resource.data.authorId == request.auth.uid
+        );
+      }
+
+      match /likes/{likeId} {
+        allow read: if isSignedIn();
+
+        allow create: if isSignedIn()
+          && likeId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.createdAt is timestamp;
+
+        allow delete: if isSignedIn() && likeId == request.auth.uid;
+
+        allow update: if false;
+      }
+
+      match /reports/{reportId} {
+        allow read: if isAdmin();
+
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() <= 80
+          && request.resource.data.details is string
+          && request.resource.data.details.size() <= 400
+          && request.resource.data.createdAt is timestamp;
+
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // --- CONTRACTOR PORTFOLIOS ---
+    match /portfolios/{contractorId}/items/{itemId} {
+      allow read: if true;
+      allow write: if isSignedIn() && (
+        request.auth.uid == contractorId || isAdmin()
+      );
+    }
+  }
+}

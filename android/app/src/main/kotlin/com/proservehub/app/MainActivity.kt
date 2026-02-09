@@ -1,0 +1,5 @@
+package com.proservehub.app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
