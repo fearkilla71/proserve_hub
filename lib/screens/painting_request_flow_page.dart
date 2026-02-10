@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
@@ -409,7 +410,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushNamed('/recommended', arguments: jobRef.id);
+      context.push('/recommended/${jobRef.id}');
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

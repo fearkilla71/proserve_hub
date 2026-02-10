@@ -15,11 +15,12 @@ import 'package:proserve_hub/screens/customer_portal_page.dart';
 import 'package:proserve_hub/services/deep_link_service.dart';
 import 'package:proserve_hub/services/fcm_service.dart';
 import 'package:proserve_hub/services/error_logger.dart';
-import 'package:proserve_hub/widgets/offline_banner.dart';
 import 'package:proserve_hub/screens/verify_contact_info_page.dart';
 import 'package:proserve_hub/theme/proserve_theme.dart';
-import 'screens/recommended_contractors_page.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/landing_page.dart';
+import 'router/app_router.dart';
 
 // Global navigator key for deep linking
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -370,27 +371,24 @@ void main() async {
 class ProServeHubApp extends StatelessWidget {
   const ProServeHubApp({super.key});
 
+  static final _router = createRouter();
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
+    return MaterialApp.router(
+      routerConfig: _router,
       title: 'ProServe Hub',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ProServeTheme.darkTheme(),
       theme: ProServeTheme.darkTheme(),
-      routes: {
-        '/recommended': (context) {
-          final jobId = ModalRoute.of(context)!.settings.arguments as String;
-          return RecommendedContractorsPage(jobId: jobId);
-        },
-        '/contractorProfile': (context) {
-          final contractorId =
-              ModalRoute.of(context)!.settings.arguments as String;
-          return ContractorProfilePage(contractorId: contractorId);
-        },
-      },
-      home: const OfflineBanner(child: RootGate()),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
     );
   }
 }

@@ -9,8 +9,13 @@ class ErrorLogger {
   ErrorLogger._();
 
   static const String _fileName = 'error_log.txt';
+  static const String _oldFileName = 'error_log.old.txt';
+
+  /// Max log size before rotation (500 KB).
+  static const int _maxBytes = 500 * 1024;
 
   File? _logFile;
+  File? _oldLogFile;
   final List<String> _buffer = <String>[];
   bool _initialized = false;
 
@@ -24,11 +29,15 @@ class ErrorLogger {
 
     final dir = await getApplicationDocumentsDirectory();
     _logFile = File('${dir.path}${Platform.pathSeparator}$_fileName');
+    _oldLogFile = File('${dir.path}${Platform.pathSeparator}$_oldFileName');
 
     // Ensure file exists.
     if (!await _logFile!.exists()) {
       await _logFile!.create(recursive: true);
     }
+
+    // Rotate on startup if the log is already too large.
+    await _rotateIfNeeded();
 
     _initialized = true;
 
@@ -158,8 +167,37 @@ class ErrorLogger {
 
     try {
       await file.writeAsString(message, mode: FileMode.append, flush: true);
+      await _rotateIfNeeded();
     } catch (_) {
       // If writing fails, don't crash the app.
+    }
+  }
+
+  /// Rotate the log file when it exceeds [_maxBytes].
+  /// The current log is moved to `.old` (overwriting any previous archive)
+  /// and a fresh empty log is created.
+  Future<void> _rotateIfNeeded() async {
+    final file = _logFile;
+    if (file == null) return;
+
+    try {
+      if (!await file.exists()) return;
+
+      final length = await file.length();
+      if (length < _maxBytes) return;
+
+      // Rename current → old (overwrite).
+      final oldFile = _oldLogFile;
+      if (oldFile != null && await oldFile.exists()) {
+        await oldFile.delete();
+      }
+      await file.rename(oldFile!.path);
+
+      // Re-create the fresh log file at the original path.
+      _logFile = File(oldFile.path.replaceAll(_oldFileName, _fileName));
+      await _logFile!.create(recursive: true);
+    } catch (_) {
+      // Best-effort rotation — never crash.
     }
   }
 }

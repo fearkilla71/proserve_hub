@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'recommended_contractors_page.dart';
 import '../widgets/contractor_reputation_card.dart';
 import '../services/location_service.dart';
+import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
+import 'favorite_contractors_screen.dart';
 
 class BrowseContractorsScreen extends StatefulWidget {
   const BrowseContractorsScreen({super.key, this.showBackButton = true});
@@ -174,6 +176,18 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Browse Contractors'),
+        actions: [
+          IconButton(
+            tooltip: 'Saved contractors',
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FavoriteContractorsScreen(),
+              ),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -721,7 +735,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
   }
 }
 
-class _ContractorCard extends StatelessWidget {
+class _ContractorCard extends StatefulWidget {
   final String contractorId;
   final Map<String, dynamic> contractor;
   final double? distanceMiles;
@@ -733,7 +747,37 @@ class _ContractorCard extends StatelessWidget {
   });
 
   @override
+  State<_ContractorCard> createState() => _ContractorCardState();
+}
+
+class _ContractorCardState extends State<_ContractorCard> {
+  bool _isFav = false;
+  bool _toggling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFav();
+  }
+
+  Future<void> _checkFav() async {
+    final fav = await FavoritesService.instance.isFavorite(widget.contractorId);
+    if (mounted) setState(() => _isFav = fav);
+  }
+
+  Future<void> _toggleFav() async {
+    if (_toggling) return;
+    _toggling = true;
+    final result = await FavoritesService.instance.toggle(widget.contractorId);
+    if (mounted) setState(() => _isFav = result);
+    _toggling = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final contractor = widget.contractor;
+    final contractorId = widget.contractorId;
+    final distanceMiles = widget.distanceMiles;
     final businessNameRaw = (contractor['businessName'] as String?)?.trim();
     final nameRaw = (contractor['name'] as String?)?.trim();
     final companyNameRaw = (contractor['companyName'] as String?)?.trim();
@@ -931,10 +975,27 @@ class _ContractorCard extends StatelessWidget {
                 ),
               ),
 
-              // Arrow
-              Icon(
-                Icons.chevron_right,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              // Favorite + Arrow
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  IconButton(
+                    tooltip: _isFav
+                        ? 'Remove from favorites'
+                        : 'Save contractor',
+                    icon: Icon(
+                      _isFav ? Icons.favorite : Icons.favorite_border,
+                      color: _isFav
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    onPressed: _toggleFav,
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
               ),
             ],
           ),

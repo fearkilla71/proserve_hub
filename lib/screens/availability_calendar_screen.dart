@@ -262,6 +262,7 @@ class _AvailabilityCalendarScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
+                  tooltip: 'Previous day',
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () {
                     setState(() {
@@ -276,6 +277,7 @@ class _AvailabilityCalendarScreenState
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 IconButton(
+                  tooltip: 'Next day',
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
                     setState(() {

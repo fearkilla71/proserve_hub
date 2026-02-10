@@ -18,6 +18,8 @@ import 'customer_ai_estimator_wizard_page.dart';
 import 'landing_page.dart';
 import 'submit_review_screen.dart';
 import 'community_feed_screen.dart';
+import 'favorite_contractors_screen.dart';
+import 'referral_screen.dart';
 
 import '../services/customer_portal_nav.dart';
 import '../services/fcm_service.dart';
@@ -573,53 +575,57 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: ProServeColors.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: ProServeColors.line),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: ProServeColors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: ProServeColors.card,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: ProServeColors.line),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: ProServeColors.accent),
               ),
-              child: Icon(icon, color: ProServeColors.accent),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: ProServeColors.ink,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: ProServeColors.ink,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      color: ProServeColors.muted,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.manrope(
+                        fontSize: 12,
+                        color: ProServeColors.muted,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -750,6 +756,44 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     icon: Icons.receipt_long,
                     onTap: () {
                       setState(() => _tabIndex = 2);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'Saved pros',
+                    subtitle: 'Your favorite contractors',
+                    icon: Icons.favorite_border,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FavoriteContractorsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'Referral',
+                    subtitle: 'Share & earn credit',
+                    icon: Icons.card_giftcard,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ReferralScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),

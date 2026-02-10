@@ -455,58 +455,72 @@ class ProServeTheme {
 class ProServeCTAButton extends StatelessWidget {
   const ProServeCTAButton({
     super.key,
-    required this.label,
+    this.label,
+    this.child,
     required this.onPressed,
     this.icon,
     this.expanded = true,
-  });
+  }) : assert(
+         label != null || child != null,
+         'Either label or child must be provided',
+       );
 
-  final String label;
-  final VoidCallback onPressed;
+  final String? label;
+  final Widget? child;
+  final VoidCallback? onPressed;
   final IconData? icon;
   final bool expanded;
 
   @override
   Widget build(BuildContext context) {
-    final child = Container(
+    final buttonChild = Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       decoration: BoxDecoration(
-        gradient: ProServeColors.ctaGradient,
+        gradient: onPressed != null ? ProServeColors.ctaGradient : null,
+        color: onPressed == null ? Colors.grey[700] : null,
         borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: ProServeColors.accent.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: onPressed != null
+            ? [
+                BoxShadow(
+                  color: ProServeColors.accent.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
       ),
-      child: Row(
-        mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: const Color(0xFF041016), size: 20),
-            const SizedBox(width: 10),
-          ],
-          Text(
-            label,
-            style: GoogleFonts.manrope(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF041016),
-            ),
+      child:
+          child ??
+          Row(
+            mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: const Color(0xFF041016), size: 20),
+                const SizedBox(width: 10),
+              ],
+              Text(
+                label ?? '',
+                style: GoogleFonts.manrope(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF041016),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
-    return expanded
-        ? SizedBox(
-            width: double.infinity,
-            child: GestureDetector(onTap: onPressed, child: child),
-          )
-        : GestureDetector(onTap: onPressed, child: child);
+    return Semantics(
+      button: true,
+      label: label,
+      child: expanded
+          ? SizedBox(
+              width: double.infinity,
+              child: GestureDetector(onTap: onPressed, child: buttonChild),
+            )
+          : GestureDetector(onTap: onPressed, child: buttonChild),
+    );
   }
 }
 

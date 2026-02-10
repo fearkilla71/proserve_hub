@@ -20,6 +20,7 @@ import '../services/conversation_service.dart';
 import 'expenses/expenses_list_page.dart';
 import '../utils/optimistic_ui.dart';
 import '../utils/bottom_sheet_helper.dart';
+import 'cancellation_screen.dart';
 import '../widgets/suggested_pros_card.dart';
 
 class JobDetailPage extends StatelessWidget {
@@ -329,6 +330,20 @@ class JobDetailPage extends StatelessWidget {
             );
           }
 
+          // Cancel job — available when the job is still active (not completed/cancelled).
+          final canCancel =
+              isRequester && status != 'completed' && status != 'cancelled';
+          if (canCancel) {
+            actions.add(
+              const ActionItem<String>(
+                title: 'Cancel Job',
+                subtitle: 'Cancel and check refund eligibility',
+                icon: Icons.cancel_outlined,
+                value: 'cancel_job',
+              ),
+            );
+          }
+
           if (actions.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('No actions available right now.')),
@@ -371,6 +386,35 @@ class JobDetailPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => DisputeScreen(jobId: jobId)),
+              );
+              break;
+            case 'cancel_job':
+              // Parse scheduled date from data, fall back to 7 days from now.
+              DateTime scheduledDate;
+              final rawDate = data['preferredDate'] ?? data['scheduledDate'];
+              if (rawDate is Timestamp) {
+                scheduledDate = rawDate.toDate();
+              } else if (rawDate is String) {
+                scheduledDate =
+                    DateTime.tryParse(rawDate) ??
+                    DateTime.now().add(const Duration(days: 7));
+              } else {
+                scheduledDate = DateTime.now().add(const Duration(days: 7));
+              }
+              final jobPrice = (data['price'] as num?)?.toDouble() ?? 0;
+              final jobTitle = (data['service'] as String?) ?? 'Job';
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CancellationScreen(
+                    jobId: jobId,
+                    collection: 'job_requests',
+                    scheduledDate: scheduledDate,
+                    jobPrice: jobPrice,
+                    jobTitle: jobTitle,
+                  ),
+                ),
               );
               break;
           }

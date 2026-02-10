@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +24,8 @@ import 'exterior_painting_request_flow_page.dart';
 import 'cabinet_request_flow_page.dart';
 import 'pressure_washing_request_flow_page.dart';
 import 'drywall_repair_request_flow_page.dart';
+import 'instant_book_screen.dart';
+import 'booking_calendar_screen.dart';
 import 'reviews_list_screen.dart';
 import 'portfolio_screen.dart';
 import 'qanda_screen.dart';
@@ -1297,11 +1300,7 @@ class _RecommendedContractorsPageState
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/contractorProfile',
-                        arguments: contractorId,
-                      );
+                      context.push('/contractor/$contractorId');
                     },
                     child: const Text('View Profile'),
                   ),
@@ -1598,6 +1597,48 @@ class ContractorProfilePage extends StatelessWidget {
                 _buildQASection(context),
 
                 const SizedBox(height: 24),
+
+                // Instant Book button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => InstantBookScreen(
+                            contractorId: contractorId,
+                            contractorName: name,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.bolt),
+                    label: const Text('Instant Book'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Booking Calendar button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingCalendarScreen(
+                            contractorId: contractorId,
+                            contractorName: name,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.calendar_month),
+                    label: const Text('View Availability'),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(

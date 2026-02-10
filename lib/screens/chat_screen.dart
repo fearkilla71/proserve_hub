@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -655,11 +656,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   icon: const Icon(Icons.work_outline),
                   onPressed: () {
                     // Navigate to job details
-                    Navigator.pushNamed(
-                      context,
-                      '/jobDetail',
-                      arguments: widget.jobId,
-                    );
+                    context.push('/job/${widget.jobId}');
                   },
                   tooltip: 'View job',
                 ),
@@ -826,6 +823,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     IconButton(
+                      tooltip: 'Send message',
                       icon: _isSending
                           ? const SizedBox(
                               width: 24,
