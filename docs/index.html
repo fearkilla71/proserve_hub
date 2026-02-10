@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ProServe Hub - Built for crews who show up</title>
+    <title>ProServe Hub - AI powered contractor OS</title>
     <meta
       name="description"
-      content="ProServe Hub turns contractor work into visible proof with a community feed, smart workflows, and verified profiles."
+      content="ProServe Hub uses AI to automate contractor workflows, proof feeds, and client updates so crews stay focused on the job."
     />
+    <link rel="icon" href="assets/app_icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,7 +23,8 @@
         --muted: #9fb2d4;
         --accent: #22e39b;
         --accent-2: #36b3ff;
-        --card: rgba(12, 23, 44, 0.78);
+        --accent-3: #8f5bff;
+        --card: rgba(12, 23, 44, 0.82);
         --line: rgba(255, 255, 255, 0.08);
         --shadow: 0 18px 60px rgba(5, 12, 26, 0.65);
       }
@@ -37,13 +39,18 @@
         color: var(--ink);
         background: radial-gradient(
             circle at top left,
-            rgba(54, 179, 255, 0.18),
+            rgba(54, 179, 255, 0.2),
             transparent 45%
           ),
           radial-gradient(
             circle at 20% 30%,
-            rgba(34, 227, 155, 0.14),
+            rgba(34, 227, 155, 0.18),
             transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 10%,
+            rgba(143, 91, 255, 0.16),
+            transparent 40%
           ),
           linear-gradient(180deg, #0a1731 0%, #071022 55%, #050b18 100%);
         min-height: 100vh;
@@ -97,17 +104,21 @@
       }
 
       .brand-badge {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
         background: linear-gradient(130deg, #1b2b5c, #0c1430);
         border: 1px solid rgba(54, 179, 255, 0.6);
         display: grid;
         place-items: center;
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 1.4rem;
-        color: var(--accent);
         box-shadow: inset 0 0 18px rgba(54, 179, 255, 0.25);
+        overflow: hidden;
+      }
+
+      .brand-badge img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       .nav-links {
@@ -143,23 +154,41 @@
       .hero {
         position: relative;
         overflow: hidden;
-        padding: 86px 0 40px;
+        padding: 90px 0 40px;
       }
 
-      .hero::after {
-        content: "";
+      .orb {
         position: absolute;
-        width: 520px;
-        height: 520px;
         border-radius: 50%;
-        background: radial-gradient(
-          circle,
-          rgba(54, 179, 255, 0.3),
-          transparent 65%
-        );
-        top: -220px;
-        right: -140px;
         filter: blur(10px);
+        opacity: 0.6;
+        animation: float 12s ease-in-out infinite;
+      }
+
+      .orb.one {
+        width: 260px;
+        height: 260px;
+        background: rgba(54, 179, 255, 0.25);
+        top: -120px;
+        right: 10%;
+      }
+
+      .orb.two {
+        width: 180px;
+        height: 180px;
+        background: rgba(34, 227, 155, 0.22);
+        bottom: 10%;
+        left: -40px;
+        animation-delay: -4s;
+      }
+
+      .orb.three {
+        width: 220px;
+        height: 220px;
+        background: rgba(143, 91, 255, 0.2);
+        top: 40%;
+        right: -60px;
+        animation-delay: -7s;
       }
 
       .hero-grid {
@@ -189,7 +218,7 @@
 
       h1 {
         font-family: "Bebas Neue", sans-serif;
-        font-size: clamp(3rem, 6vw + 1rem, 5.8rem);
+        font-size: clamp(3.2rem, 6vw + 1rem, 6rem);
         margin: 16px 0 18px;
         line-height: 0.95;
         letter-spacing: 1px;
@@ -213,6 +242,22 @@
         padding: 26px;
         box-shadow: var(--shadow);
         border: 1px solid rgba(54, 179, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          130deg,
+          transparent,
+          rgba(54, 179, 255, 0.12),
+          transparent
+        );
+        transform: translateX(-120%);
+        animation: sweep 6s ease-in-out infinite;
       }
 
       .hero-panel h3 {
@@ -221,14 +266,15 @@
         letter-spacing: 1px;
       }
 
-      .metrics {
+      .ai-stack {
         display: grid;
         gap: 12px;
         margin-top: 16px;
       }
 
-      .metric {
+      .ai-card {
         display: flex;
+        align-items: center;
         justify-content: space-between;
         padding: 12px 14px;
         border-radius: 16px;
@@ -237,13 +283,36 @@
         font-weight: 600;
       }
 
+      .ai-chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: rgba(34, 227, 155, 0.2);
+        color: var(--accent);
+      }
+
       .ribbon {
         max-width: 1180px;
         margin: 24px auto 0;
-        padding: 14px 24px;
+        padding: 10px 24px 0;
+      }
+
+      .ticker {
+        overflow: hidden;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(6, 12, 26, 0.6);
+      }
+
+      .ticker-track {
         display: flex;
-        gap: 28px;
-        flex-wrap: wrap;
+        gap: 36px;
+        padding: 14px 0;
+        animation: marquee 18s linear infinite;
+        white-space: nowrap;
+      }
+
+      .ticker span {
         color: var(--muted);
         font-size: 0.92rem;
       }
@@ -275,6 +344,12 @@
         border: 1px solid var(--line);
         box-shadow: 0 18px 40px rgba(4, 10, 26, 0.5);
         min-height: 180px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 26px 50px rgba(4, 12, 30, 0.65);
       }
 
       .card h3 {
@@ -294,6 +369,7 @@
         font-weight: 700;
         color: var(--accent-2);
         margin-bottom: 12px;
+        box-shadow: 0 0 20px rgba(54, 179, 255, 0.25);
       }
 
       .strip {
@@ -328,6 +404,21 @@
         border-radius: 26px;
         padding: 24px;
         border: 1px solid rgba(34, 227, 155, 0.2);
+      }
+
+      .ai-core {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        margin-top: 24px;
+      }
+
+      .core-card {
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(8, 16, 34, 0.85);
+        border: 1px solid rgba(143, 91, 255, 0.24);
+        box-shadow: inset 0 0 30px rgba(143, 91, 255, 0.12);
       }
 
       .stats {
@@ -384,6 +475,37 @@
         transform: translateY(0);
       }
 
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(14px);
+        }
+      }
+
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      @keyframes sweep {
+        0% {
+          transform: translateX(-120%);
+        }
+        60% {
+          transform: translateX(120%);
+        }
+        100% {
+          transform: translateX(120%);
+        }
+      }
+
       @media (max-width: 720px) {
         .nav-links {
           display: none;
@@ -408,13 +530,15 @@
     <header>
       <div class="nav">
         <div class="brand">
-          <div class="brand-badge">PH</div>
+          <div class="brand-badge">
+            <img src="assets/app_icon.png" alt="ProServe Hub" />
+          </div>
           ProServe Hub
         </div>
         <nav class="nav-links">
-          <a href="#features">Features</a>
+          <a href="#features">AI features</a>
           <a href="#proof">Proof</a>
-          <a href="#workflow">Workflow</a>
+          <a href="#workflow">AI workflow</a>
         </nav>
         <a class="cta" href="#start">Get Early Access</a>
       </div>
@@ -422,73 +546,100 @@
 
     <main>
       <section class="hero" id="start">
+        <div class="orb one"></div>
+        <div class="orb two"></div>
+        <div class="orb three"></div>
         <div class="hero-grid">
           <div>
-            <span class="eyebrow">Built for crews who show up</span>
-            <h1>Proof, progress, and payouts in one feed.</h1>
+            <span class="eyebrow">AI powered contractor OS</span>
+            <h1>Let AI run the paperwork. You run the crew.</h1>
             <p>
-              ProServe Hub keeps your jobs moving with a real-time community
-              feed, clean client portals, and profiles that close deals for you.
+              ProServe Hub uses AI to draft estimates, summarize jobs, and keep
+              clients updated in seconds. Your feed becomes proof, and proof
+              becomes new work.
             </p>
             <div class="hero-actions">
               <button class="cta">Request access</button>
-              <button class="ghost">Watch a demo</button>
+              <button class="ghost">Watch AI demo</button>
             </div>
           </div>
           <div class="hero-panel">
-            <h3>Live job signal</h3>
-            <p>Every post builds proof and brings new leads.</p>
-            <div class="metrics">
-              <div class="metric">
-                <span>Avg. response time</span>
-                <span>11 min</span>
+            <h3>AI Command Center</h3>
+            <p>Live job intelligence with zero extra admin.</p>
+            <div class="ai-stack">
+              <div class="ai-card">
+                <span>Estimate draft ready</span>
+                <span class="ai-chip">AI</span>
               </div>
-              <div class="metric">
-                <span>Client rebook rate</span>
-                <span>42%</span>
+              <div class="ai-card">
+                <span>Client update sent</span>
+                <span class="ai-chip">Auto</span>
               </div>
-              <div class="metric">
-                <span>Profile trust score</span>
-                <span>4.9</span>
+              <div class="ai-card">
+                <span>Review request queued</span>
+                <span class="ai-chip">Smart</span>
               </div>
             </div>
           </div>
         </div>
         <div class="ribbon">
-          <span>Feed updates</span>
-          <span>Client approvals</span>
-          <span>Smart estimates</span>
-          <span>Verified profiles</span>
-          <span>Referral boosts</span>
+          <div class="ticker">
+            <div class="ticker-track">
+              <span>AI estimates</span>
+              <span>Auto job summaries</span>
+              <span>Client status updates</span>
+              <span>Proof feed</span>
+              <span>Smart follow-ups</span>
+              <span>AI estimates</span>
+              <span>Auto job summaries</span>
+              <span>Client status updates</span>
+              <span>Proof feed</span>
+              <span>Smart follow-ups</span>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="section" id="features">
-        <h2>Everything you need to look elite.</h2>
+        <h2>AI features that make you look elite.</h2>
         <p>
-          Built for speed on the jobsite and clarity for clients. Your work
-          looks premium by default.
+          Built for speed on the jobsite and clarity for clients. AI handles
+          the admin, so your crew stays focused on craft.
         </p>
         <div class="grid">
           <div class="card reveal">
             <div class="feature-icon">01</div>
-            <h3>Community feed</h3>
-            <p>Post progress photos and updates that double as marketing.</p>
+            <h3>AI estimate builder</h3>
+            <p>Generate polished quotes from quick notes and photos.</p>
           </div>
           <div class="card reveal">
             <div class="feature-icon">02</div>
-            <h3>Client portal</h3>
-            <p>Centralize approvals, timelines, and documents in one place.</p>
+            <h3>AI job summaries</h3>
+            <p>Turn site updates into clean client recaps automatically.</p>
           </div>
           <div class="card reveal">
             <div class="feature-icon">03</div>
-            <h3>Smart estimates</h3>
-            <p>Send polished quotes in minutes and lock in scope fast.</p>
+            <h3>Smart client portal</h3>
+            <p>Give clients a live feed of progress and approvals.</p>
           </div>
           <div class="card reveal">
             <div class="feature-icon">04</div>
-            <h3>Verified profiles</h3>
-            <p>Showcase licenses, badges, and reviews that win trust.</p>
+            <h3>Proof and reviews</h3>
+            <p>AI prompts reviews and turns proof into new leads.</p>
+          </div>
+        </div>
+        <div class="ai-core">
+          <div class="core-card">
+            <h3>AI ops assistant</h3>
+            <p>Auto schedule follow-ups and keep timelines tight.</p>
+          </div>
+          <div class="core-card">
+            <h3>AI quality checks</h3>
+            <p>Flag missing photos and approvals before handoff.</p>
+          </div>
+          <div class="core-card">
+            <h3>AI insights</h3>
+            <p>See which jobs and posts bring the most revenue.</p>
           </div>
         </div>
       </section>
@@ -496,10 +647,10 @@
       <section class="section strip" id="proof">
         <div>
           <span class="eyebrow">Proof drives growth</span>
-          <h2>Turn every job into a referral engine.</h2>
+          <h2>Turn every job into an AI powered referral engine.</h2>
           <p>
             Clients watch progress, react in real time, and share your work.
-            You get visibility without extra marketing spend.
+            AI highlights the best moments so your feed sells for you.
           </p>
           <div class="pill-row">
             <span class="pill">Before and after stories</span>
@@ -518,30 +669,30 @@
       </section>
 
       <section class="section" id="workflow">
-        <h2>Workflow that keeps crews moving.</h2>
+        <h2>AI workflow that keeps crews moving.</h2>
         <p>
           From first message to final invoice, everything stays visible and
-          professional for your client.
+          professional for your client with AI in the background.
         </p>
         <div class="grid">
           <div class="card reveal">
             <h3>Step 1 - Intake</h3>
-            <p>Capture job details quickly with a branded request flow.</p>
+            <p>AI captures job details and pre-fills estimates.</p>
           </div>
           <div class="card reveal">
             <h3>Step 2 - Progress</h3>
-            <p>Share milestones, photos, and approvals in a clean timeline.</p>
+            <p>Auto updates, photo summaries, and approvals in one feed.</p>
           </div>
           <div class="card reveal">
             <h3>Step 3 - Close</h3>
-            <p>Collect feedback, lock reviews, and keep repeat work coming.</p>
+            <p>AI review prompts and follow-ups drive repeat work.</p>
           </div>
         </div>
         <div class="stats">
           <div class="stat">+58% faster approvals</div>
           <div class="stat">2x repeat work rate</div>
           <div class="stat">24/7 client visibility</div>
-          <div class="stat">Proof on every job</div>
+          <div class="stat">AI on every job</div>
         </div>
         <div class="cta-band">
           <div>
@@ -560,7 +711,7 @@
           <p>Built for contractors who care about craft and reputation.</p>
         </div>
         <div>
-          <p>Contact: hello@proservehub.app</p>
+          <p>Contact: proservehub.app@gmail.com</p>
         </div>
       </div>
     </footer>
