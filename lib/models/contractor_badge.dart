@@ -49,7 +49,7 @@ const List<BadgeDef> profileBadges = [
   BadgeDef(
     id: 'licensed',
     label: 'Licensed',
-    icon: Icons.gavel,
+    icon: Icons.verified_user,
     color: Color(0xFF2563EB),
     glowColor: Color(0xFF60A5FA),
     shape: BadgeShape.shield,
@@ -59,7 +59,7 @@ const List<BadgeDef> profileBadges = [
   BadgeDef(
     id: 'insured',
     label: 'Insured',
-    icon: Icons.security,
+    icon: Icons.shield,
     color: Color(0xFF0D9488),
     glowColor: Color(0xFF5EEAD4),
     shape: BadgeShape.shield,
@@ -79,7 +79,7 @@ const List<BadgeDef> profileBadges = [
   BadgeDef(
     id: 'family_owned',
     label: 'Family Owned',
-    icon: Icons.family_restroom,
+    icon: Icons.home_work,
     color: Color(0xFFD97706),
     glowColor: Color(0xFFFBBF24),
     shape: BadgeShape.circle,
@@ -99,7 +99,7 @@ const List<BadgeDef> profileBadges = [
   BadgeDef(
     id: 'quick_response',
     label: 'Quick Response',
-    icon: Icons.flash_on,
+    icon: Icons.bolt,
     color: Color(0xFFEAB308),
     glowColor: Color(0xFFFDE047),
     shape: BadgeShape.star,
@@ -109,7 +109,7 @@ const List<BadgeDef> profileBadges = [
   BadgeDef(
     id: 'top_rated',
     label: 'Top Rated',
-    icon: Icons.workspace_premium,
+    icon: Icons.emoji_events,
     color: Color(0xFFF59E0B),
     glowColor: Color(0xFFFCD34D),
     shape: BadgeShape.star,
@@ -194,7 +194,7 @@ List<BadgeDef> get achievementBadges {
       BadgeDef(
         id: 'jobs_${m.count}',
         label: m.label,
-        icon: Icons.construction,
+        icon: Icons.hardware,
         color: _tierColor(m.tier),
         glowColor: _tierGlow(m.tier),
         shape: _tierShape(m.tier),
@@ -211,7 +211,7 @@ List<BadgeDef> get achievementBadges {
       BadgeDef(
         id: 'reviews_${m.count}',
         label: m.label,
-        icon: Icons.rate_review,
+        icon: Icons.engineering,
         color: _tierColor(m.tier),
         glowColor: _tierGlow(m.tier),
         shape: _tierShape(m.tier),
@@ -228,7 +228,7 @@ List<BadgeDef> get achievementBadges {
       BadgeDef(
         id: 'rating_${m.minRating.toStringAsFixed(1).replaceAll('.', '')}',
         label: m.label,
-        icon: Icons.star,
+        icon: Icons.military_tech,
         color: _tierColor(m.tier),
         glowColor: _tierGlow(m.tier),
         shape: _tierShape(m.tier),
