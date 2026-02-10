@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:web/web.dart' as web;
 
 import 'firebase_options.dart';
 import 'screens/admin/analytics_admin_tab.dart';
@@ -14,10 +15,35 @@ import 'screens/admin/job_admin_tab.dart';
 import 'screens/admin/verification_admin_tab.dart';
 import 'theme/admin_theme.dart';
 
+void _hideElement(String id) {
+  final el = web.document.getElementById(id) as web.HTMLElement?;
+  el?.style.display = 'none';
+}
+
+void _showError(String msg) {
+  final el = web.document.getElementById('app-error') as web.HTMLElement?;
+  if (el != null) {
+    el.style.display = 'block';
+    el.textContent = msg;
+  }
+}
+
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const AdminWebApp());
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Hide loading indicator
+    _hideElement('loading');
+
+    runApp(const AdminWebApp());
+  } catch (e, st) {
+    _showError('Init error: $e\n$st');
+    _hideElement('loading');
+    rethrow;
+  }
 }
 
 // ─── App root ────────────────────────────────────────────────────────────────
@@ -191,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
         'email': email,
         'success': success,
         'timestamp': FieldValue.serverTimestamp(),
-        if (reason != null) 'reason': reason,
+        'reason': ?reason,
       });
     } catch (_) {
       // Fire-and-forget — don't block login flow

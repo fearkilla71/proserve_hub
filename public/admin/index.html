@@ -34,8 +34,67 @@
 
   <title>ProServe Hub Admin</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body { margin: 0; padding: 0; background: #071022; height: 100%; }
+    .loading-indicator {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #9FB2D4; font-family: sans-serif; font-size: 14px;
+    }
+    .loading-indicator .spinner {
+      width: 32px; height: 32px; border: 3px solid #1a2744;
+      border-top-color: #22E39B; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .app-error {
+      position: fixed; bottom: 16px; left: 16px; right: 16px;
+      background: #2a1015; color: #FF6B6B; padding: 12px 16px;
+      border-radius: 8px; font-family: monospace; font-size: 12px;
+      max-height: 200px; overflow: auto; display: none; z-index: 9999;
+    }
+  </style>
 </head>
 <body>
+  <div id="loading" class="loading-indicator">
+    <div class="spinner"></div>
+    <div>Loading ProServe Hub Admin...</div>
+  </div>
+  <div id="app-error" class="app-error"></div>
+
+  <script>
+    // Force-unregister stale service workers from previous deployments
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var reg of registrations) {
+          reg.unregister().then(function() {
+            console.log('Unregistered old service worker');
+          });
+        }
+      });
+      // Also clear all caches
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var name of names) {
+            caches.delete(name);
+            console.log('Deleted cache:', name);
+          }
+        });
+      }
+    }
+
+    // Global error handler to show Dart/Flutter init errors
+    window.addEventListener('error', function(e) {
+      var el = document.getElementById('app-error');
+      if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + (e.message || e); }
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var el = document.getElementById('app-error');
+      if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + (e.reason || e); }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
