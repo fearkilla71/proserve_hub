@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../theme/admin_theme.dart';
+
 class JobAdminTab extends StatefulWidget {
   const JobAdminTab({super.key});
 
@@ -249,7 +251,10 @@ class _JobAdminTabState extends State<JobAdminTab> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
+                        icon: const Icon(
+                          Icons.delete,
+                          color: AdminColors.error,
+                        ),
                         onPressed: () {
                           doc.reference.delete();
                         },

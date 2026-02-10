@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/admin_theme.dart';
+
 class DisputeAdminTab extends StatefulWidget {
   const DisputeAdminTab({super.key});
 
@@ -276,7 +278,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
               child: ExpansionTile(
                 leading: Icon(
                   Icons.report_problem,
-                  color: status == 'open' ? Colors.orange : Colors.blue,
+                  color: status == 'open'
+                      ? AdminColors.warning
+                      : AdminColors.accent2,
                 ),
                 title: Text(category),
                 subtitle: Column(
@@ -352,7 +356,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
+                                  foregroundColor: AdminColors.error,
                                 ),
                                 onPressed: () => _updateDisputeStatus(
                                   context,

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/admin_theme.dart';
 import '../../widgets/skeleton_loader.dart';
 
 class AnalyticsAdminTab extends StatefulWidget {
@@ -313,25 +314,25 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
           'Total Users',
           _stats['totalUsers'].toString(),
           Icons.people,
-          Colors.blue,
+          AdminColors.accent2,
         ),
         _buildStatCard(
           'Contractors',
           _stats['totalContractors'].toString(),
           Icons.construction,
-          Colors.green,
+          AdminColors.accent,
         ),
         _buildStatCard(
           'Platform Revenue',
           '\$${_stats['totalRevenue'].toStringAsFixed(2)}',
           Icons.monetization_on,
-          Colors.orange,
+          AdminColors.warning,
         ),
         _buildStatCard(
           'Completed Jobs',
           _stats['completedJobs'].toString(),
           Icons.check_circle,
-          Colors.purple,
+          AdminColors.accent3,
         ),
       ],
     );
@@ -467,13 +468,13 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
                       )
                       .toList(),
                   isCurved: true,
-                  color: Colors.orange,
+                  color: AdminColors.accent,
                   barWidth: 3,
                   isStrokeCapRound: true,
                   dotData: const FlDotData(show: true),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: Colors.orange.withValues(alpha: 0.2),
+                    color: AdminColors.accent.withValues(alpha: 0.15),
                   ),
                 ),
               ],
@@ -581,7 +582,7 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value['count'].toDouble(),
-                          color: Colors.blue,
+                          color: AdminColors.accent2,
                           width: 16,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(4),
@@ -607,7 +608,7 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
         'title': 'Pending Verifications',
         'count': _stats['pendingVerifications'],
         'icon': Icons.verified_user,
-        'color': Colors.orange,
+        'color': AdminColors.warning,
       });
     }
 
@@ -616,22 +617,25 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
         'title': 'Active Disputes',
         'count': _stats['activeDisputes'],
         'icon': Icons.report_problem,
-        'color': Colors.red,
+        'color': AdminColors.error,
       });
     }
 
     if (alerts.isEmpty) {
       return Card(
-        color: Colors.green.shade50,
-        child: const Padding(
-          padding: EdgeInsets.all(16),
+        color: AdminColors.accent.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 12),
+              const Icon(Icons.check_circle, color: AdminColors.accent),
+              const SizedBox(width: 12),
               Text(
                 'All caught up! No pending actions.',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: AdminColors.ink,
+                ),
               ),
             ],
           ),
@@ -660,7 +664,9 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
                     Expanded(child: Text(alert['title'])),
                     Chip(
                       label: Text(alert['count'].toString()),
-                      backgroundColor: alert['color'].withValues(alpha: 0.2),
+                      backgroundColor: (alert['color'] as Color).withValues(
+                        alpha: 0.2,
+                      ),
                     ),
                   ],
                 ),

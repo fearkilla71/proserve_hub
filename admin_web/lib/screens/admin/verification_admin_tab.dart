@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/admin_theme.dart';
+
 class VerificationAdminTab extends StatefulWidget {
   const VerificationAdminTab({super.key});
 
@@ -62,15 +64,15 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
           });
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification approved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Verification approved')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -90,15 +92,15 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
           });
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification rejected')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Verification rejected')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -106,9 +108,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('contractors')
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('contractors').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -128,9 +128,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
         var contractors = snapshot.data!.docs.toList();
         contractors = contractors.where((doc) {
           final contractor = doc.data() as Map<String, dynamic>;
-          final types = _typeFilter == 'all'
-              ? _types()
-              : <String>[_typeFilter];
+          final types = _typeFilter == 'all' ? _types() : <String>[_typeFilter];
 
           for (final type in types) {
             final verification = _verificationFor(contractor, type);
@@ -208,10 +206,9 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                     children: [
                       Text(
                         'Filters & sorting',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Wrap(
@@ -229,9 +226,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                             label: const Text('ID'),
                             selected: _typeFilter == 'idVerification',
                             onSelected: (_) {
-                              setState(
-                                () => _typeFilter = 'idVerification',
-                              );
+                              setState(() => _typeFilter = 'idVerification');
                             },
                           ),
                           ChoiceChip(
@@ -393,9 +388,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                         Text(
                           'License #: ${verification['licenseNumber'] ?? 'N/A'}',
                         ),
-                        Text(
-                          'Expires: ${verification['expiryDate'] ?? 'N/A'}',
-                        ),
+                        Text('Expires: ${verification['expiryDate'] ?? 'N/A'}'),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -428,9 +421,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Provider: ${verification['provider'] ?? 'N/A'}',
-                        ),
+                        Text('Provider: ${verification['provider'] ?? 'N/A'}'),
                         Text(
                           'Policy #: ${verification['policyNumber'] ?? 'N/A'}',
                         ),
@@ -469,13 +460,10 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.close),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
+                            foregroundColor: AdminColors.error,
                           ),
-                          onPressed: () => _rejectVerification(
-                            context,
-                            contractorId,
-                            type,
-                          ),
+                          onPressed: () =>
+                              _rejectVerification(context, contractorId, type),
                           label: const Text('Reject'),
                         ),
                       ),
@@ -483,11 +471,8 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
                       Expanded(
                         child: FilledButton.icon(
                           icon: const Icon(Icons.check),
-                          onPressed: () => _approveVerification(
-                            context,
-                            contractorId,
-                            type,
-                          ),
+                          onPressed: () =>
+                              _approveVerification(context, contractorId, type),
                           label: const Text('Approve'),
                         ),
                       ),
@@ -545,7 +530,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
           child: Container(
             height: 120,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
+              border: Border.all(color: AdminColors.lineStrong),
               borderRadius: BorderRadius.circular(8),
             ),
             child: ClipRRect(
