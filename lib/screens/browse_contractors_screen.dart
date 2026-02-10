@@ -919,7 +919,7 @@ class _ContractorCardState extends State<_ContractorCard> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${formatDistance(distanceMiles!)} away',
+                            '${formatDistance(distanceMiles)} away',
                             style: TextStyle(
                               fontSize: 14,
                               color: Theme.of(

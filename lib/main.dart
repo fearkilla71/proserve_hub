@@ -21,6 +21,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/landing_page.dart';
 import 'router/app_router.dart';
+import 'services/service_locator.dart';
 
 // Global navigator key for deep linking
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -282,6 +283,9 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+
+      // Initialize service locator (pass overrides in tests).
+      ServiceLocator.init();
 
       // App Check can be surprisingly expensive / flaky on emulators.
       // - Release: activate before app work starts.

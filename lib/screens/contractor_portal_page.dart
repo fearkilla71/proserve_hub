@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 import 'job_detail_page.dart';
 import 'job_feed_page.dart';
@@ -33,6 +32,7 @@ import '../widgets/page_header.dart';
 import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/persistent_job_state_bar.dart';
+import '../widgets/contractor_portal_helpers.dart';
 
 class ContractorPortalPage extends StatefulWidget {
   const ContractorPortalPage({super.key});
@@ -43,20 +43,6 @@ class ContractorPortalPage extends StatefulWidget {
 
 class _ContractorPortalPageState extends State<ContractorPortalPage> {
   int _tabIndex = 0;
-
-  bool _pricingToolsUnlockedFromUserDoc(Map<String, dynamic>? data) {
-    if (data == null) return false;
-    return data['pricingToolsPro'] == true ||
-        data['contractorPro'] == true ||
-        data['isPro'] == true;
-  }
-
-  String _formatTimestamp(dynamic ts) {
-    if (ts is Timestamp) {
-      return DateFormat.yMMMd().add_jm().format(ts.toDate());
-    }
-    return '';
-  }
 
   Future<void> _openPricingToolsOrSubscribe({
     required Future<void> Function() open,
@@ -70,7 +56,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           .collection('users')
           .doc(user.uid)
           .get(const GetOptions(source: Source.serverAndCache));
-      unlocked = _pricingToolsUnlockedFromUserDoc(snap.data());
+      unlocked = pricingToolsUnlockedFromUserDoc(snap.data());
     } catch (_) {
       // Best-effort.
     }
@@ -306,54 +292,6 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _statusPill({
-    required BuildContext context,
-    required String label,
-    required IconData icon,
-    Color? sideColor,
-  }) {
-    final scheme = Theme.of(context).colorScheme;
-    final borderColor = sideColor ?? scheme.outlineVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: sideColor ?? scheme.onSurfaceVariant),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
     );
   }
 
@@ -898,8 +836,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                       final service = (data['service'] ?? 'Service').toString();
                       final location = (data['location'] ?? 'Unknown')
                           .toString();
-                      final claimedAt = _formatTimestamp(data['claimedAt']);
-                      final createdAt = _formatTimestamp(data['createdAt']);
+                      final claimedAt = formatTimestamp(data['claimedAt']);
+                      final createdAt = formatTimestamp(data['createdAt']);
 
                       final subtitleParts = <String>[];
                       subtitleParts.add('Location: $location');
@@ -962,7 +900,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           .snapshots(),
       builder: (context, snap) {
         final data = snap.data?.data();
-        final unlocked = _pricingToolsUnlockedFromUserDoc(data);
+        final unlocked = pricingToolsUnlockedFromUserDoc(data);
 
         Future<void> openSubscription() async {
           Navigator.push(
@@ -1337,7 +1275,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                         spacing: 8,
                                         runSpacing: 8,
                                         children: [
-                                          _statusPill(
+                                          contractorStatusPill(
                                             context: context,
                                             label: statusText,
                                             icon: approved
@@ -1345,7 +1283,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                                 : Icons.pending_actions,
                                             sideColor: statusTone,
                                           ),
-                                          _statusPill(
+                                          contractorStatusPill(
                                             context: context,
                                             label: payoutsLabel,
                                             icon: payoutsEnabled
@@ -1353,20 +1291,20 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                                       .account_balance_wallet_outlined
                                                 : Icons.payments_outlined,
                                           ),
-                                          _statusPill(
+                                          contractorStatusPill(
                                             context: context,
                                             label:
                                                 'Non-exclusive credits: $nonExclusiveCredits',
                                             icon: Icons.local_offer_outlined,
                                           ),
-                                          _statusPill(
+                                          contractorStatusPill(
                                             context: context,
                                             label:
                                                 'Exclusive credits: $exclusiveCredits',
                                             icon: Icons.lock_outline,
                                           ),
                                           if (stripeAccountId.isEmpty)
-                                            _statusPill(
+                                            contractorStatusPill(
                                               context: context,
                                               label: 'Payouts not connected',
                                               icon: Icons.link_off,
@@ -1381,7 +1319,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                               Card(
                                 child: Column(
                                   children: [
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.account_circle_outlined,
                                       title: 'Edit profile',
@@ -1398,7 +1336,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.verified_outlined,
                                       title: 'Get verified',
@@ -1415,7 +1353,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.analytics_outlined,
                                       title: 'Analytics',
@@ -1431,7 +1369,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.calendar_month_outlined,
                                       title: 'Availability',
@@ -1447,7 +1385,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.map_outlined,
                                       title: 'Service area',
@@ -1463,7 +1401,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.photo_library_outlined,
                                       title: 'Portfolio',
@@ -1481,7 +1419,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.business_outlined,
                                       title: 'Business profile',
@@ -1497,7 +1435,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       },
                                     ),
                                     const Divider(height: 1),
-                                    _actionTile(
+                                    contractorActionTile(
                                       context: context,
                                       icon: Icons.question_answer_outlined,
                                       title: 'Q&A',

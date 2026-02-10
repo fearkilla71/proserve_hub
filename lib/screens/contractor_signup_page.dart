@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
 import '../utils/zip_locations.dart';
+import '../widgets/signup_step_widgets.dart';
 import 'verify_contact_info_page.dart';
 import 'contractor_login_page.dart';
 
@@ -43,7 +44,6 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   static const int _totalSteps = 5;
   bool _showZipPreview = false;
   String _zipAreaLabel = 'your area';
-  int _zipDemandCount = 0;
 
   String _normalizePhone(String input) {
     final digits = input.replaceAll(RegExp(r'\D'), '');
@@ -60,21 +60,22 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     return '';
   }
 
-  String _areaForZip(String zipValue) {
-    if (zipValue.startsWith('770') ||
-        zipValue.startsWith('771') ||
-        zipValue.startsWith('772') ||
-        zipValue.startsWith('773') ||
-        zipValue.startsWith('774') ||
-        zipValue.startsWith('775')) {
-      return 'Houston, TX';
-    }
-    return 'your area';
-  }
+  /// Resolve city / area label from the [zipLocations] map comments,
+  /// falling back to a generic label so every supported ZIP is covered.
+  static const _zipAreaNames = <String, String>{
+    '770': 'Houston, TX',
+    '771': 'Houston, TX',
+    '772': 'Houston, TX',
+    '773': 'Spring / Tomball, TX',
+    '774': 'Katy / Cypress, TX',
+    '775': 'Galveston / Sugar Land, TX',
+    '776': 'Beaumont, TX',
+  };
 
-  int _demandForZip(String zipValue) {
-    final numeric = int.tryParse(zipValue) ?? 0;
-    return 12000 + (numeric % 4000);
+  String _areaForZip(String zipValue) {
+    if (zipValue.length < 3) return 'your area';
+    final prefix = zipValue.substring(0, 3);
+    return _zipAreaNames[prefix] ?? 'your area';
   }
 
   void _updateZipPreview(String value) {
@@ -84,7 +85,6 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       _showZipPreview = isKnown;
       if (isKnown) {
         _zipAreaLabel = _areaForZip(zipValue);
-        _zipDemandCount = _demandForZip(zipValue);
       }
     });
   }
@@ -454,254 +454,54 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   Widget _buildStepContent() {
     switch (_step) {
       case 0:
-        return Column(
-          children: [
-            TextField(
-              controller: email,
-              keyboardType: TextInputType.emailAddress,
-              enabled: !_awaitingEmailVerification,
-              decoration: _inputDecoration(
-                label: 'Email',
-                hint: 'you@company.com',
-                icon: Icons.email_outlined,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _awaitingEmailVerification
-                  ? 'Check your email, verify, then return to continue.'
-                  : 'We’ll email a verification link after you create the account.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (_awaitingEmailVerification) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () async {
-                  await _refreshEmailVerificationStatus();
-                  if (!mounted) return;
-                  if (!_emailVerified) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Not verified yet. Try again in a moment.',
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: const Text('I verified, refresh status'),
-              ),
-            ],
-          ],
+        return SignupStepEmail(
+          emailController: email,
+          awaitingVerification: _awaitingEmailVerification,
+          emailVerified: _emailVerified,
+          inputDecoration: _inputDecoration,
+          onRefreshVerification: () async {
+            await _refreshEmailVerificationStatus();
+            if (!mounted) return;
+            if (!_emailVerified) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Not verified yet. Try again in a moment.'),
+                ),
+              );
+            }
+          },
         );
       case 1:
-        return Column(
-          children: [
-            TextField(
-              controller: password,
-              obscureText: _obscurePassword,
-              decoration: _inputDecoration(
-                label: 'Password',
-                hint: 'At least 6 characters',
-                icon: Icons.lock_outline,
-                suffixIcon: IconButton(
-                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
-              ),
-            ),
-          ],
+        return SignupStepPassword(
+          passwordController: password,
+          obscure: _obscurePassword,
+          onToggleObscure: () =>
+              setState(() => _obscurePassword = !_obscurePassword),
+          inputDecoration: _inputDecoration,
         );
       case 2:
-        return Column(
-          children: [
-            TextField(
-              controller: name,
-              decoration: _inputDecoration(
-                label: 'Full name',
-                icon: Icons.person_outline,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: company,
-              decoration: _inputDecoration(
-                label: 'Company',
-                icon: Icons.business_outlined,
-              ),
-            ),
-          ],
+        return SignupStepProfile(
+          nameController: name,
+          companyController: company,
+          inputDecoration: _inputDecoration,
         );
       case 3:
-        return Column(
-          children: [
-            Center(
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: const BoxDecoration(
-                  color: ProServeColors.cardElevated,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.phone_iphone,
-                    size: 72,
-                    color: ProServeColors.accent2,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: phone,
-              keyboardType: TextInputType.phone,
-              enabled: !_phoneVerified,
-              decoration: _inputDecoration(
-                label: 'Phone',
-                hint: '(123) 456-7890',
-                icon: Icons.phone_outlined,
-              ),
-            ),
-            if (_phoneVerificationId != null) ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneCode,
-                keyboardType: TextInputType.number,
-                decoration: _inputDecoration(
-                  label: 'Verification code',
-                  hint: '123456',
-                  icon: Icons.sms_outlined,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            Text(
-              'By creating an account, you agree to the ProServe Hub Privacy Policy and Terms of Service.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+        return SignupStepPhone(
+          phoneController: phone,
+          codeController: phoneCode,
+          phoneVerified: _phoneVerified,
+          phoneVerificationId: _phoneVerificationId,
+          inputDecoration: _inputDecoration,
         );
       case 4:
       default:
-        return Column(
-          children: [
-            Center(
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: const BoxDecoration(
-                  color: ProServeColors.cardElevated,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/pitch/pin_card.png',
-                      width: 110,
-                      height: 110,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 22),
-            SizedBox(
-              height: 230,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        color: ProServeColors.cardElevated,
-                        child: Image.asset(
-                          'assets/pitch/zipcode_card.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 18,
-                    right: 18,
-                    bottom: 14,
-                    child: AnimatedSlide(
-                      duration: const Duration(milliseconds: 220),
-                      offset: _showZipPreview
-                          ? Offset.zero
-                          : const Offset(0, 0.08),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 220),
-                        opacity: _showZipPreview ? 1 : 0.92,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: ProServeColors.card,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            _showZipPreview
-                                ? '$_zipDemandCount General Contractors in $_zipAreaLabel won bids last week using ProServe Hub'
-                                : 'Enter your ZIP code to see demand in your area',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: ProServeColors.muted,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 22),
-            TextField(
-              controller: zip,
-              keyboardType: TextInputType.number,
-              onChanged: _updateZipPreview,
-              decoration: _inputDecoration(
-                label: 'ZIP code',
-                icon: Icons.location_on_outlined,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: radiusMiles,
-              keyboardType: TextInputType.number,
-              decoration: _inputDecoration(
-                label: 'Service radius (miles)',
-                icon: Icons.radar_outlined,
-              ),
-            ),
-          ],
+        return SignupStepLocation(
+          zipController: zip,
+          radiusController: radiusMiles,
+          showZipPreview: _showZipPreview,
+          zipAreaLabel: _zipAreaLabel,
+          onZipChanged: _updateZipPreview,
+          inputDecoration: _inputDecoration,
         );
     }
   }

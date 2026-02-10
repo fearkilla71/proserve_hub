@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
+import '../models/invoice_item.dart';
+
 class InvoiceScreen extends StatefulWidget {
   final String jobId;
 
@@ -12,39 +14,11 @@ class InvoiceScreen extends StatefulWidget {
   State<InvoiceScreen> createState() => _InvoiceScreenState();
 }
 
-class _InvoiceItem {
-  final String description;
-  final double quantity;
-  final double unitPrice;
-
-  const _InvoiceItem({
-    required this.description,
-    required this.quantity,
-    required this.unitPrice,
-  });
-
-  double get total => quantity * unitPrice;
-
-  Map<String, dynamic> toMap() => {
-    'description': description,
-    'quantity': quantity,
-    'unitPrice': unitPrice,
-  };
-
-  static _InvoiceItem fromMap(Map<String, dynamic> map) {
-    return _InvoiceItem(
-      description: (map['description'] as String?)?.trim() ?? 'Item',
-      quantity: (map['quantity'] as num?)?.toDouble() ?? 1,
-      unitPrice: (map['unitPrice'] as num?)?.toDouble() ?? 0,
-    );
-  }
-}
-
 class _InvoiceScreenState extends State<InvoiceScreen> {
   bool _editMode = false;
   bool _saving = false;
 
-  List<_InvoiceItem> _draftItems = <_InvoiceItem>[];
+  List<InvoiceItem> _draftItems = <InvoiceItem>[];
   final TextEditingController _notesController = TextEditingController();
 
   DocumentReference<Map<String, dynamic>> get _invoiceRef =>
@@ -71,13 +45,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     return null;
   }
 
-  List<_InvoiceItem> _defaultItems({
+  List<InvoiceItem> _defaultItems({
     required Map<String, dynamic> job,
     required double jobAmount,
   }) {
     final service = (job['service'] as String?)?.trim();
     return [
-      _InvoiceItem(
+      InvoiceItem(
         description: (service != null && service.isNotEmpty)
             ? service
             : 'Service',
@@ -87,17 +61,17 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     ];
   }
 
-  List<_InvoiceItem> _itemsFromInvoiceData({
+  List<InvoiceItem> _itemsFromInvoiceData({
     required Map<String, dynamic>? invoiceData,
     required Map<String, dynamic> job,
     required double jobAmount,
   }) {
     final itemsRaw = invoiceData?['items'];
     if (itemsRaw is List) {
-      final parsed = <_InvoiceItem>[];
+      final parsed = <InvoiceItem>[];
       for (final item in itemsRaw) {
         if (item is Map) {
-          parsed.add(_InvoiceItem.fromMap(Map<String, dynamic>.from(item)));
+          parsed.add(InvoiceItem.fromMap(Map<String, dynamic>.from(item)));
         }
       }
       if (parsed.isNotEmpty) return parsed;
@@ -109,10 +83,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     return (invoiceData?['notes'] as String?)?.trim() ?? '';
   }
 
-  void _enterEdit({required List<_InvoiceItem> items, required String notes}) {
+  void _enterEdit({required List<InvoiceItem> items, required String notes}) {
     setState(() {
       _editMode = true;
-      _draftItems = List<_InvoiceItem>.from(items);
+      _draftItems = List<InvoiceItem>.from(items);
       _notesController.text = notes;
     });
   }
@@ -120,7 +94,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   void _cancelEdit() {
     setState(() {
       _editMode = false;
-      _draftItems = <_InvoiceItem>[];
+      _draftItems = <InvoiceItem>[];
       _notesController.text = '';
     });
   }
@@ -186,8 +160,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   Future<void> _showItemDialog({
-    _InvoiceItem? initial,
-    required void Function(_InvoiceItem item) onSave,
+    InvoiceItem? initial,
+    required void Function(InvoiceItem item) onSave,
   }) async {
     final desc = TextEditingController(text: initial?.description ?? '');
     final qty = TextEditingController(
@@ -197,7 +171,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       text: initial == null ? '' : initial.unitPrice.toStringAsFixed(2),
     );
 
-    final result = await showDialog<_InvoiceItem>(
+    final result = await showDialog<InvoiceItem>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -250,7 +224,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
 
                 Navigator.pop(
                   context,
-                  _InvoiceItem(
+                  InvoiceItem(
                     description: description,
                     quantity: quantity,
                     unitPrice: unitPrice,

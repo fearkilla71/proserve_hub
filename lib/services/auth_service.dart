@@ -95,7 +95,14 @@ class AuthService {
 
       await _sendEmailVerificationBestEffort(user);
 
-      await _db.collection('users').doc(user.uid).set({
+      final zipKey = zip.trim();
+      final loc = zipLocations[zipKey];
+      final lat = loc?['lat'];
+      final lng = loc?['lng'];
+
+      final batch = _db.batch();
+
+      batch.set(_db.collection('users').doc(user.uid), {
         'role': 'contractor',
         'name': name,
         'email': email,
@@ -110,25 +117,16 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      final zipKey = zip.trim();
-      final loc = zipLocations[zipKey];
-      final lat = loc?['lat'];
-      final lng = loc?['lng'];
-
-      await _db.collection('contractors').doc(user.uid).set({
+      batch.set(_db.collection('contractors').doc(user.uid), {
         'name': company.trim().isEmpty ? name : company,
         'services': services,
         'zip': zip,
-        // Legacy field used by the existing Nearby Contractors page.
         'radius': radius,
-        // Smart matching foundation fields.
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
         'rating': 0.0,
         'completedJobs': 0,
-        // Legacy field used by reviews UI.
         'reviewCount': 0,
-
         'available': true,
         'availabilityWindow': 'next_week',
         'avgResponseMinutes': 60,
@@ -136,6 +134,8 @@ class AuthService {
         'stripeAccountId': '',
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      await batch.commit();
 
       return user;
     } on FirebaseAuthException catch (e, st) {

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:proserve_hub/services/job_claim_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:proserve_hub/services/lead_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 
 import 'submit_review_screen.dart';
 import 'bids_list_screen.dart';
-import 'chat_screen.dart';
 import 'job_status_screen.dart';
 import 'add_tip_screen.dart';
 import 'invoice_screen.dart';
@@ -16,12 +14,11 @@ import 'quotes_screen.dart';
 import 'project_milestones_screen.dart';
 import 'progress_photos_screen.dart';
 import 'project_timeline_screen.dart';
-import '../services/conversation_service.dart';
 import 'expenses/expenses_list_page.dart';
-import '../utils/optimistic_ui.dart';
 import '../utils/bottom_sheet_helper.dart';
 import 'cancellation_screen.dart';
 import '../widgets/suggested_pros_card.dart';
+import '../widgets/job_detail_actions.dart';
 
 class JobDetailPage extends StatelessWidget {
   final String jobId;
@@ -29,153 +26,7 @@ class JobDetailPage extends StatelessWidget {
 
   const JobDetailPage({super.key, required this.jobId, this.jobData});
 
-  Future<void> _openChatFromJobDetail({
-    required BuildContext context,
-    required String requesterUid,
-    required String claimedBy,
-    required bool isRequester,
-  }) async {
-    final otherUserId = isRequester ? claimedBy : requesterUid;
-    if (otherUserId.trim().isEmpty) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-
-    String otherUserName = isRequester ? 'Contractor' : 'Client';
-    try {
-      if (isRequester) {
-        // Customer -> Contractor
-        // Prefer name stored on the job doc (set during claim), otherwise use
-        // the public-ish contractor profile (readable by signed-in users).
-        final jobDoc = await FirebaseFirestore.instance
-            .collection('job_requests')
-            .doc(jobId)
-            .get();
-        final claimedByName = (jobDoc.data()?['claimedByName'] as String?)
-            ?.trim();
-        if (claimedByName != null && claimedByName.isNotEmpty) {
-          otherUserName = claimedByName;
-        } else {
-          final contractorDoc = await FirebaseFirestore.instance
-              .collection('contractors')
-              .doc(otherUserId)
-              .get();
-          final contractorName =
-              (contractorDoc.data()?['name'] as String?)?.trim() ??
-              (contractorDoc.data()?['displayName'] as String?)?.trim();
-          if (contractorName != null && contractorName.isNotEmpty) {
-            otherUserName = contractorName;
-          }
-        }
-      } else {
-        // Contractor -> Customer
-        // Use the job private contact name (allowed once claimed/unlocked);
-        // do NOT read /users/{uid} (blocked by rules).
-        try {
-          final contactDoc = await FirebaseFirestore.instance
-              .collection('job_requests')
-              .doc(jobId)
-              .collection('private')
-              .doc('contact')
-              .get();
-          final contactName = (contactDoc.data()?['name'] as String?)?.trim();
-          if (contactName != null && contactName.isNotEmpty) {
-            otherUserName = contactName;
-          }
-        } catch (_) {
-          // If rules block contact details (lead not unlocked/claimed yet),
-          // still allow opening chat with a generic display name.
-        }
-      }
-
-      final conversationId = await ConversationService.getOrCreateConversation(
-        otherUserId: otherUserId,
-        otherUserName: otherUserName,
-        jobId: jobId,
-      );
-
-      if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            conversationId: conversationId,
-            otherUserId: otherUserId,
-            otherUserName: otherUserName,
-            jobId: jobId,
-          ),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to open chat: ${e.toString().replaceFirst('Exception: ', '')}',
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _openLatestDispute(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('disputes')
-          .where('jobId', isEqualTo: jobId)
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .get();
-
-      if (snap.docs.isEmpty) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('No dispute found for this job.')),
-        );
-        return;
-      }
-
-      final disputeId = snap.docs.first.id;
-      if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DisputeDetailScreen(disputeId: disputeId),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error loading dispute: ${e.toString().replaceFirst('Exception: ', '')}',
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> claimJob(BuildContext context) async {
-    final confirmed = await BottomSheetHelper.showConfirmation(
-      context: context,
-      title: 'Claim Job',
-      message:
-          'Claim this job now? You\'ll be assigned as the contractor and can proceed to chat and next steps.',
-      confirmText: 'Claim Job',
-    );
-
-    if (!confirmed || !context.mounted) return;
-
-    final navigator = Navigator.of(context);
-    final service = JobClaimService();
-
-    await OptimisticUI.executeWithOptimism(
-      context: context,
-      action: () => service.claimJob(jobId),
-      loadingMessage: 'Claiming job...',
-      successMessage: 'Job claimed successfully.',
-      onSuccess: () {
-        if (context.mounted) navigator.pop();
-      },
-    );
-  }
+  /* ── Action helpers moved to JobDetailActions ── */
 
   @override
   Widget build(BuildContext context) {
@@ -360,8 +211,9 @@ class JobDetailPage extends StatelessWidget {
 
           switch (selected) {
             case 'chat':
-              await _openChatFromJobDetail(
+              await JobDetailActions.openChat(
                 context: context,
+                jobId: jobId,
                 requesterUid: requesterUid,
                 claimedBy: claimedBy,
                 isRequester: isRequester,
@@ -380,7 +232,7 @@ class JobDetailPage extends StatelessWidget {
               );
               break;
             case 'view_dispute':
-              await _openLatestDispute(context);
+              await JobDetailActions.openLatestDispute(context, jobId);
               break;
             case 'report_dispute':
               Navigator.push(
@@ -1318,8 +1170,9 @@ class JobDetailPage extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.tonal(
-                      onPressed: () => _openChatFromJobDetail(
+                      onPressed: () => JobDetailActions.openChat(
                         context: context,
+                        jobId: jobId,
                         requesterUid: requesterUid,
                         claimedBy: claimedBy,
                         isRequester: isRequester,
@@ -1335,7 +1188,9 @@ class JobDetailPage extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: canClaim ? () => claimJob(context) : null,
+                      onPressed: canClaim
+                          ? () => JobDetailActions.claimJob(context, jobId)
+                          : null,
                       child: Text(claimed ? 'Already Claimed' : 'Accept Job'),
                     ),
                   ),

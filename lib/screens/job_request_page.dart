@@ -123,9 +123,9 @@ class _JobRequestPageState extends State<JobRequestPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
     } finally {
       if (mounted) setState(() => _locating = false);
     }

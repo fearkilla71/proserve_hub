@@ -22,7 +22,7 @@ class CallSchedulingScreen extends StatefulWidget {
 class _CallSchedulingScreenState extends State<CallSchedulingScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _callType = 'video';
+  String _callType = 'audio';
   final _notesController = TextEditingController();
   bool _isScheduling = false;
 
@@ -153,25 +153,23 @@ class _CallSchedulingScreenState extends State<CallSchedulingScreen> {
             // Call Type Selection
             Text('Call Type', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
-                  value: 'video',
-                  label: Text('Video Call'),
-                  icon: Icon(Icons.videocam),
-                ),
-                ButtonSegment(
-                  value: 'audio',
-                  label: Text('Audio Call'),
-                  icon: Icon(Icons.phone),
-                ),
-              ],
-              selected: {_callType},
-              onSelectionChanged: (Set<String> selection) {
-                setState(() {
-                  _callType = selection.first;
-                });
-              },
+            // Audio call only — video call not supported.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.phone,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Audio Call'),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
