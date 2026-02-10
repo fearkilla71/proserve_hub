@@ -1,44 +1,100 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0B1A3A"/>
-      <stop offset="1" stop-color="#050B18"/>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1024" y2="1024">
+      <stop stop-color="#06101F"/>
+      <stop offset="1" stop-color="#030912"/>
     </linearGradient>
-    <linearGradient id="accent" x1="256" y1="200" x2="768" y2="824" gradientUnits="userSpaceOnUse">
+    <linearGradient id="tealBlue" x1="200" y1="200" x2="824" y2="824">
+      <stop stop-color="#22E39B"/>
+      <stop offset="1" stop-color="#36B3FF"/>
+    </linearGradient>
+    <linearGradient id="blueViolet" x1="400" y1="150" x2="700" y2="874">
+      <stop stop-color="#36B3FF"/>
+      <stop offset="1" stop-color="#8F5BFF"/>
+    </linearGradient>
+    <linearGradient id="triGrad" x1="180" y1="200" x2="844" y2="824">
       <stop stop-color="#22E39B"/>
       <stop offset="0.5" stop-color="#36B3FF"/>
       <stop offset="1" stop-color="#8F5BFF"/>
     </linearGradient>
-    <linearGradient id="letterGrad" x1="320" y1="180" x2="700" y2="780" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#C8E6FF"/>
-    </linearGradient>
-    <filter id="glow1" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="18" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="24" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="roundClip">
+      <rect width="1024" height="1024" rx="224"/>
+    </clipPath>
   </defs>
+
   <!-- Background -->
   <rect width="1024" height="1024" rx="224" fill="url(#bgGrad)"/>
-  <!-- Subtle corner glow -->
-  <circle cx="780" cy="220" r="260" fill="#36B3FF" opacity="0.08"/>
-  <circle cx="260" cy="800" r="200" fill="#22E39B" opacity="0.06"/>
-  <!-- Outer ring -->
-  <circle cx="512" cy="512" r="360" stroke="url(#accent)" stroke-width="6" fill="none" opacity="0.3"/>
-  <!-- Circuit nodes on ring -->
-  <circle cx="512" cy="152" r="14" fill="#36B3FF" opacity="0.7"/>
-  <circle cx="823" cy="332" r="14" fill="#22E39B" opacity="0.7"/>
-  <circle cx="823" cy="692" r="14" fill="#8F5BFF" opacity="0.7"/>
-  <circle cx="512" cy="872" r="14" fill="#36B3FF" opacity="0.7"/>
-  <circle cx="201" cy="692" r="14" fill="#22E39B" opacity="0.7"/>
-  <circle cx="201" cy="332" r="14" fill="#8F5BFF" opacity="0.7"/>
-  <!-- Bold P letter -->
-  <path d="M340 260 L340 764 L420 764 L420 580 L560 580 C672 580 740 510 740 420 C740 330 672 260 560 260 Z M420 340 L548 340 C620 340 656 370 656 420 C656 470 620 500 548 500 L420 500 Z" fill="url(#letterGrad)" filter="url(#glow1)"/>
-  <!-- AI spark dots -->
-  <circle cx="680" cy="300" r="10" fill="#22E39B" opacity="0.9"/>
-  <circle cx="720" cy="260" r="6" fill="#36B3FF" opacity="0.8"/>
-  <circle cx="750" cy="310" r="8" fill="#8F5BFF" opacity="0.7"/>
-  <!-- Connection lines from P to dots -->
-  <line x1="700" y1="340" x2="680" y2="308" stroke="#22E39B" stroke-width="3" opacity="0.5"/>
-  <line x1="700" y1="320" x2="720" y2="268" stroke="#36B3FF" stroke-width="2" opacity="0.4"/>
+
+  <!-- Ambient glow blobs -->
+  <g clip-path="url(#roundClip)">
+    <ellipse cx="280" cy="260" rx="320" ry="280" fill="#22E39B" opacity="0.045"/>
+    <ellipse cx="760" cy="780" rx="300" ry="260" fill="#8F5BFF" opacity="0.04"/>
+    <ellipse cx="750" cy="200" rx="200" ry="180" fill="#36B3FF" opacity="0.035"/>
+  </g>
+
+  <!-- Outer shield frame — rounded hexagon -->
+  <path
+    d="M512 120 L820 280 L820 744 L512 904 L204 744 L204 280 Z"
+    stroke="url(#triGrad)" stroke-width="5" fill="none" opacity="0.18"
+    stroke-linejoin="round"
+  />
+
+  <!-- Inner accent ring -->
+  <circle cx="512" cy="512" r="310" stroke="url(#triGrad)" stroke-width="2.5" fill="none" opacity="0.12"/>
+
+  <!-- ===== PH Monogram ===== -->
+  <!-- The P and H share their vertical stroke creating an interlocking monogram -->
+  <g filter="url(#glow)">
+    <!-- P vertical stem (left) -->
+    <rect x="270" y="280" width="56" height="464" rx="8" fill="url(#tealBlue)"/>
+    <!-- P bowl -->
+    <path
+      d="M298 280 L520 280 C610 280 664 336 664 416 C664 496 610 552 520 552 L326 552"
+      stroke="url(#tealBlue)" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" fill="none"
+    />
+
+    <!-- H shared vertical (center) — this is the right stem of P and left stem of H -->
+    <rect x="490" y="280" width="52" height="464" rx="8" fill="url(#blueViolet)"/>
+
+    <!-- H right vertical -->
+    <rect x="700" y="280" width="52" height="464" rx="8" fill="url(#blueViolet)"/>
+
+    <!-- H crossbar -->
+    <rect x="490" y="486" width="262" height="50" rx="8" fill="url(#blueViolet)"/>
+  </g>
+
+  <!-- Accent slash cutting through — gives it a techy edge -->
+  <line x1="620" y1="240" x2="740" y2="780" stroke="#22E39B" stroke-width="4" opacity="0.15" stroke-linecap="round"/>
+
+  <!-- AI circuit dots cluster (top-right) -->
+  <g filter="url(#softGlow)">
+    <circle cx="800" cy="220" r="8" fill="#22E39B" opacity="0.9"/>
+    <circle cx="836" cy="252" r="5" fill="#36B3FF" opacity="0.8"/>
+    <circle cx="812" cy="272" r="6" fill="#8F5BFF" opacity="0.75"/>
+    <line x1="800" y1="228" x2="812" y2="266" stroke="#36B3FF" stroke-width="1.5" opacity="0.5"/>
+    <line x1="800" y1="228" x2="836" y2="252" stroke="#22E39B" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- AI circuit dots cluster (bottom-left) -->
+  <g filter="url(#softGlow)">
+    <circle cx="200" cy="780" r="7" fill="#36B3FF" opacity="0.85"/>
+    <circle cx="170" cy="750" r="5" fill="#8F5BFF" opacity="0.75"/>
+    <circle cx="230" cy="760" r="4" fill="#22E39B" opacity="0.7"/>
+    <line x1="200" y1="780" x2="170" y2="750" stroke="#8F5BFF" stroke-width="1.5" opacity="0.4"/>
+    <line x1="200" y1="780" x2="230" y2="760" stroke="#22E39B" stroke-width="1.5" opacity="0.35"/>
+  </g>
+
+  <!-- Tiny corner accent notches -->
+  <rect x="168" y="168" width="40" height="4" rx="2" fill="#22E39B" opacity="0.35"/>
+  <rect x="168" y="168" width="4" height="40" rx="2" fill="#22E39B" opacity="0.35"/>
+  <rect x="816" y="852" width="40" height="4" rx="2" fill="#8F5BFF" opacity="0.35"/>
+  <rect x="852" y="816" width="4" height="40" rx="2" fill="#8F5BFF" opacity="0.35"/>
 </svg>
