@@ -8,7 +8,7 @@
       name="description"
       content="ProServe Hub uses AI to automate contractor workflows, proof feeds, and client updates so crews stay focused on the job."
     />
-    <link rel="icon" href="assets/app_icon.png" />
+    <link rel="icon" type="image/svg+xml" href="assets/proservehub_icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -118,7 +118,10 @@
       .brand-badge img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
+        padding: 6px;
+        filter: drop-shadow(0 0 12px rgba(54, 179, 255, 0.35));
+        animation: iconPulse 4s ease-in-out infinite;
       }
 
       .nav-links {
@@ -317,6 +320,121 @@
         font-size: 0.92rem;
       }
 
+      .ai-demo {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        align-items: center;
+      }
+
+      .ai-demo-panel {
+        background: rgba(8, 16, 34, 0.9);
+        border-radius: 22px;
+        padding: 22px;
+        border: 1px solid rgba(54, 179, 255, 0.2);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .ai-demo-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at top right,
+          rgba(54, 179, 255, 0.2),
+          transparent 60%
+        );
+        opacity: 0.7;
+      }
+
+      .prompt-stack {
+        position: relative;
+        display: grid;
+        gap: 12px;
+      }
+
+      .prompt {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(5, 11, 24, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.9rem;
+        color: var(--muted);
+        animation: promptFloat 6s ease-in-out infinite;
+      }
+
+      .prompt strong {
+        color: var(--ink);
+      }
+
+      .prompt:nth-child(2) {
+        animation-delay: -2s;
+      }
+
+      .prompt:nth-child(3) {
+        animation-delay: -4s;
+      }
+
+      .timeline {
+        margin-top: 32px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .timeline-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 12px rgba(34, 227, 155, 0.6);
+        margin-top: 8px;
+      }
+
+      .timeline-card {
+        background: rgba(8, 16, 34, 0.85);
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .signal-map {
+        position: relative;
+        border-radius: 24px;
+        background: rgba(8, 16, 34, 0.75);
+        border: 1px solid rgba(54, 179, 255, 0.2);
+        height: 320px;
+        overflow: hidden;
+      }
+
+      .signal-node {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent-2);
+        box-shadow: 0 0 14px rgba(54, 179, 255, 0.7);
+        animation: nodePulse 5s ease-in-out infinite;
+      }
+
+      .signal-node.green {
+        background: var(--accent);
+        box-shadow: 0 0 14px rgba(34, 227, 155, 0.7);
+      }
+
+      .signal-node.purple {
+        background: var(--accent-3);
+        box-shadow: 0 0 14px rgba(143, 91, 255, 0.7);
+      }
+
       .section {
         max-width: 1180px;
         margin: 0 auto;
@@ -506,6 +624,38 @@
         }
       }
 
+      @keyframes promptFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      @keyframes nodePulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+        50% {
+          transform: scale(1.35);
+          opacity: 1;
+        }
+      }
+
+      @keyframes iconPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+
       @media (max-width: 720px) {
         .nav-links {
           display: none;
@@ -531,7 +681,7 @@
       <div class="nav">
         <div class="brand">
           <div class="brand-badge">
-            <img src="assets/app_icon.png" alt="ProServe Hub" />
+            <img src="assets/proservehub_icon.svg" alt="ProServe Hub" />
           </div>
           ProServe Hub
         </div>
@@ -600,6 +750,72 @@
         </div>
       </section>
 
+      <section class="section">
+        <div class="ai-demo">
+          <div>
+            <h2>Interactive AI demo</h2>
+            <p>
+              Watch how ProServe Hub turns job notes into client-ready updates.
+              Each prompt below is auto-generated from a real job timeline.
+            </p>
+          </div>
+          <div class="ai-demo-panel">
+            <div class="prompt-stack">
+              <div class="prompt">
+                <strong>AI draft:</strong> Estimate created from scope notes and
+                uploaded photos.
+              </div>
+              <div class="prompt">
+                <strong>AI update:</strong> "Drywall repaired, sanded, ready for
+                paint. Next: primer." sent to client.
+              </div>
+              <div class="prompt">
+                <strong>AI follow-up:</strong> Review request scheduled for
+                project close.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>AI workflow timeline</h2>
+        <p>
+          A scrollytelling snapshot of how AI keeps every step clean, fast, and
+          professional.
+        </p>
+        <div class="timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <h3>1. Intake captured</h3>
+              <p>AI reads job notes, photos, and location data instantly.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <h3>2. Estimate assembled</h3>
+              <p>Pricing and scope auto-fill into a branded quote.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <h3>3. Client updates</h3>
+              <p>Progress posts become clean client messages automatically.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <h3>4. Close + reviews</h3>
+              <p>AI requests reviews and schedules follow-ups.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section" id="features">
         <h2>AI features that make you look elite.</h2>
         <p>
@@ -641,6 +857,24 @@
             <h3>AI insights</h3>
             <p>See which jobs and posts bring the most revenue.</p>
           </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Signal map</h2>
+        <p>
+          A branded view of how ProServe Hub connects crews, clients, and proof
+          in one live network.
+        </p>
+        <div class="signal-map">
+          <div class="signal-node" style="top: 18%; left: 12%;"></div>
+          <div class="signal-node green" style="top: 32%; left: 32%;"></div>
+          <div class="signal-node" style="top: 58%; left: 22%;"></div>
+          <div class="signal-node purple" style="top: 24%; left: 56%;"></div>
+          <div class="signal-node" style="top: 48%; left: 64%;"></div>
+          <div class="signal-node green" style="top: 70%; left: 48%;"></div>
+          <div class="signal-node" style="top: 36%; left: 78%;"></div>
+          <div class="signal-node purple" style="top: 62%; left: 86%;"></div>
         </div>
       </section>
 
