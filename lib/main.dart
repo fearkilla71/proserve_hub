@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
@@ -31,6 +32,9 @@ int _suppressedNeverLaidOutHitTests = 0;
 
 DateTime? _lastRenderBoxNotLaidOutLog;
 int _suppressedRenderBoxNotLaidOut = 0;
+
+/// Whether Firebase Crashlytics is available on the current platform.
+bool _crashlyticsSupported = false;
 
 bool _isMouseTrackerDeviceUpdateAssertion(Object error) {
   final text = error.toString();
@@ -161,6 +165,19 @@ void main() async {
       // Don't block first frame on file I/O. ErrorLogger buffers until ready.
       unawaited(ErrorLogger.instance.init());
 
+      // ── Firebase Crashlytics ─────────────────────────────────────
+      // Supported on Android, iOS, macOS, and web. Skip on Windows/Linux
+      // desktop where the native SDK is unavailable.
+      _crashlyticsSupported = kIsWeb ||
+          defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS;
+
+      if (_crashlyticsSupported) {
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(!kDebugMode);
+      }
+
       FlutterError.onError = (details) {
         final exception = details.exception;
         if (_isMouseTrackerDeviceUpdateAssertion(exception)) {
@@ -222,6 +239,9 @@ void main() async {
 
         FlutterError.presentError(details);
         ErrorLogger.instance.logFlutterError(details);
+        if (_crashlyticsSupported) {
+          FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+        }
       };
 
       PlatformDispatcher.instance.onError = (error, stack) {
@@ -249,6 +269,9 @@ void main() async {
           stack,
           context: 'PlatformDispatcher',
         );
+        if (_crashlyticsSupported) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        }
         // Return false to allow the error to propagate (default behavior).
         return false;
       };
@@ -335,6 +358,9 @@ void main() async {
     },
     (error, stack) {
       ErrorLogger.instance.logError(error, stack, context: 'runZonedGuarded');
+      if (_crashlyticsSupported) {
+        FirebaseCrashlytics.instance.recordError(error, stack);
+      }
     },
   );
 }

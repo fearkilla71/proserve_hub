@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,6 +17,7 @@ class FcmService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   static Function(Map<String, dynamic>)? _onNotificationTap;
+  static StreamSubscription<String>? _tokenRefreshSub;
 
   static bool _isMobilePlatform() {
     return !kIsWeb &&
@@ -186,11 +189,18 @@ class FcmService {
 
       _syncedUids.add(user.uid);
 
-      // Keep token updated if it rotates
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      // Cancel any previous listener to prevent writing to a stale uid
+      // after sign-out / sign-in with a different account.
+      await _tokenRefreshSub?.cancel();
+
+      // Capture uid at subscription time so the closure always writes to the
+      // correct user document, even if FirebaseAuth.currentUser changes.
+      final capturedUid = user.uid;
+      _tokenRefreshSub =
+          FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
         final t = newToken.trim();
         if (t.isEmpty) return;
-        FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        FirebaseFirestore.instance.collection('users').doc(capturedUid).set({
           'fcmToken': t,
           'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -204,8 +214,16 @@ class FcmService {
   static Future<void> clearToken() async {
     if (!_isMobilePlatform()) return;
 
+    // Cancel the token-refresh listener first to prevent writes after
+    // sign-out (the currentUser reference may become null mid-flow).
+    await _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = null;
+
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _syncedUids.clear();
+      return;
+    }
 
     try {
       await FirebaseMessaging.instance.deleteToken();
