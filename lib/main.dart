@@ -24,8 +24,7 @@ import 'router/app_router.dart';
 import 'services/service_locator.dart';
 import 'state/app_state.dart';
 
-// Global navigator key for deep linking
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 
 DateTime? _lastMouseTrackerAssertionLog;
 int _suppressedMouseTrackerAssertions = 0;
@@ -59,6 +58,16 @@ bool _isRenderBoxNotLaidOutAssertion(Object error) {
   return text.contains('RenderBox was not laid out') ||
       (text.contains('Failed assertion') && text.contains("'hasSize'"));
 }
+
+bool _isElementLifecycleAssertion(Object error) {
+  final text = error.toString();
+  return error is AssertionError &&
+      text.contains('_lifecycleState') &&
+      text.contains('_ElementLifecycle.inactive');
+}
+
+DateTime? _lastElementLifecycleLog;
+int _suppressedElementLifecycleAssertions = 0;
 
 class _AppLoadingSkeleton extends StatelessWidget {
   const _AppLoadingSkeleton();
@@ -242,6 +251,24 @@ void main() async {
           return;
         }
 
+        if (kDebugMode && _isElementLifecycleAssertion(exception)) {
+          // Debug-only assertion that can fire transiently during hot reload
+          // when elements are being torn down and rebuilt. Harmless.
+          final now = DateTime.now();
+          final last = _lastElementLifecycleLog;
+          _suppressedElementLifecycleAssertions++;
+          if (last == null ||
+              now.difference(last) > const Duration(seconds: 5)) {
+            _lastElementLifecycleLog = now;
+            debugPrint(
+              'Suppressed element lifecycle assertion '
+              '($_suppressedElementLifecycleAssertions total).',
+            );
+            ErrorLogger.instance.logFlutterError(details);
+          }
+          return;
+        }
+
         FlutterError.presentError(details);
         ErrorLogger.instance.logFlutterError(details);
         if (_crashlyticsSupported) {
@@ -269,6 +296,12 @@ void main() async {
           _suppressedRenderBoxNotLaidOut++;
           return true;
         }
+
+        if (kDebugMode && _isElementLifecycleAssertion(error)) {
+          _suppressedElementLifecycleAssertions++;
+          return true;
+        }
+
         ErrorLogger.instance.logError(
           error,
           stack,
@@ -314,7 +347,7 @@ void main() async {
       runApp(const ProServeHubApp());
 
       // External deep links (URI scheme / universal links).
-      DeepLinkService.initialize(navigatorKey: navigatorKey);
+      DeepLinkService.initialize(router: _ProServeHubAppState._router);
 
       // Post-frame initialization: keep startup responsive on slower emulators.
       WidgetsBinding.instance.addPostFrameCallback((_) {

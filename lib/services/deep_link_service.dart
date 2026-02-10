@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
+import 'package:go_router/go_router.dart';
 
 import '../screens/chat_screen.dart';
 import '../screens/job_detail_page.dart';
 import '../screens/payment_history_screen.dart';
 
 /// Handles external deep links (URI) + internal "deep link" payloads (like FCM data)
-/// and navigates using the app's global navigator key.
+/// and navigates using the GoRouter's navigator key.
 class DeepLinkService {
-  static GlobalKey<NavigatorState>? _navigatorKey;
+  static GoRouter? _router;
   static StreamSubscription? _sub;
 
   static final AppLinks _appLinks = AppLinks();
@@ -18,8 +19,8 @@ class DeepLinkService {
   static Uri? _pendingUri;
   static Map<String, dynamic>? _pendingData;
 
-  static void initialize({required GlobalKey<NavigatorState> navigatorKey}) {
-    _navigatorKey = navigatorKey;
+  static void initialize({required GoRouter router}) {
+    _router = router;
 
     // Handle initial launch deep link.
     () async {
@@ -63,8 +64,9 @@ class DeepLinkService {
   }
 
   static void _tryHandlePending() {
-    final nav = _navigatorKey?.currentState;
-    final context = _navigatorKey?.currentContext;
+    final key = _router?.routerDelegate.navigatorKey;
+    final nav = key?.currentState;
+    final context = key?.currentContext;
     if (nav == null || context == null) return;
 
     final uri = _pendingUri;

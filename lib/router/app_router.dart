@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 
-import '../main.dart';
+import '../main.dart' show RootGate;
 import '../screens/recommended_contractors_page.dart';
 import '../screens/job_detail_page.dart';
 import '../screens/favorite_contractors_screen.dart';
@@ -30,7 +30,6 @@ abstract final class AppRoutes {
 /// Creates and returns the application's [GoRouter].
 GoRouter createRouter() {
   return GoRouter(
-    navigatorKey: navigatorKey,
     initialLocation: '/',
     routes: [
       GoRoute(
