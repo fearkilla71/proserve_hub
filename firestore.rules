@@ -245,6 +245,13 @@ service cloud.firestore {
         ])
       );
       allow delete: if isAdmin();
+
+      // Portfolio subcollection — owner can CRUD, others read-only.
+      match /portfolio/{itemId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && request.auth.uid == uid;
+        allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      }
     }
 
     // --- REVIEWS ---
@@ -360,7 +367,7 @@ service cloud.firestore {
       allow create: if isCustomer()
         && request.resource.data.requesterUid == request.auth.uid
         && !(request.resource.data.keys().hasAny(['requesterEmail', 'requesterPhone']))
-        && !(request.resource.data.keys().hasAny(['paymentIntentId', 'fundedAt', 'completedAt', 'escrowStatus', 'escrowReleasedAt', 'escrowStatusHistory']));
+        && !(request.resource.data.keys().hasAny(['paymentIntentId', 'fundedAt', 'completedAt']));
 
       // Admins can manage jobs.
       allow delete: if isAdmin();
@@ -373,13 +380,10 @@ service cloud.firestore {
         (
           resource.data.requesterUid == request.auth.uid
           && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
-          // Escrow fields are server-controlled (if they exist, they can't change)
+          // Payment fields are server-controlled (if they exist, they can't change)
           && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
           && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
           && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
-          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
-          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
-          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
           // Requester can only move status to a small set of lifecycle states.
           && (
             !(request.resource.data.diff(resource.data).changedKeys().hasAny(['status']))
@@ -411,13 +415,10 @@ service cloud.firestore {
           ])
           // Prevent adding contact fields.
           && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
-          // Escrow fields remain server-controlled.
+          // Payment fields remain server-controlled.
           && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
           && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
           && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
-          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
-          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
-          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
           // If a quote is being accepted, it must already be accepted and match this job.
           && (
             !('acceptedQuoteId' in request.resource.data)
@@ -464,13 +465,10 @@ service cloud.firestore {
           ])
           // Disallow changing contact fields (legacy docs may still contain them).
           && !(request.resource.data.diff(resource.data).changedKeys().hasAny(['requesterEmail', 'requesterPhone']))
-          // Escrow fields are server-controlled (if they exist, they can't change; if absent, OK)
+          // Payment fields are server-controlled (if they exist, they can't change; if absent, OK)
           && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
           && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
           && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
-          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
-          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
-          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
         ) ||
 
         // Contractor can progress a claimed job (state machine).
@@ -485,13 +483,10 @@ service cloud.firestore {
             'completionRequested'
           ])
           && (request.resource.data.status in ['in_progress', 'completion_requested'])
-          // Escrow fields are server-controlled
+          // Payment fields are server-controlled
           && !('paymentIntentId' in resource.data && request.resource.data.get('paymentIntentId', null) != resource.data.paymentIntentId)
           && !('fundedAt' in resource.data && request.resource.data.get('fundedAt', null) != resource.data.fundedAt)
           && !('completedAt' in resource.data && request.resource.data.get('completedAt', null) != resource.data.completedAt)
-          && !('escrowStatus' in resource.data && request.resource.data.get('escrowStatus', null) != resource.data.escrowStatus)
-          && !('escrowReleasedAt' in resource.data && request.resource.data.get('escrowReleasedAt', null) != resource.data.escrowReleasedAt)
-          && !('escrowStatusHistory' in resource.data && request.resource.data.get('escrowStatusHistory', null) != resource.data.escrowStatusHistory)
         ) ||
 
         // Contractor can bump quote counters/lastQuoteAt when submitting a quote.

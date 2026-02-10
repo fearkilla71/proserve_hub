@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../screens/chat_screen.dart';
-import '../screens/dispute_screen.dart';
 import '../services/conversation_service.dart';
 import '../services/job_claim_service.dart';
 import '../utils/bottom_sheet_helper.dart';
@@ -72,16 +71,13 @@ class JobDetailActions {
       );
 
       if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            conversationId: conversationId,
-            otherUserId: otherUserId,
-            otherUserName: otherUserName,
-            jobId: jobId,
-          ),
-        ),
+      context.push(
+        '/chat/$conversationId',
+        extra: {
+          'otherUserId': otherUserId,
+          'otherUserName': otherUserName,
+          'jobId': jobId,
+        },
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -117,12 +113,7 @@ class JobDetailActions {
 
       final disputeId = snap.docs.first.id;
       if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DisputeDetailScreen(disputeId: disputeId),
-        ),
-      );
+      context.push('/dispute-detail/$disputeId');
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(

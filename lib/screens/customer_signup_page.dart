@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
-import 'verify_contact_info_page.dart';
-import 'customer_login_page.dart';
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
@@ -194,7 +193,6 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     setState(() => loading = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
 
     try {
       await _auth.signUpCustomer(
@@ -206,10 +204,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Account created.')));
-      navigator.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const VerifyContactInfoPage()),
-        (r) => false,
-      );
+      context.go('/verify-contact');
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceFirst('Exception: ', '');
@@ -654,13 +649,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                               onPressed: loading
                                   ? null
                                   : () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const CustomerLoginPage(),
-                                        ),
-                                      );
+                                      context.push('/customer-login');
                                     },
                               child: const Text(
                                 'Already have an account? Sign in',

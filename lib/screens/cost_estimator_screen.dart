@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +8,6 @@ import 'package:intl/intl.dart';
 import '../models/invoice_models.dart';
 import '../services/labor_ai_service.dart';
 import '../services/material_ai_service.dart';
-import 'invoice_maker_screen.dart';
 
 double _computeDescriptionScore(String text) {
   final trimmed = text.trim();
@@ -631,12 +631,7 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
       items: fallbackItems,
     );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => InvoiceMakerScreen(initialDraft: draft),
-      ),
-    );
+    context.push('/invoice-maker', extra: {'initialDraft': draft});
   }
 
   @override

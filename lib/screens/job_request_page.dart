@@ -891,7 +891,6 @@ class _JobRequestPageState extends State<JobRequestPage> {
                             'status': 'open',
                             'claimed': false,
                             'leadUnlockedBy': null,
-                            // Escrow amount.
                             'price': price,
 
                             // Phase 1 lead unlock legacy fields (kept for backward compatibility).

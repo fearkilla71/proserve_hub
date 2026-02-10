@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,17 +19,6 @@ import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
 
-import 'job_request_page.dart';
-import 'painting_request_flow_page.dart';
-import 'exterior_painting_request_flow_page.dart';
-import 'cabinet_request_flow_page.dart';
-import 'pressure_washing_request_flow_page.dart';
-import 'drywall_repair_request_flow_page.dart';
-import 'instant_book_screen.dart';
-import 'booking_calendar_screen.dart';
-import 'reviews_list_screen.dart';
-import 'portfolio_screen.dart';
-import 'qanda_screen.dart';
 import '../models/marketplace_models.dart';
 import '../utils/platform_file_bytes.dart';
 import '../utils/zip_locations.dart';
@@ -1565,14 +1555,7 @@ class ContractorProfilePage extends StatelessWidget {
                         // View All Reviews Button
                         OutlinedButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ReviewsListScreen(
-                                  contractorId: contractorId,
-                                ),
-                              ),
-                            );
+                            context.push('/reviews/$contractorId');
                           },
                           child: const Text('View All Reviews'),
                         ),
@@ -1603,15 +1586,7 @@ class ContractorProfilePage extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => InstantBookScreen(
-                            contractorId: contractorId,
-                            contractorName: name,
-                          ),
-                        ),
-                      );
+                      context.push('/instant-book/$contractorId?name=$name');
                     },
                     icon: const Icon(Icons.bolt),
                     label: const Text('Instant Book'),
@@ -1624,15 +1599,7 @@ class ContractorProfilePage extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BookingCalendarScreen(
-                            contractorId: contractorId,
-                            contractorName: name,
-                          ),
-                        ),
-                      );
+                      context.push('/calendar/$contractorId?name=$name');
                     },
                     icon: const Icon(Icons.calendar_month),
                     label: const Text('View Availability'),
@@ -1648,73 +1615,30 @@ class ContractorProfilePage extends StatelessWidget {
                             final s = firstService!.trim();
                             final lower = s.toLowerCase();
                             if (lower == 'painting') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const PaintingRequestFlowPage(),
-                                ),
-                              );
+                              context.push('/flow/painting');
                               return;
                             }
                             if (lower == 'interior painting') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PaintingRequestFlowPage(
-                                    initialPaintingScope: 'interior',
-                                  ),
-                                ),
-                              );
+                              context.push('/flow/painting?scope=interior');
                               return;
                             }
                             if (lower == 'exterior painting') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const ExteriorPaintingRequestFlowPage(),
-                                ),
-                              );
+                              context.push('/flow/exterior-painting');
                               return;
                             }
                             if (lower == 'cabinets') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const CabinetRequestFlowPage(),
-                                ),
-                              );
+                              context.push('/flow/cabinets');
                               return;
                             }
                             if (lower == 'pressure washing') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const PressureWashingRequestFlowPage(),
-                                ),
-                              );
+                              context.push('/flow/pressure-washing');
                               return;
                             }
                             if (lower == 'drywall repair') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const DrywallRepairRequestFlowPage(),
-                                ),
-                              );
+                              context.push('/flow/drywall-repair');
                               return;
                             }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    JobRequestPage(serviceName: firstService!),
-                              ),
-                            );
+                            context.push('/job-request/$firstService');
                           },
                     child: const Text('Request Job'),
                   ),
@@ -1731,12 +1655,20 @@ class ContractorProfilePage extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> data,
   ) {
-    final portfolio = data['portfolio'];
-    final portfolioList = portfolio is List ? portfolio : [];
-
-    if (portfolioList.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    // Portfolio is now stored as a subcollection.
+    return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(contractorId)
+          .collection('portfolio')
+          .orderBy('uploadedAt', descending: true)
+          .limit(5)
+          .get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final portfolioList = snapshot.data!.docs;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1750,15 +1682,7 @@ class ContractorProfilePage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PortfolioScreen(
-                      contractorId: contractorId,
-                      isEditable: false,
-                    ),
-                  ),
-                );
+                context.push('/portfolio/$contractorId');
               },
               child: const Text('View All'),
             ),
@@ -1769,9 +1693,9 @@ class ContractorProfilePage extends StatelessWidget {
           height: 150,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: portfolioList.length.clamp(0, 5),
+            itemCount: portfolioList.length,
             itemBuilder: (context, index) {
-              final item = portfolioList[index];
+              final item = portfolioList[index].data();
               final url = item['url']?.toString() ?? '';
               final title = item['title']?.toString() ?? '';
 
@@ -1785,7 +1709,21 @@ class ContractorProfilePage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: url.isNotEmpty
-                            ? Image.network(url, fit: BoxFit.cover, width: 150)
+                            ? CachedNetworkImage(
+                                imageUrl: url,
+                                fit: BoxFit.cover,
+                                width: 150,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                    ),
+                              )
                             : Container(
                                 color: const Color(0xFF101E38),
                                 child: const Icon(Icons.image),
@@ -1809,6 +1747,8 @@ class ContractorProfilePage extends StatelessWidget {
           ),
         ),
       ],
+    );
+      },
     );
   }
 
@@ -1949,15 +1889,7 @@ class ContractorProfilePage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => QandAScreen(
-                      contractorId: contractorId,
-                      isContractor: false,
-                    ),
-                  ),
-                );
+                context.push('/qanda/$contractorId');
               },
               child: const Text('View All'),
             ),

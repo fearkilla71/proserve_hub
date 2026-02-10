@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/invoice_models.dart';
-import 'invoice_maker_screen.dart';
 
 class PricingCalculatorScreen extends StatefulWidget {
   const PricingCalculatorScreen({super.key});
@@ -131,12 +131,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
       items: items,
     );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => InvoiceMakerScreen(initialDraft: draft),
-      ),
-    );
+    context.push('/invoice-maker', extra: {'initialDraft': draft});
   }
 
   @override

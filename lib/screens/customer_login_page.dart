@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
-import 'customer_portal_page.dart';
-import 'customer_signup_page.dart';
 
 class CustomerLoginPage extends StatefulWidget {
   const CustomerLoginPage({super.key});
@@ -40,7 +39,6 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
     setState(() => loading = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
 
     try {
       final user = await _auth.signIn(emailValue, passwordValue);
@@ -50,10 +48,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
       if (!mounted) return;
 
       if (role == 'customer') {
-        navigator.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const CustomerPortalPage()),
-          (r) => false,
-        );
+        context.go('/customer-portal');
         return;
       }
 
@@ -121,12 +116,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
               onPressed: loading
                   ? null
                   : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CustomerSignupPage(),
-                        ),
-                      );
+                      context.push('/customer-signup');
                     },
               child: const Text("Don't have an account? Sign up"),
             ),

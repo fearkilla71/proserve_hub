@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../widgets/animated_states.dart';
@@ -42,12 +44,7 @@ class _ContractorSubcontractBoardScreenState
             IconButton(
               tooltip: 'Post a job',
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ContractorPostJobScreen(),
-                  ),
-                );
+                context.push('/contractor-post-job');
               },
               icon: const Icon(Icons.add),
             ),
@@ -132,12 +129,7 @@ class _JobListTab extends StatelessWidget {
             return Card(
               child: ListTile(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ContractorJobDetailScreen(jobId: doc.id),
-                    ),
-                  );
+                  context.push('/contractor-job-detail/${doc.id}');
                 },
                 leading: photoUrls.isEmpty
                     ? CircleAvatar(
@@ -148,11 +140,18 @@ class _JobListTab extends StatelessWidget {
                       )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          photoUrls.first,
+                        child: CachedNetworkImage(
+                          imageUrl: photoUrls.first,
                           width: 52,
                           height: 52,
                           fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                 title: Text(title),
@@ -243,11 +242,18 @@ class _ContractorJobDetailScreenState extends State<ContractorJobDetailScreen> {
                     itemBuilder: (context, index) {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          photoUrls[index],
+                        child: CachedNetworkImage(
+                          imageUrl: photoUrls[index],
                           width: 220,
                           height: 160,
                           fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                          ),
                         ),
                       );
                     },

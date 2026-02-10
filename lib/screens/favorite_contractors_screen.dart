@@ -1,8 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/favorites_service.dart';
-import 'recommended_contractors_page.dart';
 
 /// Shows the customer's saved / favorite contractors.
 class FavoriteContractorsScreen extends StatelessWidget {
@@ -91,7 +92,7 @@ class FavoriteContractorsScreen extends StatelessWidget {
                         radius: 28,
                         backgroundColor: scheme.primaryContainer,
                         backgroundImage: profileImage != null
-                            ? NetworkImage(profileImage)
+                            ? CachedNetworkImageProvider(profileImage)
                             : null,
                         child: profileImage == null
                             ? Text(
@@ -128,14 +129,7 @@ class FavoriteContractorsScreen extends StatelessWidget {
                         },
                       ),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ContractorProfilePage(
-                              contractorId: contractorId,
-                            ),
-                          ),
-                        );
+                        context.push('/contractor/$contractorId');
                       },
                     ),
                   );

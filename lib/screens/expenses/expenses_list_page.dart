@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../models/job_expense.dart';
 import '../../services/expense_export_service.dart';
 import '../../services/job_expense_service.dart';
 import '../../widgets/skeleton_loader.dart';
-import 'add_expense_page.dart';
 
 class ExpensesListPage extends StatelessWidget {
   final String jobId;
@@ -77,14 +77,9 @@ class ExpensesListPage extends StatelessWidget {
       floatingActionButton: canAdd
           ? FloatingActionButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddExpensePage(
-                      jobId: jobId,
-                      createdByRole: createdByRole,
-                    ),
-                  ),
+                context.push(
+                  '/add-expense/$jobId',
+                  extra: {'createdByRole': createdByRole},
                 );
               },
               child: const Icon(Icons.add),

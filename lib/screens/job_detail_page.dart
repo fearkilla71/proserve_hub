@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:proserve_hub/services/lead_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 
-import 'submit_review_screen.dart';
-import 'bids_list_screen.dart';
-import 'job_status_screen.dart';
-import 'add_tip_screen.dart';
-import 'invoice_screen.dart';
-import 'dispute_screen.dart';
-import 'quotes_screen.dart';
-import 'project_milestones_screen.dart';
-import 'progress_photos_screen.dart';
-import 'project_timeline_screen.dart';
-import 'expenses/expenses_list_page.dart';
 import '../utils/bottom_sheet_helper.dart';
-import 'cancellation_screen.dart';
 import '../widgets/suggested_pros_card.dart';
 import '../widgets/job_detail_actions.dart';
 
@@ -174,7 +163,7 @@ class JobDetailPage extends StatelessWidget {
             actions.add(
               ActionItem<String>(
                 title: 'Report Dispute',
-                subtitle: 'Freeze escrow and start dispute',
+                subtitle: 'Report an issue with this job',
                 icon: Icons.report_problem,
                 value: 'report_dispute',
               ),
@@ -220,25 +209,19 @@ class JobDetailPage extends StatelessWidget {
               );
               break;
             case 'expenses':
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ExpensesListPage(
-                    jobId: jobId,
-                    canAdd: true,
-                    createdByRole: isRequester ? 'customer' : 'contractor',
-                  ),
-                ),
+              context.push(
+                '/expenses/$jobId',
+                extra: {
+                  'canAdd': true,
+                  'createdByRole': isRequester ? 'customer' : 'contractor',
+                },
               );
               break;
             case 'view_dispute':
               await JobDetailActions.openLatestDispute(context, jobId);
               break;
             case 'report_dispute':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => DisputeScreen(jobId: jobId)),
-              );
+              context.push('/dispute/$jobId');
               break;
             case 'cancel_job':
               // Parse scheduled date from data, fall back to 7 days from now.
@@ -256,17 +239,14 @@ class JobDetailPage extends StatelessWidget {
               final jobPrice = (data['price'] as num?)?.toDouble() ?? 0;
               final jobTitle = (data['service'] as String?) ?? 'Job';
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CancellationScreen(
-                    jobId: jobId,
-                    collection: 'job_requests',
-                    scheduledDate: scheduledDate,
-                    jobPrice: jobPrice,
-                    jobTitle: jobTitle,
-                  ),
-                ),
+              context.push(
+                '/cancellation/$jobId',
+                extra: {
+                  'collection': 'job_requests',
+                  'scheduledDate': scheduledDate,
+                  'jobPrice': jobPrice,
+                  'jobTitle': jobTitle,
+                },
               );
               break;
           }
@@ -909,12 +889,7 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.timeline),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => JobStatusScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/job-status/$jobId');
                       },
                       label: const Text('View Job Status'),
                     ),
@@ -955,15 +930,7 @@ class JobDetailPage extends StatelessWidget {
                         width: double.infinity,
                         child: FilledButton.tonal(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => SubmitReviewScreen(
-                                  contractorId: claimedBy,
-                                  jobId: jobId,
-                                ),
-                              ),
-                            );
+                            context.push('/submit-review/$jobId/$claimedBy');
                           },
                           child: const Text('Leave a Review'),
                         ),
@@ -983,15 +950,12 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.thumb_up),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AddTipScreen(
-                              jobId: jobId,
-                              contractorId: claimedBy,
-                              jobAmount: price.toDouble(),
-                            ),
-                          ),
+                        context.push(
+                          '/add-tip/$jobId',
+                          extra: {
+                            'contractorId': claimedBy,
+                            'jobAmount': price.toDouble(),
+                          },
                         );
                       },
                       label: const Text('Add a Tip'),
@@ -1007,12 +971,7 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.receipt_long),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => InvoiceScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/invoice/$jobId');
                       },
                       label: const Text('View Invoice'),
                     ),
@@ -1026,12 +985,7 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.request_quote),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuotesScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/quotes/$jobId');
                       },
                       label: const Text('View Quotes'),
                     ),
@@ -1045,12 +999,7 @@ class JobDetailPage extends StatelessWidget {
                     child: FilledButton.icon(
                       icon: const Icon(Icons.add),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SubmitQuoteScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/submit-quote/$jobId');
                       },
                       label: const Text('Submit a Quote'),
                     ),
@@ -1064,12 +1013,7 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.gavel),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BidsListScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/bids/$jobId');
                       },
                       label: const Text('View Bids (Legacy)'),
                     ),
@@ -1084,14 +1028,9 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.flag),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProjectMilestonesScreen(
-                              jobId: jobId,
-                              isContractor: isClaimedByMe,
-                            ),
-                          ),
+                        context.push(
+                          '/milestones/$jobId',
+                          extra: {'isContractor': isClaimedByMe},
                         );
                       },
                       label: const Text('Project Milestones'),
@@ -1106,14 +1045,9 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.photo_camera),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProgressPhotosScreen(
-                              jobId: jobId,
-                              canUpload: isClaimedByMe,
-                            ),
-                          ),
+                        context.push(
+                          '/progress-photos/$jobId',
+                          extra: {'canUpload': isClaimedByMe},
                         );
                       },
                       label: const Text('Progress Photos'),
@@ -1128,12 +1062,7 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.timeline),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProjectTimelineScreen(jobId: jobId),
-                          ),
-                        );
+                        context.push('/timeline/$jobId');
                       },
                       label: const Text('View Timeline'),
                     ),
@@ -1147,17 +1076,14 @@ class JobDetailPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.receipt_long),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ExpensesListPage(
-                              jobId: jobId,
-                              canAdd: true,
-                              createdByRole: isRequester
-                                  ? 'customer'
-                                  : 'contractor',
-                            ),
-                          ),
+                        context.push(
+                          '/expenses/$jobId',
+                          extra: {
+                            'canAdd': true,
+                            'createdByRole': isRequester
+                                ? 'customer'
+                                : 'contractor',
+                          },
                         );
                       },
                       label: const Text('Receipts & Expenses'),

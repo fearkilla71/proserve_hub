@@ -46,18 +46,14 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
       final days = int.parse(_selectedPeriod);
       final cutoffDate = DateTime.now().subtract(Duration(days: days));
 
-      // Get all jobs for this contractor
+      // Server-side date filter (equality + inequality is supported).
       final jobsSnapshot = await FirebaseFirestore.instance
           .collection('job_requests')
           .where('claimedBy', isEqualTo: user.uid)
+          .where('createdAt', isGreaterThan: Timestamp.fromDate(cutoffDate))
           .get();
 
-      // Filter by date in code since we can't use two inequality filters
-      final filteredDocs = jobsSnapshot.docs.where((doc) {
-        final data = doc.data();
-        final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-        return createdAt != null && createdAt.isAfter(cutoffDate);
-      }).toList();
+      final filteredDocs = jobsSnapshot.docs;
 
       int totalJobs = filteredDocs.length;
       int completedJobs = 0;

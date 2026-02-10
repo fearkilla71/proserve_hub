@@ -4,10 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
 import 'package:go_router/go_router.dart';
 
-import '../screens/chat_screen.dart';
-import '../screens/job_detail_page.dart';
-import '../screens/payment_history_screen.dart';
-
 /// Handles external deep links (URI) + internal "deep link" payloads (like FCM data)
 /// and navigates using the GoRouter's navigator key.
 class DeepLinkService {
@@ -109,10 +105,7 @@ class DeepLinkService {
       case 'jobs':
         final jobId = readId(1, 'jobId');
         if (jobId == null || jobId.trim().isEmpty) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => JobDetailPage(jobId: jobId)),
-        );
+        context.push('/job/$jobId');
         return;
 
       case 'chat':
@@ -126,24 +119,18 @@ class DeepLinkService {
         if (otherUserId == null || otherUserId.trim().isEmpty) return;
         if (otherUserName == null || otherUserName.trim().isEmpty) return;
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(
-              conversationId: conversationId,
-              otherUserId: otherUserId,
-              otherUserName: otherUserName,
-              jobId: jobId,
-            ),
-          ),
+        context.push(
+          '/chat/$conversationId',
+          extra: {
+            'otherUserId': otherUserId,
+            'otherUserName': otherUserName,
+            'jobId': jobId,
+          },
         );
         return;
 
       case 'payments':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
-        );
+        context.push('/payment-history');
         return;
 
       default:
@@ -171,16 +158,13 @@ class DeepLinkService {
             conversationId.trim().isNotEmpty &&
             otherUserId.trim().isNotEmpty &&
             otherUserName.trim().isNotEmpty) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChatScreen(
-                conversationId: conversationId,
-                otherUserId: otherUserId,
-                otherUserName: otherUserName,
-                jobId: jobId,
-              ),
-            ),
+          context.push(
+            '/chat/$conversationId',
+            extra: {
+              'otherUserId': otherUserId,
+              'otherUserName': otherUserName,
+              'jobId': jobId,
+            },
           );
         }
         return;
@@ -192,19 +176,13 @@ class DeepLinkService {
       case 'job_status':
         final jobId = data['jobId'] as String?;
         if (jobId != null && jobId.trim().isNotEmpty) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => JobDetailPage(jobId: jobId)),
-          );
+          context.push('/job/$jobId');
         }
         return;
 
       case 'payment':
       case 'payments':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
-        );
+        context.push('/payment-history');
         return;
 
       default:

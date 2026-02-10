@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import '../screens/job_detail_page.dart';
+import 'package:go_router/go_router.dart';
 
 enum JobBarRole { customer, contractor }
 
@@ -58,10 +57,7 @@ class PersistentJobStateBar extends StatelessWidget {
             subtitle: 'Work is underway.',
             actionLabel: 'Open job',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => JobDetailPage(jobId: jobId)),
-              );
+              context.push('/job/$jobId');
             },
           );
         }
@@ -88,12 +84,7 @@ class PersistentJobStateBar extends StatelessWidget {
                   subtitle: 'Leave a review to close this out.',
                   actionLabel: 'Review',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => JobDetailPage(jobId: jobId),
-                      ),
-                    );
+                    context.push('/job/$jobId');
                   },
                 );
               },
@@ -105,10 +96,7 @@ class PersistentJobStateBar extends StatelessWidget {
             subtitle: 'Customer review pending.',
             actionLabel: 'Open job',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => JobDetailPage(jobId: jobId)),
-              );
+              context.push('/job/$jobId');
             },
           );
         }

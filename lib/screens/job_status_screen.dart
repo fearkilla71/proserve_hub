@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'progress_photos_screen.dart';
 
 class JobStatusScreen extends StatefulWidget {
   final String jobId;
@@ -244,13 +244,7 @@ class _JobStatusScreenState extends State<JobStatusScreen> {
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Progress Photos'),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ProgressPhotosScreen(jobId: widget.jobId),
-                        ),
-                      );
+                      context.push('/progress-photos/${widget.jobId}');
                     },
                   ),
                 ),

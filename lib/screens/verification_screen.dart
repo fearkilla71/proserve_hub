@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -650,7 +651,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
               ? Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(imageUrl, fit: BoxFit.cover),
+                    CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
                     Positioned(
                       top: 8,
                       right: 8,

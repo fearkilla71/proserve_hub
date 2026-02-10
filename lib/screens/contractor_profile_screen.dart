@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -240,7 +241,7 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
                         CircleAvatar(
                           radius: 38,
                           backgroundImage: (_logoUrl.trim().isNotEmpty)
-                              ? NetworkImage(_logoUrl.trim())
+                              ? CachedNetworkImageProvider(_logoUrl.trim())
                               : null,
                           child: (_logoUrl.trim().isNotEmpty)
                               ? null

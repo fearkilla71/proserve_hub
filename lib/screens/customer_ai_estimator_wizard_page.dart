@@ -9,13 +9,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:proserve_hub/firebase_options.dart';
 
 import '../services/location_service.dart';
 import '../utils/platform_file_bytes.dart';
-import 'service_select_page.dart';
 
 class CustomerAiEstimatorWizardPage extends StatefulWidget {
   final String initialService;
@@ -126,9 +126,9 @@ class _CustomerAiEstimatorWizardPageState
       setState(() {});
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -1226,10 +1226,7 @@ class _CustomerAiEstimatorWizardPageState
           child: FilledButton.icon(
             icon: const Icon(Icons.add_circle_outline),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ServiceSelectPage()),
-              );
+              context.push('/select-service');
             },
             label: const Text('Start a New Request'),
           ),

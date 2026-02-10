@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/proserve_theme.dart';
-import 'contractor_login_page.dart';
-import 'customer_login_page.dart';
 import 'onboarding_screen.dart';
 
 class LandingPage extends StatefulWidget {
@@ -292,12 +291,7 @@ class _LandingPageState extends State<LandingPage>
                               label: 'I Need Services',
                               icon: Icons.arrow_forward,
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const CustomerLoginPage(),
-                                  ),
-                                );
+                                context.push('/customer-login');
                               },
                             ),
                             const SizedBox(height: 14),
@@ -305,13 +299,7 @@ class _LandingPageState extends State<LandingPage>
                               width: double.infinity,
                               child: OutlinedButton(
                                 onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const ContractorLoginPage(),
-                                    ),
-                                  );
+                                  context.push('/contractor-login');
                                 },
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(double.infinity, 54),

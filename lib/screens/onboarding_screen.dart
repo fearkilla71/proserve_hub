@@ -40,7 +40,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingPage(
       title: 'Secure Payments',
       description:
-          'Pay safely with escrow protection. Money is only released when work is complete.',
+          'Pay safely through ProServe Hub. Your payments are protected until the job is done.',
       icon: Icons.verified_user,
       color: ProServeColors.accent,
     ),

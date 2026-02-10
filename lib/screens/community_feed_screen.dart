@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -292,7 +293,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     minScale: 1,
                     maxScale: 4,
                     child: Center(
-                      child: Image.network(urls[index], fit: BoxFit.contain),
+                      child: CachedNetworkImage(
+                        imageUrl: urls[index],
+                        fit: BoxFit.contain,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
                     ),
                   );
                 },
@@ -423,6 +432,23 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Prevent duplicate reports from the same user.
+    final existing = await _postsRef
+        .doc(postId)
+        .collection('reports')
+        .where('authorId', isEqualTo: user.uid)
+        .limit(1)
+        .get();
+    if (existing.docs.isNotEmpty) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('You have already reported this post.')),
+      );
+      return;
+    }
+
     final result = await showDialog<_ReportResult>(
       context: context,
       builder: (context) => const _ReportDialog(),
@@ -445,10 +471,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       'lastReportedAt': FieldValue.serverTimestamp(),
     });
 
+    // Auto-hide posts that reach the report threshold.
+    final postDoc = await _postsRef.doc(postId).get();
+    final count = (postDoc.data()?['reportCount'] as num?)?.toInt() ?? 0;
+    if (count >= 3) {
+      await _postsRef.doc(postId).update({'moderationStatus': 'hidden'});
+    }
+
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Report submitted.')));
+    messenger.showSnackBar(const SnackBar(content: Text('Report submitted.')));
   }
 
   Future<void> _setModerationStatus(String postId, String status) async {
@@ -629,7 +660,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
               aspectRatio: 16 / 10,
-              child: Image.network(urls.first, fit: BoxFit.cover),
+              child: CachedNetworkImage(
+                imageUrl: urls.first,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                errorWidget: (context, url, error) =>
+                    const Icon(Icons.broken_image, color: Colors.grey),
+              ),
             ),
           ),
         ),
@@ -658,11 +697,16 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
-                    Image.network(
-                      urls[index],
+                    CachedNetworkImage(
+                      imageUrl: urls[index],
                       width: 240,
                       height: 180,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.broken_image, color: Colors.grey),
                     ),
                     Positioned(
                       top: 8,
@@ -1079,10 +1123,16 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _postsRef
-                  .orderBy('createdAt', descending: true)
-                  .limit(50)
-                  .snapshots(),
+              stream: isAdmin
+                  ? _postsRef
+                      .orderBy('createdAt', descending: true)
+                      .limit(50)
+                      .snapshots()
+                  : _postsRef
+                      .where('moderationStatus', isEqualTo: 'active')
+                      .orderBy('createdAt', descending: true)
+                      .limit(50)
+                      .snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
                   return Card(
@@ -1107,7 +1157,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   final data = doc.data();
                   final status = (data['moderationStatus'] ?? 'active')
                       .toString();
-                  return isAdmin || status != 'removed';
+                  // Non-admins see only 'active' (server-side filtered).
+                  // Admins see all statuses in-app.
+                  return isAdmin || status == 'active';
                 }).toList();
 
                 if (docs.isEmpty) {

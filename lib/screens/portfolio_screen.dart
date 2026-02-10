@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,6 +27,13 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   bool _isUploading = false;
   List<Map<String, dynamic>> _portfolioItems = [];
 
+  /// Subcollection reference for the contractor's portfolio.
+  CollectionReference<Map<String, dynamic>> get _portfolioRef =>
+      FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(_userId)
+          .collection('portfolio');
+
   String get _userId =>
       widget.contractorId ?? FirebaseAuth.instance.currentUser!.uid;
 
@@ -39,23 +47,14 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('contractors')
-          .doc(_userId)
-          .get();
+      final snapshot =
+          await _portfolioRef.orderBy('uploadedAt', descending: true).get();
 
-      if (doc.exists) {
-        final data = doc.data()!;
-        final portfolio = data['portfolio'] as List<dynamic>?;
-
-        if (portfolio != null) {
-          setState(() {
-            _portfolioItems = List<Map<String, dynamic>>.from(
-              portfolio.map((item) => Map<String, dynamic>.from(item)),
-            );
-          });
-        }
-      }
+      setState(() {
+        _portfolioItems = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+      });
     } catch (e) {
       debugPrint('Error loading portfolio: $e');
     } finally {
@@ -113,12 +112,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           'uploadedAt': FieldValue.serverTimestamp(),
         };
 
-        await FirebaseFirestore.instance
-            .collection('contractors')
-            .doc(_userId)
-            .update({
-              'portfolio': FieldValue.arrayUnion([newItem]),
-            });
+        await _portfolioRef.add(newItem);
 
         await _loadPortfolio();
 
@@ -163,12 +157,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     if (confirmed != true) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('contractors')
-          .doc(_userId)
-          .update({
-            'portfolio': FieldValue.arrayRemove([item]),
-          });
+      final docId = item['id'] as String?;
+      if (docId != null) {
+        await _portfolioRef.doc(docId).delete();
+      }
 
       await _loadPortfolio();
 
@@ -273,20 +265,14 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    item['url'],
+                  CachedNetworkImage(
+                    imageUrl: item['url'],
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.broken_image, color: Colors.grey),
                   ),
                   if (widget.isEditable)
                     Positioned(
@@ -338,7 +324,15 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             ),
             Flexible(
               child: InteractiveViewer(
-                child: Image.network(item['url'], fit: BoxFit.contain),
+                child: CachedNetworkImage(
+                  imageUrl: item['url'],
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
+                ),
               ),
             ),
             if (item['description'] != null &&

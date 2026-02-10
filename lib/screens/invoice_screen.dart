@@ -333,14 +333,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           final tipAmount = (job['tipAmount'] as num?)?.toDouble() ?? 0;
 
           final status = (job['status'] as String?)?.trim().toLowerCase() ?? '';
-          final escrowStatus =
-              (job['escrowStatus'] as String?)?.trim().toLowerCase() ?? '';
-          final fundedAt = job['fundedAt'];
           final String paymentStatus;
-          if (escrowStatus == 'released' || status == 'completed') {
-            paymentStatus = 'Escrow released';
-          } else if (escrowStatus == 'funded' || fundedAt is Timestamp) {
-            paymentStatus = 'Paid into escrow';
+          if (status == 'completed') {
+            paymentStatus = 'Paid';
           } else {
             paymentStatus = 'Unpaid';
           }

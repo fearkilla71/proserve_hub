@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'painting_request_flow_page.dart';
-import 'exterior_painting_request_flow_page.dart';
-import 'cabinet_request_flow_page.dart';
-import 'pressure_washing_request_flow_page.dart';
-import 'drywall_repair_request_flow_page.dart';
+import 'package:go_router/go_router.dart';
 
 /// Maps icon name strings stored in Firestore to [IconData].
 IconData _iconFromName(String? name) {
@@ -56,34 +51,30 @@ class ServiceSelectPage extends StatelessWidget {
   const ServiceSelectPage({super.key});
 
   void _navigateToFlow(BuildContext context, String type) {
-    Widget? page;
     switch (type) {
       case 'interior_painting':
-        page = const PaintingRequestFlowPage(initialPaintingScope: 'interior');
+        context.push('/flow/painting?scope=interior');
         break;
       case 'exterior_painting':
-        page = const ExteriorPaintingRequestFlowPage();
+        context.push('/flow/exterior-painting');
         break;
       case 'painting':
-        page = const PaintingRequestFlowPage();
+        context.push('/flow/painting');
         break;
       case 'drywall_repair':
-        page = const DrywallRepairRequestFlowPage();
+        context.push('/flow/drywall-repair');
         break;
       case 'pressure_washing':
-        page = const PressureWashingRequestFlowPage();
+        context.push('/flow/pressure-washing');
         break;
       case 'cabinets':
-        page = const CabinetRequestFlowPage();
+        context.push('/flow/cabinets');
         break;
-    }
-
-    if (page != null) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => page!));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Service "$type" is coming soon!')),
-      );
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Service "$type" is coming soon!')),
+        );
+        return;
     }
   }
 

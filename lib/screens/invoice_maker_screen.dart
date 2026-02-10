@@ -3,10 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'invoice_preview_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/invoice_models.dart';
-import '../screens/invoice_preview_screen.dart';
 import '../services/invoice_ai_service.dart';
 import '../services/invoice_pdf_builder.dart';
 import '../widgets/animated_states.dart';
@@ -504,30 +505,26 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
   Future<void> _openPreview() async {
     _syncDraftFromControllers();
 
-    final result = await Navigator.push<InvoicePreviewResult>(
-      context,
-      MaterialPageRoute(
-        builder: (_) {
-          return InvoicePreviewScreen(
-            draft: _draft,
-            issuedDate: _issuedDate,
-            total: _total,
-            buildPdf: () async {
-              final args = <String, dynamic>{
-                'draft': _draft.toJson(),
-                'issuedDateIso': _issuedDate.toIso8601String(),
-                'discount': _discount,
-                'taxRatePercent': _taxRatePercent,
-              };
+    final result = await context.push<InvoicePreviewResult>(
+      '/invoice-preview',
+      extra: {
+        'draft': _draft,
+        'issuedDate': _issuedDate,
+        'total': _total,
+        'buildPdf': () async {
+          final args = <String, dynamic>{
+            'draft': _draft.toJson(),
+            'issuedDateIso': _issuedDate.toIso8601String(),
+            'discount': _discount,
+            'taxRatePercent': _taxRatePercent,
+          };
 
-              if (kIsWeb) {
-                return await buildInvoicePdfBytesFromJson(args);
-              }
-              return compute(buildInvoicePdfBytesFromJson, args);
-            },
-          );
+          if (kIsWeb) {
+            return await buildInvoicePdfBytesFromJson(args);
+          }
+          return compute(buildInvoicePdfBytesFromJson, args);
         },
-      ),
+      },
     );
 
     if (!mounted) return;

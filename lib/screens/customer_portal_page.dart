@@ -4,22 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/proserve_theme.dart';
-import 'service_select_page.dart';
-import 'nearby_contractors_page.dart';
-import 'job_detail_page.dart';
-import 'conversations_list_screen.dart';
 import 'browse_contractors_screen.dart';
-import 'customer_analytics_screen.dart';
-import 'customer_profile_screen.dart';
 import 'account_profile_screen.dart';
-import 'customer_ai_estimator_wizard_page.dart';
 import 'landing_page.dart';
-import 'submit_review_screen.dart';
 import 'community_feed_screen.dart';
-import 'favorite_contractors_screen.dart';
-import 'referral_screen.dart';
 
 import '../services/customer_portal_nav.dart';
 import '../services/fcm_service.dart';
@@ -216,15 +207,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           width: double.infinity,
           child: FilledButton.tonal(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SubmitReviewScreen(
-                    contractorId: contractorId,
-                    jobId: jobId,
-                  ),
-                ),
-              );
+              context.push('/submit-review/$jobId/$contractorId');
             },
             child: const Text('Leave a Review'),
           ),
@@ -298,10 +281,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           return;
         }
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ServiceSelectPage()),
-        );
+        context.push('/select-service');
       },
       borderRadius: BorderRadius.circular(16),
       child: Column(
@@ -457,12 +437,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         ),
                         child: FilledButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ServiceSelectPage(),
-                              ),
-                            );
+                            context.push('/select-service');
                           },
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -551,10 +526,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             const SizedBox(width: 10),
             FilledButton.tonal(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ServiceSelectPage()),
-                );
+                context.push('/select-service');
               },
               style: FilledButton.styleFrom(
                 backgroundColor: ProServeColors.accent.withValues(alpha: 0.15),
@@ -665,12 +637,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 IconButton(
                   tooltip: 'Profile',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CustomerProfileScreen(),
-                      ),
-                    );
+                    context.push('/customer-profile');
                   },
                   icon: const Icon(Icons.account_circle_outlined),
                 ),
@@ -705,12 +672,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     subtitle: 'Post a job in minutes',
                     icon: Icons.add_circle_outline,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ServiceSelectPage(),
-                        ),
-                      );
+                      context.push('/select-service');
                     },
                   ),
                 ),
@@ -738,12 +700,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     subtitle: 'Open your inbox',
                     icon: Icons.chat_bubble_outline,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ConversationsListScreen(),
-                        ),
-                      );
+                      context.push('/conversations');
                     },
                   ),
                 ),
@@ -771,12 +728,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     subtitle: 'Your favorite contractors',
                     icon: Icons.favorite_border,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FavoriteContractorsScreen(),
-                        ),
-                      );
+                      context.push('/favorites');
                     },
                   ),
                 ),
@@ -788,12 +740,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     subtitle: 'Share & earn credit',
                     icon: Icons.card_giftcard,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ReferralScreen(),
-                        ),
-                      );
+                      context.push('/referral');
                     },
                   ),
                 ),
@@ -802,10 +749,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ServiceSelectPage()),
-                );
+                context.push('/select-service');
               },
               child: AbsorbPointer(
                 child: TextField(
@@ -860,14 +804,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   title: 'Cabinet\nEstimate',
                   icon: Icons.kitchen,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CustomerAiEstimatorWizardPage(
-                          initialService: 'cabinet_painting',
-                        ),
-                      ),
-                    );
+                    context.push('/ai-estimator?service=cabinet_painting');
                   },
                 ),
               ],
@@ -877,12 +814,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ServiceSelectPage(),
-                    ),
-                  );
+                  context.push('/select-service');
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: scheme.onSurface,
@@ -939,12 +871,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 ? FloatingActionButton(
                     tooltip: 'Inbox',
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ConversationsListScreen(),
-                        ),
-                      );
+                      context.push('/conversations');
                     },
                     child: const Icon(Icons.mail_outline),
                   )
@@ -969,12 +896,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ServiceSelectPage(),
-                            ),
-                          );
+                          context.push('/select-service');
                         },
                         child: const Text('Start a New Request'),
                       ),
@@ -984,13 +906,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                       width: double.infinity,
                       child: FilledButton.tonal(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const CustomerAiEstimatorWizardPage(),
-                            ),
-                          );
+                          context.push('/ai-estimator');
                         },
                         child: const Text('AI Estimator'),
                       ),
@@ -1000,12 +916,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CustomerAnalyticsScreen(),
-                            ),
-                          );
+                          context.push('/customer-analytics');
                         },
                         child: const Text('Analytics'),
                       ),
@@ -1218,15 +1129,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                                 ),
                                                 isThreeLine: true,
                                                 onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          JobDetailPage(
-                                                            jobId: doc.id,
-                                                            jobData: data,
-                                                          ),
-                                                    ),
+                                                  context.push(
+                                                    '/job/${doc.id}',
+                                                    extra: {'jobData': data},
                                                   );
                                                 },
                                               ),
@@ -1344,14 +1249,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                     ),
                                     isThreeLine: true,
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => JobDetailPage(
-                                            jobId: doc.id,
-                                            jobData: data,
-                                          ),
-                                        ),
+                                      context.push(
+                                        '/job/${doc.id}',
+                                        extra: {'jobData': data},
                                       );
                                     },
                                     trailing: Row(
@@ -1432,14 +1332,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                               Icons.near_me_outlined,
                                             ),
                                             onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      NearbyContractorsPage(
-                                                        jobZip: zip,
-                                                      ),
-                                                ),
+                                              context.push(
+                                                '/nearby-contractors/$zip',
                                               );
                                             },
                                           ),

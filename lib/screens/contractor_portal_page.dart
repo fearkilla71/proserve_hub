@@ -1,29 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
-import 'job_detail_page.dart';
-import 'job_feed_page.dart';
-import 'conversations_list_screen.dart';
-import 'verification_screen.dart';
-import 'contractor_analytics_screen.dart';
-import 'availability_calendar_screen.dart';
-import 'service_area_screen.dart';
-import 'portfolio_screen.dart';
-import 'business_profile_screen.dart';
 import 'contractor_login_page.dart';
-import 'qanda_screen.dart';
-import 'pricing_calculator_screen.dart';
-import 'cost_estimator_screen.dart';
-import 'render_tool_screen.dart';
-import 'invoice_maker_screen.dart';
-import 'contractor_profile_screen.dart';
-import 'account_profile_screen.dart';
-import 'payment_history_screen.dart';
-import 'contractor_subscription_screen.dart';
-import 'contractor_subcontract_board_screen.dart';
 import 'community_feed_screen.dart';
-import 'boost_listing_screen.dart';
 
 import '../services/fcm_service.dart';
 import '../widgets/animated_states.dart';
@@ -115,10 +96,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     );
 
     if (shouldSubscribe == true && mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ContractorSubscriptionScreen()),
-      );
+      context.push('/contractor-subscription');
     }
   }
 
@@ -155,12 +133,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                         Navigator.pop(context);
                         await _openPricingToolsOrSubscribe(
                           open: () async {
-                            Navigator.push(
-                              rootContext,
-                              MaterialPageRoute(
-                                builder: (_) => const InvoiceMakerScreen(),
-                              ),
-                            );
+                            rootContext.push('/invoice-maker');
                           },
                         );
                       },
@@ -173,12 +146,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                         Navigator.pop(context);
                         await _openPricingToolsOrSubscribe(
                           open: () async {
-                            Navigator.push(
-                              rootContext,
-                              MaterialPageRoute(
-                                builder: (_) => const PricingCalculatorScreen(),
-                              ),
-                            );
+                            rootContext.push('/pricing-calculator');
                           },
                         );
                       },
@@ -211,14 +179,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                           title: Text(service),
                                           onTap: () {
                                             Navigator.pop(context);
-                                            Navigator.push(
-                                              rootContext,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    CostEstimatorScreen(
-                                                      serviceType: service,
-                                                    ),
-                                              ),
+                                            rootContext.push(
+                                              '/cost-estimator/$service',
                                             );
                                           },
                                         );
@@ -241,12 +203,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                         Navigator.pop(context);
                         await _openPricingToolsOrSubscribe(
                           open: () async {
-                            Navigator.push(
-                              rootContext,
-                              MaterialPageRoute(
-                                builder: (_) => const RenderToolScreen(),
-                              ),
-                            );
+                            rootContext.push('/render-tool');
                           },
                         );
                       },
@@ -259,13 +216,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                       title: const Text('Subscribe (\$11.99/mo)'),
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.push(
-                          rootContext,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const ContractorSubscriptionScreen(),
-                          ),
-                        );
+                        rootContext.push('/contractor-subscription');
                       },
                     ),
                     const Divider(height: 1),
@@ -277,12 +228,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                       subtitle: const Text('Appear first in search results'),
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.push(
-                          rootContext,
-                          MaterialPageRoute(
-                            builder: (_) => const BoostListingScreen(),
-                          ),
-                        );
+                        rootContext.push('/boost-listing');
                       },
                     ),
                   ],
@@ -500,10 +446,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             totalJobsCompleted: totalJobsCompleted,
           ),
           onEdit: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AccountProfileScreen()),
-            );
+            context.push('/customer-profile');
           },
         );
       },
@@ -581,12 +524,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 IconButton(
                   tooltip: 'Help',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ContractorProfileScreen(),
-                      ),
-                    );
+                    context.push('/contractor-profile-settings');
                   },
                   icon: const Icon(Icons.help_outline),
                 ),
@@ -621,10 +559,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'Find new leads',
                     icon: Icons.work_outline,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const JobFeedPage()),
-                      );
+                      context.push('/job-feed');
                     },
                   ),
                 ),
@@ -636,12 +571,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'Reply faster',
                     icon: Icons.chat_bubble_outline,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ConversationsListScreen(),
-                        ),
-                      );
+                      context.push('/conversations');
                     },
                   ),
                 ),
@@ -657,14 +587,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'Showcase your work',
                     icon: Icons.photo_library_outlined,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PortfolioScreen(
-                            contractorId: user.uid,
-                            isEditable: true,
-                          ),
-                        ),
+                      context.push(
+                        '/portfolio/${user.uid}',
+                        extra: {'isEditable': true},
                       );
                     },
                   ),
@@ -677,12 +602,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'Track earnings',
                     icon: Icons.payments_outlined,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PaymentHistoryScreen(),
-                        ),
-                      );
+                      context.push('/payment-history');
                     },
                   ),
                 ),
@@ -698,13 +618,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'View posted work',
                     icon: Icons.handshake_outlined,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const ContractorSubcontractBoardScreen(),
-                        ),
-                      );
+                      context.push('/subcontract-board');
                     },
                   ),
                 ),
@@ -716,12 +630,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     subtitle: 'Share overflow work',
                     icon: Icons.add_circle_outline,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ContractorPostJobScreen(),
-                        ),
-                      );
+                      context.push('/contractor-post-job');
                     },
                   ),
                 ),
@@ -853,12 +762,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                           title: Text(service),
                           subtitle: Text(subtitleParts.join('\n')),
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    JobDetailPage(jobId: doc.id, jobData: data),
-                              ),
+                            context.push(
+                              '/job/${doc.id}',
+                              extra: {'jobData': data},
                             );
                           },
                         ),
@@ -875,10 +781,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           width: double.infinity,
           child: FilledButton.tonal(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const JobFeedPage()),
-              );
+              context.push('/job-feed');
             },
             child: const Text('Browse jobs'),
           ),
@@ -903,12 +806,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
         final unlocked = pricingToolsUnlockedFromUserDoc(data);
 
         Future<void> openSubscription() async {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const ContractorSubscriptionScreen(),
-            ),
-          );
+          context.push('/contractor-subscription');
         }
 
         return ListView(
@@ -932,12 +830,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     onTap: () async {
                       await _openPricingToolsOrSubscribe(
                         open: () async {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const InvoiceMakerScreen(),
-                            ),
-                          );
+                          context.push('/invoice-maker');
                         },
                       );
                     },
@@ -951,12 +844,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     onTap: () async {
                       await _openPricingToolsOrSubscribe(
                         open: () async {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PricingCalculatorScreen(),
-                            ),
-                          );
+                          context.push('/pricing-calculator');
                         },
                       );
                     },
@@ -988,14 +876,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                         title: Text(service),
                                         onTap: () {
                                           Navigator.pop(context);
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  CostEstimatorScreen(
-                                                    serviceType: service,
-                                                  ),
-                                            ),
+                                          context.push(
+                                            '/cost-estimator/$service',
                                           );
                                         },
                                       );
@@ -1018,12 +900,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     onTap: () async {
                       await _openPricingToolsOrSubscribe(
                         open: () async {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RenderToolScreen(),
-                            ),
-                          );
+                          context.push('/render-tool');
                         },
                       );
                     },
@@ -1108,12 +985,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 ? FloatingActionButton(
                     tooltip: 'Inbox',
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ConversationsListScreen(),
-                        ),
-                      );
+                      context.push('/conversations');
                     },
                     child: const Icon(Icons.mail_outline),
                   )
@@ -1139,11 +1011,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     ),
                     ProfileCompletionCard(
                       onTapComplete: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AccountProfileScreen(),
-                          ),
-                        );
+                        context.push('/customer-profile');
                       },
                     ),
                     const SizedBox(height: 12),
@@ -1326,13 +1194,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       subtitle:
                                           'Update your public contractor info',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const AccountProfileScreen(),
-                                          ),
-                                        );
+                                        context.push('/customer-profile');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1343,13 +1205,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       subtitle:
                                           'Improve trust and win more work',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const VerificationScreen(),
-                                          ),
-                                        );
+                                        context.push('/verification');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1359,13 +1215,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       title: 'Analytics',
                                       subtitle: 'Track performance and growth',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ContractorAnalyticsScreen(),
-                                          ),
-                                        );
+                                        context.push('/contractor-analytics');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1375,13 +1225,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       title: 'Availability',
                                       subtitle: 'Keep your schedule up to date',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const AvailabilityCalendarScreen(),
-                                          ),
-                                        );
+                                        context.push('/availability-calendar');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1391,13 +1235,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       title: 'Service area',
                                       subtitle: 'Control where you get leads',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ServiceAreaScreen(),
-                                          ),
-                                        );
+                                        context.push('/service-area');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1407,14 +1245,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       title: 'Portfolio',
                                       subtitle: 'Showcase your best work',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PortfolioScreen(
-                                              contractorId: user.uid,
-                                              isEditable: true,
-                                            ),
-                                          ),
+                                        context.push(
+                                          '/portfolio/${user.uid}',
+                                          extra: {'isEditable': true},
                                         );
                                       },
                                     ),
@@ -1425,13 +1258,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       title: 'Business profile',
                                       subtitle: 'Manage company details',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const BusinessProfileScreen(),
-                                          ),
-                                        );
+                                        context.push('/business-profile');
                                       },
                                     ),
                                     const Divider(height: 1),
@@ -1442,14 +1269,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                       subtitle:
                                           'Answer common customer questions',
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => QandAScreen(
-                                              contractorId: user.uid,
-                                              isContractor: true,
-                                            ),
-                                          ),
+                                        context.push(
+                                          '/qanda/${user.uid}',
+                                          extra: {'isContractor': true},
                                         );
                                       },
                                     ),

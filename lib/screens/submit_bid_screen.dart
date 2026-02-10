@@ -85,7 +85,6 @@ class _SubmitBidScreenState extends State<SubmitBidScreen> {
 
           final jobStatusSnapshot = {
             'status': jobData['status'],
-            'escrowStatus': jobData['escrowStatus'],
             'service': jobData['service'],
             'location': jobData['location'],
             'createdAt': jobData['createdAt'],

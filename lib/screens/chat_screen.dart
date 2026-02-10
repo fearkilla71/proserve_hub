@@ -11,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'call_scheduling_screen.dart';
 import '../models/marketplace_models.dart';
 import '../widgets/chat_message_bubble.dart';
 
@@ -621,15 +620,13 @@ class _ChatScreenState extends State<ChatScreen> {
               IconButton(
                 icon: const Icon(Icons.schedule),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CallSchedulingScreen(
-                        otherUserId: widget.otherUserId,
-                        otherUserName: widget.otherUserName,
-                        conversationId: widget.conversationId,
-                      ),
-                    ),
+                  context.push(
+                    '/call-schedule',
+                    extra: {
+                      'otherUserId': widget.otherUserId,
+                      'otherUserName': widget.otherUserName,
+                      'conversationId': widget.conversationId,
+                    },
                   );
                 },
                 tooltip: 'Schedule Call',

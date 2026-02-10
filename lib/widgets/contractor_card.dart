@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../models/contractor_badge.dart';
@@ -453,7 +454,7 @@ class _AvatarBadge extends StatelessWidget {
     final avatar = CircleAvatar(
       radius: 26,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      backgroundImage: hasLogo ? NetworkImage(logoUrl) : null,
+      backgroundImage: hasLogo ? CachedNetworkImageProvider(logoUrl) : null,
       child: hasLogo
           ? null
           : Text(

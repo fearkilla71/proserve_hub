@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../models/marketplace_models.dart';
-import 'chat_screen.dart';
 import '../widgets/skeleton.dart';
 
 class ConversationsListScreen extends StatelessWidget {
@@ -138,15 +138,12 @@ class ConversationsListScreen extends StatelessWidget {
                   ],
                 ),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        conversationId: conversation.id,
-                        otherUserId: otherParticipantId,
-                        otherUserName: otherName,
-                      ),
-                    ),
+                  context.push(
+                    '/chat/${conversation.id}',
+                    extra: {
+                      'otherUserId': otherParticipantId,
+                      'otherUserName': otherName,
+                    },
                   );
                 },
               );

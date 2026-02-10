@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:proserve_hub/screens/job_detail_page.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
@@ -141,13 +141,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final navContext = context;
       try {
-        await Navigator.push(
-          navContext,
-          MaterialPageRoute(
-            builder: (_) => JobDetailPage(jobId: jobId, jobData: jobData),
-          ),
+        await context.push(
+          '/job/$jobId',
+          extra: {'jobData': jobData},
         );
       } finally {
         if (mounted) {

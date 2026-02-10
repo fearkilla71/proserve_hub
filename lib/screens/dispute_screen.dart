@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class DisputeScreen extends StatefulWidget {
@@ -237,7 +238,7 @@ class _DisputeScreenState extends State<DisputeScreen> {
                       context,
                       number: 1,
                       title: 'You submit the dispute',
-                      subtitle: 'Escrow is frozen while it’s reviewed.',
+                      subtitle: 'Your dispute is under review.',
                     ),
                     const SizedBox(height: 10),
                     _stepRow(
@@ -517,13 +518,7 @@ class DisputesListScreen extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DisputeDetailScreen(disputeId: disputeId),
-                      ),
-                    );
+                    context.push('/dispute-detail/$disputeId');
                   },
                 ),
               );

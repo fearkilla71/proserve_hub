@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
-import 'contractor_portal_page.dart';
-import 'contractor_signup_page.dart';
 
 class ContractorLoginPage extends StatefulWidget {
   const ContractorLoginPage({super.key});
@@ -40,7 +39,6 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
     setState(() => loading = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
 
     try {
       final user = await _auth.signIn(emailValue, passwordValue);
@@ -50,10 +48,7 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
       if (!mounted) return;
 
       if (role == 'contractor') {
-        navigator.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const ContractorPortalPage()),
-          (r) => false,
-        );
+        context.go('/contractor-portal');
         return;
       }
 
@@ -123,12 +118,7 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
               onPressed: loading
                   ? null
                   : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ContractorSignupPage(),
-                        ),
-                      );
+                      context.push('/contractor-signup');
                     },
               child: const Text("Don't have an account? Sign up"),
             ),
