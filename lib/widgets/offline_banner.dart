@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import '../theme/proserve_theme.dart';
 
 class OfflineBanner extends StatefulWidget {
   final Widget child;
@@ -54,21 +55,21 @@ class _OfflineBannerState extends State<OfflineBanner> {
         widget.child,
         if (_isOffline)
           Positioned(
-            top: 0,
+            top: MediaQuery.of(context).padding.top,
             left: 0,
             right: 0,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              color: const Color(0xFF3D1313),
+              color: ProServeColors.error.withValues(alpha: 0.18),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wifi_off, color: Color(0xFFFF6B6B), size: 18),
+                  Icon(Icons.wifi_off, color: ProServeColors.error, size: 18),
                   SizedBox(width: 8),
                   Text(
                     'No internet connection',
-                    style: TextStyle(color: Color(0xFFE6F1FF), fontSize: 14),
+                    style: TextStyle(color: ProServeColors.ink, fontSize: 14),
                   ),
                 ],
               ),

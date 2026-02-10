@@ -26,11 +26,58 @@ class _ContractorSubscriptionScreenState
   bool _isAutoRefreshing = false;
   int _autoRefreshAttempts = 0;
 
-  bool _isProFromUserDoc(Map<String, dynamic>? data) {
-    if (data == null) return false;
-    return data['pricingToolsPro'] == true ||
+  /// Subscription tiers — ordered from least to most features.
+  static const _tiers = <_SubscriptionTier>[
+    _SubscriptionTier(
+      id: 'basic',
+      name: 'Basic',
+      price: r'Free',
+      features: ['Job feed access', 'Accept customer bids', 'Community feed'],
+    ),
+    _SubscriptionTier(
+      id: 'pro',
+      name: 'Pro',
+      price: r'$11.99/mo',
+      features: [
+        'Everything in Basic',
+        'Pricing Calculator',
+        'Cost Estimator',
+        'AI Invoice Maker',
+        'Render Tool',
+      ],
+      recommended: true,
+    ),
+    _SubscriptionTier(
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: r'$29.99/mo',
+      features: [
+        'Everything in Pro',
+        'Priority support',
+        'Subcontractor board',
+        'Advanced analytics',
+        'Boosted listing included',
+      ],
+    ),
+  ];
+
+  /// Returns the user's current tier from Firestore.
+  String _tierFromUserDoc(Map<String, dynamic>? data) {
+    if (data == null) return 'basic';
+    // Check new tier field first, fall back to legacy booleans.
+    final tier = data['subscriptionTier'] as String?;
+    if (tier != null && tier.isNotEmpty) return tier;
+    if (data['pricingToolsPro'] == true ||
         data['contractorPro'] == true ||
-        data['isPro'] == true;
+        data['isPro'] == true) {
+      return 'pro';
+    }
+    return 'basic';
+  }
+
+  bool _isProFromUserDoc(Map<String, dynamic>? data) {
+    final tier = _tierFromUserDoc(data);
+    return tier == 'pro' || tier == 'enterprise';
   }
 
   Future<bool> _fetchIsPro(String uid) async {
@@ -241,7 +288,6 @@ class _ContractorSubscriptionScreenState
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final storePrice = _monthlyProduct?.price;
-    final storeTitle = _monthlyProduct?.title;
     final storeLabel = _iapAvailable
         ? (storePrice == null
               ? 'Subscribe with Google Play'
@@ -250,7 +296,7 @@ class _ContractorSubscriptionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pro Subscription'),
+        title: const Text('Subscription Plans'),
         actions: [
           IconButton(
             tooltip: 'Stripe diagnostics',
@@ -259,25 +305,29 @@ class _ContractorSubscriptionScreenState
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: FirebaseAuth.instance.currentUser == null
-                ? null
-                : FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(FirebaseAuth.instance.currentUser!.uid)
-                      .snapshots(),
-            builder: (context, snap) {
-              final data = snap.data?.data();
-              final unlocked = _isProFromUserDoc(data);
-              if (!unlocked) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _autoRefreshEntitlement();
-                });
-              }
-              return Card(
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseAuth.instance.currentUser == null
+            ? null
+            : FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                  .snapshots(),
+        builder: (context, snap) {
+          final data = snap.data?.data();
+          final currentTier = _tierFromUserDoc(data);
+          final unlocked = _isProFromUserDoc(data);
+
+          if (!unlocked) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _autoRefreshEntitlement();
+            });
+          }
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            children: [
+              // Status card
+              Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -287,42 +337,33 @@ class _ContractorSubscriptionScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              'Status',
+                              'Current Plan',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                           ),
                           Chip(
-                            label: Text(unlocked ? 'Active' : 'Not active'),
+                            label: Text(
+                              currentTier[0].toUpperCase() +
+                                  currentTier.substring(1),
+                            ),
                             visualDensity: VisualDensity.compact,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        unlocked
-                            ? 'Your Pro tools are unlocked in the app.'
-                            : 'After paying, activation is automatic and should update shortly.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      if (!unlocked) ...[
+                      if (!unlocked && _isAutoRefreshing) ...[
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            if (_isAutoRefreshing)
-                              const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            if (_isAutoRefreshing) const SizedBox(width: 8),
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                _isAutoRefreshing
-                                    ? 'Updating status…'
-                                    : 'Waiting for Stripe confirmation…',
+                                'Updating status…',
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: scheme.onSurfaceVariant),
                               ),
@@ -333,109 +374,183 @@ class _ContractorSubscriptionScreenState
                     ],
                   ),
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Contractor Pro',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    r'$11.99 / month',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: scheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Unlock the Pricing Calculator and Cost Estimator tools.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  const _BenefitRow(text: 'Pricing Calculator'),
-                  const _BenefitRow(text: 'Cost Estimator'),
-                  if (storeTitle != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      storeTitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  if (_iapError != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _iapError!,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: scheme.error),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: (_isLoadingIap || !_iapAvailable)
-                          ? null
-                          : _startStoreSubscription,
-                      icon: _isLoadingIap
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.shopping_bag),
-                      label: Text(
-                        _isLoadingIap ? 'Opening store…' : storeLabel,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoadingStripe ? null : _startStripeCheckout,
-                      icon: _isLoadingStripe
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.credit_card),
-                      label: Text(
-                        _isLoadingStripe
-                            ? 'Opening checkout…'
-                            : 'Subscribe with Card (Stripe)',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tip: Google Play is best for mobile subscriptions. Stripe is a flexible fallback and works outside the app store flow.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 16),
+
+              if (_iapError != null) ...[
+                Card(
+                  color: scheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _iapError!,
+                      style: TextStyle(color: scheme.onErrorContainer),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // Tier cards
+              ..._tiers.map((tier) {
+                final isActive = tier.id == currentTier;
+                final isUpgrade = _tierIndex(tier.id) > _tierIndex(currentTier);
+
+                return Card(
+                  shape: tier.recommended
+                      ? RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: scheme.primary, width: 2),
+                        )
+                      : null,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                tier.name,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                            if (tier.recommended)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: scheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'POPULAR',
+                                  style: TextStyle(
+                                    color: scheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            if (isActive)
+                              Chip(
+                                label: const Text('CURRENT'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          tier.price,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: scheme.primary,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...tier.features.map((f) => _BenefitRow(text: f)),
+                        if (isUpgrade && tier.id != 'basic') ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed:
+                                  (_isLoadingIap || !_iapAvailable) &&
+                                      _isLoadingStripe
+                                  ? null
+                                  : _startStripeCheckout,
+                              icon: _isLoadingStripe
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.credit_card),
+                              label: Text(
+                                _isLoadingStripe
+                                    ? 'Opening checkout…'
+                                    : 'Upgrade with Card',
+                              ),
+                            ),
+                          ),
+                          if (_iapAvailable) ...[
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoadingIap
+                                    ? null
+                                    : _startStoreSubscription,
+                                icon: _isLoadingIap
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.shopping_bag),
+                                label: Text(
+                                  _isLoadingIap ? 'Opening store…' : storeLabel,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              Text(
+                'Tip: Google Play is best for mobile subscriptions. '
+                'Stripe is a flexible fallback and works outside the app store flow.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
+
+  int _tierIndex(String tier) {
+    switch (tier) {
+      case 'enterprise':
+        return 2;
+      case 'pro':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+}
+
+class _SubscriptionTier {
+  final String id;
+  final String name;
+  final String price;
+  final List<String> features;
+  final bool recommended;
+
+  const _SubscriptionTier({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.features,
+    this.recommended = false,
+  });
 }
 
 class _BenefitRow extends StatelessWidget {

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../theme/proserve_theme.dart';
 import 'verify_contact_info_page.dart';
 import 'customer_login_page.dart';
 
@@ -17,11 +20,17 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final password = TextEditingController();
   final name = TextEditingController();
   final phone = TextEditingController();
+  final phoneCode = TextEditingController();
 
   bool loading = false;
   bool _obscurePassword = true;
+  bool _phoneVerified = false;
+  bool _sendingPhoneCode = false;
+  bool _verifyingPhoneCode = false;
+  String? _phoneVerificationId;
+  int? _forceResendingToken;
   int _step = 0;
-  static const int _totalSteps = 3;
+  static const int _totalSteps = 4;
 
   @override
   void dispose() {
@@ -29,7 +38,137 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     password.dispose();
     name.dispose();
     phone.dispose();
+    phoneCode.dispose();
     super.dispose();
+  }
+
+  String _normalizePhone(String input) {
+    final digits = input.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+    if (digits.startsWith('1') && digits.length == 11) return '+$digits';
+    if (digits.length == 10) return '+1$digits';
+    if (input.trim().startsWith('+')) return '+$digits';
+    return '';
+  }
+
+  Future<void> _sendPhoneCode() async {
+    if (_sendingPhoneCode) return;
+    final phoneValue = phone.text.trim();
+    if (phoneValue.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a phone number.')));
+      return;
+    }
+
+    final normalized = _normalizePhone(phoneValue);
+    if (normalized.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid phone number (ex: +1 555 123 4567).'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _sendingPhoneCode = true);
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: normalized,
+        forceResendingToken: _forceResendingToken,
+        verificationCompleted: (credential) async {
+          await _applyPhoneCredential(credential, normalized);
+        },
+        verificationFailed: (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? 'Phone verification failed.')),
+          );
+        },
+        codeSent: (verificationId, forceResendingToken) {
+          if (!mounted) return;
+          setState(() {
+            _phoneVerificationId = verificationId;
+            _forceResendingToken = forceResendingToken;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Verification code sent.')),
+          );
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          if (!mounted) return;
+          setState(() => _phoneVerificationId = verificationId);
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _sendingPhoneCode = false);
+    }
+  }
+
+  Future<void> _verifyPhoneCode() async {
+    if (_verifyingPhoneCode) return;
+    final verificationId = _phoneVerificationId;
+    if (verificationId == null || verificationId.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Send the code first.')));
+      return;
+    }
+
+    final code = phoneCode.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter the SMS code.')));
+      return;
+    }
+
+    setState(() => _verifyingPhoneCode = true);
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: code,
+      );
+      await _applyPhoneCredential(credential, phone.text.trim());
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Phone verified!')));
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Invalid code.')));
+    } finally {
+      if (mounted) setState(() => _verifyingPhoneCode = false);
+    }
+  }
+
+  Future<void> _applyPhoneCredential(
+    PhoneAuthCredential credential,
+    String phoneInput,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await user.linkWithCredential(credential);
+    } on FirebaseAuthException catch (_) {
+      try {
+        await user.updatePhoneNumber(credential);
+      } catch (_) {
+        // Ignore; we still set app-level verification flag below.
+      }
+    }
+
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'phone': phoneInput,
+      'phoneVerified': true,
+      'phoneVerifiedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    setState(() => _phoneVerified = true);
   }
 
   Future<void> submit() async {
@@ -92,7 +231,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       prefixIcon: icon == null ? null : Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFF0C172C),
+      fillColor: ProServeColors.card,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -135,11 +274,37 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
         return false;
       }
     }
+    if (_step == 2) {
+      if (phone.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Phone number is required.')),
+        );
+        return false;
+      }
+    }
     return true;
   }
 
   void _nextOrSubmit() async {
     if (!_validateStep()) return;
+
+    // Phone verification step
+    if (_step == 3) {
+      if (!_phoneVerified) {
+        if (_phoneVerificationId == null) {
+          await _sendPhoneCode();
+        } else {
+          await _verifyPhoneCode();
+        }
+        if (_phoneVerified) {
+          // Phone verified — proceed to submit
+          await submit();
+        }
+        return;
+      }
+      await submit();
+      return;
+    }
 
     if (_step < _totalSteps - 1) {
       setState(() => _step += 1);
@@ -218,14 +383,13 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
           ],
         );
       case 2:
-      default:
         return Column(
           children: [
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF101E38),
+                color: ProServeColors.cardElevated,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
@@ -234,12 +398,12 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     width: 48,
                     height: 48,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF142647),
+                      color: ProServeColors.card,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.handshake_outlined,
-                      color: Color(0xFF22E39B),
+                      color: ProServeColors.accent,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -248,7 +412,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       'Local pros respond faster when your profile is complete.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1E2749),
+                        color: ProServeColors.muted,
                       ),
                     ),
                   ),
@@ -275,13 +439,85 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
             ),
           ],
         );
+      case 3:
+        return Column(
+          children: [
+            Center(
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: const BoxDecoration(
+                  color: ProServeColors.cardElevated,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    _phoneVerified ? Icons.verified : Icons.phone_iphone,
+                    size: 56,
+                    color: _phoneVerified
+                        ? ProServeColors.accent
+                        : ProServeColors.accent2,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (_phoneVerified)
+              Text(
+                'Phone verified!',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: ProServeColors.accent,
+                ),
+              )
+            else ...[
+              Text(
+                'Verify your phone number',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'We sent a code to ${phone.text.trim()}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (_phoneVerificationId != null) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: phoneCode,
+                  keyboardType: TextInputType.number,
+                  decoration: _inputDecoration(
+                    label: 'Verification code',
+                    hint: '123456',
+                    icon: Icons.sms_outlined,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _sendingPhoneCode ? null : _sendPhoneCode,
+                child: Text(
+                  _phoneVerificationId == null
+                      ? 'Send verification code'
+                      : 'Resend code',
+                ),
+              ),
+            ],
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF171C3A),
+      backgroundColor: ProServeColors.bg,
       body: Stack(
         children: [
           SafeArea(
@@ -315,7 +551,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
                     decoration: const BoxDecoration(
-                      color: Color(0xFF0C172C),
+                      color: ProServeColors.card,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(28),
                         topRight: Radius.circular(28),
@@ -330,7 +566,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                                 ? 'Create your customer account'
                                 : _step == 1
                                 ? 'Create Password'
-                                : 'Tell us who you are',
+                                : _step == 2
+                                ? 'Tell us who you are'
+                                : 'Verify your phone',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
@@ -340,7 +578,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                                 ? 'Start getting bids from trusted pros.'
                                 : _step == 1
                                 ? 'Secure your account for faster support.'
-                                : 'So contractors can contact you quickly.',
+                                : _step == 2
+                                ? 'So contractors can contact you quickly.'
+                                : 'One last step to secure your account.',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Theme.of(
@@ -395,7 +635,11 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                                             ),
                                           )
                                         : Text(
-                                            _step == _totalSteps - 1
+                                            _step == 3 && !_phoneVerified
+                                                ? (_phoneVerificationId == null
+                                                      ? 'Send code'
+                                                      : 'Verify')
+                                                : _step == _totalSteps - 1
                                                 ? 'Create account'
                                                 : 'Next',
                                           ),

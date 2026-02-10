@@ -196,8 +196,9 @@ class FcmService {
       // Capture uid at subscription time so the closure always writes to the
       // correct user document, even if FirebaseAuth.currentUser changes.
       final capturedUid = user.uid;
-      _tokenRefreshSub =
-          FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
+        newToken,
+      ) {
         final t = newToken.trim();
         if (t.isEmpty) return;
         FirebaseFirestore.instance.collection('users').doc(capturedUid).set({

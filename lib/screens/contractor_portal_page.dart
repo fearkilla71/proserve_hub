@@ -24,6 +24,7 @@ import 'payment_history_screen.dart';
 import 'contractor_subscription_screen.dart';
 import 'contractor_subcontract_board_screen.dart';
 import 'community_feed_screen.dart';
+import 'boost_listing_screen.dart';
 
 import '../services/fcm_service.dart';
 import '../widgets/animated_states.dart';
@@ -277,6 +278,23 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                           MaterialPageRoute(
                             builder: (_) =>
                                 const ContractorSubscriptionScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.rocket_launch),
+                      ),
+                      title: const Text('Boost Listing'),
+                      subtitle: const Text('Appear first in search results'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          rootContext,
+                          MaterialPageRoute(
+                            builder: (_) => const BoostListingScreen(),
                           ),
                         );
                       },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/proserve_theme.dart';
 
 import 'contractor_portal_page.dart';
 import 'contractor_subscription_screen.dart';
@@ -86,7 +87,7 @@ class _ContractorSignupPitchPageState extends State<ContractorSignupPitchPage> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF171C3A),
+      backgroundColor: ProServeColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -105,7 +106,7 @@ class _ContractorSignupPitchPageState extends State<ContractorSignupPitchPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(22, 26, 22, 16),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF0C172C),
+                  color: ProServeColors.card,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(28),
                     topRight: Radius.circular(28),

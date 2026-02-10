@@ -168,14 +168,16 @@ void main() async {
       // ── Firebase Crashlytics ─────────────────────────────────────
       // Supported on Android, iOS, macOS, and web. Skip on Windows/Linux
       // desktop where the native SDK is unavailable.
-      _crashlyticsSupported = kIsWeb ||
+      _crashlyticsSupported =
+          kIsWeb ||
           defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS;
 
       if (_crashlyticsSupported) {
-        await FirebaseCrashlytics.instance
-            .setCrashlyticsCollectionEnabled(!kDebugMode);
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+          !kDebugMode,
+        );
       }
 
       FlutterError.onError = (details) {

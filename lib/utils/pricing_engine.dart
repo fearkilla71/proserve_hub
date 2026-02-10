@@ -1,23 +1,67 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Cached Firestore document with expiry.
+class _CachedDoc {
+  final Map<String, dynamic>? data;
+  final bool exists;
+  final DateTime fetchedAt;
+
+  _CachedDoc({
+    required this.data,
+    required this.exists,
+    required this.fetchedAt,
+  });
+
+  bool get isExpired =>
+      DateTime.now().difference(fetchedAt) > PricingEngine._cacheTtl;
+}
+
 class PricingEngine {
+  /// Time-to-live for cached pricing/zip docs.
+  static const _cacheTtl = Duration(minutes: 5);
+
+  /// In-memory cache keyed by collection/docId.
+  static final Map<String, _CachedDoc> _cache = {};
+
+  /// Clear the entire pricing cache (e.g. on logout or manual refresh).
+  static void clearCache() => _cache.clear();
+
   static bool _isPainting(String service) {
     final s = service.trim().toLowerCase();
     return s.contains('paint');
   }
 
-  static Future<DocumentSnapshot<Map<String, dynamic>>> _getPricingDoc({
-    required String service,
-  }) async {
+  /// Fetch a Firestore doc with in-memory caching + TTL.
+  static Future<_CachedDoc> _getCachedDoc(
+    String collection,
+    String docId,
+  ) async {
+    final key = '$collection/$docId';
+    final cached = _cache[key];
+    if (cached != null && !cached.isExpired) return cached;
+
+    final snap = await FirebaseFirestore.instance
+        .collection(collection)
+        .doc(docId)
+        .get();
+    final entry = _CachedDoc(
+      data: snap.data(),
+      exists: snap.exists,
+      fetchedAt: DateTime.now(),
+    );
+    _cache[key] = entry;
+    return entry;
+  }
+
+  static Future<_CachedDoc> _getPricingDoc({required String service}) async {
     final raw = service.trim();
     final lower = raw.toLowerCase();
-    final col = FirebaseFirestore.instance.collection('pricing_rules');
 
-    final lowerDoc = await col.doc(lower).get();
+    final lowerDoc = await _getCachedDoc('pricing_rules', lower);
     if (lowerDoc.exists) return lowerDoc;
 
     if (raw.isNotEmpty && raw != lower) {
-      final rawDoc = await col.doc(raw).get();
+      final rawDoc = await _getCachedDoc('pricing_rules', raw);
       if (rawDoc.exists) return rawDoc;
     }
 
@@ -26,10 +70,8 @@ class PricingEngine {
 
   static Future<String?> getUnit({required String service}) async {
     if (_isPainting(service)) {
-      // Default unit for painting estimates: home square footage.
-      // If Firestore is configured differently, the backend estimator still uses sqft.
       final pricingDoc = await _getPricingDoc(service: service);
-      final unit = pricingDoc.data()?['unit'];
+      final unit = pricingDoc.data?['unit'];
       final unitStr = unit is String ? unit.trim() : '';
       if (unitStr.toLowerCase() == 'room') return 'sqft';
       if (unitStr.isNotEmpty) return unitStr;
@@ -38,7 +80,7 @@ class PricingEngine {
 
     final pricingDoc = await _getPricingDoc(service: service);
     if (!pricingDoc.exists) return null;
-    final data = pricingDoc.data();
+    final data = pricingDoc.data;
     final unit = data?['unit'];
     return unit is String && unit.trim().isNotEmpty ? unit.trim() : null;
   }
@@ -52,13 +94,10 @@ class PricingEngine {
     if (_isPainting(service)) {
       // Interior painting baseline (walls only): $1.75–$2.75 per sqft.
       final zipKey = zip.trim();
-      final zipDoc = await FirebaseFirestore.instance
-          .collection('zip_costs')
-          .doc(zipKey)
-          .get();
+      final zipDoc = await _getCachedDoc('zip_costs', zipKey);
 
       final zipMultiplier = zipDoc.exists
-          ? (zipDoc.data()!['multiplier'] as num).toDouble()
+          ? (zipDoc.data!['multiplier'] as num).toDouble()
           : 1.0;
 
       double low = 1.75 * quantity * zipMultiplier;
@@ -85,18 +124,15 @@ class PricingEngine {
       );
     }
 
-    final pricing = pricingDoc.data()!;
+    final pricing = pricingDoc.data!;
     final baseRate = (pricing['baseRate'] as num).toDouble();
     final minPrice = (pricing['minPrice'] as num).toDouble();
     final maxPrice = (pricing['maxPrice'] as num).toDouble();
 
-    final zipDoc = await FirebaseFirestore.instance
-        .collection('zip_costs')
-        .doc(zipKey)
-        .get();
+    final zipDoc = await _getCachedDoc('zip_costs', zipKey);
 
     final zipMultiplier = zipDoc.exists
-        ? (zipDoc.data()!['multiplier'] as num).toDouble()
+        ? (zipDoc.data!['multiplier'] as num).toDouble()
         : 1.0;
 
     double price = baseRate * quantity * zipMultiplier;

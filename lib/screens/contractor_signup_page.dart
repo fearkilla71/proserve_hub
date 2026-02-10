@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../theme/proserve_theme.dart';
 import '../utils/zip_locations.dart';
 import 'verify_contact_info_page.dart';
 import 'contractor_login_page.dart';
@@ -100,7 +101,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       prefixIcon: icon == null ? null : Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFF0C172C),
+      fillColor: ProServeColors.card,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -549,14 +550,14 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 width: 140,
                 height: 140,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF101E38),
+                  color: ProServeColors.cardElevated,
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
                   child: Icon(
                     Icons.phone_iphone,
                     size: 72,
-                    color: Color(0xFF36B3FF),
+                    color: ProServeColors.accent2,
                   ),
                 ),
               ),
@@ -603,7 +604,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 width: 140,
                 height: 140,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF101E38),
+                  color: ProServeColors.cardElevated,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -627,7 +628,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        color: const Color(0xFF101E38),
+                        color: ProServeColors.cardElevated,
                         child: Image.asset(
                           'assets/pitch/zipcode_card.png',
                           fit: BoxFit.cover,
@@ -653,7 +654,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0C172C),
+                            color: ProServeColors.card,
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
@@ -671,7 +672,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1E2749),
+                                  color: ProServeColors.muted,
                                 ),
                           ),
                         ),
@@ -832,7 +833,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF171C3A),
+      backgroundColor: ProServeColors.bg,
       body: Stack(
         children: [
           SafeArea(
@@ -866,7 +867,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
                     decoration: const BoxDecoration(
-                      color: Color(0xFF0C172C),
+                      color: ProServeColors.card,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(28),
                         topRight: Radius.circular(28),

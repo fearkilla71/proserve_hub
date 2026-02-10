@@ -86,9 +86,9 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
     } finally {
       if (mounted) setState(() => _loadingLocation = false);
     }
@@ -144,8 +144,8 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
     final zip = _currentZip;
     if (zip == null || zip.isEmpty) return null;
 
-    final contractorZip = extractZip(data) ??
-        extractZipFromString(data['location']?.toString());
+    final contractorZip =
+        extractZip(data) ?? extractZipFromString(data['location']?.toString());
     if (contractorZip == null || contractorZip.isEmpty) return null;
 
     return distanceMilesBetweenZips(zip, contractorZip);
@@ -232,21 +232,15 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                           Expanded(
                             child: Text(
                               'Filters',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
+                              style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                           Text(
                             _filtersExpanded ? 'Hide' : 'Show',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
+                            style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                           ),
                           const SizedBox(width: 6),
@@ -269,90 +263,96 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
 
                                   final serviceDropdown =
                                       DropdownButtonFormField<String>(
-                                    isExpanded: true,
-                                    initialValue: _selectedService,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Service Type',
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                    items: _serviceTypes
-                                        .map(
-                                          (service) => DropdownMenuItem(
-                                            value: service,
-                                            child: Text(service),
-                                          ),
-                                        )
-                                        .toList(),
-                                    selectedItemBuilder: (context) {
-                                      return _serviceTypes
-                                          .map(
-                                            (service) => Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                service,
-                                                overflow: TextOverflow.ellipsis,
+                                        isExpanded: true,
+                                        initialValue: _selectedService,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Service Type',
+                                          border: OutlineInputBorder(),
+                                          isDense: true,
+                                        ),
+                                        items: _serviceTypes
+                                            .map(
+                                              (service) => DropdownMenuItem(
+                                                value: service,
+                                                child: Text(service),
                                               ),
-                                            ),
-                                          )
-                                          .toList();
-                                    },
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setState(() => _selectedService = value);
-                                    },
-                                  );
+                                            )
+                                            .toList(),
+                                        selectedItemBuilder: (context) {
+                                          return _serviceTypes
+                                              .map(
+                                                (service) => Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Text(
+                                                    service,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList();
+                                        },
+                                        onChanged: (value) {
+                                          if (value == null) return;
+                                          setState(
+                                            () => _selectedService = value,
+                                          );
+                                        },
+                                      );
 
                                   final sortDropdown =
                                       DropdownButtonFormField<String>(
-                                    isExpanded: true,
-                                    initialValue: _sortBy,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Sort By',
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'rating',
-                                        child: Text('Highest Rated'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'reviews',
-                                        child: Text('Most Reviews'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'distance',
-                                        child: Text('Closest'),
-                                      ),
-                                    ],
-                                    selectedItemBuilder: (context) {
-                                      const labels = {
-                                        'rating': 'Highest Rated',
-                                        'reviews': 'Most Reviews',
-                                        'distance': 'Closest',
-                                      };
-                                      return const [
-                                        'rating',
-                                        'reviews',
-                                        'distance',
-                                      ]
-                                          .map(
-                                            (v) => Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                labels[v] ?? v,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          )
-                                          .toList();
-                                    },
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setState(() => _sortBy = value);
-                                    },
-                                  );
+                                        isExpanded: true,
+                                        initialValue: _sortBy,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Sort By',
+                                          border: OutlineInputBorder(),
+                                          isDense: true,
+                                        ),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'rating',
+                                            child: Text('Highest Rated'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'reviews',
+                                            child: Text('Most Reviews'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'distance',
+                                            child: Text('Closest'),
+                                          ),
+                                        ],
+                                        selectedItemBuilder: (context) {
+                                          const labels = {
+                                            'rating': 'Highest Rated',
+                                            'reviews': 'Most Reviews',
+                                            'distance': 'Closest',
+                                          };
+                                          return const [
+                                                'rating',
+                                                'reviews',
+                                                'distance',
+                                              ]
+                                              .map(
+                                                (v) => Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Text(
+                                                    labels[v] ?? v,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList();
+                                        },
+                                        onChanged: (value) {
+                                          if (value == null) return;
+                                          setState(() => _sortBy = value);
+                                        },
+                                      );
 
                                   if (narrow) {
                                     return Column(
@@ -414,7 +414,8 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                             ),
                                           ),
                                           Switch(
-                                            value: _distanceEnabled &&
+                                            value:
+                                                _distanceEnabled &&
                                                 _currentZip != null &&
                                                 _currentZip!.isNotEmpty,
                                             onChanged: (value) {
@@ -440,9 +441,9 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
                                             ),
                                       ),
                                       const SizedBox(height: 8),
@@ -456,7 +457,8 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                               divisions: 19,
                                               label:
                                                   '${_distanceMiles.toStringAsFixed(0)} mi',
-                                              onChanged: (_distanceEnabled &&
+                                              onChanged:
+                                                  (_distanceEnabled &&
                                                       _currentZip != null &&
                                                       _currentZip!.isNotEmpty)
                                                   ? (value) {
@@ -483,9 +485,10 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                               ? const SizedBox(
                                                   width: 16,
                                                   height: 16,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
                                                 )
                                               : const Icon(Icons.my_location),
                                           label: const Text('Use my location'),
@@ -619,10 +622,15 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                   return matchesRating && matchesSearch;
                 }).toList();
 
-                // Client-side sorting
+                // Client-side sorting — boosted/featured contractors always first
                 contractors.sort((a, b) {
                   final dataA = a.data() as Map<String, dynamic>;
                   final dataB = b.data() as Map<String, dynamic>;
+
+                  // Featured / boosted contractors float to top
+                  final featA = dataA['featured'] == true ? 0 : 1;
+                  final featB = dataB['featured'] == true ? 0 : 1;
+                  if (featA != featB) return featA.compareTo(featB);
 
                   if (_sortBy == 'rating') {
                     final ratingA =
