@@ -438,7 +438,9 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
                                       const SizedBox(width: 8),
                                       Chip(
                                         label: const Text('Inactive'),
-                                        backgroundColor: Colors.grey[300],
+                                        backgroundColor: const Color(
+                                          0xFF142647,
+                                        ),
                                       ),
                                     ],
                                   ],

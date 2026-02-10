@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../theme/proserve_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,28 +21,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       description:
           'Connect with trusted professionals for all your home service needs.',
       icon: Icons.handshake,
-      color: Colors.deepPurple,
+      color: ProServeColors.accent,
     ),
     OnboardingPage(
       title: 'Post Your Project',
       description:
           'Share photos and details. Our AI helps estimate costs instantly.',
       icon: Icons.camera_alt,
-      color: Colors.blue,
+      color: ProServeColors.accent2,
     ),
     OnboardingPage(
       title: 'Get Matched Instantly',
       description:
           'Our smart algorithm finds the best contractors near you based on ratings, experience, and availability.',
       icon: Icons.auto_awesome,
-      color: Colors.orange,
+      color: ProServeColors.accent3,
     ),
     OnboardingPage(
       title: 'Secure Payments',
       description:
           'Pay safely with escrow protection. Money is only released when work is complete.',
       icon: Icons.verified_user,
-      color: Colors.green,
+      color: ProServeColors.accent,
     ),
   ];
 
@@ -58,9 +61,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return Scaffold(
+      backgroundColor: ProServeColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -68,7 +70,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: _completeOnboarding,
-                child: const Text('Skip'),
+                child: Text(
+                  'Skip',
+                  style: GoogleFonts.manrope(color: ProServeColors.muted),
+                ),
               ),
             ),
             Expanded(
@@ -100,8 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
-                              ? scheme.primary
-                              : scheme.outlineVariant,
+                              ? ProServeColors.accent
+                              : ProServeColors.line,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -111,6 +116,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ProServeColors.accent,
+                        foregroundColor: ProServeColors.bgDeep,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: () {
                         if (_currentPage == _pages.length - 1) {
                           _completeOnboarding();
@@ -125,6 +138,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         _currentPage == _pages.length - 1
                             ? 'Get Started'
                             : 'Next',
+                        style: GoogleFonts.manrope(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -164,15 +181,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 48),
           Text(
             page.title,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            style: GoogleFonts.bebasNeue(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: ProServeColors.ink,
+              letterSpacing: 1.0,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
             page.description,
-            style: TextStyle(
+            style: GoogleFonts.manrope(
               fontSize: 16,
-              color: Colors.grey.shade600,
+              color: ProServeColors.muted,
               height: 1.5,
             ),
             textAlign: TextAlign.center,

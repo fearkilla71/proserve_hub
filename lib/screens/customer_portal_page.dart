@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme/proserve_theme.dart';
 import 'service_select_page.dart';
 import 'nearby_contractors_page.dart';
 import 'job_detail_page.dart';
@@ -286,8 +288,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     String? assetSvg,
     VoidCallback? onTap,
   }) {
-    final scheme = Theme.of(context).colorScheme;
-
     return InkWell(
       onTap: () {
         final handler = onTap;
@@ -311,18 +311,20 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               borderRadius: BorderRadius.circular(16),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
+                  color: ProServeColors.cardElevated,
+                  border: Border.all(color: ProServeColors.line),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: assetSvg == null
-                        ? Icon(icon, color: scheme.onSurfaceVariant, size: 32)
+                        ? Icon(icon, color: ProServeColors.accent2, size: 32)
                         : SvgPicture.asset(
                             assetSvg,
                             fit: BoxFit.contain,
-                            colorFilter: ColorFilter.mode(
-                              scheme.onSurfaceVariant,
+                            colorFilter: const ColorFilter.mode(
+                              ProServeColors.accent2,
                               BlendMode.srcIn,
                             ),
                           ),
@@ -340,9 +342,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  style: GoogleFonts.manrope(
                     fontWeight: FontWeight.w700,
                     height: 1.1,
+                    color: ProServeColors.ink,
                   ),
                 ),
               ),
@@ -354,23 +357,28 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildHomeHero(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final gradient = LinearGradient(
-      colors: [
-        scheme.primaryContainer,
-        scheme.primaryContainer.withValues(alpha: 0.6),
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
     return Container(
       decoration: BoxDecoration(
-        gradient: gradient,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0E2A1E), Color(0xFF0A1E38)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: ProServeColors.accent.withValues(alpha: 0.15),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ProServeColors.accent.withValues(alpha: 0.1),
+            blurRadius: 30,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: [
+          // Orb top-right
           Positioned(
             right: -30,
             top: -30,
@@ -379,10 +387,11 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: scheme.onPrimaryContainer.withValues(alpha: 0.08),
+                color: ProServeColors.accent2.withValues(alpha: 0.1),
               ),
             ),
           ),
+          // Orb bottom-left
           Positioned(
             left: -20,
             bottom: -30,
@@ -391,7 +400,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: scheme.onPrimaryContainer.withValues(alpha: 0.06),
+                color: ProServeColors.accent.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -401,24 +410,26 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Book a pro in minutes',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: scheme.onPrimaryContainer,
+                  'BOOK A PRO IN MINUTES',
+                  style: GoogleFonts.bebasNeue(
+                    fontSize: 26,
+                    letterSpacing: 1.5,
+                    color: ProServeColors.ink,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Tell us what you need, compare quotes, and track the job here.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
+                  style: GoogleFonts.manrope(
+                    fontSize: 14,
+                    color: ProServeColors.muted,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [
+                  children: const [
                     _HeroPill(label: 'Verified pros'),
                     _HeroPill(label: 'Upfront pricing'),
                     _HeroPill(label: 'Project tracking'),
@@ -428,16 +439,35 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Row(
                   children: [
                     Expanded(
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ServiceSelectPage(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: ProServeColors.ctaGradient,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: ProServeColors.accent.withValues(
+                                alpha: 0.3,
+                              ),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
                             ),
-                          );
-                        },
-                        child: const Text('Start a request'),
+                          ],
+                        ),
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ServiceSelectPage(),
+                              ),
+                            );
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                          ),
+                          child: const Text('Start a request'),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -447,11 +477,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                           setState(() => _tabIndex = 1);
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: scheme.onPrimaryContainer,
-                          side: BorderSide(
-                            color: scheme.onPrimaryContainer.withValues(
-                              alpha: 0.35,
-                            ),
+                          foregroundColor: ProServeColors.ink,
+                          side: BorderSide(color: ProServeColors.lineStrong),
+                          backgroundColor: ProServeColors.card.withValues(
+                            alpha: 0.5,
                           ),
                         ),
                         child: const Text('Browse pros'),
@@ -468,13 +497,11 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildNextActionCard(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: scheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+        border: Border.all(color: ProServeColors.line),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -484,10 +511,16 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.12),
+                gradient: ProServeColors.ctaGradient,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: ProServeColors.accent.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                  ),
+                ],
               ),
-              child: Icon(Icons.flash_on, color: scheme.primary),
+              child: const Icon(Icons.flash_on, color: Color(0xFF041016)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -496,15 +529,18 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 children: [
                   Text(
                     'Next action',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
+                      color: ProServeColors.ink,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Kick off a new request or check your messages.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: ProServeColors.muted,
                     ),
                   ),
                 ],
@@ -518,6 +554,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   MaterialPageRoute(builder: (_) => const ServiceSelectPage()),
                 );
               },
+              style: FilledButton.styleFrom(
+                backgroundColor: ProServeColors.accent.withValues(alpha: 0.15),
+                foregroundColor: ProServeColors.accent,
+              ),
               child: const Text('Start'),
             ),
           ],
@@ -533,18 +573,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    final scheme = Theme.of(context).colorScheme;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Ink(
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerLow,
+          color: ProServeColors.card,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: scheme.outlineVariant.withValues(alpha: 0.35),
-          ),
+          border: Border.all(color: ProServeColors.line),
         ),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -554,10 +590,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.12),
+                color: ProServeColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: scheme.primary),
+              child: Icon(icon, color: ProServeColors.accent),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -566,15 +602,18 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
+                      color: ProServeColors.ink,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: ProServeColors.muted,
                     ),
                   ),
                 ],
@@ -1404,18 +1443,19 @@ class _HeroPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: scheme.onPrimaryContainer.withValues(alpha: 0.12),
+        color: ProServeColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        style: GoogleFonts.manrope(
+          fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: scheme.onPrimaryContainer,
+          color: ProServeColors.accent,
         ),
       ),
     );

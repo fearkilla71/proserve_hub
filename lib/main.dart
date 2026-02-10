@@ -16,6 +16,7 @@ import 'package:proserve_hub/services/fcm_service.dart';
 import 'package:proserve_hub/services/error_logger.dart';
 import 'package:proserve_hub/widgets/offline_banner.dart';
 import 'package:proserve_hub/screens/verify_contact_info_page.dart';
+import 'package:proserve_hub/theme/proserve_theme.dart';
 import 'screens/recommended_contractors_page.dart';
 import 'screens/landing_page.dart';
 
@@ -58,7 +59,7 @@ class _AppLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF171C3A),
+      color: ProServeColors.bg,
       alignment: Alignment.center,
       child: SafeArea(
         child: Column(
@@ -69,8 +70,11 @@ class _AppLoadingSkeleton extends StatelessWidget {
               height: 110,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: ProServeColors.accent.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: ProServeColors.accent.withValues(alpha: 0.25),
+                ),
               ),
               child: Image.asset('assets/icon/app_icon.png'),
             ),
@@ -80,14 +84,14 @@ class _AppLoadingSkeleton extends StatelessWidget {
               height: 42,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: ProServeColors.accent,
               ),
             ),
             const SizedBox(height: 18),
             const Text(
               'Just a moment…',
               style: TextStyle(
-                color: Colors.white,
+                color: ProServeColors.ink,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -340,188 +344,13 @@ class ProServeHubApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Brand palette inspired by the app icon.
-    const brandBlue = Color(0xFF1E6FDB);
-    const brandOrange = Color(0xFFFFB300);
-
-    final lightScheme =
-        ColorScheme.fromSeed(
-          seedColor: brandBlue,
-          brightness: Brightness.light,
-        ).copyWith(
-          tertiary: brandOrange,
-          onTertiary: Color(0xFF2A1B00),
-          tertiaryContainer: Color(0xFFFFE1A6),
-          onTertiaryContainer: Color(0xFF2A1B00),
-        );
-
-    final darkScheme =
-        ColorScheme.fromSeed(
-          seedColor: brandBlue,
-          brightness: Brightness.dark,
-        ).copyWith(
-          tertiary: Color(0xFFFFC857),
-          onTertiary: Color(0xFF2A1B00),
-          tertiaryContainer: Color(0xFF5A3A00),
-          onTertiaryContainer: Color(0xFFFFE1A6),
-        );
-
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'ProServe Hub',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: lightScheme,
-        scaffoldBackgroundColor: lightScheme.surface,
-        appBarTheme: AppBarTheme(
-          centerTitle: false,
-          backgroundColor: lightScheme.surface,
-          foregroundColor: lightScheme.onSurface,
-          iconTheme: IconThemeData(color: lightScheme.onSurface),
-          actionsIconTheme: IconThemeData(color: lightScheme.onSurface),
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          surfaceTintColor: lightScheme.surfaceTint,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: lightScheme.onSurface,
-          ),
-          toolbarTextStyle: TextStyle(color: lightScheme.onSurface),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: lightScheme.surfaceContainerHighest,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: lightScheme.outlineVariant),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: lightScheme.primary, width: 2),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        snackBarTheme: SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: lightScheme.inverseSurface,
-          contentTextStyle: TextStyle(color: lightScheme.onInverseSurface),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          color: lightScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          },
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: darkScheme,
-        scaffoldBackgroundColor: darkScheme.surface,
-        appBarTheme: AppBarTheme(
-          centerTitle: false,
-          backgroundColor: darkScheme.surface,
-          foregroundColor: darkScheme.onSurface,
-          iconTheme: IconThemeData(color: darkScheme.onSurface),
-          actionsIconTheme: IconThemeData(color: darkScheme.onSurface),
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          surfaceTintColor: darkScheme.surfaceTint,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: darkScheme.onSurface,
-          ),
-          toolbarTextStyle: TextStyle(color: darkScheme.onSurface),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: darkScheme.surfaceContainerHighest,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: darkScheme.outlineVariant),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: darkScheme.primary, width: 2),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        snackBarTheme: SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: darkScheme.inverseSurface,
-          contentTextStyle: TextStyle(color: darkScheme.onInverseSurface),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          color: darkScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          },
-        ),
-      ),
+      themeMode: ThemeMode.dark,
+      darkTheme: ProServeTheme.darkTheme(),
+      theme: ProServeTheme.darkTheme(),
       routes: {
         '/recommended': (context) {
           final jobId = ModalRoute.of(context)!.settings.arguments as String;

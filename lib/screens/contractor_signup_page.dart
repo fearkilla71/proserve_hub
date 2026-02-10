@@ -100,7 +100,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       prefixIcon: icon == null ? null : Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFFF4F6FA),
+      fillColor: const Color(0xFF0C172C),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -549,14 +549,14 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 width: 140,
                 height: 140,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF4EFEA),
+                  color: Color(0xFF101E38),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
                   child: Icon(
                     Icons.phone_iphone,
                     size: 72,
-                    color: Color(0xFF1E2749),
+                    color: Color(0xFF36B3FF),
                   ),
                 ),
               ),
@@ -603,7 +603,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 width: 140,
                 height: 140,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF4EFEA),
+                  color: Color(0xFF101E38),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -627,7 +627,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        color: const Color(0xFFE9EEF6),
+                        color: const Color(0xFF101E38),
                         child: Image.asset(
                           'assets/pitch/zipcode_card.png',
                           fit: BoxFit.cover,
@@ -653,7 +653,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFF0C172C),
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
@@ -866,7 +866,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF9FAFE),
+                      color: Color(0xFF0C172C),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(28),
                         topRight: Radius.circular(28),

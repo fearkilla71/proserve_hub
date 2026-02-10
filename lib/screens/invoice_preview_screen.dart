@@ -602,7 +602,7 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
                         '${widget.draft.invoiceNumber.isEmpty ? 'invoice' : widget.draft.invoiceNumber}.pdf',
                   )
                 : Container(
-                    color: const Color(0xFFF3F5F8),
+                    color: const Color(0xFF0C172C),
                     alignment: Alignment.center,
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 150),
                     child: ConstrainedBox(
@@ -832,7 +832,7 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      tileColor: const Color(0xFFF6F6F6),
+                      tileColor: const Color(0xFF101E38),
                       title: const Text(
                         'Record Payment',
                         style: TextStyle(fontWeight: FontWeight.w900),

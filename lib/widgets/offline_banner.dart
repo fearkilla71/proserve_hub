@@ -59,16 +59,16 @@ class _OfflineBannerState extends State<OfflineBanner> {
             right: 0,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              color: Colors.red.shade700,
+              color: const Color(0xFF3D1313),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wifi_off, color: Colors.white, size: 18),
+                  Icon(Icons.wifi_off, color: Color(0xFFFF6B6B), size: 18),
                   SizedBox(width: 8),
                   Text(
                     'No internet connection',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: Color(0xFFE6F1FF), fontSize: 14),
                   ),
                 ],
               ),

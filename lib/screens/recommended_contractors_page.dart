@@ -1746,7 +1746,7 @@ class ContractorProfilePage extends StatelessWidget {
                         child: url.isNotEmpty
                             ? Image.network(url, fit: BoxFit.cover, width: 150)
                             : Container(
-                                color: Colors.grey[300],
+                                color: const Color(0xFF101E38),
                                 child: const Icon(Icons.image),
                               ),
                       ),

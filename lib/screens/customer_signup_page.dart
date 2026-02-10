@@ -92,7 +92,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       prefixIcon: icon == null ? null : Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFFF4F6FA),
+      fillColor: const Color(0xFF0C172C),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -113,17 +113,17 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     final passwordValue = password.text;
     if (_step == 0) {
       if (emailValue.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email is required.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Email is required.')));
         return false;
       }
     }
     if (_step == 1) {
       if (passwordValue.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password is required.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Password is required.')));
         return false;
       }
       if (passwordValue.length < 6) {
@@ -225,7 +225,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFE9EEF6),
+                color: const Color(0xFF101E38),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
@@ -234,12 +234,12 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     width: 48,
                     height: 48,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: Color(0xFF142647),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.handshake_outlined,
-                      color: Color(0xFF1E2749),
+                      color: Color(0xFF22E39B),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -315,7 +315,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF9FAFE),
+                      color: Color(0xFF0C172C),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(28),
                         topRight: Radius.circular(28),
@@ -418,8 +418,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                                         ),
                                       );
                                     },
-                              child:
-                                  const Text('Already have an account? Sign in'),
+                              child: const Text(
+                                'Already have an account? Sign in',
+                              ),
                             ),
                           ),
                         ],

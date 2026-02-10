@@ -105,7 +105,7 @@ class _ContractorSignupPitchPageState extends State<ContractorSignupPitchPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(22, 26, 22, 16),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF9FAFE),
+                  color: Color(0xFF0C172C),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(28),
                     topRight: Radius.circular(28),

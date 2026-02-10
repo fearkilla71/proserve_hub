@@ -890,9 +890,11 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
               child: FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: canProceed
-                      ? const Color(0xFF00A8C6)
-                      : Colors.grey[300],
-                  foregroundColor: canProceed ? Colors.white : Colors.grey[600],
+                      ? const Color(0xFF22E39B)
+                      : const Color(0xFF142647),
+                  foregroundColor: canProceed
+                      ? const Color(0xFF041016)
+                      : const Color(0xFF9FB2D4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
