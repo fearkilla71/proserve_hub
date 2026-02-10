@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/contractor_badge.dart';
+import 'badge_widget.dart';
+
 class ContractorCardData {
   const ContractorCardData({
     required this.displayName,
@@ -24,6 +27,7 @@ class ContractorCardData {
     required this.bannerIcon,
     required this.avatarGlow,
     required this.latestReview,
+    this.totalJobsCompleted = 0,
   });
 
   final String displayName;
@@ -46,6 +50,7 @@ class ContractorCardData {
   final String bannerIcon;
   final bool avatarGlow;
   final String latestReview;
+  final int totalJobsCompleted;
 }
 
 class ContractorCard extends StatelessWidget {
@@ -118,26 +123,7 @@ class ContractorCard extends StatelessWidget {
                 left: 0,
                 right: 0,
                 top: 0,
-                child: Container(
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.2),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Icon(
-                        _bannerIconFromKey(data.bannerIcon),
-                        size: 16,
-                        color: accent,
-                      ),
-                    ),
-                  ),
-                ),
+                child: _StatusBanner(data: data, accent: accent),
               ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -231,31 +217,46 @@ class ContractorCard extends StatelessWidget {
                   ),
                   if (data.badges.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: data.badges.take(5).map((badge) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            badge,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                          ),
-                        );
-                      }).toList(),
+                    BadgeRow(
+                      badgeIds: data.badges,
+                      maxVisible: 5,
+                      size: BadgeSize.small,
                     ),
                   ],
+                  // Achievement badges (auto-earned)
+                  Builder(
+                    builder: (context) {
+                      final earned = computeEarnedAchievements(
+                        totalJobsCompleted: data.totalJobsCompleted,
+                        reviewCount: data.reviewCount,
+                        avgRating: data.ratingValue,
+                      );
+                      if (earned.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 10),
+                          Text(
+                            'ACHIEVEMENTS',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                  color: scheme.onSurfaceVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          BadgeRow(
+                            badgeIds: earned,
+                            maxVisible: 4,
+                            size: BadgeSize.small,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -315,6 +316,116 @@ class ContractorCard extends StatelessWidget {
       default:
         return Icons.auto_awesome;
     }
+  }
+}
+
+/// ── Status Banner ────────────────────────────────────────────────────
+/// Shows the contractor's top achievement tier + status line.
+/// Meaningful content: tier level, jobs completed, response speed.
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.data, required this.accent});
+
+  final ContractorCardData data;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final earned = computeEarnedAchievements(
+      totalJobsCompleted: data.totalJobsCompleted,
+      reviewCount: data.reviewCount,
+      avgRating: data.ratingValue,
+    );
+
+    // Find highest tier earned
+    BadgeTier? highestTier;
+    String tierText = '';
+    for (final id in earned.reversed) {
+      final b = badgeById(id);
+      if (b != null && b.tier != null) {
+        final t = b.tier!;
+        if (highestTier == null || t.index > highestTier.index) {
+          highestTier = t;
+        }
+      }
+    }
+
+    if (highestTier != null) {
+      tierText = '${tierLabel(highestTier)} Pro';
+    }
+
+    // Build status items
+    final items = <Widget>[];
+    if (tierText.isNotEmpty) {
+      items.add(
+        _bannerChip(icon: Icons.military_tech, text: tierText, color: accent),
+      );
+    }
+    if (data.totalJobsCompleted > 0) {
+      items.add(
+        _bannerChip(
+          icon: Icons.check_circle_outline,
+          text: '${data.totalJobsCompleted} jobs',
+          color: accent,
+        ),
+      );
+    }
+    items.add(
+      Icon(
+        ContractorCard._bannerIconFromKey(data.bannerIcon),
+        size: 14,
+        color: accent,
+      ),
+    );
+
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.2),
+            accent.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            if (items.length > 1) ...[
+              ...items
+                  .take(items.length - 1)
+                  .expand((w) => [w, const SizedBox(width: 10)]),
+            ],
+            const Spacer(),
+            items.last,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bannerChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: color,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
   }
 }
 

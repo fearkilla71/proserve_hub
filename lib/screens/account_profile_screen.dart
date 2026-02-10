@@ -8,6 +8,8 @@ import '../services/location_service.dart';
 import '../utils/zip_locations.dart';
 import '../widgets/contractor_card.dart';
 import '../widgets/skeleton_loader.dart';
+import '../models/contractor_badge.dart';
+import '../widgets/badge_widget.dart';
 
 class AccountProfileScreen extends StatefulWidget {
   const AccountProfileScreen({super.key});
@@ -41,6 +43,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   String _bannerIcon = 'spark';
   bool _avatarGlow = false;
   List<String> _selectedBadges = [];
+  int _totalJobsCompleted = 0;
+  int _reviewCount = 0;
+  double _avgRating = 0.0;
 
   bool _loading = true;
   bool _saving = false;
@@ -65,16 +70,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     Color(0xFFFFA726),
     Color(0xFF4A1D2D),
     Color(0xFFF472B6),
-  ];
-
-  final List<String> _badgeOptions = const [
-    'Top Rated',
-    'Family Owned',
-    'Background Checked',
-    'Licensed',
-    'Insured',
-    'Eco Friendly',
-    'Quick Response',
   ];
 
   @override
@@ -147,6 +142,16 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _avatarGlow = data['avatarGlow'] as bool? ?? _avatarGlow;
         _selectedBadges =
             (data['badges'] as List?)?.whereType<String>().toList() ?? [];
+        _totalJobsCompleted =
+            (data['totalJobsCompleted'] as num?)?.toInt() ?? 0;
+        _reviewCount =
+            (data['reviewCount'] as num?)?.toInt() ??
+            (data['totalReviews'] as num?)?.toInt() ??
+            0;
+        _avgRating =
+            (data['avgRating'] as num?)?.toDouble() ??
+            (data['averageRating'] as num?)?.toDouble() ??
+            0.0;
       }
     } catch (_) {
       // Keep form empty if load fails.
@@ -474,7 +479,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       yearsExp: int.tryParse(_yearsExpController.text.trim()) ?? 7,
       badges: _selectedBadges.isNotEmpty
           ? _selectedBadges
-          : ['Licensed', 'Insured', 'Top Rated'],
+          : ['licensed', 'insured', 'top_rated'],
       themeKey: _cardTheme,
       gradientStart: gradientStart,
       gradientEnd: gradientEnd,
@@ -486,6 +491,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       bannerIcon: _bannerIcon,
       avatarGlow: _avatarGlow,
       latestReview: 'Quick response and flawless finish.',
+      totalJobsCompleted: _totalJobsCompleted,
     );
   }
 
@@ -504,7 +510,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     const textures = ['none', 'dots', 'grid', 'waves'];
     const bannerIcons = ['spark', 'bolt', 'shield', 'star', 'check'];
 
-    final badgePool = List<String>.from(_badgeOptions)..shuffle(rand);
+    final badgePool = profileBadges.map((b) => b.id).toList()..shuffle(rand);
     final badgeCount = 2 + rand.nextInt(3);
 
     setState(() {
@@ -529,6 +535,21 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       _avatarGlow = rand.nextBool();
       _selectedBadges = badgePool.take(badgeCount).toList();
     });
+  }
+
+  Widget _bannerIconChip(String key, String label, IconData icon) {
+    final selected = _bannerIcon == key;
+    return ChoiceChip(
+      selected: selected,
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
+      ),
+      onSelected: (isSelected) {
+        if (!isSelected) return;
+        setState(() => _bannerIcon = key);
+      },
+    );
   }
 
   Widget _optionGroup({required String title, required List<Widget> children}) {
@@ -994,94 +1015,210 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             ],
                           ),
                           _optionGroup(
-                            title: 'Banner',
+                            title: 'Status Banner',
                             children: [
+                              Text(
+                                'Shows your tier level, jobs completed, and a decorative icon at the top of your card.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
                               SwitchListTile(
                                 value: _showBanner,
                                 onChanged: (value) {
                                   setState(() => _showBanner = value);
                                 },
-                                title: const Text('Top banner strip'),
+                                title: const Text('Show status banner'),
+                                subtitle: const Text(
+                                  'Displays your rank and stats',
+                                ),
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              if (_showBanner)
+                              if (_showBanner) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Banner accent icon',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                ),
+                                const SizedBox(height: 8),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
                                   children: [
-                                    ChoiceChip(
-                                      label: const Text('Spark'),
-                                      selected: _bannerIcon == 'spark',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _bannerIcon = 'spark');
-                                      },
+                                    _bannerIconChip(
+                                      'spark',
+                                      'Spark',
+                                      Icons.auto_awesome,
                                     ),
-                                    ChoiceChip(
-                                      label: const Text('Bolt'),
-                                      selected: _bannerIcon == 'bolt',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _bannerIcon = 'bolt');
-                                      },
+                                    _bannerIconChip('bolt', 'Bolt', Icons.bolt),
+                                    _bannerIconChip(
+                                      'shield',
+                                      'Shield',
+                                      Icons.shield_outlined,
                                     ),
-                                    ChoiceChip(
-                                      label: const Text('Shield'),
-                                      selected: _bannerIcon == 'shield',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _bannerIcon = 'shield');
-                                      },
+                                    _bannerIconChip(
+                                      'star',
+                                      'Star',
+                                      Icons.star_outline,
                                     ),
-                                    ChoiceChip(
-                                      label: const Text('Star'),
-                                      selected: _bannerIcon == 'star',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _bannerIcon = 'star');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Check'),
-                                      selected: _bannerIcon == 'check',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _bannerIcon = 'check');
-                                      },
+                                    _bannerIconChip(
+                                      'check',
+                                      'Verified',
+                                      Icons.verified_outlined,
                                     ),
                                   ],
                                 ),
+                              ],
                             ],
                           ),
                           _optionGroup(
-                            title: 'Badges',
+                            title: 'Profile Badges',
                             children: [
+                              Text(
+                                'Select badges that represent your business. These appear on your public card.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
                               Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _badgeOptions.map((badge) {
-                                  final selected = _selectedBadges.contains(
-                                    badge,
-                                  );
-                                  return FilterChip(
-                                    label: Text(badge),
-                                    selected: selected,
-                                    onSelected: (isSelected) {
+                                spacing: 10,
+                                runSpacing: 12,
+                                children: profileBadges.map((badge) {
+                                  final selected =
+                                      _selectedBadges.contains(badge.id) ||
+                                      _selectedBadges.contains(badge.label);
+                                  return GestureDetector(
+                                    onTap: () {
                                       setState(() {
-                                        if (isSelected) {
+                                        if (selected) {
+                                          _selectedBadges = _selectedBadges
+                                              .where(
+                                                (id) =>
+                                                    id != badge.id &&
+                                                    id != badge.label,
+                                              )
+                                              .toList();
+                                        } else {
                                           _selectedBadges = [
                                             ..._selectedBadges,
-                                            badge,
+                                            badge.id,
                                           ];
-                                        } else {
-                                          _selectedBadges = _selectedBadges
-                                              .where((item) => item != badge)
-                                              .toList();
                                         }
                                       });
                                     },
+                                    onLongPress: () =>
+                                        showBadgeDetail(context, badge),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: selected
+                                            ? badge.color.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHighest
+                                                  .withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: selected
+                                              ? badge.color.withValues(
+                                                  alpha: 0.5,
+                                                )
+                                              : Colors.transparent,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          BadgeWidget(
+                                            badge: badge,
+                                            size: BadgeSize.small,
+                                            showLabel: false,
+                                            earned: selected,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            badge.label,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: selected
+                                                  ? badge.color
+                                                  : Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   );
                                 }).toList(),
+                              ),
+                            ],
+                          ),
+                          _optionGroup(
+                            title: 'Achievements',
+                            children: [
+                              Text(
+                                'Badges earned automatically based on your performance. Complete jobs and earn reviews to unlock more!',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
+                              Builder(
+                                builder: (context) {
+                                  final earnedIds = computeEarnedAchievements(
+                                    totalJobsCompleted: _totalJobsCompleted,
+                                    reviewCount: _reviewCount,
+                                    avgRating: _avgRating,
+                                  );
+                                  final allAchievements = achievementBadges;
+                                  return Wrap(
+                                    spacing: 10,
+                                    runSpacing: 14,
+                                    children: allAchievements.map((badge) {
+                                      final isEarned = earnedIds.contains(
+                                        badge.id,
+                                      );
+                                      return GestureDetector(
+                                        onTap: () => showBadgeDetail(
+                                          context,
+                                          badge,
+                                          earned: isEarned,
+                                        ),
+                                        child: BadgeWidget(
+                                          badge: badge,
+                                          size: BadgeSize.medium,
+                                          showLabel: true,
+                                          earned: isEarned,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                },
                               ),
                             ],
                           ),

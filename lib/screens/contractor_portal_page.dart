@@ -501,6 +501,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             .where((badge) => badge.isNotEmpty)
             .toList() ??
         <String>[];
+    final totalJobsRaw = data?['totalJobsCompleted'];
+    final totalJobsCompleted = totalJobsRaw is num ? totalJobsRaw.toInt() : 0;
 
     final reviewStream = FirebaseFirestore.instance
         .collection('reviews')
@@ -539,6 +541,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             bannerIcon: bannerIcon,
             avatarGlow: avatarGlow,
             latestReview: latestReview,
+            totalJobsCompleted: totalJobsCompleted,
           ),
           onEdit: () {
             Navigator.push(
