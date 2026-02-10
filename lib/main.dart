@@ -22,6 +22,7 @@ import 'l10n/app_localizations.dart';
 import 'screens/landing_page.dart';
 import 'router/app_router.dart';
 import 'services/service_locator.dart';
+import 'state/app_state.dart';
 
 // Global navigator key for deep linking
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -372,96 +373,123 @@ void main() async {
   );
 }
 
-class ProServeHubApp extends StatelessWidget {
+class ProServeHubApp extends StatefulWidget {
   const ProServeHubApp({super.key});
+
+  @override
+  State<ProServeHubApp> createState() => _ProServeHubAppState();
+}
+
+class _ProServeHubAppState extends State<ProServeHubApp> {
+  late final AppState _appState;
 
   static final _router = createRouter();
 
   @override
+  void initState() {
+    super.initState();
+    _appState = AppState();
+  }
+
+  @override
+  void dispose() {
+    _appState.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: _router,
-      title: 'ProServe Hub',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      darkTheme: ProServeTheme.darkTheme(),
-      theme: ProServeTheme.darkTheme(),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en')],
+    return AppStateProvider(
+      notifier: _appState,
+      child: MaterialApp.router(
+        routerConfig: _router,
+        title: 'ProServe Hub',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        darkTheme: ProServeTheme.darkTheme(),
+        theme: ProServeTheme.darkTheme(),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en')],
+      ),
     );
   }
 }
 
-class RootGate extends StatefulWidget {
+class RootGate extends StatelessWidget {
   const RootGate({super.key});
 
   @override
-  State<RootGate> createState() => _RootGateState();
-}
+  Widget build(BuildContext context) {
+    final state = AppState.of(context);
 
-class _RootGateState extends State<RootGate> {
-  String? _cachedUid;
-  Future<Widget>? _homeFuture;
+    if (state.isLoading) {
+      return const Scaffold(body: _AppLoadingSkeleton());
+    }
 
-  Future<Widget> _resolveHome(User user) async {
+    if (!state.isSignedIn) {
+      return const LandingPage();
+    }
+
     // Require verified email + phone before allowing portal access.
-    // Email verification is stored in FirebaseAuth; phone verification is stored
-    // in Firestore (`users/{uid}.phoneVerified` or `phoneVerifiedAt`).
-    try {
-      await user.reload();
-    } catch (_) {
-      // Best-effort.
-    }
-
-    Map<String, dynamic> userData = const <String, dynamic>{};
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      userData = snap.data() ?? <String, dynamic>{};
-    } catch (_) {
-      // Best-effort.
-    }
-
-    final phoneVerified =
-        (userData['phoneVerified'] as bool?) == true ||
-        userData['phoneVerifiedAt'] != null;
-    if (!user.emailVerified || !phoneVerified) {
+    final user = state.user!;
+    if (!user.emailVerified || !state.phoneVerified) {
       return const VerifyContactInfoPage();
     }
 
+    if (state.isCustomer) return const CustomerPortalPage();
+    if (state.isContractor) return const ContractorPortalPage();
+
+    // Unknown role — prompt sign-out.
+    return _UnknownRoleScreen(uid: user.uid);
+  }
+}
+
+/// Shown when a user is signed in but has no recognisable role.
+class _UnknownRoleScreen extends StatefulWidget {
+  const _UnknownRoleScreen({required this.uid});
+  final String uid;
+
+  @override
+  State<_UnknownRoleScreen> createState() => _UnknownRoleScreenState();
+}
+
+class _UnknownRoleScreenState extends State<_UnknownRoleScreen> {
+  bool _checked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // One-time backward-compat fix for old contractor accounts.
+    _checkLegacyContractor();
+  }
+
+  Future<void> _checkLegacyContractor() async {
     try {
-      final role = (userData['role'] as String?)?.trim().toLowerCase();
-
-      if (role == 'customer') return const CustomerPortalPage();
-      if (role == 'contractor') return const ContractorPortalPage();
-
-      // Backward-compatible fallback for older contractor accounts that have a
-      // `contractors/{uid}` doc but no `users/{uid}.role`.
-      final contractorSnap = await FirebaseFirestore.instance
+      final snap = await FirebaseFirestore.instance
           .collection('contractors')
-          .doc(user.uid)
+          .doc(widget.uid)
           .get();
-      if (contractorSnap.exists) {
-        try {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .set({'role': 'contractor'}, SetOptions(merge: true));
-        } catch (_) {
-          // Best-effort.
-        }
-        return const ContractorPortalPage();
+      if (snap.exists) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.uid)
+            .set({'role': 'contractor'}, SetOptions(merge: true));
+        // AppState will pick up the Firestore change automatically.
       }
     } catch (_) {
-      // Fall through to unknown-role UI.
+      // Best-effort.
     }
+    if (mounted) setState(() => _checked = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_checked) return const Scaffold(body: _AppLoadingSkeleton());
 
     return Scaffold(
       appBar: AppBar(title: const Text('ProServe Hub')),
@@ -487,40 +515,6 @@ class _RootGateState extends State<RootGate> {
           ],
         ),
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snap) {
-        final user = snap.data;
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: _AppLoadingSkeleton());
-        }
-
-        if (user == null) {
-          _cachedUid = null;
-          _homeFuture = null;
-          return const LandingPage();
-        }
-
-        if (_cachedUid != user.uid || _homeFuture == null) {
-          _cachedUid = user.uid;
-          _homeFuture = _resolveHome(user);
-        }
-
-        return FutureBuilder<Widget>(
-          future: _homeFuture,
-          builder: (context, homeSnap) {
-            if (!homeSnap.hasData) {
-              return const Scaffold(body: _AppLoadingSkeleton());
-            }
-            return homeSnap.data!;
-          },
-        );
-      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -13,6 +14,13 @@ class ErrorLogger {
 
   /// Max log size before rotation (500 KB).
   static const int _maxBytes = 500 * 1024;
+
+  /// Whether Firebase Crashlytics is available on the current platform.
+  static bool get _crashlyticsSupported =>
+      kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 
   File? _logFile;
   File? _oldLogFile;
@@ -98,6 +106,19 @@ class ErrorLogger {
     );
 
     await _write(message);
+
+    // Forward to Crashlytics in release builds.
+    if (_crashlyticsSupported && !kDebugMode) {
+      try {
+        await FirebaseCrashlytics.instance.recordError(
+          error,
+          stack,
+          reason: context,
+        );
+      } catch (_) {
+        // Best-effort — never crash the crash reporter.
+      }
+    }
   }
 
   Future<void> logFlutterError(FlutterErrorDetails details) async {
@@ -110,6 +131,15 @@ class ErrorLogger {
     );
 
     await _write(message);
+
+    // Forward to Crashlytics in release builds.
+    if (_crashlyticsSupported && !kDebugMode) {
+      try {
+        await FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      } catch (_) {
+        // Best-effort.
+      }
+    }
   }
 
   Future<void> logMessage(String message, {String? context}) async {
