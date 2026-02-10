@@ -411,28 +411,215 @@
         border-radius: 24px;
         background: rgba(8, 16, 34, 0.75);
         border: 1px solid rgba(54, 179, 255, 0.2);
-        height: 320px;
         overflow: hidden;
+        padding: 20px;
       }
 
-      .signal-node {
+      .signal-map svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .signal-map .edge {
+        stroke-dasharray: 8 6;
+        animation: dashFlow 2.5s linear infinite;
+      }
+
+      .signal-map .node-glow {
+        animation: nodePulse 4s ease-in-out infinite;
+      }
+
+      .signal-map .node-glow:nth-child(2n) { animation-delay: -1.5s; }
+      .signal-map .node-glow:nth-child(3n) { animation-delay: -3s; }
+
+      .signal-map .node-label {
+        font-family: 'Manrope', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        fill: var(--ink);
+        text-anchor: middle;
+      }
+
+      .signal-map .node-sub {
+        font-family: 'Manrope', sans-serif;
+        font-size: 8.5px;
+        fill: var(--muted);
+        text-anchor: middle;
+      }
+
+      .signal-map .packet {
+        animation: packetMove 3s ease-in-out infinite;
+      }
+
+      .signal-map .packet:nth-child(2n) { animation-delay: -1.5s; }
+
+      @keyframes dashFlow {
+        to { stroke-dashoffset: -28; }
+      }
+
+      @keyframes packetMove {
+        0%, 100% { opacity: 0.3; offset-distance: 0%; }
+        50% { opacity: 1; offset-distance: 100%; }
+      }
+
+      /* Proof section upgrades */
+      .proof-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .proof-stat {
+        text-align: center;
+        padding: 18px 10px;
+        border-radius: 18px;
+        background: rgba(6, 14, 30, 0.8);
+        border: 1px solid rgba(34, 227, 155, 0.15);
+      }
+
+      .proof-stat .big {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.4rem;
+        background: linear-gradient(120deg, #22e39b, #36b3ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+      }
+
+      .proof-stat .label {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      .testimonial-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .testimonial {
+        background: #040914;
+        border-radius: 22px;
+        padding: 22px;
+        border: 1px solid rgba(34, 227, 155, 0.18);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+      }
+
+      .testimonial:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(34, 227, 155, 0.12);
+      }
+
+      .testimonial::before {
+        content: '\201C';
         position: absolute;
-        width: 12px;
-        height: 12px;
+        top: -8px;
+        left: 14px;
+        font-size: 5rem;
+        font-family: Georgia, serif;
+        color: rgba(34, 227, 155, 0.12);
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .testimonial .stars {
+        display: flex;
+        gap: 3px;
+        margin-bottom: 10px;
+      }
+
+      .testimonial .stars span {
+        color: #f5b731;
+        font-size: 1.05rem;
+      }
+
+      .testimonial h3 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .testimonial .author {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .testimonial .avatar {
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: var(--accent-2);
-        box-shadow: 0 0 14px rgba(54, 179, 255, 0.7);
-        animation: nodePulse 5s ease-in-out infinite;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #041016;
       }
 
-      .signal-node.green {
-        background: var(--accent);
-        box-shadow: 0 0 14px rgba(34, 227, 155, 0.7);
+      .testimonial .author-info {
+        font-size: 0.85rem;
       }
 
-      .signal-node.purple {
-        background: var(--accent-3);
-        box-shadow: 0 0 14px rgba(143, 91, 255, 0.7);
+      .testimonial .author-info strong {
+        display: block;
+        color: var(--ink);
+      }
+
+      .testimonial .author-info span {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .before-after {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        border-radius: 18px;
+        overflow: hidden;
+        margin-top: 20px;
+        border: 1px solid rgba(54, 179, 255, 0.15);
+      }
+
+      .before-after-half {
+        padding: 28px 20px;
+        text-align: center;
+      }
+
+      .before-after-half.before {
+        background: rgba(255, 80, 80, 0.06);
+      }
+
+      .before-after-half.after {
+        background: rgba(34, 227, 155, 0.08);
+      }
+
+      .before-after-half .ba-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .before-after-half.before .ba-label { color: #ff6b6b; }
+      .before-after-half.after .ba-label { color: #22e39b; }
+
+      .before-after-half .ba-icon {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+      }
+
+      .before-after-half p {
+        font-size: 0.88rem;
+        margin: 0;
       }
 
       .section {
@@ -863,42 +1050,175 @@
       <section class="section">
         <h2>Signal map</h2>
         <p>
-          A branded view of how ProServe Hub connects crews, clients, and proof
-          in one live network.
+          A live view of how ProServe Hub connects crews, clients, and proof
+          into one intelligent network.
         </p>
-        <div class="signal-map">
-          <div class="signal-node" style="top: 18%; left: 12%;"></div>
-          <div class="signal-node green" style="top: 32%; left: 32%;"></div>
-          <div class="signal-node" style="top: 58%; left: 22%;"></div>
-          <div class="signal-node purple" style="top: 24%; left: 56%;"></div>
-          <div class="signal-node" style="top: 48%; left: 64%;"></div>
-          <div class="signal-node green" style="top: 70%; left: 48%;"></div>
-          <div class="signal-node" style="top: 36%; left: 78%;"></div>
-          <div class="signal-node purple" style="top: 62%; left: 86%;"></div>
+        <div class="signal-map reveal">
+          <svg viewBox="0 0 900 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Connection lines -->
+            <line class="edge" x1="450" y1="80" x2="200" y2="200" stroke="#36B3FF" stroke-width="1.5" opacity="0.5"/>
+            <line class="edge" x1="450" y1="80" x2="700" y2="200" stroke="#22E39B" stroke-width="1.5" opacity="0.5"/>
+            <line class="edge" x1="450" y1="80" x2="450" y2="340" stroke="#8F5BFF" stroke-width="1.5" opacity="0.4"/>
+            <line class="edge" x1="200" y1="200" x2="120" y2="340" stroke="#36B3FF" stroke-width="1.5" opacity="0.4"/>
+            <line class="edge" x1="200" y1="200" x2="340" y2="340" stroke="#22E39B" stroke-width="1.5" opacity="0.4"/>
+            <line class="edge" x1="700" y1="200" x2="580" y2="340" stroke="#8F5BFF" stroke-width="1.5" opacity="0.4"/>
+            <line class="edge" x1="700" y1="200" x2="780" y2="340" stroke="#36B3FF" stroke-width="1.5" opacity="0.4"/>
+            <line class="edge" x1="200" y1="200" x2="700" y2="200" stroke="rgba(255,255,255,0.08)" stroke-width="1" opacity="0.6"/>
+            <line class="edge" x1="120" y1="340" x2="340" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
+            <line class="edge" x1="580" y1="340" x2="780" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
+            <line class="edge" x1="340" y1="340" x2="450" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
+            <line class="edge" x1="450" y1="340" x2="580" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
+
+            <!-- Central AI Hub -->
+            <circle class="node-glow" cx="450" cy="80" r="28" fill="rgba(54,179,255,0.12)" stroke="#36B3FF" stroke-width="2"/>
+            <circle cx="450" cy="80" r="14" fill="#36B3FF"/>
+            <text class="node-label" x="450" y="130">AI HUB</text>
+            <text class="node-sub" x="450" y="143">Central brain</text>
+
+            <!-- Contractor node -->
+            <circle class="node-glow" cx="200" cy="200" r="24" fill="rgba(34,227,155,0.12)" stroke="#22E39B" stroke-width="2"/>
+            <circle cx="200" cy="200" r="12" fill="#22E39B"/>
+            <text class="node-label" x="200" y="248">CONTRACTOR</text>
+            <text class="node-sub" x="200" y="261">Job updates</text>
+
+            <!-- Client node -->
+            <circle class="node-glow" cx="700" cy="200" r="24" fill="rgba(143,91,255,0.12)" stroke="#8F5BFF" stroke-width="2"/>
+            <circle cx="700" cy="200" r="12" fill="#8F5BFF"/>
+            <text class="node-label" x="700" y="248">CLIENT</text>
+            <text class="node-sub" x="700" y="261">Live portal</text>
+
+            <!-- Bottom row nodes -->
+            <circle class="node-glow" cx="120" cy="340" r="18" fill="rgba(54,179,255,0.1)" stroke="#36B3FF" stroke-width="1.5"/>
+            <circle cx="120" cy="340" r="8" fill="#36B3FF"/>
+            <text class="node-label" x="120" y="376">ESTIMATES</text>
+
+            <circle class="node-glow" cx="340" cy="340" r="18" fill="rgba(34,227,155,0.1)" stroke="#22E39B" stroke-width="1.5"/>
+            <circle cx="340" cy="340" r="8" fill="#22E39B"/>
+            <text class="node-label" x="340" y="376">PROOF FEED</text>
+
+            <circle class="node-glow" cx="450" cy="340" r="18" fill="rgba(143,91,255,0.1)" stroke="#8F5BFF" stroke-width="1.5"/>
+            <circle cx="450" cy="340" r="8" fill="#8F5BFF"/>
+            <text class="node-label" x="450" y="376">REVIEWS</text>
+
+            <circle class="node-glow" cx="580" cy="340" r="18" fill="rgba(34,227,155,0.1)" stroke="#22E39B" stroke-width="1.5"/>
+            <circle cx="580" cy="340" r="8" fill="#22E39B"/>
+            <text class="node-label" x="580" y="376">INVOICES</text>
+
+            <circle class="node-glow" cx="780" cy="340" r="18" fill="rgba(54,179,255,0.1)" stroke="#36B3FF" stroke-width="1.5"/>
+            <circle cx="780" cy="340" r="8" fill="#36B3FF"/>
+            <text class="node-label" x="780" y="376">SCHEDULE</text>
+
+            <!-- Data packets moving along edges -->
+            <circle r="3" fill="#36B3FF" opacity="0.9">
+              <animateMotion dur="3s" repeatCount="indefinite" path="M450,80 L200,200" />
+            </circle>
+            <circle r="3" fill="#22E39B" opacity="0.9">
+              <animateMotion dur="2.8s" repeatCount="indefinite" path="M450,80 L700,200" />
+            </circle>
+            <circle r="2.5" fill="#8F5BFF" opacity="0.9">
+              <animateMotion dur="3.5s" repeatCount="indefinite" path="M200,200 L340,340" />
+            </circle>
+            <circle r="2.5" fill="#36B3FF" opacity="0.9">
+              <animateMotion dur="3.2s" repeatCount="indefinite" path="M700,200 L580,340" />
+            </circle>
+            <circle r="2" fill="#22E39B" opacity="0.8">
+              <animateMotion dur="4s" repeatCount="indefinite" path="M200,200 L700,200" />
+            </circle>
+            <circle r="2" fill="#8F5BFF" opacity="0.8">
+              <animateMotion dur="3.8s" repeatCount="indefinite" path="M450,80 L450,340" />
+            </circle>
+          </svg>
         </div>
       </section>
 
-      <section class="section strip" id="proof">
-        <div>
-          <span class="eyebrow">Proof drives growth</span>
-          <h2>Turn every job into an AI powered referral engine.</h2>
-          <p>
-            Clients watch progress, react in real time, and share your work.
-            AI highlights the best moments so your feed sells for you.
-          </p>
-          <div class="pill-row">
-            <span class="pill">Before and after stories</span>
-            <span class="pill">Instant reactions</span>
-            <span class="pill">Verified reviews</span>
+      <section class="section" id="proof">
+        <span class="eyebrow">Proof drives growth</span>
+        <h2>Turn every job into an AI powered referral engine.</h2>
+        <p>
+          Clients watch progress, react in real time, and share your work.
+          AI highlights the best moments so your feed sells for you.
+        </p>
+
+        <!-- Animated stats -->
+        <div class="proof-stats reveal">
+          <div class="proof-stat">
+            <div class="big">3.2x</div>
+            <div class="label">More repeat clients</div>
+          </div>
+          <div class="proof-stat">
+            <div class="big">87%</div>
+            <div class="label">Review response rate</div>
+          </div>
+          <div class="proof-stat">
+            <div class="big">+58%</div>
+            <div class="label">Faster approvals</div>
+          </div>
+          <div class="proof-stat">
+            <div class="big">24/7</div>
+            <div class="label">Client visibility</div>
           </div>
         </div>
-        <div class="testimonial">
-          <h3>Booked three new jobs in two days.</h3>
-          <p>
-            Posting a single renovation update brought two referrals and a
-            repeat client. The feed sells for us.
-          </p>
-          <span>- Summit Builders Co.</span>
+
+        <!-- Before / After visual -->
+        <div class="before-after reveal">
+          <div class="before-after-half before">
+            <div class="ba-label">Before ProServe</div>
+            <div class="ba-icon">&#128683;</div>
+            <p>Missed follow-ups, lost photos, slow estimates, chasing reviews manually.</p>
+          </div>
+          <div class="before-after-half after">
+            <div class="ba-label">After ProServe</div>
+            <div class="ba-icon">&#9889;</div>
+            <p>AI drafts estimates, auto-updates clients, proof feed drives referrals 24/7.</p>
+          </div>
+        </div>
+
+        <!-- Testimonial cards -->
+        <div class="testimonial-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 24px;">
+          <div class="testimonial reveal">
+            <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
+            <h3>Booked three new jobs in two days.</h3>
+            <p>Posting a single renovation update brought two referrals and a repeat client. The feed sells for us.</p>
+            <div class="author">
+              <div class="avatar" style="background: linear-gradient(135deg, #22e39b, #36b3ff);">SB</div>
+              <div class="author-info">
+                <strong>Summit Builders Co.</strong>
+                <span>General Contractor &bull; Denver, CO</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial reveal">
+            <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
+            <h3>Clients now approve faster than ever.</h3>
+            <p>AI summaries cut our back-and-forth in half. Clients see real-time progress and approve same-day.</p>
+            <div class="author">
+              <div class="avatar" style="background: linear-gradient(135deg, #8F5BFF, #36b3ff);">MR</div>
+              <div class="author-info">
+                <strong>Metro Remodeling</strong>
+                <span>Kitchen &amp; Bath &bull; Austin, TX</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial reveal">
+            <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
+            <h3>Our reviews went from 12 to 80+ in a month.</h3>
+            <p>ProServe's auto-review requests at job close changed everything. We barely have to think about it.</p>
+            <div class="author">
+              <div class="avatar" style="background: linear-gradient(135deg, #36b3ff, #22e39b);">EP</div>
+              <div class="author-info">
+                <strong>Elite Painters LLC</strong>
+                <span>Residential Paint &bull; Charlotte, NC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pill-row" style="margin-top: 20px;">
+          <span class="pill">Before and after stories</span>
+          <span class="pill">Instant reactions</span>
+          <span class="pill">Verified reviews</span>
+          <span class="pill">Auto follow-ups</span>
+          <span class="pill">AI highlights</span>
         </div>
       </section>
 
