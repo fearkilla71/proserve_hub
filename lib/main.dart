@@ -24,8 +24,6 @@ import 'router/app_router.dart';
 import 'services/service_locator.dart';
 import 'state/app_state.dart';
 
-
-
 DateTime? _lastMouseTrackerAssertionLog;
 int _suppressedMouseTrackerAssertions = 0;
 
@@ -37,6 +35,9 @@ int _suppressedRenderBoxNotLaidOut = 0;
 
 /// Whether Firebase Crashlytics is available on the current platform.
 bool _crashlyticsSupported = false;
+
+/// Whether Firebase has been initialized (guards error handlers).
+bool _firebaseInitialized = false;
 
 bool _isMouseTrackerDeviceUpdateAssertion(Object error) {
   final text = error.toString();
@@ -186,11 +187,7 @@ void main() async {
           defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS;
 
-      if (_crashlyticsSupported) {
-        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-          !kDebugMode,
-        );
-      }
+      // NOTE: Crashlytics setup moved below Firebase.initializeApp().
 
       FlutterError.onError = (details) {
         final exception = details.exception;
@@ -271,7 +268,7 @@ void main() async {
 
         FlutterError.presentError(details);
         ErrorLogger.instance.logFlutterError(details);
-        if (_crashlyticsSupported) {
+        if (_crashlyticsSupported && _firebaseInitialized) {
           FirebaseCrashlytics.instance.recordFlutterFatalError(details);
         }
       };
@@ -307,7 +304,7 @@ void main() async {
           stack,
           context: 'PlatformDispatcher',
         );
-        if (_crashlyticsSupported) {
+        if (_crashlyticsSupported && _firebaseInitialized) {
           FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         }
         // Return false to allow the error to propagate (default behavior).
@@ -317,6 +314,14 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      _firebaseInitialized = true;
+
+      // Now that Firebase is initialized, configure Crashlytics.
+      if (_crashlyticsSupported) {
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+          !kDebugMode,
+        );
+      }
 
       // Initialize service locator (pass overrides in tests).
       ServiceLocator.init();
@@ -399,7 +404,7 @@ void main() async {
     },
     (error, stack) {
       ErrorLogger.instance.logError(error, stack, context: 'runZonedGuarded');
-      if (_crashlyticsSupported) {
+      if (_crashlyticsSupported && _firebaseInitialized) {
         FirebaseCrashlytics.instance.recordError(error, stack);
       }
     },
