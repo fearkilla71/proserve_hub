@@ -333,8 +333,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        allow read: if chatIsUnlocked(jobId)
-          && isChatParticipantFromJob(jobId);
+        // Participants can read messages if they're in the parent chat doc
+        allow read: if isSignedIn()
+          && exists(/databases/$(database)/documents/chats/$(jobId))
+          && get(/databases/$(database)/documents/chats/$(jobId)).data.participants is list
+          && get(/databases/$(database)/documents/chats/$(jobId)).data.participants.hasAny([request.auth.uid]);
 
         allow create: if chatIsUnlocked(jobId)
           && isChatParticipantFromJob(jobId)
