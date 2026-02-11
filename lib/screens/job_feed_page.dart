@@ -1229,35 +1229,65 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 final exRaw = data?['exclusiveLeadCredits'];
                 final exCredits = exRaw is num ? exRaw.toInt() : 0;
 
-                final showBoth = neCredits > 0 && exCredits > 0;
-                final showNeOnly = neCredits > 0 && exCredits <= 0;
-                final showExOnly = exCredits > 0 && neCredits <= 0;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Center(
-                    child: Wrap(
-                      spacing: 8,
-                      children: [
-                        if (showBoth || showNeOnly)
-                          Chip(
-                            label: Text('Non-excl: $neCredits'),
-                            avatar: const Icon(Icons.group_outlined, size: 18),
-                            visualDensity: VisualDensity.compact,
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.group_outlined,
+                            size: 14,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
-                        if (showBoth || showExOnly)
-                          Chip(
-                            label: Text('Exclusive: $exCredits'),
-                            avatar: const Icon(Icons.lock_outline, size: 18),
-                            visualDensity: VisualDensity.compact,
+                          const SizedBox(width: 3),
+                          Text(
+                            '$neCredits',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                           ),
-                        if (!showBoth && !showNeOnly && !showExOnly)
-                          const Chip(
-                            label: Text('Credits: 0'),
-                            visualDensity: VisualDensity.compact,
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.lock_outline,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                      ],
+                          const SizedBox(width: 3),
+                          Text(
+                            '$exCredits',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      tooltip: 'Buy leads',
+                      onPressed: showLeadPackSheet,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
                 );
               },
             ),
