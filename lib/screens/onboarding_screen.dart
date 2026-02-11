@@ -5,7 +5,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/proserve_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  /// Optional role – when provided, shows role-specific onboarding pages.
+  /// Accepted values: `'customer'`, `'contractor'`, or `null` (generic).
+  final String? role;
+
+  const OnboardingScreen({super.key, this.role});
+
+  /// Launch role-specific onboarding if the user hasn't seen it yet.
+  /// Call from the portal page's `initState`.
+  static Future<void> showIfNeeded(BuildContext context, String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'onboarding_${role}_complete';
+    if (prefs.getBool(key) ?? false) return;
+    if (!context.mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => OnboardingScreen(role: role)),
+    );
+  }
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -15,40 +31,128 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = [
-    OnboardingPage(
-      title: 'Welcome to ProServe Hub',
-      description:
-          'Connect with trusted professionals for all your home service needs.',
-      icon: Icons.handshake,
-      color: ProServeColors.accent,
-    ),
-    OnboardingPage(
-      title: 'Post Your Project',
-      description:
-          'Share photos and details. Our AI helps estimate costs instantly.',
-      icon: Icons.camera_alt,
-      color: ProServeColors.accent2,
-    ),
-    OnboardingPage(
-      title: 'Get Matched Instantly',
-      description:
-          'Our smart algorithm finds the best contractors near you based on ratings, experience, and availability.',
-      icon: Icons.auto_awesome,
-      color: ProServeColors.accent3,
-    ),
-    OnboardingPage(
-      title: 'Secure Payments',
-      description:
-          'Pay safely through ProServe Hub. Your payments are protected until the job is done.',
-      icon: Icons.verified_user,
-      color: ProServeColors.accent,
-    ),
-  ];
+  late final List<OnboardingPage> _pages = _buildPages();
+
+  List<OnboardingPage> _buildPages() {
+    if (widget.role == 'contractor') {
+      return [
+        OnboardingPage(
+          title: 'Welcome, Pro!',
+          description:
+              'Join thousands of professionals growing their business on ProServe Hub.',
+          icon: Icons.construction,
+          color: ProServeColors.accent,
+        ),
+        OnboardingPage(
+          title: 'Get Quality Leads',
+          description:
+              'Browse local job postings and purchase leads that match your skills and service area.',
+          icon: Icons.work,
+          color: ProServeColors.accent2,
+        ),
+        OnboardingPage(
+          title: 'Manage Your Schedule',
+          description:
+              'Set your availability, accept bookings, and keep your calendar organized in one place.',
+          icon: Icons.calendar_month,
+          color: ProServeColors.accent3,
+        ),
+        OnboardingPage(
+          title: 'Build Your Portfolio',
+          description:
+              'Showcase before & after photos, collect reviews, and let your work speak for itself.',
+          icon: Icons.photo_library,
+          color: ProServeColors.accent,
+        ),
+        OnboardingPage(
+          title: 'Get Paid Securely',
+          description:
+              'Send invoices, track expenses, and receive payments – all protected through ProServe Hub.',
+          icon: Icons.account_balance_wallet,
+          color: ProServeColors.accent2,
+        ),
+      ];
+    } else if (widget.role == 'customer') {
+      return [
+        OnboardingPage(
+          title: 'Welcome to ProServe Hub',
+          description:
+              'Find and hire trusted professionals for any home project – big or small.',
+          icon: Icons.home_repair_service,
+          color: ProServeColors.accent,
+        ),
+        OnboardingPage(
+          title: 'Post Your Project',
+          description:
+              'Share photos and details. Our AI helps estimate costs so you know what to expect.',
+          icon: Icons.camera_alt,
+          color: ProServeColors.accent2,
+        ),
+        OnboardingPage(
+          title: 'Compare & Choose',
+          description:
+              'Review bids from qualified contractors, check their ratings, and pick the best fit.',
+          icon: Icons.compare_arrows,
+          color: ProServeColors.accent3,
+        ),
+        OnboardingPage(
+          title: 'Book & Track',
+          description:
+              'Schedule your contractor, receive booking confirmations, and track job progress live.',
+          icon: Icons.track_changes,
+          color: ProServeColors.accent,
+        ),
+        OnboardingPage(
+          title: 'Pay Safely',
+          description:
+              'Your payments are held securely until you approve the completed work.',
+          icon: Icons.verified_user,
+          color: ProServeColors.accent2,
+        ),
+      ];
+    }
+
+    // Generic / first-time user pages (no role known yet).
+    return [
+      OnboardingPage(
+        title: 'Welcome to ProServe Hub',
+        description:
+            'Connect with trusted professionals for all your home service needs.',
+        icon: Icons.handshake,
+        color: ProServeColors.accent,
+      ),
+      OnboardingPage(
+        title: 'Post Your Project',
+        description:
+            'Share photos and details. Our AI helps estimate costs instantly.',
+        icon: Icons.camera_alt,
+        color: ProServeColors.accent2,
+      ),
+      OnboardingPage(
+        title: 'Get Matched Instantly',
+        description:
+            'Our smart algorithm finds the best contractors near you based on ratings, experience, and availability.',
+        icon: Icons.auto_awesome,
+        color: ProServeColors.accent3,
+      ),
+      OnboardingPage(
+        title: 'Secure Payments',
+        description:
+            'Pay safely through ProServe Hub. Your payments are protected until the job is done.',
+        icon: Icons.verified_user,
+        color: ProServeColors.accent,
+      ),
+    ];
+  }
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
+    // Mark the appropriate onboarding as complete.
+    if (widget.role != null) {
+      await prefs.setBool('onboarding_${widget.role}_complete', true);
+    } else {
+      await prefs.setBool('onboarding_complete', true);
+    }
     if (!mounted) return;
     Navigator.of(context).pop();
   }

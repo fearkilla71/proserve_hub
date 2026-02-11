@@ -17,6 +17,7 @@ import '../services/fcm_service.dart';
 import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/persistent_job_state_bar.dart';
+import 'onboarding_screen.dart';
 
 class _RequestsFetchResult {
   const _RequestsFetchResult({required this.docs, required this.usedFallback});
@@ -74,6 +75,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         );
     _homeIntroController.forward();
     CustomerPortalNav.tabRequest.addListener(_handleTabRequest);
+    // Show role-specific onboarding the first time a customer opens the portal.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) OnboardingScreen.showIfNeeded(context, 'customer');
+    });
   }
 
   @override

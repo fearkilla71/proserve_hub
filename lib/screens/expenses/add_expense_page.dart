@@ -29,6 +29,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   DateTime? _receiptDate;
   File? _imageFile;
   String _ocrText = '';
+  List<ReceiptLineItem> _lineItems = [];
 
   bool _isScanning = false;
   bool _isSaving = false;
@@ -70,6 +71,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
       setState(() {
         _ocrText = res.rawText;
+        _lineItems = res.lineItems;
         if ((_vendorCtrl.text).trim().isEmpty) {
           _vendorCtrl.text = res.vendor ?? '';
         }
@@ -82,7 +84,16 @@ class _AddExpensePageState extends State<AddExpensePage> {
         }
       });
 
-      messenger.showSnackBar(const SnackBar(content: Text('Scan complete.')));
+      final itemCount = res.lineItems.length;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            itemCount > 0
+                ? 'Scan complete — $itemCount line items found.'
+                : 'Scan complete.',
+          ),
+        ),
+      );
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
@@ -123,6 +134,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
         tax: parseMoney(_taxCtrl.text),
         notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         ocrText: _ocrText.isEmpty ? null : _ocrText,
+        lineItems: _lineItems.isEmpty
+            ? null
+            : _lineItems.map((e) => e.toMap()).toList(),
       );
 
       messenger.showSnackBar(const SnackBar(content: Text('Saved receipt.')));
@@ -259,6 +273,80 @@ class _AddExpensePageState extends State<AddExpensePage> {
             ],
           ),
           const SizedBox(height: 12),
+          // ── Line items from OCR ──
+          if (_lineItems.isNotEmpty) ...[
+            Card(
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Line Items (${_lineItems.length})',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    for (final item in _lineItems)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.quantity > 1
+                                    ? '${item.description} (x${item.quantity})'
+                                    : item.description,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            Text(
+                              '\$${item.total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Divider(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Items subtotal',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '\$${_lineItems.fold<double>(0, (s, i) => s + i.total).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _notesCtrl,
             maxLines: 3,

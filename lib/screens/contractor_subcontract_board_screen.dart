@@ -24,6 +24,57 @@ class _ContractorSubcontractBoardScreenState
     extends State<ContractorSubcontractBoardScreen> {
   final _tabs = const [Tab(text: 'Open jobs'), Tab(text: 'My posts')];
 
+  // ── Search & filter state ──────────────────────────────────────────
+  String _searchQuery = '';
+  String? _tradeFilter;
+  final _searchController = TextEditingController();
+  bool _showSearch = false;
+
+  static const _tradeTypes = [
+    'General',
+    'Plumbing',
+    'Electrical',
+    'Roofing',
+    'HVAC',
+    'Painting',
+    'Carpentry',
+    'Landscaping',
+    'Flooring',
+    'Drywall',
+    'Concrete',
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _passesFilters(Map<String, dynamic> data) {
+    // Text search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      final title = (data['title'] as String? ?? '').toLowerCase();
+      final trade = (data['trade'] as String? ?? '').toLowerCase();
+      final location = (data['location'] as String? ?? '').toLowerCase();
+      final desc = (data['description'] as String? ?? '').toLowerCase();
+      if (!title.contains(q) &&
+          !trade.contains(q) &&
+          !location.contains(q) &&
+          !desc.contains(q)) {
+        return false;
+      }
+    }
+
+    // Trade filter
+    if (_tradeFilter != null) {
+      final trade = (data['trade'] as String? ?? '').toLowerCase();
+      if (trade != _tradeFilter!.toLowerCase()) return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -38,9 +89,76 @@ class _ContractorSubcontractBoardScreenState
       length: _tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Subcontract jobs'),
-          bottom: TabBar(tabs: _tabs),
+          title: _showSearch
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Search jobs…',
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                )
+              : const Text('Subcontract jobs'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kTextTabBarHeight + 48),
+            child: Column(
+              children: [
+                TabBar(tabs: _tabs),
+                // Trade filter chips
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: [
+                      if (_tradeFilter != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          child: InputChip(
+                            label: Text(_tradeFilter!),
+                            selected: true,
+                            onDeleted: () =>
+                                setState(() => _tradeFilter = null),
+                          ),
+                        ),
+                      for (final t in _tradeTypes)
+                        if (_tradeFilter == null || _tradeFilter == t)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 8,
+                            ),
+                            child: FilterChip(
+                              label: Text(t),
+                              selected: _tradeFilter == t,
+                              onSelected: (sel) =>
+                                  setState(() => _tradeFilter = sel ? t : null),
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           actions: [
+            IconButton(
+              tooltip: _showSearch ? 'Close search' : 'Search',
+              icon: Icon(_showSearch ? Icons.close : Icons.search),
+              onPressed: () {
+                setState(() {
+                  _showSearch = !_showSearch;
+                  if (!_showSearch) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                });
+              },
+            ),
             IconButton(
               tooltip: 'Post a job',
               onPressed: () {
@@ -52,8 +170,11 @@ class _ContractorSubcontractBoardScreenState
         ),
         body: TabBarView(
           children: [
-            _JobListTab(query: _openJobsQuery()),
-            _JobListTab(query: _myJobsQuery(user.uid)),
+            _JobListTab(query: _openJobsQuery(), filterFn: _passesFilters),
+            _JobListTab(
+              query: _myJobsQuery(user.uid),
+              filterFn: _passesFilters,
+            ),
           ],
         ),
       ),
@@ -76,9 +197,10 @@ class _ContractorSubcontractBoardScreenState
 }
 
 class _JobListTab extends StatelessWidget {
-  const _JobListTab({required this.query});
+  const _JobListTab({required this.query, this.filterFn});
 
   final Query<Map<String, dynamic>> query;
+  final bool Function(Map<String, dynamic>)? filterFn;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +221,13 @@ class _JobListTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snap.data!.docs;
+        var docs = snap.data!.docs;
+
+        // Apply client-side filters.
+        if (filterFn != null) {
+          docs = docs.where((d) => filterFn!(d.data())).toList();
+        }
+
         if (docs.isEmpty) {
           return const AnimatedStateSwitcher(
             stateKey: 'job_empty',

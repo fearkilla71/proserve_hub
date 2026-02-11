@@ -185,6 +185,42 @@ class DeepLinkService {
         context.push('/payment-history');
         return;
 
+      case 'review':
+      case 'reviews':
+        final jobId = data['jobId'] as String?;
+        if (jobId != null && jobId.trim().isNotEmpty) {
+          context.push('/job/$jobId');
+        } else {
+          context.push('/reviews');
+        }
+        return;
+
+      case 'referral':
+        context.push('/referral');
+        return;
+
+      case 'promotion':
+      case 'promo':
+        context.push('/notifications');
+        return;
+
+      case 'booking':
+      case 'booking_confirmed':
+      case 'booking_reminder':
+        final jobId = data['jobId'] as String?;
+        if (jobId != null && jobId.trim().isNotEmpty) {
+          context.push('/job/$jobId');
+        }
+        return;
+
+      case 'invoice':
+      case 'invoice_status':
+        final jobId = data['jobId'] as String?;
+        if (jobId != null && jobId.trim().isNotEmpty) {
+          context.push('/invoice/$jobId');
+        }
+        return;
+
       default:
         debugPrint('DeepLinkService: Unhandled payload type: $type');
         return;

@@ -14,6 +14,7 @@ import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/persistent_job_state_bar.dart';
 import '../widgets/contractor_portal_helpers.dart';
+import 'onboarding_screen.dart';
 
 class ContractorPortalPage extends StatefulWidget {
   const ContractorPortalPage({super.key});
@@ -24,6 +25,15 @@ class ContractorPortalPage extends StatefulWidget {
 
 class _ContractorPortalPageState extends State<ContractorPortalPage> {
   int _tabIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show role-specific onboarding the first time a contractor opens the portal.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) OnboardingScreen.showIfNeeded(context, 'contractor');
+    });
+  }
 
   Future<void> _openPricingToolsOrSubscribe({
     required Future<void> Function() open,

@@ -30,6 +30,155 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     super.dispose();
   }
 
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'draft':
+        return Colors.grey;
+      case 'sent':
+        return Colors.blue;
+      case 'viewed':
+        return Colors.orange;
+      case 'paid':
+        return Colors.green;
+      case 'overdue':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'draft':
+        return Icons.edit_note;
+      case 'sent':
+        return Icons.send;
+      case 'viewed':
+        return Icons.visibility;
+      case 'paid':
+        return Icons.check_circle;
+      case 'overdue':
+        return Icons.warning;
+      default:
+        return Icons.receipt;
+    }
+  }
+
+  Future<void> _updateInvoiceStatus(String newStatus) async {
+    try {
+      await _invoiceRef.update({
+        'status': newStatus,
+        'statusUpdatedAt': FieldValue.serverTimestamp(),
+        'statusHistory': FieldValue.arrayUnion([
+          {
+            'status': newStatus,
+            'timestamp': DateTime.now().toIso8601String(),
+            'updatedBy': FirebaseAuth.instance.currentUser?.uid,
+          },
+        ]),
+      });
+
+      // Notify the other party
+      final invoiceSnap = await _invoiceRef.get();
+      final invoiceData = invoiceSnap.data();
+      if (invoiceData != null) {
+        final contractorId = invoiceData['contractorId'] as String?;
+        final customerId = invoiceData['customerId'] as String?;
+        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+        final targetUid = currentUid == contractorId
+            ? customerId
+            : contractorId;
+        if (targetUid != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(targetUid)
+              .collection('notifications')
+              .add({
+                'title':
+                    'Invoice ${newStatus[0].toUpperCase()}${newStatus.substring(1)}',
+                'body':
+                    'Invoice for job ${widget.jobId} has been marked as $newStatus',
+                'type': 'invoice_status',
+                'route': '/invoice/${widget.jobId}',
+                'read': false,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Invoice marked as $newStatus')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
+    }
+  }
+
+  Widget _statusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _statusColor(status).withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _statusColor(status).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_statusIcon(status), size: 14, color: _statusColor(status)),
+          const SizedBox(width: 4),
+          Text(
+            status[0].toUpperCase() + status.substring(1),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: _statusColor(status),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusActionButtons(String currentStatus, bool isContractor) {
+    final nextStatuses = <String>[];
+    if (isContractor) {
+      if (currentStatus == 'draft') nextStatuses.add('sent');
+      if (currentStatus == 'sent') nextStatuses.add('overdue');
+    }
+    if (!isContractor) {
+      if (currentStatus == 'sent') nextStatuses.add('viewed');
+    }
+    // Both can mark as paid
+    if (currentStatus == 'viewed' ||
+        currentStatus == 'sent' ||
+        currentStatus == 'overdue') {
+      nextStatuses.add('paid');
+    }
+
+    if (nextStatuses.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 8,
+        children: nextStatuses.map((status) {
+          return FilledButton.tonalIcon(
+            onPressed: () => _updateInvoiceStatus(status),
+            icon: Icon(_statusIcon(status), size: 16),
+            label: Text(
+              'Mark ${status[0].toUpperCase()}${status.substring(1)}',
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   String _formatMoney(double value) => '\$${value.toStringAsFixed(2)}';
 
   double? _readPlatformFeeAmount(Map<String, dynamic> job) {
@@ -359,6 +508,25 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
               final invoiceData = invoiceSnap.data?.data();
               final invoiceExists = invoiceSnap.data?.exists == true;
 
+              // Auto-mark as viewed when customer opens the invoice
+              if (invoiceExists && isRequester) {
+                final invoiceStatus =
+                    (invoiceData?['status'] as String?) ?? 'draft';
+                if (invoiceStatus == 'sent') {
+                  _invoiceRef.update({
+                    'status': 'viewed',
+                    'viewedAt': FieldValue.serverTimestamp(),
+                    'statusHistory': FieldValue.arrayUnion([
+                      {
+                        'status': 'viewed',
+                        'timestamp': DateTime.now().toIso8601String(),
+                        'updatedBy': currentUid,
+                      },
+                    ]),
+                  });
+                }
+              }
+
               final items = _itemsFromInvoiceData(
                 invoiceData: invoiceData,
                 job: job,
@@ -407,6 +575,11 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                     ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+                                _statusBadge(
+                                  (invoiceData?['status'] as String?) ??
+                                      'draft',
+                                ),
                               ],
                             ),
                             Column(
@@ -434,6 +607,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                               ],
                             ),
                           ],
+                        ),
+
+                        const Divider(height: 32),
+
+                        // Status actions
+                        _statusActionButtons(
+                          (invoiceData?['status'] as String?) ?? 'draft',
+                          isAssignedContractor,
                         ),
 
                         const Divider(height: 32),

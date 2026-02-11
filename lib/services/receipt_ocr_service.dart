@@ -10,6 +10,7 @@ class ReceiptOcrResult {
   final DateTime? date;
   final double? total;
   final double? tax;
+  final List<ReceiptLineItem> lineItems;
 
   const ReceiptOcrResult({
     required this.rawText,
@@ -17,7 +18,30 @@ class ReceiptOcrResult {
     this.date,
     this.total,
     this.tax,
+    this.lineItems = const [],
   });
+}
+
+/// Represents a single line item extracted from a receipt.
+class ReceiptLineItem {
+  final String description;
+  final int quantity;
+  final double unitPrice;
+  final double total;
+
+  const ReceiptLineItem({
+    required this.description,
+    this.quantity = 1,
+    required this.unitPrice,
+    required this.total,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'description': description,
+    'quantity': quantity,
+    'unitPrice': unitPrice,
+    'total': total,
+  };
 }
 
 class ReceiptOcrService {
@@ -63,6 +87,7 @@ class ReceiptOcrService {
       rawText,
       keywords: const ['tax', 'sales tax', 'vat'],
     );
+    final lineItems = _extractLineItems(lines);
 
     return ReceiptOcrResult(
       rawText: rawText,
@@ -70,7 +95,85 @@ class ReceiptOcrService {
       date: date,
       total: total,
       tax: tax,
+      lineItems: lineItems,
     );
+  }
+
+  /// Attempts to extract individual line items from receipt text.
+  ///
+  /// Looks for lines with a description followed by a price, e.g.:
+  ///   "Paper Towels  2x  $3.99  $7.98"
+  ///   "Coffee Filters         $4.29"
+  List<ReceiptLineItem> _extractLineItems(List<String> lines) {
+    final items = <ReceiptLineItem>[];
+
+    // Pattern: description text followed by price(s)
+    // Captures: description, optional qty, price
+    final linePattern = RegExp(
+      r'^(.+?)\s+'
+      r'(?:(\d+)\s*[xX@]\s*)?'
+      r'\$?\s*(\d{1,3}(?:,\d{3})*\.\d{2})'
+      r'(?:\s+\$?\s*(\d{1,3}(?:,\d{3})*\.\d{2}))?$',
+    );
+
+    // Skip lines that are headers, totals, tax, etc.
+    final skipPatterns = RegExp(
+      r'(?:^sub\s*total|^total|^tax|^sales\s*tax|^vat|^amount|^balance|'
+      r'^change|^cash|^credit|^debit|^visa|^master|^amex|'
+      r'^thank|^receipt|^invoice|^order|^date|^time|^store|'
+      r'^phone|^addr|^www\.|^http)',
+      caseSensitive: false,
+    );
+
+    for (final line in lines) {
+      if (skipPatterns.hasMatch(line.toLowerCase())) continue;
+
+      final match = linePattern.firstMatch(line);
+      if (match == null) continue;
+
+      final desc = match.group(1)?.trim() ?? '';
+      if (desc.length < 2) continue;
+
+      // Skip if description looks like a number or date
+      if (RegExp(r'^\d+[\/-]\d+').hasMatch(desc)) continue;
+
+      final qtyStr = match.group(2);
+      final qty = qtyStr != null ? (int.tryParse(qtyStr) ?? 1) : 1;
+
+      final price1 = double.tryParse(
+        (match.group(3) ?? '').replaceAll(',', ''),
+      );
+      final price2 = double.tryParse(
+        (match.group(4) ?? '').replaceAll(',', ''),
+      );
+
+      if (price1 == null) continue;
+
+      // If there are two prices, the last is usually the line total
+      final double unitPrice;
+      final double lineTotal;
+      if (price2 != null) {
+        unitPrice = price1;
+        lineTotal = price2;
+      } else {
+        unitPrice = qty > 1 ? (price1 / qty) : price1;
+        lineTotal = price1;
+      }
+
+      // Ignore unlikely values
+      if (lineTotal <= 0 || lineTotal > 100000) continue;
+
+      items.add(
+        ReceiptLineItem(
+          description: desc,
+          quantity: qty,
+          unitPrice: double.parse(unitPrice.toStringAsFixed(2)),
+          total: lineTotal,
+        ),
+      );
+    }
+
+    return items;
   }
 
   String? _guessVendor(List<String> lines) {

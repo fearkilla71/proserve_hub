@@ -91,10 +91,7 @@ class _ReferralScreenState extends State<ReferralScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _shareTab(scheme),
-          _trackingTab(scheme),
-        ],
+        children: [_shareTab(scheme), _trackingTab(scheme)],
       ),
     );
   }
@@ -337,8 +334,13 @@ class _ReferralScreenState extends State<ReferralScreen>
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.group_add, size: 48,
-                              color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                          Icon(
+                            Icons.group_add,
+                            size: 48,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'No referrals yet.\nShare your code to start earning!',
@@ -469,10 +471,7 @@ class _ReferralScreenState extends State<ReferralScreen>
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: scheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -484,10 +483,30 @@ class _ReferralScreenState extends State<ReferralScreen>
 
   Widget _tierProgressCard(ColorScheme scheme, int referrals) {
     final tiers = [
-      {'name': 'Bronze', 'min': 0, 'icon': Icons.workspace_premium, 'color': const Color(0xFFCD7F32)},
-      {'name': 'Silver', 'min': 5, 'icon': Icons.workspace_premium, 'color': const Color(0xFFC0C0C0)},
-      {'name': 'Gold', 'min': 15, 'icon': Icons.workspace_premium, 'color': const Color(0xFFFFD700)},
-      {'name': 'Platinum', 'min': 30, 'icon': Icons.diamond, 'color': const Color(0xFFE5E4E2)},
+      {
+        'name': 'Bronze',
+        'min': 0,
+        'icon': Icons.workspace_premium,
+        'color': const Color(0xFFCD7F32),
+      },
+      {
+        'name': 'Silver',
+        'min': 5,
+        'icon': Icons.workspace_premium,
+        'color': const Color(0xFFC0C0C0),
+      },
+      {
+        'name': 'Gold',
+        'min': 15,
+        'icon': Icons.workspace_premium,
+        'color': const Color(0xFFFFD700),
+      },
+      {
+        'name': 'Platinum',
+        'min': 30,
+        'icon': Icons.diamond,
+        'color': const Color(0xFFE5E4E2),
+      },
     ];
 
     // Determine current tier.
@@ -547,10 +566,7 @@ class _ReferralScreenState extends State<ReferralScreen>
               nextTier != null
                   ? '$referrals / $nextMin referrals to ${nextTier['name']}'
                   : 'Max tier reached! $referrals referrals',
-              style: TextStyle(
-                fontSize: 13,
-                color: scheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
             ),
           ],
         ),

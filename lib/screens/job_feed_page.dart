@@ -39,6 +39,26 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   String? _currentZip;
   bool _loadingLocation = false;
 
+  // ─── Advanced filters ──
+  String? _serviceFilter;
+  double? _minPrice;
+  double? _maxPrice;
+  int _datePostedDays = 0; // 0 = any, 1/3/7/30 = within N days
+
+  static const List<String> _serviceTypes = [
+    'Painting',
+    'Plumbing',
+    'Electrical',
+    'Roofing',
+    'Flooring',
+    'HVAC',
+    'Landscaping',
+    'Carpentry',
+    'Cleaning',
+    'Moving',
+    'General',
+  ];
+
   Future<QuerySnapshot<Map<String, dynamic>>>? _diagnoseFetch;
 
   bool _isNavigatingToDetail = false;
@@ -298,6 +318,215 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         ),
       ),
     );
+  }
+
+  bool _hasActiveFilters() {
+    return _serviceFilter != null ||
+        _minPrice != null ||
+        _maxPrice != null ||
+        _datePostedDays > 0;
+  }
+
+  void _clearAdvancedFilters() {
+    setState(() {
+      _serviceFilter = null;
+      _minPrice = null;
+      _maxPrice = null;
+      _datePostedDays = 0;
+    });
+  }
+
+  Widget _advancedFiltersCard() {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: scheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+      ),
+      child: ExpansionTile(
+        leading: Badge(
+          isLabelVisible: _hasActiveFilters(),
+          child: Icon(Icons.tune, color: scheme.primary),
+        ),
+        title: Text(
+          'Filters',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        trailing: _hasActiveFilters()
+            ? TextButton(
+                onPressed: _clearAdvancedFilters,
+                child: const Text('Clear'),
+              )
+            : null,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Service type
+                Text(
+                  'Service type',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    FilterChip(
+                      label: const Text('All'),
+                      selected: _serviceFilter == null,
+                      onSelected: (_) => setState(() => _serviceFilter = null),
+                    ),
+                    ..._serviceTypes.map(
+                      (svc) => FilterChip(
+                        label: Text(svc),
+                        selected: _serviceFilter == svc,
+                        onSelected: (sel) =>
+                            setState(() => _serviceFilter = sel ? svc : null),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Price range
+                Text(
+                  'Budget range',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    FilterChip(
+                      label: const Text('Any'),
+                      selected: _minPrice == null && _maxPrice == null,
+                      onSelected: (_) {
+                        setState(() {
+                          _minPrice = null;
+                          _maxPrice = null;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('< \$500'),
+                      selected: _maxPrice == 500 && _minPrice == null,
+                      onSelected: (sel) {
+                        setState(() {
+                          _minPrice = sel ? null : null;
+                          _maxPrice = sel ? 500 : null;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('\$500 – \$2k'),
+                      selected: _minPrice == 500 && _maxPrice == 2000,
+                      onSelected: (sel) {
+                        setState(() {
+                          _minPrice = sel ? 500 : null;
+                          _maxPrice = sel ? 2000 : null;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('\$2k – \$10k'),
+                      selected: _minPrice == 2000 && _maxPrice == 10000,
+                      onSelected: (sel) {
+                        setState(() {
+                          _minPrice = sel ? 2000 : null;
+                          _maxPrice = sel ? 10000 : null;
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('\$10k+'),
+                      selected: _minPrice == 10000 && _maxPrice == null,
+                      onSelected: (sel) {
+                        setState(() {
+                          _minPrice = sel ? 10000 : null;
+                          _maxPrice = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Date posted
+                Text(
+                  'Posted within',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final entry in {
+                      0: 'Any time',
+                      1: '24 hours',
+                      3: '3 days',
+                      7: '1 week',
+                      30: '30 days',
+                    }.entries)
+                      FilterChip(
+                        label: Text(entry.value),
+                        selected: _datePostedDays == entry.key,
+                        onSelected: (_) =>
+                            setState(() => _datePostedDays = entry.key),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _passesAdvancedFilters(Map<String, dynamic> data) {
+    // Service filter
+    if (_serviceFilter != null) {
+      final svc = (data['service'] ?? '').toString().toLowerCase();
+      final svcName = (data['serviceName'] ?? '').toString().toLowerCase();
+      final filterLower = _serviceFilter!.toLowerCase();
+      if (!svc.contains(filterLower) && !svcName.contains(filterLower)) {
+        return false;
+      }
+    }
+
+    // Price filter
+    final budget =
+        (data['budget'] as num?)?.toDouble() ??
+        (data['price'] as num?)?.toDouble();
+    if (_minPrice != null && (budget == null || budget < _minPrice!)) {
+      return false;
+    }
+    if (_maxPrice != null && (budget == null || budget > _maxPrice!)) {
+      return false;
+    }
+
+    // Date posted filter
+    if (_datePostedDays > 0) {
+      final createdAt = data['createdAt'];
+      if (createdAt is Timestamp) {
+        final postedDate = createdAt.toDate();
+        final cutoff = DateTime.now().subtract(Duration(days: _datePostedDays));
+        if (postedDate.isBefore(cutoff)) return false;
+      }
+    }
+
+    return true;
   }
 
   Widget _leadCard({
@@ -1368,11 +1597,18 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                               final snap = diagSnap.data;
                               final docs = snap?.docs ?? const [];
                               final filteredDocs = docs.where((doc) {
-                                if (!_distanceEnabled) return true;
                                 final data = doc.data();
-                                final distance = _distanceForJob(data);
-                                return distance != null &&
-                                    distance <= _distanceMiles;
+                                // Distance filter
+                                if (_distanceEnabled) {
+                                  final distance = _distanceForJob(data);
+                                  if (distance == null ||
+                                      distance > _distanceMiles) {
+                                    return false;
+                                  }
+                                }
+                                // Advanced filters
+                                if (!_passesAdvancedFilters(data)) return false;
+                                return true;
                               }).toList();
 
                               if (filteredDocs.isEmpty) {
@@ -1431,6 +1667,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   unlockedLeadsSection(uid: user.uid),
                                   _availableLeadsHeader(context),
                                   _distanceFilterCard(),
+                                  _advancedFiltersCard(),
                                   const SizedBox(height: 12),
                                   for (final doc in filteredDocs) ...[
                                     _leadCard(
@@ -1496,11 +1733,18 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
                     final allDocs = <DocumentSnapshot>[...docs, ..._olderJobs];
                     final filteredDocs = allDocs.where((doc) {
-                      if (!_distanceEnabled) return true;
                       final data = doc.data() as Map<String, dynamic>?;
                       if (data == null) return false;
-                      final distance = _distanceForJob(data);
-                      return distance != null && distance <= _distanceMiles;
+                      // Distance filter
+                      if (_distanceEnabled) {
+                        final distance = _distanceForJob(data);
+                        if (distance == null || distance > _distanceMiles) {
+                          return false;
+                        }
+                      }
+                      // Advanced filters
+                      if (!_passesAdvancedFilters(data)) return false;
+                      return true;
                     }).toList();
 
                     if (filteredDocs.isEmpty) {
@@ -1512,6 +1756,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           unlockedLeadsSection(uid: user.uid),
                           _availableLeadsHeader(context),
                           _distanceFilterCard(),
+                          _advancedFiltersCard(),
                           const SizedBox(height: 12),
                           const EmptyStateCard(
                             icon: Icons.inbox_outlined,
@@ -1559,6 +1804,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                             return Column(
                               children: [
                                 _distanceFilterCard(),
+                                _advancedFiltersCard(),
                                 const SizedBox(height: 12),
                               ],
                             );

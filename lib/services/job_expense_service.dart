@@ -69,6 +69,7 @@ class JobExpenseService {
     String currency = 'USD',
     String? notes,
     String? ocrText,
+    List<Map<String, dynamic>>? lineItems,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
@@ -102,7 +103,11 @@ class JobExpenseService {
       ocrText: ocrText,
     );
 
-    await ref.set(expense.toMap());
+    final data = expense.toMap();
+    if (lineItems != null && lineItems.isNotEmpty) {
+      data['lineItems'] = lineItems;
+    }
+    await ref.set(data);
     return expense;
   }
 }

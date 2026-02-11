@@ -8,6 +8,7 @@ import 'dart:typed_data';
 
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
+import '../services/version_check_service.dart';
 import '../utils/legal_documents.dart';
 import '../widgets/skeleton_loader.dart';
 import 'legal_doc_screen.dart';
@@ -411,10 +412,13 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 Center(
-                  child: Text(
-                    'Version 1.0.0+1',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).hintColor,
+                  child: FutureBuilder<String>(
+                    future: VersionCheckService.currentVersionLabel(),
+                    builder: (context, snap) => Text(
+                      snap.data ?? 'Version …',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                      ),
                     ),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/version_check_service.dart';
 import '../theme/proserve_theme.dart';
 import 'onboarding_screen.dart';
 
@@ -57,6 +58,7 @@ class _LandingPageState extends State<LandingPage>
     );
     _introCtrl.forward();
     _checkOnboarding();
+    _checkAppVersion();
   }
 
   @override
@@ -77,6 +79,14 @@ class _LandingPageState extends State<LandingPage>
           ).push(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
         }
       });
+    }
+  }
+
+  Future<void> _checkAppVersion() async {
+    // Give the UI a moment to settle before potentially showing a dialog.
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      await VersionCheckService.instance.checkForUpdate(context);
     }
   }
 

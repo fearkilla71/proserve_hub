@@ -316,6 +316,15 @@ void main() async {
       );
       _firebaseInitialized = true;
 
+      // Enable offline persistence for Firestore.
+      // On mobile, persistence is on by default. On web, we explicitly enable
+      // it. We also set a generous cache size so users can browse cached jobs,
+      // invoices, and messages while offline.
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+
       // Now that Firebase is initialized, configure Crashlytics.
       if (_crashlyticsSupported) {
         await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
+import '../services/version_check_service.dart';
 import '../state/app_state.dart';
 import '../utils/legal_documents.dart';
 import '../widgets/skeleton_loader.dart';
@@ -89,10 +90,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Select Language',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               ListTile(
@@ -354,10 +352,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 Center(
-                  child: Text(
-                    'Version 1.0.0+1',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).hintColor,
+                  child: FutureBuilder<String>(
+                    future: VersionCheckService.currentVersionLabel(),
+                    builder: (context, snap) => Text(
+                      snap.data ?? 'Version …',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                      ),
                     ),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
@@ -85,15 +86,19 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
 
     setState(() => _submitting = true);
     try {
-      // Create booking doc
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'customerId': uid,
-        'contractorId': widget.contractorId,
-        'date': _dateKey(_selectedDate),
-        'time': _selectedSlot,
-        'status': 'confirmed',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Create booking doc with rich fields for tracking
+      final bookingRef = await FirebaseFirestore.instance
+          .collection('bookings')
+          .add({
+            'customerId': uid,
+            'contractorId': widget.contractorId,
+            'contractorName': widget.contractorName,
+            'date': _dateKey(_selectedDate),
+            'time': _selectedSlot,
+            'status': 'confirmed',
+            'reminderSent': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       // Mark slot as booked on contractor doc
       final key = _dateKey(_selectedDate);
@@ -108,18 +113,82 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
           .doc(widget.contractorId)
           .set({'availability': _availability}, SetOptions(merge: true));
 
+      // Send booking confirmation notification via Cloud Function
+      try {
+        await FirebaseFunctions.instance
+            .httpsCallable('sendBookingConfirmation')
+            .call({
+              'bookingId': bookingRef.id,
+              'contractorId': widget.contractorId,
+              'customerId': uid,
+              'date': _dateKey(_selectedDate),
+              'time': _selectedSlot,
+            });
+      } catch (_) {
+        // Notifications are best-effort
+      }
+
+      // Write notification doc for both parties
+      final batch = FirebaseFirestore.instance.batch();
+      final notifData = {
+        'title': 'Booking Confirmed',
+        'body':
+            '${DateFormat.yMMMd().format(_selectedDate)} at $_selectedSlot with ${widget.contractorName}',
+        'type': 'booking_confirmed',
+        'route': '/bookings',
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+      batch.set(
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('notifications')
+            .doc(),
+        notifData,
+      );
+      batch.set(
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.contractorId)
+            .collection('notifications')
+            .doc(),
+        {
+          ...notifData,
+          'body':
+              'New booking: ${DateFormat.yMMMd().format(_selectedDate)} at $_selectedSlot',
+        },
+      );
+      await batch.commit();
+
       if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: const Text('Booking Confirmed'),
-          content: Text(
-            '${DateFormat.yMMMd().format(_selectedDate)} at $_selectedSlot\n'
-            'with ${widget.contractorName}',
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+          title: const Text('Booking Confirmed!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${DateFormat.yMMMd().format(_selectedDate)} at $_selectedSlot\n'
+                'with ${widget.contractorName}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You\'ll receive a reminder before your appointment.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
           actions: [
-            TextButton(
+            FilledButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context);

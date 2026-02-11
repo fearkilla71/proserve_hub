@@ -6,8 +6,24 @@ import 'package:intl/intl.dart';
 import '../models/marketplace_models.dart';
 import '../widgets/skeleton.dart';
 
-class ConversationsListScreen extends StatelessWidget {
+class ConversationsListScreen extends StatefulWidget {
   const ConversationsListScreen({super.key});
+
+  @override
+  State<ConversationsListScreen> createState() =>
+      _ConversationsListScreenState();
+}
+
+class _ConversationsListScreenState extends State<ConversationsListScreen> {
+  String _searchQuery = '';
+  bool _showSearch = false;
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +36,33 @@ class ConversationsListScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Messages')),
+      appBar: AppBar(
+        title: _showSearch
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search conversations…',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v.trim()),
+              )
+            : const Text('Messages'),
+        actions: [
+          IconButton(
+            icon: Icon(_showSearch ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _showSearch = !_showSearch;
+                if (!_showSearch) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('conversations')
@@ -41,14 +83,28 @@ class ConversationsListScreen extends StatelessWidget {
           }
 
           final convoDocs = snapshot.data?.docs ?? [];
-          final conversations =
-              convoDocs.map(Conversation.fromFirestore).toList()..sort((a, b) {
-                final aTime =
-                    a.lastMessageTime ?? DateTime.fromMillisecondsSinceEpoch(0);
-                final bTime =
-                    b.lastMessageTime ?? DateTime.fromMillisecondsSinceEpoch(0);
-                return bTime.compareTo(aTime);
-              });
+          var conversations = convoDocs.map(Conversation.fromFirestore).toList()
+            ..sort((a, b) {
+              final aTime =
+                  a.lastMessageTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bTime =
+                  b.lastMessageTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return bTime.compareTo(aTime);
+            });
+
+          // Apply search filter
+          if (_searchQuery.isNotEmpty) {
+            final q = _searchQuery.toLowerCase();
+            conversations = conversations.where((c) {
+              // Search by participant name
+              final names = c.participantNames.values.join(' ').toLowerCase();
+              if (names.contains(q)) return true;
+              // Search by last message
+              final msg = (c.lastMessage ?? '').toLowerCase();
+              if (msg.contains(q)) return true;
+              return false;
+            }).toList();
+          }
 
           if (conversations.isEmpty) {
             return const Center(
