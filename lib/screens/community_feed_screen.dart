@@ -1125,14 +1125,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: isAdmin
                   ? _postsRef
-                      .orderBy('createdAt', descending: true)
-                      .limit(50)
-                      .snapshots()
+                        .orderBy('createdAt', descending: true)
+                        .limit(50)
+                        .snapshots()
                   : _postsRef
-                      .where('moderationStatus', isEqualTo: 'active')
-                      .orderBy('createdAt', descending: true)
-                      .limit(50)
-                      .snapshots(),
+                        .where('moderationStatus', isEqualTo: 'active')
+                        .orderBy('createdAt', descending: true)
+                        .limit(50)
+                        .snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
                   return Card(

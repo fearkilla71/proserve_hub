@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AvailabilityCalendarScreen extends StatefulWidget {
   const AvailabilityCalendarScreen({super.key});
@@ -16,6 +18,8 @@ class _AvailabilityCalendarScreenState
   DateTime _selectedDate = DateTime.now();
   Map<String, List<Map<String, dynamic>>> _availability = {};
   bool _isLoading = true;
+  bool _syncing = false;
+  bool _calendarLinked = false;
 
   final List<String> _timeSlots = [
     '08:00 AM',
@@ -35,6 +39,7 @@ class _AvailabilityCalendarScreenState
   void initState() {
     super.initState();
     _loadAvailability();
+    _checkCalendarLinked();
   }
 
   Future<void> _loadAvailability() async {
@@ -143,12 +148,121 @@ class _AvailabilityCalendarScreenState
     });
   }
 
+  Future<void> _checkCalendarLinked() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('contractors')
+        .doc(user.uid)
+        .get();
+    if (mounted) {
+      setState(() {
+        _calendarLinked = doc.data()?['googleCalendarLinked'] as bool? ?? false;
+      });
+    }
+  }
+
+  Future<void> _linkGoogleCalendar() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable('getGoogleCalendarAuthUrl');
+      final result = await callable.call(<String, dynamic>{});
+      final url = result.data?['url'] as String?;
+
+      if (url != null && url.isNotEmpty) {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Google Calendar sync requires server setup. '
+                'Contact support for assistance.',
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Calendar link error: $e')));
+      }
+    }
+  }
+
+  Future<void> _syncCalendar() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() => _syncing = true);
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+      final callable = functions.httpsCallable(
+        'syncGoogleCalendar',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      );
+      final result = await callable.call(<String, dynamic>{
+        'availability': _availability,
+      });
+
+      final imported = result.data?['imported'] as int? ?? 0;
+      final exported = result.data?['exported'] as int? ?? 0;
+
+      // Reload updated availability from Firestore
+      await _loadAvailability();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Synced! $exported slots exported, $imported events imported.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Availability Calendar'),
         actions: [
+          if (_calendarLinked)
+            IconButton(
+              icon: _syncing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.sync),
+              tooltip: 'Sync Google Calendar',
+              onPressed: _syncing ? null : _syncCalendar,
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.calendar_month),
+              tooltip: 'Link Google Calendar',
+              onPressed: _linkGoogleCalendar,
+            ),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveAvailability,

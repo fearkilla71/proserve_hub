@@ -433,6 +433,22 @@ class _ReviewCardState extends State<ReviewCard> {
     }
   }
 
+  Widget _templateChip(String text) {
+    final preview = text.length > 30 ? '${text.substring(0, 30)}...' : text;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ActionChip(
+        label: Text(preview, style: const TextStyle(fontSize: 12)),
+        onPressed: () {
+          _responseController.text = text;
+          _responseController.selection = TextSelection.fromPosition(
+            TextPosition(offset: text.length),
+          );
+        },
+      ),
+    );
+  }
+
   bool _canRespond() {
     final currentUser = FirebaseAuth.instance.currentUser;
     return currentUser != null &&
@@ -630,6 +646,29 @@ class _ReviewCardState extends State<ReviewCard> {
           if (_isRespondingMode)
             Column(
               children: [
+                // Quick response templates
+                SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _templateChip('Thank you for your kind review!'),
+                      _templateChip(
+                        'We appreciate your feedback and look forward '
+                        'to working with you again.',
+                      ),
+                      _templateChip(
+                        'Thank you for choosing us. We value your '
+                        'trust and support!',
+                      ),
+                      _templateChip(
+                        'We\'re glad you\'re satisfied with our work. '
+                        'Please don\'t hesitate to reach out anytime.',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: _responseController,
                   maxLines: 3,

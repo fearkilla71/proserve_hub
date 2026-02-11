@@ -61,6 +61,8 @@ import '../screens/job_request_page.dart';
 import '../screens/verify_contact_info_page.dart';
 import '../screens/invoice_preview_screen.dart';
 import '../screens/community_feed_screen.dart';
+import '../screens/notification_center_screen.dart';
+import '../screens/saved_estimates_screen.dart';
 import '../screens/painting_request_flow_page.dart';
 import '../screens/exterior_painting_request_flow_page.dart';
 import '../screens/drywall_repair_request_flow_page.dart';
@@ -151,6 +153,8 @@ abstract final class AppRoutes {
   static const verifyContact = '/verify-contact';
   static const invoicePreview = '/invoice-preview';
   static const communityFeed = '/community-feed';
+  static const notificationCenter = '/notifications';
+  static const savedEstimates = '/saved-estimates';
   static const landing = '/landing';
 
   // ── Service Request Flows ──
@@ -579,7 +583,15 @@ GoRouter createRouter() {
         path: '/job-request/:serviceName',
         builder: (context, state) {
           final serviceName = state.pathParameters['serviceName']!;
-          return JobRequestPage(serviceName: serviceName);
+          final extra = state.extra as Map<String, dynamic>?;
+          return JobRequestPage(
+            serviceName: serviceName,
+            initialZip: extra?['initialZip'] as String?,
+            initialQuantity: extra?['initialQuantity'] as String?,
+            initialPrice: extra?['initialPrice'] as String?,
+            initialDescription: extra?['initialDescription'] as String?,
+            initialUrgent: extra?['initialUrgent'] as bool?,
+          );
         },
       ),
       GoRoute(
@@ -595,6 +607,14 @@ GoRouter createRouter() {
       GoRoute(
         path: '/community-feed',
         builder: (context, state) => const CommunityFeedScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
+      ),
+      GoRoute(
+        path: '/saved-estimates',
+        builder: (context, state) => const SavedEstimatesScreen(),
       ),
       GoRoute(
         path: '/landing',

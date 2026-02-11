@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
+import '../state/app_state.dart';
 import '../utils/legal_documents.dart';
 import '../widgets/skeleton_loader.dart';
 import 'legal_doc_screen.dart';
@@ -59,6 +60,87 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  String _languageLabel(Locale? locale) {
+    if (locale == null) return 'System default';
+    switch (locale.languageCode) {
+      case 'en':
+        return 'English';
+      case 'es':
+        return 'Español';
+      case 'fr':
+        return 'Français';
+      default:
+        return locale.languageCode;
+    }
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final appState = AppState.read(context);
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Select Language',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                title: const Text('System default'),
+                trailing: appState.locale == null
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () {
+                  appState.setLocale(null);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: const Text('English'),
+                trailing: appState.locale?.languageCode == 'en'
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () {
+                  appState.setLocale(const Locale('en'));
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: const Text('Español'),
+                trailing: appState.locale?.languageCode == 'es'
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () {
+                  appState.setLocale(const Locale('es'));
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                title: const Text('Français'),
+                trailing: appState.locale?.languageCode == 'fr'
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () {
+                  appState.setLocale(const Locale('fr'));
+                  Navigator.pop(ctx);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _openDoc({required String title, required String body}) {
@@ -196,6 +278,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.language),
+                  title: const Text('Language'),
+                  subtitle: Text(_languageLabel(AppState.of(context).locale)),
+                  onTap: () => _showLanguagePicker(context),
+                ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Help'),

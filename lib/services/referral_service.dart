@@ -101,6 +101,25 @@ class ReferralService {
       'appliedAt': FieldValue.serverTimestamp(),
     });
 
+    // Increment usage count on the referral code doc.
+    batch.update(_firestore.collection('referrals').doc(codeUpper), {
+      'usageCount': FieldValue.increment(1),
+    });
+
+    // Record who used the code (for referrer's dashboard).
+    batch.set(
+      _firestore
+          .collection('referrals')
+          .doc(codeUpper)
+          .collection('usedBy')
+          .doc(uid),
+      {
+        'uid': uid,
+        'credit': creditAmount,
+        'appliedAt': FieldValue.serverTimestamp(),
+      },
+    );
+
     await batch.commit();
     return null; // success
   }
@@ -117,5 +136,41 @@ class ReferralService {
         .doc(uid)
         .snapshots()
         .map((snap) => (snap.data()?['promoCredits'] as num?)?.toDouble() ?? 0);
+  }
+
+  // ─── Dashboard stats ──────────────────────────────────────────────
+
+  /// Stream the usage count for the current user's referral code.
+  Stream<int> watchMyCodeUsageCount(String code) {
+    return _firestore
+        .collection('referrals')
+        .doc(code)
+        .snapshots()
+        .map((snap) => (snap.data()?['usageCount'] as int?) ?? 0);
+  }
+
+  /// Stream the list of people who used the current user's referral code.
+  Stream<List<Map<String, dynamic>>> watchMyCodeUsedBy(String code) {
+    return _firestore
+        .collection('referrals')
+        .doc(code)
+        .collection('usedBy')
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.data()).toList());
+  }
+
+  /// Stream the current user's own referral history (codes they redeemed).
+  Stream<List<Map<String, dynamic>>> watchMyRedemptions() {
+    final uid = _uid;
+    if (uid == null) return const Stream.empty();
+
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('referralHistory')
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.data()).toList());
   }
 }

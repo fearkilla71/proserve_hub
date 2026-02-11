@@ -635,6 +635,13 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Notifications',
+                  onPressed: () {
+                    context.push('/notifications');
+                  },
+                  icon: const Icon(Icons.notifications_outlined),
+                ),
+                IconButton(
                   tooltip: 'Profile',
                   onPressed: () {
                     context.push('/customer-profile');
@@ -745,6 +752,19 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: _quickActionTile(
+                context: context,
+                title: 'My Estimates',
+                subtitle: 'View saved AI estimates',
+                icon: Icons.calculate_outlined,
+                onTap: () {
+                  context.push('/saved-estimates');
+                },
+              ),
             ),
             const SizedBox(height: 16),
             GestureDetector(

@@ -20,8 +20,21 @@ import '../widgets/price_suggestion_card.dart';
 
 class JobRequestPage extends StatefulWidget {
   final String serviceName;
+  final String? initialZip;
+  final String? initialQuantity;
+  final String? initialPrice;
+  final String? initialDescription;
+  final bool? initialUrgent;
 
-  const JobRequestPage({super.key, required this.serviceName});
+  const JobRequestPage({
+    super.key,
+    required this.serviceName,
+    this.initialZip,
+    this.initialQuantity,
+    this.initialPrice,
+    this.initialDescription,
+    this.initialUrgent,
+  });
 
   @override
   State<JobRequestPage> createState() => _JobRequestPageState();
@@ -62,6 +75,24 @@ class _JobRequestPageState extends State<JobRequestPage> {
   @override
   void initState() {
     super.initState();
+
+    // Pre-fill from AI estimator if provided
+    if (widget.initialZip != null && widget.initialZip!.isNotEmpty) {
+      zipController.text = widget.initialZip!;
+    }
+    if (widget.initialQuantity != null && widget.initialQuantity!.isNotEmpty) {
+      quantityController.text = widget.initialQuantity!;
+    }
+    if (widget.initialPrice != null && widget.initialPrice!.isNotEmpty) {
+      priceController.text = widget.initialPrice!;
+    }
+    if (widget.initialDescription != null &&
+        widget.initialDescription!.isNotEmpty) {
+      descriptionController.text = widget.initialDescription!;
+    }
+    if (widget.initialUrgent == true) {
+      isUrgent = true;
+    }
 
     PricingEngine.getUnit(service: widget.serviceName).then((unit) {
       if (!mounted) return;

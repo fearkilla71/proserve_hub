@@ -522,6 +522,13 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Notifications',
+                  onPressed: () {
+                    context.push('/notifications');
+                  },
+                  icon: const Icon(Icons.notifications_outlined),
+                ),
+                IconButton(
                   tooltip: 'Help',
                   onPressed: () {
                     context.push('/contractor-profile-settings');

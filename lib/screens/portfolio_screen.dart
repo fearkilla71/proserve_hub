@@ -47,8 +47,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final snapshot =
-          await _portfolioRef.orderBy('uploadedAt', descending: true).get();
+      final snapshot = await _portfolioRef
+          .orderBy('uploadedAt', descending: true)
+          .get();
 
       setState(() {
         _portfolioItems = snapshot.docs

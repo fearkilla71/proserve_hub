@@ -1221,6 +1221,41 @@ class _CustomerAiEstimatorWizardPageState
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         const SizedBox(height: 16),
+        if (_aiResult != null)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: const Icon(Icons.send),
+              onPressed: () {
+                final prices = _aiResult!['prices'] as Map<String, dynamic>?;
+                final recommended = prices?['recommended']?.toString() ?? '';
+                final labels = <String, String>{
+                  'painting': 'Interior Painting',
+                  'cabinet_painting': 'Cabinet Painting',
+                  'drywall': 'Drywall Repair',
+                  'pressure_washing': 'Pressure Washing',
+                };
+                final serviceName = labels[_service] ?? _service;
+                final qty = _quantityController.text.trim();
+                final zip = _zipController.text.trim();
+                final urgent = _urgency == 'rush';
+
+                context.push(
+                  '/job-request/$serviceName',
+                  extra: <String, dynamic>{
+                    'initialZip': zip,
+                    'initialQuantity': qty,
+                    'initialPrice': recommended,
+                    'initialDescription':
+                        'AI-estimated $serviceName job — ${_aiResult!['quantity'] ?? qty} ${_aiResult!['unit'] ?? 'units'}',
+                    'initialUrgent': urgent,
+                  },
+                );
+              },
+              label: const Text('Post as Job Request'),
+            ),
+          ),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(

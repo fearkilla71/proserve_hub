@@ -142,10 +142,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       try {
-        await context.push(
-          '/job/$jobId',
-          extra: {'jobData': jobData},
-        );
+        await context.push('/job/$jobId', extra: {'jobData': jobData});
       } finally {
         if (mounted) {
           _isNavigatingToDetail = false;

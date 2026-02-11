@@ -446,13 +446,14 @@ class _ProServeHubAppState extends State<ProServeHubApp> {
         themeMode: ThemeMode.dark,
         darkTheme: ProServeTheme.darkTheme(),
         theme: ProServeTheme.darkTheme(),
+        locale: _appState.locale,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [Locale('en')],
+        supportedLocales: const [Locale('en'), Locale('es'), Locale('fr')],
       ),
     );
   }

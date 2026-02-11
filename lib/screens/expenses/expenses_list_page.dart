@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../models/job_expense.dart';
@@ -8,7 +9,7 @@ import '../../services/expense_export_service.dart';
 import '../../services/job_expense_service.dart';
 import '../../widgets/skeleton_loader.dart';
 
-class ExpensesListPage extends StatelessWidget {
+class ExpensesListPage extends StatefulWidget {
   final String jobId;
   final bool canAdd;
   final String createdByRole;
@@ -19,6 +20,46 @@ class ExpensesListPage extends StatelessWidget {
     required this.canAdd,
     required this.createdByRole,
   });
+
+  @override
+  State<ExpensesListPage> createState() => _ExpensesListPageState();
+}
+
+class _ExpensesListPageState extends State<ExpensesListPage> {
+  DateTime? _filterStart;
+  DateTime? _filterEnd;
+
+  List<JobExpense> _applyDateFilter(List<JobExpense> items) {
+    if (_filterStart == null && _filterEnd == null) return items;
+    return items.where((e) {
+      final d = e.receiptDate;
+      if (d == null) return true;
+      if (_filterStart != null && d.isBefore(_filterStart!)) return false;
+      if (_filterEnd != null &&
+          d.isAfter(_filterEnd!.add(const Duration(days: 1)))) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      initialDateRange: _filterStart != null && _filterEnd != null
+          ? DateTimeRange(start: _filterStart!, end: _filterEnd!)
+          : null,
+    );
+    if (range != null) {
+      setState(() {
+        _filterStart = range.start;
+        _filterEnd = range.end;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +78,7 @@ class ExpensesListPage extends StatelessWidget {
       try {
         final csv = exportService.buildCsv(items);
         final file = await exportService.writeCsvToTempFile(
-          filenameBase: 'expenses_$jobId',
+          filenameBase: 'expenses_${widget.jobId}',
           csv: csv,
         );
         await Share.shareXFiles([XFile(file.path)], text: 'Expenses CSV');
@@ -56,7 +97,7 @@ class ExpensesListPage extends StatelessWidget {
       final messenger = ScaffoldMessenger.of(context);
       try {
         final file = await exportService.writePdfToTempFile(
-          filenameBase: 'expenses_$jobId',
+          filenameBase: 'expenses_${widget.jobId}',
           title: 'Receipts & Expenses',
           expenses: items,
         );
@@ -73,20 +114,44 @@ class ExpensesListPage extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Receipts & Expenses')),
-      floatingActionButton: canAdd
+      appBar: AppBar(
+        title: const Text('Receipts & Expenses'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _filterStart != null
+                  ? Icons.filter_alt
+                  : Icons.filter_alt_outlined,
+            ),
+            tooltip: 'Filter by date',
+            onPressed: _pickDateRange,
+          ),
+          if (_filterStart != null)
+            IconButton(
+              icon: const Icon(Icons.filter_alt_off),
+              tooltip: 'Clear filter',
+              onPressed: () {
+                setState(() {
+                  _filterStart = null;
+                  _filterEnd = null;
+                });
+              },
+            ),
+        ],
+      ),
+      floatingActionButton: widget.canAdd
           ? FloatingActionButton(
               onPressed: () {
                 context.push(
-                  '/add-expense/$jobId',
-                  extra: {'createdByRole': createdByRole},
+                  '/add-expense/${widget.jobId}',
+                  extra: {'createdByRole': widget.createdByRole},
                 );
               },
               child: const Icon(Icons.add),
             )
           : null,
       body: StreamBuilder<List<JobExpense>>(
-        stream: expenseService.streamExpensesForJob(jobId),
+        stream: expenseService.streamExpensesForJob(widget.jobId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -123,12 +188,66 @@ class ExpensesListPage extends StatelessWidget {
             );
           }
 
-          final items = snapshot.data!;
+          final allItems = snapshot.data!;
+          final items = _applyDateFilter(allItems);
+
+          // Aggregate totals
+          double totalAmount = 0;
+          double totalTax = 0;
+          for (final e in items) {
+            totalAmount += e.total ?? 0;
+            totalTax += e.tax ?? 0;
+          }
 
           return Column(
             children: [
+              // Date filter indicator
+              if (_filterStart != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  child: Text(
+                    'Showing ${DateFormat.MMMd().format(_filterStart!)} – '
+                    '${DateFormat.MMMd().format(_filterEnd!)}  '
+                    '(${items.length} of ${allItems.length})',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+
+              // Aggregate totals card
+              if (items.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _statCol('Items', items.length.toString()),
+                          _statCol(
+                            'Subtotal',
+                            '\$${(totalAmount - totalTax).toStringAsFixed(2)}',
+                          ),
+                          _statCol('Tax', '\$${totalTax.toStringAsFixed(2)}'),
+                          _statCol(
+                            'Total',
+                            '\$${totalAmount.toStringAsFixed(2)}',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
                     Expanded(
@@ -192,6 +311,27 @@ class ExpensesListPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _statCol(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,75 +1,138 @@
 {
   "@@locale": "en",
   "appTitle": "ProServe Hub",
-  "@appTitle": {
-    "description": "The application title shown in various places"
-  },
+  "@appTitle": { "description": "The application title" },
   "selectService": "Select a Service",
-  "@selectService": {
-    "description": "Title of the service selection page"
-  },
+  "@selectService": { "description": "Title of the service selection page" },
   "browseContractors": "Browse Contractors",
-  "@browseContractors": {
-    "description": "Title of the browse contractors screen"
-  },
+  "@browseContractors": { "description": "Title of the browse contractors screen" },
   "savedContractors": "Saved Contractors",
-  "@savedContractors": {
-    "description": "Title of the favorites screen"
-  },
+  "@savedContractors": { "description": "Title of the favorites screen" },
   "instantBook": "Instant Book",
-  "@instantBook": {
-    "description": "Instant booking button label"
-  },
+  "@instantBook": { "description": "Instant booking button label" },
   "viewAvailability": "View Availability",
-  "@viewAvailability": {
-    "description": "Button to view a contractor's calendar"
-  },
+  "@viewAvailability": { "description": "Button to view a contractor's calendar" },
   "requestJob": "Request Job",
-  "@requestJob": {
-    "description": "Button to request a job from a contractor"
-  },
+  "@requestJob": { "description": "Button to request a job" },
   "cancelJob": "Cancel Job",
-  "@cancelJob": {
-    "description": "Button to cancel a job"
-  },
+  "@cancelJob": { "description": "Button to cancel a job" },
   "referralPromo": "Referral & Promo",
-  "@referralPromo": {
-    "description": "Referral screen title"
-  },
+  "@referralPromo": { "description": "Referral screen title" },
   "bookingConfirmed": "Booking Confirmed",
-  "@bookingConfirmed": {
-    "description": "Alert title when a booking is confirmed"
-  },
+  "@bookingConfirmed": { "description": "Booking confirmation alert" },
   "noErrors": "No errors logged yet.",
-  "@noErrors": {
-    "description": "Placeholder in the error log when empty"
-  },
+  "@noErrors": { "description": "Placeholder in error log" },
   "quickActions": "Quick actions",
-  "@quickActions": {
-    "description": "Section header for quick action buttons"
-  },
+  "@quickActions": { "description": "Section header" },
   "startRequest": "Start request",
-  "@startRequest": {
-    "description": "Quick action tile label"
-  },
+  "@startRequest": { "description": "Quick action tile label" },
   "browsePros": "Browse pros",
-  "@browsePros": {
-    "description": "Quick action tile label"
-  },
+  "@browsePros": { "description": "Quick action tile label" },
   "messages": "Messages",
-  "@messages": {
-    "description": "Quick action tile label"
-  },
+  "@messages": { "description": "Quick action tile label" },
   "projectTracker": "Project tracker",
-  "@projectTracker": {
-    "description": "Quick action tile label"
-  },
+  "@projectTracker": { "description": "Quick action tile label" },
   "savedPros": "Saved pros",
-  "@savedPros": {
-    "description": "Quick action tile label"
-  },
+  "@savedPros": { "description": "Quick action tile label" },
   "referral": "Referral",
-  "@referral": {
-    "description": "Quick action tile label"
-  }
+  "@referral": { "description": "Quick action tile label" },
+
+  "welcome": "Welcome, {name}",
+  "@welcome": { "placeholders": { "name": { "type": "String" } } },
+  "notifications": "Notifications",
+  "@notifications": { "description": "Notification screen title" },
+  "settings": "Settings",
+  "@settings": { "description": "Settings screen title" },
+  "language": "Language",
+  "@language": { "description": "Language selector label" },
+  "signOut": "Sign Out",
+  "@signOut": { "description": "Sign out button" },
+  "signIn": "Sign In",
+  "@signIn": { "description": "Sign in button" },
+  "profile": "Profile",
+  "@profile": { "description": "Profile screen title" },
+  "home": "Home",
+  "@home": { "description": "Home tab label" },
+  "search": "Search",
+  "@search": { "description": "Search tab label" },
+  "project": "Project",
+  "@project": { "description": "Project tab label" },
+  "community": "Community",
+  "@community": { "description": "Community tab label" },
+  "tools": "Tools",
+  "@tools": { "description": "Tools tab label" },
+  "jobs": "Jobs",
+  "@jobs": { "description": "Jobs tab label" },
+  "plan": "Plan",
+  "@plan": { "description": "Plan tab label" },
+
+  "renderTool": "Render Tool",
+  "@renderTool": { "description": "Render tool screen title" },
+  "compare": "Compare",
+  "@compare": { "description": "Before/after compare button" },
+  "exitCompare": "Exit compare",
+  "@exitCompare": { "description": "Exit compare mode button" },
+  "before": "BEFORE",
+  "@before": { "description": "Before label in comparison" },
+  "after": "AFTER",
+  "@after": { "description": "After label in comparison" },
+
+  "myEstimates": "My Estimates",
+  "@myEstimates": { "description": "Saved estimates screen title" },
+  "noEstimatesYet": "No estimates yet",
+  "@noEstimatesYet": { "description": "Empty state for estimates" },
+  "getAiEstimate": "Get AI Estimate",
+  "@getAiEstimate": { "description": "AI estimate button" },
+  "postAsJobRequest": "Post as Job Request",
+  "@postAsJobRequest": { "description": "Convert estimate to job button" },
+  "deleteEstimate": "Delete Estimate",
+  "@deleteEstimate": { "description": "Delete estimate button" },
+
+  "receiptsExpenses": "Receipts & Expenses",
+  "@receiptsExpenses": { "description": "Expenses screen title" },
+  "exportCsv": "Export CSV",
+  "@exportCsv": { "description": "CSV export button" },
+  "exportPdf": "Export PDF",
+  "@exportPdf": { "description": "PDF export button" },
+  "noReceiptsYet": "No receipts yet.",
+  "@noReceiptsYet": { "description": "Empty state for expenses" },
+
+  "availabilityCalendar": "Availability Calendar",
+  "@availabilityCalendar": { "description": "Calendar screen title" },
+  "allDayAvailable": "All Day Available",
+  "@allDayAvailable": { "description": "Set full day available" },
+  "allDayUnavailable": "All Day Unavailable",
+  "@allDayUnavailable": { "description": "Set full day unavailable" },
+
+  "aiEstimator": "AI Estimator",
+  "@aiEstimator": { "description": "AI estimator screen title" },
+  "startNewRequest": "Start a New Request",
+  "@startNewRequest": { "description": "New request button on estimate result" },
+
+  "activity": "Activity",
+  "@activity": { "description": "Notification activity tab" },
+  "noNotificationsYet": "No notifications yet",
+  "@noNotificationsYet": { "description": "Empty notifications" },
+  "chooseNotifications": "Choose which notifications you want to receive.",
+  "@chooseNotifications": { "description": "Notification prefs header" },
+
+  "referralDashboard": "Referral Dashboard",
+  "@referralDashboard": { "description": "Referral dashboard title" },
+  "totalReferrals": "Total Referrals",
+  "@totalReferrals": { "description": "Referral stat label" },
+  "creditsEarned": "Credits Earned",
+  "@creditsEarned": { "description": "Referral stat label" },
+  "yourReferralCode": "Your Referral Code",
+  "@yourReferralCode": { "description": "Referral code header" },
+
+  "interiorPainting": "Interior Painting",
+  "@interiorPainting": {},
+  "cabinetPainting": "Cabinet Painting",
+  "@cabinetPainting": {},
+  "drywallRepair": "Drywall Repair",
+  "@drywallRepair": {},
+  "pressureWashing": "Pressure Washing",
+  "@pressureWashing": {},
+  "exteriorPainting": "Exterior Painting",
+  "@exteriorPainting": {}
 }

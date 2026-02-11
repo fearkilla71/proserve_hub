@@ -53,6 +53,8 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
 
   _RenderMode _mode = _RenderMode.ai;
   bool _showOriginal = false;
+  bool _compareMode = false;
+  double _sliderX = 0.5; // 0.0 = all original, 1.0 = all edited
 
   bool _aiBusy = false;
   Color _wallColor = const Color(0xFF2E7DFF);
@@ -881,6 +883,84 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
                 ),
               ),
             ),
+            // ── Render History Gallery ──
+            if (_aiHistory.isNotEmpty)
+              SizedBox(
+                height: 72,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _aiHistory.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, i) {
+                      final item = _aiHistory[i];
+                      return GestureDetector(
+                        onTap: () async {
+                          final codec = await ui.instantiateImageCodec(
+                            item.imageBytes,
+                          );
+                          final frame = await codec.getNextFrame();
+                          if (!mounted) return;
+                          setState(() {
+                            _aiImage?.dispose();
+                            _aiImage = frame.image;
+                            _showOriginal = false;
+                            _compareMode = false;
+                            _wallColor = item.wallColor;
+                            _cabinetColor = item.cabinetColor;
+                            _wallsEnabled = item.wallsEnabled;
+                            _cabinetsEnabled = item.cabinetsEnabled;
+                            if (item.prompt != null) {
+                              _promptController.text = item.prompt!;
+                            }
+                          });
+                        },
+                        child: Container(
+                          width: 64,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                              width: 1.5,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.memory(item.imageBytes, fit: BoxFit.cover),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  color: const Color(0x99000000),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  child: Text(
+                                    '#${i + 1}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             Expanded(
               child: original == null
                   ? Padding(
@@ -937,40 +1017,72 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: FilledButton.icon(
-                                  onPressed: () {
-                                    final hasAlt = _mode == _RenderMode.ai
-                                        ? ai != null
-                                        : _strokes.isNotEmpty;
-                                    if (!hasAlt) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            _mode == _RenderMode.ai
-                                                ? 'No edited render yet. Tap Next (→) to generate one.'
-                                                : 'No manual edits yet. Paint on the image first.',
-                                          ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: FilledButton.icon(
+                                        onPressed: () {
+                                          final hasAlt = _mode == _RenderMode.ai
+                                              ? ai != null
+                                              : _strokes.isNotEmpty;
+                                          if (!hasAlt) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  _mode == _RenderMode.ai
+                                                      ? 'No edited render yet. Tap Next (→) to generate one.'
+                                                      : 'No manual edits yet. Paint on the image first.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          setState(() {
+                                            _compareMode = !_compareMode;
+                                            if (_compareMode) {
+                                              _showOriginal = false;
+                                              _sliderX = 0.5;
+                                            }
+                                          });
+                                        },
+                                        icon: Icon(
+                                          _compareMode
+                                              ? Icons.compare
+                                              : Icons.compare_arrows,
                                         ),
-                                      );
-                                      return;
-                                    }
-
-                                    setState(
-                                      () => _showOriginal = !_showOriginal,
-                                    );
-                                  },
-                                  icon: Icon(
-                                    _showOriginal
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  label: Text(
-                                    _showOriginal
-                                        ? 'Show edited'
-                                        : 'Show original',
-                                  ),
+                                        label: Text(
+                                          _compareMode
+                                              ? 'Exit compare'
+                                              : 'Compare',
+                                        ),
+                                      ),
+                                    ),
+                                    if (!_compareMode) ...[
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        tooltip: _showOriginal
+                                            ? 'Show edited'
+                                            : 'Show original',
+                                        onPressed: () {
+                                          final hasAlt = _mode == _RenderMode.ai
+                                              ? ai != null
+                                              : _strokes.isNotEmpty;
+                                          if (!hasAlt) return;
+                                          setState(
+                                            () =>
+                                                _showOriginal = !_showOriginal,
+                                          );
+                                        },
+                                        icon: Icon(
+                                          _showOriginal
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -1013,6 +1125,21 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
                                 boxWidth: constraints.maxWidth,
                                 boxHeight: constraints.maxHeight,
                               );
+
+                              // ── Compare mode: before / after slider ──
+                              if (_compareMode &&
+                                  _mode == _RenderMode.ai &&
+                                  ai != null) {
+                                return _BeforeAfterSlider(
+                                  boundaryKey: _boundaryKey,
+                                  original: original,
+                                  edited: ai,
+                                  mapping: mapping,
+                                  sliderX: _sliderX,
+                                  onSliderChanged: (v) =>
+                                      setState(() => _sliderX = v),
+                                );
+                              }
 
                               final display =
                                   (_mode == _RenderMode.ai &&
@@ -1543,5 +1670,204 @@ class _DisplayPainter extends CustomPainter {
   bool shouldRepaint(covariant _DisplayPainter oldDelegate) {
     return oldDelegate.image != image ||
         oldDelegate.mapping.imageRect != mapping.imageRect;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Before / After comparison slider
+// ────────────────────────────────────────────────────────────────────────────
+
+class _BeforeAfterSlider extends StatelessWidget {
+  final GlobalKey boundaryKey;
+  final ui.Image original;
+  final ui.Image edited;
+  final _CanvasMapping mapping;
+  final double sliderX;
+  final ValueChanged<double> onSliderChanged;
+
+  const _BeforeAfterSlider({
+    required this.boundaryKey,
+    required this.original,
+    required this.edited,
+    required this.mapping,
+    required this.sliderX,
+    required this.onSliderChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerX = mapping.imageRect.left + sliderX * mapping.imageRect.width;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragUpdate: (d) {
+        final w = mapping.imageRect.width;
+        if (w <= 0) return;
+        final local = d.localPosition.dx - mapping.imageRect.left;
+        onSliderChanged((local / w).clamp(0.0, 1.0));
+      },
+      onTapDown: (d) {
+        final w = mapping.imageRect.width;
+        if (w <= 0) return;
+        final local = d.localPosition.dx - mapping.imageRect.left;
+        onSliderChanged((local / w).clamp(0.0, 1.0));
+      },
+      child: Stack(
+        children: [
+          // Canvas
+          Positioned.fill(
+            child: Center(
+              child: RepaintBoundary(
+                key: boundaryKey,
+                child: CustomPaint(
+                  size: Size(mapping.boxWidth, mapping.boxHeight),
+                  painter: _BeforeAfterPainter(
+                    original: original,
+                    edited: edited,
+                    mapping: mapping,
+                    sliderX: sliderX,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Divider line
+          Positioned(
+            left: dividerX - 1.5,
+            top: mapping.imageRect.top,
+            width: 3,
+            height: mapping.imageRect.height,
+            child: const ColoredBox(color: Colors.white),
+          ),
+
+          // Handle circle
+          Positioned(
+            left: dividerX - 18,
+            top: mapping.imageRect.top + mapping.imageRect.height / 2 - 18,
+            child: IgnorePointer(
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: Colors.black26, width: 2),
+                  boxShadow: const [
+                    BoxShadow(blurRadius: 6, color: Colors.black26),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.drag_indicator,
+                  size: 20,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+          ),
+
+          // BEFORE label
+          Positioned(
+            left: mapping.imageRect.left + 8,
+            top: mapping.imageRect.top + 8,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC000000),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'BEFORE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // AFTER label
+          Positioned(
+            right: (mapping.boxWidth - mapping.imageRect.right) + 8,
+            top: mapping.imageRect.top + 8,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC0B163B),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'AFTER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BeforeAfterPainter extends CustomPainter {
+  final ui.Image original;
+  final ui.Image edited;
+  final _CanvasMapping mapping;
+  final double sliderX;
+
+  _BeforeAfterPainter({
+    required this.original,
+    required this.edited,
+    required this.mapping,
+    required this.sliderX,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dst = mapping.imageRect;
+    final srcOrig = Rect.fromLTWH(
+      0,
+      0,
+      original.width.toDouble(),
+      original.height.toDouble(),
+    );
+    final srcEdit = Rect.fromLTWH(
+      0,
+      0,
+      edited.width.toDouble(),
+      edited.height.toDouble(),
+    );
+
+    final splitX = dst.left + sliderX * dst.width;
+
+    // Draw original (left side)
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(dst.left, dst.top, splitX, dst.bottom));
+    canvas.drawImageRect(original, srcOrig, dst, Paint());
+    canvas.restore();
+
+    // Draw edited (right side)
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(splitX, dst.top, dst.right, dst.bottom));
+    canvas.drawImageRect(edited, srcEdit, dst, Paint());
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _BeforeAfterPainter old) {
+    return old.original != original ||
+        old.edited != edited ||
+        old.sliderX != sliderX ||
+        old.mapping.imageRect != mapping.imageRect;
   }
 }

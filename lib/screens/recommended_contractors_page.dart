@@ -1670,84 +1670,84 @@ class ContractorProfilePage extends StatelessWidget {
         }
         final portfolioList = snapshot.data!.docs;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Portfolio',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Portfolio',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.push('/portfolio/$contractorId');
+                  },
+                  child: const Text('View All'),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                context.push('/portfolio/$contractorId');
-              },
-              child: const Text('View All'),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 150,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: portfolioList.length,
+                itemBuilder: (context, index) {
+                  final item = portfolioList[index].data();
+                  final url = item['url']?.toString() ?? '';
+                  final title = item['title']?.toString() ?? '';
+
+                  return Card(
+                    clipBehavior: Clip.antiAlias,
+                    margin: const EdgeInsets.only(right: 12),
+                    child: SizedBox(
+                      width: 150,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: url.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: url,
+                                    fit: BoxFit.cover,
+                                    width: 150,
+                                    placeholder: (context, url) => const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey,
+                                        ),
+                                  )
+                                : Container(
+                                    color: const Color(0xFF101E38),
+                                    child: const Icon(Icons.image),
+                                  ),
+                          ),
+                          if (title.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 150,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: portfolioList.length,
-            itemBuilder: (context, index) {
-              final item = portfolioList[index].data();
-              final url = item['url']?.toString() ?? '';
-              final title = item['title']?.toString() ?? '';
-
-              return Card(
-                clipBehavior: Clip.antiAlias,
-                margin: const EdgeInsets.only(right: 12),
-                child: SizedBox(
-                  width: 150,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: url.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: url,
-                                fit: BoxFit.cover,
-                                width: 150,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    const Icon(
-                                      Icons.broken_image,
-                                      color: Colors.grey,
-                                    ),
-                              )
-                            : Container(
-                                color: const Color(0xFF101E38),
-                                child: const Icon(Icons.image),
-                              ),
-                      ),
-                      if (title.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Text(
-                            title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+        );
       },
     );
   }
