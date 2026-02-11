@@ -1135,12 +1135,35 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         .snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
+                  debugPrint('Community feed error: ${snap.error}');
                   return Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'Could not load community posts. Please try again.',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off, size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Could not load community posts.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${snap.error}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () => setState(() {}),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
                       ),
                     ),
                   );
