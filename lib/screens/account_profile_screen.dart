@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../services/location_service.dart';
 import '../utils/zip_locations.dart';
+import '../widgets/address_autocomplete_field.dart';
 import '../widgets/contractor_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../models/contractor_badge.dart';
@@ -663,13 +664,14 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             validator: (v) {
                               final s = (v ?? '').trim();
                               if (s.isEmpty) return 'Phone is required.';
-                              if (s.length < 10)
+                              if (s.length < 10) {
                                 return 'Enter a 10-digit phone number.';
+                              }
                               return null;
                             },
                           ),
                           const SizedBox(height: 12),
-                          TextFormField(
+                          AddressAutocompleteField(
                             controller: _addressController,
                             decoration: _fieldDecoration(
                               label: 'Address',
@@ -680,6 +682,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                               final s = (v ?? '').trim();
                               if (s.isEmpty) return 'Address is required.';
                               return null;
+                            },
+                            onPlaceSelected: (details) {
+                              // Auto-fill ZIP when user picks a suggestion
+                              if (details.zip.isNotEmpty) {
+                                _zipController.text = details.zip;
+                              }
                             },
                           ),
                           const SizedBox(height: 12),
@@ -746,8 +754,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                               ],
                               validator: (v) {
                                 final n = int.tryParse(v ?? '');
-                                if (n != null && (n < 0 || n > 60))
+                                if (n != null && (n < 0 || n > 60)) {
                                   return 'Enter 0-60.';
+                                }
                                 return null;
                               },
                             ),
