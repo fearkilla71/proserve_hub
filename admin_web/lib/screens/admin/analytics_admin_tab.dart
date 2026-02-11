@@ -26,6 +26,15 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
     'totalRevenue': 0.0,
     'pendingVerifications': 0,
     'activeDisputes': 0,
+    // Escrow stats
+    'escrowBookings': 0,
+    'escrowFunded': 0,
+    'escrowReleased': 0,
+    'escrowRevenue': 0.0,
+    'escrowSavings': 0.0,
+    'avgEscrowRating': 0.0,
+    'escrowRatedCount': 0,
+    'premiumCreditsUsed': 0,
   };
 
   List<Map<String, dynamic>> _revenueData = [];
@@ -113,6 +122,48 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
           .get();
       final activeDisputes = disputesSnapshot.docs.length;
 
+      // ── Escrow stats ──
+      int escrowBookings = 0;
+      int escrowFunded = 0;
+      int escrowReleased = 0;
+      double escrowRevenue = 0;
+      double escrowSavings = 0;
+      double escrowRatingSum = 0;
+      int escrowRatedCount = 0;
+      int premiumCreditsUsed = 0;
+
+      final escrowSnap = await FirebaseFirestore.instance
+          .collection('escrow_bookings')
+          .get();
+      escrowBookings = escrowSnap.docs.length;
+
+      for (final doc in escrowSnap.docs) {
+        final d = doc.data();
+        final status = d['status'] as String? ?? '';
+        final fee = (d['platformFee'] as num?)?.toDouble() ?? 0;
+        final savings = (d['savingsAmount'] as num?)?.toDouble() ?? 0;
+        final rating = (d['priceFairnessRating'] as num?)?.toInt();
+        final leadCost = (d['premiumLeadCost'] as num?)?.toInt() ?? 0;
+
+        if (status == 'funded' ||
+            status == 'customerConfirmed' ||
+            status == 'contractorConfirmed') {
+          escrowFunded++;
+          escrowRevenue += fee;
+          escrowSavings += savings;
+        } else if (status == 'released') {
+          escrowReleased++;
+          escrowRevenue += fee;
+          escrowSavings += savings;
+        }
+
+        if (rating != null) {
+          escrowRatedCount++;
+          escrowRatingSum += rating;
+        }
+        premiumCreditsUsed += leadCost;
+      }
+
       // Sort and prepare chart data
       final sortedDates = revenueByDay.keys.toList()..sort();
       final revenueData = sortedDates
@@ -134,6 +185,16 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
           'totalRevenue': totalRevenue,
           'pendingVerifications': pendingVerifications,
           'activeDisputes': activeDisputes,
+          'escrowBookings': escrowBookings,
+          'escrowFunded': escrowFunded,
+          'escrowReleased': escrowReleased,
+          'escrowRevenue': escrowRevenue,
+          'escrowSavings': escrowSavings,
+          'avgEscrowRating': escrowRatedCount > 0
+              ? escrowRatingSum / escrowRatedCount
+              : 0.0,
+          'escrowRatedCount': escrowRatedCount,
+          'premiumCreditsUsed': premiumCreditsUsed,
         };
         _revenueData = revenueData;
         _userGrowthData = userGrowthData;
@@ -302,39 +363,74 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
   }
 
   Widget _buildStatsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: [
-        _buildStatCard(
-          'Total Users',
-          _stats['totalUsers'].toString(),
-          Icons.people,
-          AdminColors.accent2,
-        ),
-        _buildStatCard(
-          'Contractors',
-          _stats['totalContractors'].toString(),
-          Icons.construction,
-          AdminColors.accent,
-        ),
-        _buildStatCard(
-          'Platform Revenue',
-          '\$${_stats['totalRevenue'].toStringAsFixed(2)}',
-          Icons.monetization_on,
-          AdminColors.warning,
-        ),
-        _buildStatCard(
-          'Completed Jobs',
-          _stats['completedJobs'].toString(),
-          Icons.check_circle,
-          AdminColors.accent3,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 900 ? 4 : 2;
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: crossAxisCount == 4 ? 2.0 : 1.5,
+          children: [
+            _buildStatCard(
+              'Total Users',
+              _stats['totalUsers'].toString(),
+              Icons.people,
+              AdminColors.accent2,
+            ),
+            _buildStatCard(
+              'Contractors',
+              _stats['totalContractors'].toString(),
+              Icons.construction,
+              AdminColors.accent,
+            ),
+            _buildStatCard(
+              'Job Revenue',
+              '\$${(_stats['totalRevenue'] as double).toStringAsFixed(2)}',
+              Icons.monetization_on,
+              AdminColors.warning,
+            ),
+            _buildStatCard(
+              'Completed Jobs',
+              _stats['completedJobs'].toString(),
+              Icons.check_circle,
+              AdminColors.accent3,
+            ),
+            _buildStatCard(
+              'Escrow Bookings',
+              _stats['escrowBookings'].toString(),
+              Icons.account_balance_wallet,
+              AdminColors.accent2,
+              subtitle:
+                  '${_stats['escrowFunded']} funded · ${_stats['escrowReleased']} released',
+            ),
+            _buildStatCard(
+              'Escrow Revenue',
+              '\$${(_stats['escrowRevenue'] as double).toStringAsFixed(2)}',
+              Icons.payments,
+              AdminColors.accent,
+              subtitle: '5% platform fee',
+            ),
+            _buildStatCard(
+              'Customer Savings',
+              '\$${(_stats['escrowSavings'] as double).toStringAsFixed(2)}',
+              Icons.savings,
+              const Color(0xFF4CAF50),
+              subtitle: 'via AI pricing',
+            ),
+            _buildStatCard(
+              'AI Rating',
+              '${(_stats['avgEscrowRating'] as double).toStringAsFixed(1)}/5',
+              Icons.star,
+              AdminColors.warning,
+              subtitle:
+                  '${_stats['escrowRatedCount']} ratings · ${_stats['premiumCreditsUsed']} credits used',
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -342,8 +438,9 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    String? subtitle,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -368,6 +465,17 @@ class _AnalyticsAdminTabState extends State<AnalyticsAdminTab> {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
+                if (subtitle != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AdminColors.muted.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ],

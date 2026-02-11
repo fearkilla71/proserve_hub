@@ -8,9 +8,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:web/web.dart' as web;
 
 import 'firebase_options.dart';
+import 'screens/admin/activity_log_admin_tab.dart';
+import 'screens/admin/ai_insights_admin_tab.dart';
 import 'screens/admin/analytics_admin_tab.dart';
 import 'screens/admin/contractor_admin_tab.dart';
 import 'screens/admin/dispute_admin_tab.dart';
+import 'screens/admin/escrow_admin_tab.dart';
 import 'screens/admin/job_admin_tab.dart';
 import 'screens/admin/verification_admin_tab.dart';
 import 'theme/admin_theme.dart';
@@ -426,8 +429,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   // Badge counts
   int _pendingVerifications = 0;
   int _activeDisputes = 0;
+  int _activeEscrow = 0;
   StreamSubscription<QuerySnapshot>? _verifSub;
   StreamSubscription<QuerySnapshot>? _disputeSub;
+  StreamSubscription<QuerySnapshot>? _escrowSub;
 
   @override
   void initState() {
@@ -441,6 +446,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _sessionTimer?.cancel();
     _verifSub?.cancel();
     _disputeSub?.cancel();
+    _escrowSub?.cancel();
     super.dispose();
   }
 
@@ -477,6 +483,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
         .listen((snap) {
           if (mounted) setState(() => _activeDisputes = snap.docs.length);
         });
+
+    // Active escrow bookings (funded but not yet released)
+    _escrowSub = FirebaseFirestore.instance
+        .collection('escrow_bookings')
+        .where(
+          'status',
+          whereIn: ['funded', 'customerConfirmed', 'contractorConfirmed'],
+        )
+        .snapshots()
+        .listen((snap) {
+          if (mounted) setState(() => _activeEscrow = snap.docs.length);
+        });
   }
 
   static const _navItems = <_NavDestination>[
@@ -501,6 +519,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
       label: 'Disputes',
     ),
     _NavDestination(
+      icon: Icons.account_balance_wallet_outlined,
+      selectedIcon: Icons.account_balance_wallet,
+      label: 'Escrow',
+    ),
+    _NavDestination(
+      icon: Icons.history_outlined,
+      selectedIcon: Icons.history,
+      label: 'Activity',
+    ),
+    _NavDestination(
+      icon: Icons.auto_awesome_outlined,
+      selectedIcon: Icons.auto_awesome,
+      label: 'AI',
+    ),
+    _NavDestination(
       icon: Icons.analytics_outlined,
       selectedIcon: Icons.analytics,
       label: 'Analytics',
@@ -518,6 +551,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 3:
         return const DisputeAdminTab();
       case 4:
+        return const EscrowAdminTab();
+      case 5:
+        return const ActivityLogAdminTab();
+      case 6:
+        return const AiInsightsAdminTab();
+      case 7:
         return const AnalyticsAdminTab();
       default:
         return const SizedBox.shrink();
@@ -608,6 +647,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 if (i == 3 && _activeDisputes > 0) {
                   badge = _activeDisputes;
                 }
+                if (i == 4 && _activeEscrow > 0) {
+                  badge = _activeEscrow;
+                }
                 return NavigationRailDestination(
                   icon: badge != null
                       ? Badge(label: Text('$badge'), child: Icon(item.icon))
@@ -649,6 +691,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 }
                 if (i == 3 && _activeDisputes > 0) {
                   badge = _activeDisputes;
+                }
+                if (i == 4 && _activeEscrow > 0) {
+                  badge = _activeEscrow;
                 }
                 return NavigationDestination(
                   icon: badge != null
@@ -701,6 +746,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }
             if (i == 3 && _activeDisputes > 0) {
               badge = _activeDisputes;
+            }
+            if (i == 4 && _activeEscrow > 0) {
+              badge = _activeEscrow;
             }
 
             return ListTile(
