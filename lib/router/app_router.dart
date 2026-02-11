@@ -72,6 +72,7 @@ import '../screens/landing_page.dart';
 import '../screens/account_profile_screen.dart';
 import '../screens/ai_price_offer_screen.dart';
 import '../screens/escrow_status_screen.dart';
+import '../screens/escrow_rating_screen.dart';
 import '../widgets/offline_banner.dart';
 
 /// Centralised route path constants.
@@ -654,6 +655,13 @@ GoRouter createRouter() {
         builder: (context, state) {
           final escrowId = state.pathParameters['escrowId']!;
           return EscrowStatusScreen(escrowId: escrowId);
+        },
+      ),
+      GoRoute(
+        path: '/escrow-rating/:escrowId',
+        builder: (context, state) {
+          final escrowId = state.pathParameters['escrowId']!;
+          return EscrowRatingScreen(escrowId: escrowId);
         },
       ),
 

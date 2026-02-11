@@ -56,6 +56,26 @@ class EscrowBooking {
   final String? stripePaymentIntentId;
   final Map<String, double> priceBreakdown; // low, recommended, premium
 
+  // ── Price Lock ──
+  final DateTime? priceLockExpiry;
+
+  // ── Savings ──
+  final double? estimatedMarketPrice; // what contractors typically charge
+  final double? savingsAmount; // estimatedMarketPrice - aiPrice
+  final double? savingsPercent; // savings as percentage
+
+  // ── Instant Booking Discount ──
+  final double? discountPercent; // discount applied for instant booking
+  final double? originalAiPrice; // price before discount
+
+  // ── Post-Job Rating ──
+  final int? priceFairnessRating; // 1-5 stars from customer
+  final String? ratingComment;
+  final DateTime? ratedAt;
+
+  // ── Premium Lead ──
+  final int premiumLeadCost; // credits charged to contractor (default 3)
+
   const EscrowBooking({
     required this.id,
     required this.jobId,
@@ -75,6 +95,16 @@ class EscrowBooking {
     this.releasedAt,
     this.stripePaymentIntentId,
     this.priceBreakdown = const {},
+    this.priceLockExpiry,
+    this.estimatedMarketPrice,
+    this.savingsAmount,
+    this.savingsPercent,
+    this.discountPercent,
+    this.originalAiPrice,
+    this.priceFairnessRating,
+    this.ratingComment,
+    this.ratedAt,
+    this.premiumLeadCost = 3,
   });
 
   factory EscrowBooking.fromDoc(DocumentSnapshot doc) {
@@ -99,6 +129,16 @@ class EscrowBooking {
       releasedAt: (d['releasedAt'] as Timestamp?)?.toDate(),
       stripePaymentIntentId: d['stripePaymentIntentId'] as String?,
       priceBreakdown: _parseBreakdown(d['priceBreakdown']),
+      priceLockExpiry: (d['priceLockExpiry'] as Timestamp?)?.toDate(),
+      estimatedMarketPrice: (d['estimatedMarketPrice'] as num?)?.toDouble(),
+      savingsAmount: (d['savingsAmount'] as num?)?.toDouble(),
+      savingsPercent: (d['savingsPercent'] as num?)?.toDouble(),
+      discountPercent: (d['discountPercent'] as num?)?.toDouble(),
+      originalAiPrice: (d['originalAiPrice'] as num?)?.toDouble(),
+      priceFairnessRating: (d['priceFairnessRating'] as num?)?.toInt(),
+      ratingComment: d['ratingComment'] as String?,
+      ratedAt: (d['ratedAt'] as Timestamp?)?.toDate(),
+      premiumLeadCost: (d['premiumLeadCost'] as num?)?.toInt() ?? 3,
     );
   }
 
@@ -123,11 +163,29 @@ class EscrowBooking {
     'jobDetails': jobDetails,
     'createdAt': FieldValue.serverTimestamp(),
     'priceBreakdown': priceBreakdown,
+    if (priceLockExpiry != null)
+      'priceLockExpiry': Timestamp.fromDate(priceLockExpiry!),
+    if (estimatedMarketPrice != null)
+      'estimatedMarketPrice': estimatedMarketPrice,
+    if (savingsAmount != null) 'savingsAmount': savingsAmount,
+    if (savingsPercent != null) 'savingsPercent': savingsPercent,
+    if (discountPercent != null) 'discountPercent': discountPercent,
+    if (originalAiPrice != null) 'originalAiPrice': originalAiPrice,
+    'premiumLeadCost': premiumLeadCost,
   };
+
+  /// Whether the price lock has expired.
+  bool get isPriceLockExpired {
+    if (priceLockExpiry == null) return false;
+    return DateTime.now().isAfter(priceLockExpiry!);
+  }
 
   /// Whether both parties have confirmed completion.
   bool get bothConfirmed =>
       customerConfirmedAt != null && contractorConfirmedAt != null;
+
+  /// Whether this booking has been rated.
+  bool get hasRating => priceFairnessRating != null;
 
   /// Human-readable status label.
   String get statusLabel {

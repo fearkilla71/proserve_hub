@@ -217,7 +217,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
           ),
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } catch (e) {
@@ -618,68 +620,69 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         child: _loading
             ? const ProfileSkeleton(key: ValueKey('skeleton'))
             : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: [
-                  _headerCard(),
-                  const SizedBox(height: 16),
-                  _expandableSectionCard(
-                    title: 'Your details',
-                    subtitle: 'This helps clients recognize and contact you.',
-                    icon: Icons.badge_outlined,
-                    initiallyExpanded: false,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: _fieldDecoration(
-                            label: 'Full name',
-                            icon: Icons.person_outline,
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: [
+                    _headerCard(),
+                    const SizedBox(height: 16),
+                    _expandableSectionCard(
+                      title: 'Your details',
+                      subtitle: 'This helps clients recognize and contact you.',
+                      icon: Icons.badge_outlined,
+                      initiallyExpanded: false,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: _fieldDecoration(
+                              label: 'Full name',
+                              icon: Icons.person_outline,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            validator: (v) {
+                              final s = (v ?? '').trim();
+                              if (s.isEmpty) return 'Name is required.';
+                              return null;
+                            },
                           ),
-                          textInputAction: TextInputAction.next,
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return 'Name is required.';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _phoneController,
-                          decoration: _fieldDecoration(
-                            label: 'Phone',
-                            icon: Icons.phone_outlined,
-                            hint: '(555) 123-4567',
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: _fieldDecoration(
+                              label: 'Phone',
+                              icon: Icons.phone_outlined,
+                              hint: '(555) 123-4567',
+                            ),
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            validator: (v) {
+                              final s = (v ?? '').trim();
+                              if (s.isEmpty) return 'Phone is required.';
+                              if (s.length < 10)
+                                return 'Enter a 10-digit phone number.';
+                              return null;
+                            },
                           ),
-                          keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.next,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(10),
-                          ],
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return 'Phone is required.';
-                            if (s.length < 10) return 'Enter a 10-digit phone number.';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _addressController,
-                          decoration: _fieldDecoration(
-                            label: 'Address',
-                            icon: Icons.location_on_outlined,
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _addressController,
+                            decoration: _fieldDecoration(
+                              label: 'Address',
+                              icon: Icons.location_on_outlined,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            validator: (v) {
+                              final s = (v ?? '').trim();
+                              if (s.isEmpty) return 'Address is required.';
+                              return null;
+                            },
                           ),
-                          textInputAction: TextInputAction.next,
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return 'Address is required.';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           TextFormField(
                             controller: _zipController,
                             decoration: _fieldDecoration(
@@ -695,550 +698,558 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             ],
                             validator: _validateZip,
                           ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: _locating ? null : _fillFromLocation,
-                            icon: _locating
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.my_location),
-                            label: Text(
-                              _locating
-                                  ? 'Finding your location...'
-                                  : 'Use my location',
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: _locating ? null : _fillFromLocation,
+                              icon: _locating
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.my_location),
+                              label: Text(
+                                _locating
+                                    ? 'Finding your location...'
+                                    : 'Use my location',
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_role == 'contractor') ...[
-                    const SizedBox(height: 16),
-                    _expandableSectionCard(
-                      title: 'Contractor details',
-                      subtitle: 'Showcase your experience and skills.',
-                      icon: Icons.handyman_outlined,
-                      initiallyExpanded: false,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _yearsExpController,
-                            decoration: _fieldDecoration(
-                              label: 'Years of experience',
-                              icon: Icons.timeline,
-                              hint: 'e.g. 5',
-                            ),
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(2),
-                            ],
-                            validator: (v) {
-                              final n = int.tryParse(v ?? '');
-                              if (n != null && (n < 0 || n > 60)) return 'Enter 0-60.';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _bioController,
-                            decoration: _fieldDecoration(
-                              label: 'Bio/description',
-                              icon: Icons.short_text,
-                              hint:
-                                  'Describe your specialties and recent work.',
-                            ),
-                            maxLines: 4,
-                            textInputAction: TextInputAction.newline,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    _expandableSectionCard(
-                      title: 'Public contractor card',
-                      subtitle:
-                          'Customize how customers and other contractors see you.',
-                      icon: Icons.badge_outlined,
-                      initiallyExpanded: true,
-                      child: Column(
-                        children: [
-                          ContractorCard(
-                            data: _previewCardData(),
-                            showEdit: false,
-                          ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: OutlinedButton.icon(
-                              onPressed: _randomizeCard,
-                              icon: const Icon(Icons.shuffle),
-                              label: const Text('Randomize card'),
+                    if (_role == 'contractor') ...[
+                      const SizedBox(height: 16),
+                      _expandableSectionCard(
+                        title: 'Contractor details',
+                        subtitle: 'Showcase your experience and skills.',
+                        icon: Icons.handyman_outlined,
+                        initiallyExpanded: false,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _yearsExpController,
+                              decoration: _fieldDecoration(
+                                label: 'Years of experience',
+                                icon: Icons.timeline,
+                                hint: 'e.g. 5',
+                              ),
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(2),
+                              ],
+                              validator: (v) {
+                                final n = int.tryParse(v ?? '');
+                                if (n != null && (n < 0 || n > 60))
+                                  return 'Enter 0-60.';
+                                return null;
+                              },
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          _optionGroup(
-                            title: 'Card details',
-                            children: [
-                              TextFormField(
-                                controller: _publicNameController,
-                                decoration: _fieldDecoration(
-                                  label: 'Display name',
-                                  icon: Icons.storefront_outlined,
-                                  hint: 'e.g. Franco Renovations',
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _bioController,
+                              decoration: _fieldDecoration(
+                                label: 'Bio/description',
+                                icon: Icons.short_text,
+                                hint:
+                                    'Describe your specialties and recent work.',
+                              ),
+                              maxLines: 4,
+                              textInputAction: TextInputAction.newline,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _expandableSectionCard(
+                        title: 'Public contractor card',
+                        subtitle:
+                            'Customize how customers and other contractors see you.',
+                        icon: Icons.badge_outlined,
+                        initiallyExpanded: true,
+                        child: Column(
+                          children: [
+                            ContractorCard(
+                              data: _previewCardData(),
+                              showEdit: false,
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: OutlinedButton.icon(
+                                onPressed: _randomizeCard,
+                                icon: const Icon(Icons.shuffle),
+                                label: const Text('Randomize card'),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _optionGroup(
+                              title: 'Card details',
+                              children: [
+                                TextFormField(
+                                  controller: _publicNameController,
+                                  decoration: _fieldDecoration(
+                                    label: 'Display name',
+                                    icon: Icons.storefront_outlined,
+                                    hint: 'e.g. Franco Renovations',
+                                  ),
+                                  textInputAction: TextInputAction.next,
                                 ),
-                                textInputAction: TextInputAction.next,
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _publicPhoneController,
-                                decoration: _fieldDecoration(
-                                  label: 'Public phone',
-                                  icon: Icons.phone_outlined,
-                                  hint: '(555) 123-4567',
-                                ),
-                                keyboardType: TextInputType.phone,
-                                textInputAction: TextInputAction.next,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(10),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _headlineController,
-                                decoration: _fieldDecoration(
-                                  label: 'Headline',
-                                  icon: Icons.star_outline,
-                                  hint: 'Short, customer-facing tagline',
-                                ),
-                                textInputAction: TextInputAction.next,
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Theme presets',
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _themePresets
-                                    .map(_themePresetChip)
-                                    .toList(),
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Gradient start',
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _gradientPalette.map((color) {
-                                  final selected =
-                                      _gradientStart == color.toARGB32();
-                                  return _colorChip(
-                                    color: color,
-                                    selected: selected,
-                                    onTap: () {
-                                      setState(() {
-                                        _gradientStart = color.toARGB32();
-                                        _cardTheme = 'custom';
-                                      });
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Gradient end',
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _gradientPalette.map((color) {
-                                  final selected =
-                                      _gradientEnd == color.toARGB32();
-                                  return _colorChip(
-                                    color: color,
-                                    selected: selected,
-                                    onTap: () {
-                                      setState(() {
-                                        _gradientEnd = color.toARGB32();
-                                        _cardTheme = 'custom';
-                                      });
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Avatar',
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  ChoiceChip(
-                                    label: const Text('Monogram'),
-                                    selected: _avatarStyle == 'monogram',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _avatarStyle = 'monogram');
-                                    },
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _publicPhoneController,
+                                  decoration: _fieldDecoration(
+                                    label: 'Public phone',
+                                    icon: Icons.phone_outlined,
+                                    hint: '(555) 123-4567',
                                   ),
-                                  ChoiceChip(
-                                    label: const Text('Logo'),
-                                    selected: _avatarStyle == 'logo',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _avatarStyle = 'logo');
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  ChoiceChip(
-                                    label: const Text('Circle'),
-                                    selected: _avatarShape == 'circle',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _avatarShape = 'circle');
-                                    },
-                                  ),
-                                  ChoiceChip(
-                                    label: const Text('Hex'),
-                                    selected: _avatarShape == 'hex',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _avatarShape = 'hex');
-                                    },
-                                  ),
-                                  ChoiceChip(
-                                    label: const Text('Shield'),
-                                    selected: _avatarShape == 'shield',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _avatarShape = 'shield');
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              SwitchListTile(
-                                value: _avatarGlow,
-                                onChanged: (value) {
-                                  setState(() => _avatarGlow = value);
-                                },
-                                title: const Text('Avatar glow'),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Texture',
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  ChoiceChip(
-                                    label: const Text('None'),
-                                    selected: _texture == 'none',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _texture = 'none');
-                                    },
-                                  ),
-                                  ChoiceChip(
-                                    label: const Text('Dots'),
-                                    selected: _texture == 'dots',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _texture = 'dots');
-                                    },
-                                  ),
-                                  ChoiceChip(
-                                    label: const Text('Grid'),
-                                    selected: _texture == 'grid',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _texture = 'grid');
-                                    },
-                                  ),
-                                  ChoiceChip(
-                                    label: const Text('Waves'),
-                                    selected: _texture == 'waves',
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _texture = 'waves');
-                                    },
-                                  ),
-                                ],
-                              ),
-                              if (_texture != 'none') ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Text('Opacity'),
-                                    Expanded(
-                                      child: Slider(
-                                        value: _textureOpacity,
-                                        min: 0.04,
-                                        max: 0.4,
-                                        divisions: 6,
-                                        label: _textureOpacity.toStringAsFixed(
-                                          2,
-                                        ),
-                                        onChanged: (value) {
-                                          setState(
-                                            () => _textureOpacity = value,
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                  keyboardType: TextInputType.phone,
+                                  textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
                                   ],
                                 ),
-                              ],
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Status Banner',
-                            children: [
-                              Text(
-                                'Shows your tier level, jobs completed, and a decorative icon at the top of your card.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              SwitchListTile(
-                                value: _showBanner,
-                                onChanged: (value) {
-                                  setState(() => _showBanner = value);
-                                },
-                                title: const Text('Show status banner'),
-                                subtitle: const Text(
-                                  'Displays your rank and stats',
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _headlineController,
+                                  decoration: _fieldDecoration(
+                                    label: 'Headline',
+                                    icon: Icons.star_outline,
+                                    hint: 'Short, customer-facing tagline',
+                                  ),
+                                  textInputAction: TextInputAction.next,
                                 ),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              if (_showBanner) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Banner accent icon',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelMedium,
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Theme presets',
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _themePresets
+                                      .map(_themePresetChip)
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Gradient start',
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _gradientPalette.map((color) {
+                                    final selected =
+                                        _gradientStart == color.toARGB32();
+                                    return _colorChip(
+                                      color: color,
+                                      selected: selected,
+                                      onTap: () {
+                                        setState(() {
+                                          _gradientStart = color.toARGB32();
+                                          _cardTheme = 'custom';
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Gradient end',
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _gradientPalette.map((color) {
+                                    final selected =
+                                        _gradientEnd == color.toARGB32();
+                                    return _colorChip(
+                                      color: color,
+                                      selected: selected,
+                                      onTap: () {
+                                        setState(() {
+                                          _gradientEnd = color.toARGB32();
+                                          _cardTheme = 'custom';
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Avatar',
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    ChoiceChip(
+                                      label: const Text('Monogram'),
+                                      selected: _avatarStyle == 'monogram',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(
+                                          () => _avatarStyle = 'monogram',
+                                        );
+                                      },
+                                    ),
+                                    ChoiceChip(
+                                      label: const Text('Logo'),
+                                      selected: _avatarStyle == 'logo',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _avatarStyle = 'logo');
+                                      },
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 8),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
                                   children: [
-                                    _bannerIconChip(
-                                      'spark',
-                                      'Spark',
-                                      Icons.auto_awesome,
+                                    ChoiceChip(
+                                      label: const Text('Circle'),
+                                      selected: _avatarShape == 'circle',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _avatarShape = 'circle');
+                                      },
                                     ),
-                                    _bannerIconChip('bolt', 'Bolt', Icons.bolt),
-                                    _bannerIconChip(
-                                      'shield',
-                                      'Shield',
-                                      Icons.shield_outlined,
+                                    ChoiceChip(
+                                      label: const Text('Hex'),
+                                      selected: _avatarShape == 'hex',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _avatarShape = 'hex');
+                                      },
                                     ),
-                                    _bannerIconChip(
-                                      'star',
-                                      'Star',
-                                      Icons.star_outline,
-                                    ),
-                                    _bannerIconChip(
-                                      'check',
-                                      'Verified',
-                                      Icons.verified_outlined,
+                                    ChoiceChip(
+                                      label: const Text('Shield'),
+                                      selected: _avatarShape == 'shield',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _avatarShape = 'shield');
+                                      },
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 8),
+                                SwitchListTile(
+                                  value: _avatarGlow,
+                                  onChanged: (value) {
+                                    setState(() => _avatarGlow = value);
+                                  },
+                                  title: const Text('Avatar glow'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
                               ],
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Profile Badges',
-                            children: [
-                              Text(
-                                'Select badges that represent your business. These appear on your public card.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
+                            ),
+                            _optionGroup(
+                              title: 'Texture',
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    ChoiceChip(
+                                      label: const Text('None'),
+                                      selected: _texture == 'none',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'none');
+                                      },
                                     ),
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 12,
-                                children: profileBadges.map((badge) {
-                                  final selected =
-                                      _selectedBadges.contains(badge.id) ||
-                                      _selectedBadges.contains(badge.label);
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        if (selected) {
-                                          _selectedBadges = _selectedBadges
-                                              .where(
-                                                (id) =>
-                                                    id != badge.id &&
-                                                    id != badge.label,
-                                              )
-                                              .toList();
-                                        } else {
-                                          _selectedBadges = [
-                                            ..._selectedBadges,
-                                            badge.id,
-                                          ];
-                                        }
-                                      });
-                                    },
-                                    onLongPress: () =>
-                                        showBadgeDetail(context, badge),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
+                                    ChoiceChip(
+                                      label: const Text('Dots'),
+                                      selected: _texture == 'dots',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'dots');
+                                      },
+                                    ),
+                                    ChoiceChip(
+                                      label: const Text('Grid'),
+                                      selected: _texture == 'grid',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'grid');
+                                      },
+                                    ),
+                                    ChoiceChip(
+                                      label: const Text('Waves'),
+                                      selected: _texture == 'waves',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'waves');
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                if (_texture != 'none') ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Text('Opacity'),
+                                      Expanded(
+                                        child: Slider(
+                                          value: _textureOpacity,
+                                          min: 0.04,
+                                          max: 0.4,
+                                          divisions: 6,
+                                          label: _textureOpacity
+                                              .toStringAsFixed(2),
+                                          onChanged: (value) {
+                                            setState(
+                                              () => _textureOpacity = value,
+                                            );
+                                          },
+                                        ),
                                       ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 6,
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Status Banner',
+                              children: [
+                                Text(
+                                  'Shows your tier level, jobs completed, and a decorative icon at the top of your card.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: selected
-                                            ? badge.color.withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : Theme.of(context)
-                                                  .colorScheme
-                                                  .surfaceContainerHighest
-                                                  .withValues(alpha: 0.5),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
+                                ),
+                                const SizedBox(height: 8),
+                                SwitchListTile(
+                                  value: _showBanner,
+                                  onChanged: (value) {
+                                    setState(() => _showBanner = value);
+                                  },
+                                  title: const Text('Show status banner'),
+                                  subtitle: const Text(
+                                    'Displays your rank and stats',
+                                  ),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                if (_showBanner) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Banner accent icon',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _bannerIconChip(
+                                        'spark',
+                                        'Spark',
+                                        Icons.auto_awesome,
+                                      ),
+                                      _bannerIconChip(
+                                        'bolt',
+                                        'Bolt',
+                                        Icons.bolt,
+                                      ),
+                                      _bannerIconChip(
+                                        'shield',
+                                        'Shield',
+                                        Icons.shield_outlined,
+                                      ),
+                                      _bannerIconChip(
+                                        'star',
+                                        'Star',
+                                        Icons.star_outline,
+                                      ),
+                                      _bannerIconChip(
+                                        'check',
+                                        'Verified',
+                                        Icons.verified_outlined,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Profile Badges',
+                              children: [
+                                Text(
+                                  'Select badges that represent your business. These appear on your public card.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 12,
+                                  children: profileBadges.map((badge) {
+                                    final selected =
+                                        _selectedBadges.contains(badge.id) ||
+                                        _selectedBadges.contains(badge.label);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          if (selected) {
+                                            _selectedBadges = _selectedBadges
+                                                .where(
+                                                  (id) =>
+                                                      id != badge.id &&
+                                                      id != badge.label,
+                                                )
+                                                .toList();
+                                          } else {
+                                            _selectedBadges = [
+                                              ..._selectedBadges,
+                                              badge.id,
+                                            ];
+                                          }
+                                        });
+                                      },
+                                      onLongPress: () =>
+                                          showBadgeDetail(context, badge),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
                                           color: selected
                                               ? badge.color.withValues(
-                                                  alpha: 0.5,
+                                                  alpha: 0.15,
                                                 )
-                                              : Colors.transparent,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          BadgeWidget(
-                                            badge: badge,
-                                            size: BadgeSize.small,
-                                            showLabel: false,
-                                            earned: selected,
+                                              : Theme.of(context)
+                                                    .colorScheme
+                                                    .surfaceContainerHighest
+                                                    .withValues(alpha: 0.5),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
                                           ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            badge.label,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: selected
-                                                  ? badge.color
-                                                  : Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant,
+                                          border: Border.all(
+                                            color: selected
+                                                ? badge.color.withValues(
+                                                    alpha: 0.5,
+                                                  )
+                                                : Colors.transparent,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            BadgeWidget(
+                                              badge: badge,
+                                              size: BadgeSize.small,
+                                              showLabel: false,
+                                              earned: selected,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              badge.label,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color: selected
+                                                    ? badge.color
+                                                    : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                          _optionGroup(
-                            title: 'Achievements',
-                            children: [
-                              Text(
-                                'Badges earned automatically based on your performance. Complete jobs and earn reviews to unlock more!',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
-                              Builder(
-                                builder: (context) {
-                                  final earnedIds = computeEarnedAchievements(
-                                    totalJobsCompleted: _totalJobsCompleted,
-                                    reviewCount: _reviewCount,
-                                    avgRating: _avgRating,
-                                  );
-                                  final allAchievements = achievementBadges;
-                                  return Wrap(
-                                    spacing: 10,
-                                    runSpacing: 14,
-                                    children: allAchievements.map((badge) {
-                                      final isEarned = earnedIds.contains(
-                                        badge.id,
-                                      );
-                                      return GestureDetector(
-                                        onTap: () => showBadgeDetail(
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Achievements',
+                              children: [
+                                Text(
+                                  'Badges earned automatically based on your performance. Complete jobs and earn reviews to unlock more!',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
                                           context,
-                                          badge,
-                                          earned: isEarned,
-                                        ),
-                                        child: BadgeWidget(
-                                          badge: badge,
-                                          size: BadgeSize.medium,
-                                          showLabel: true,
-                                          earned: isEarned,
-                                        ),
-                                      );
-                                    }).toList(),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: 12),
+                                Builder(
+                                  builder: (context) {
+                                    final earnedIds = computeEarnedAchievements(
+                                      totalJobsCompleted: _totalJobsCompleted,
+                                      reviewCount: _reviewCount,
+                                      avgRating: _avgRating,
+                                    );
+                                    final allAchievements = achievementBadges;
+                                    return Wrap(
+                                      spacing: 10,
+                                      runSpacing: 14,
+                                      children: allAchievements.map((badge) {
+                                        final isEarned = earnedIds.contains(
+                                          badge.id,
+                                        );
+                                        return GestureDetector(
+                                          onTap: () => showBadgeDetail(
+                                            context,
+                                            badge,
+                                            earned: isEarned,
+                                          ),
+                                          child: BadgeWidget(
+                                            badge: badge,
+                                            size: BadgeSize.medium,
+                                            showLabel: true,
+                                            earned: isEarned,
+                                          ),
+                                        );
+                                      }).toList(),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _saving ? null : _save,
+                        child: Text(_saving ? 'Saving...' : 'Save changes'),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _saving ? null : _save,
-                      child: Text(_saving ? 'Saving...' : 'Save changes'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
       ),
     );
   }

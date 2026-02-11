@@ -48,14 +48,18 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   color: ProServeColors.success.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.verified_outlined, size: 40, color: ProServeColors.success),
+                child: Icon(
+                  Icons.verified_outlined,
+                  size: 40,
+                  color: ProServeColors.success,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Confirm Job Complete?',
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
@@ -106,7 +110,10 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   ),
                   label: const Text(
                     'Confirm & Release',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -131,25 +138,32 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         await EscrowService.instance.contractorConfirm(widget.escrowId);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: ProServeColors.success, size: 20),
-            const SizedBox(width: 8),
-            const Text('Confirmation recorded!'),
-          ],
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                Icons.check_circle,
+                color: ProServeColors.success,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text('Confirmation recorded!'),
+            ],
+          ),
         ),
-      ));
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(
-        content: Text('Something went wrong. Please try again.'),
-        action: SnackBarAction(label: 'Retry', onPressed: () => _confirmCompletion(booking, isCustomer)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: () => _confirmCompletion(booking, isCustomer),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _confirming = false);
     }
@@ -175,14 +189,18 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   color: scheme.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.warning_amber_rounded, size: 40, color: scheme.error),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 40,
+                  color: scheme.error,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Cancel Booking?',
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
@@ -198,9 +216,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                 height: 50,
                 child: FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: scheme.error,
-                  ),
+                  style: FilledButton.styleFrom(backgroundColor: scheme.error),
                   child: const Text(
                     'Cancel & Refund',
                     style: TextStyle(fontWeight: FontWeight.w700),
@@ -230,11 +246,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
       context.pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(
-        content: Text('Cancellation failed. Please try again.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cancellation failed. Please try again.')),
+      );
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
@@ -257,11 +271,17 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Booking not found',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -704,7 +724,11 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: ProServeColors.warning, size: 20),
+              const Icon(
+                Icons.info_outline,
+                color: ProServeColors.warning,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -788,11 +812,17 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ProServeColors.success.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: ProServeColors.success.withValues(alpha: 0.2),
+        ),
       ),
       child: Column(
         children: [
-          const Icon(Icons.celebration, size: 40, color: ProServeColors.success),
+          const Icon(
+            Icons.celebration,
+            size: 40,
+            color: ProServeColors.success,
+          ),
           const SizedBox(height: 10),
           Text(
             'Job Complete!',
@@ -809,6 +839,64 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
+
+          // ── Rate your experience (post-job rating) ──
+          if (!booking.hasRating) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: () => context.push('/escrow-rating/${booking.id}'),
+                icon: const Icon(Icons.star_outline),
+                label: const Text(
+                  'Rate the AI Price',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Help our AI learn — rate how fair the price was',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: ProServeColors.accent2.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...List.generate(
+                    booking.priceFairnessRating ?? 0,
+                    (_) => const Icon(
+                      Icons.star,
+                      size: 18,
+                      color: ProServeColors.warning,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'You rated this price',
+                    style: TextStyle(
+                      color: ProServeColors.accent2,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
           OutlinedButton.icon(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.home_outlined),

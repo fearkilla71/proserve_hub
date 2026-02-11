@@ -25,6 +25,12 @@ class EscrowService {
     required double aiPrice,
     required Map<String, double> priceBreakdown,
     required Map<String, dynamic> jobDetails,
+    DateTime? priceLockExpiry,
+    double? estimatedMarketPrice,
+    double? savingsAmount,
+    double? savingsPercent,
+    double? discountPercent,
+    double? originalAiPrice,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
@@ -46,6 +52,15 @@ class EscrowService {
       'jobDetails': jobDetails,
       'priceBreakdown': priceBreakdown,
       'createdAt': FieldValue.serverTimestamp(),
+      if (priceLockExpiry != null)
+        'priceLockExpiry': Timestamp.fromDate(priceLockExpiry),
+      if (estimatedMarketPrice != null)
+        'estimatedMarketPrice': estimatedMarketPrice,
+      if (savingsAmount != null) 'savingsAmount': savingsAmount,
+      if (savingsPercent != null) 'savingsPercent': savingsPercent,
+      if (discountPercent != null) 'discountPercent': discountPercent,
+      if (originalAiPrice != null) 'originalAiPrice': originalAiPrice,
+      'premiumLeadCost': 3,
     });
 
     return ref.id;
@@ -99,6 +114,7 @@ class EscrowService {
   /// Assign a contractor to the escrow booking.
   ///
   /// Called when a contractor claims the job that has an escrow.
+  /// Deducts premium lead credits (3x) from the contractor.
   Future<void> assignContractor({
     required String escrowId,
     required String contractorId,
@@ -106,6 +122,27 @@ class EscrowService {
     await _db.collection(_collection).doc(escrowId).update({
       'contractorId': contractorId,
     });
+
+    // Deduct premium lead credits (3x normal cost)
+    final escrowSnap = await _db.collection(_collection).doc(escrowId).get();
+    final premiumCost =
+        (escrowSnap.data()?['premiumLeadCost'] as num?)?.toInt() ?? 3;
+
+    final contractorRef = _db.collection('contractors').doc(contractorId);
+    final contractorSnap = await contractorRef.get();
+    if (contractorSnap.exists) {
+      final currentCredits =
+          (contractorSnap.data()?['leadCredits'] as num?)?.toInt() ?? 0;
+      if (currentCredits < premiumCost) {
+        throw Exception(
+          'Insufficient credits. Escrow leads require $premiumCost credits.',
+        );
+      }
+      await contractorRef.update({
+        'leadCredits': FieldValue.increment(-premiumCost),
+        'premiumLeadsUsed': FieldValue.increment(1),
+      });
+    }
   }
 
   // ──────────────────────────── CONFIRM COMPLETION ──────────────────────
@@ -245,4 +282,23 @@ class EscrowService {
   }
 
   double _roundCents(double value) => (value * 100).round() / 100;
+
+  // ────────────────────────────── POST-JOB RATING ──────────────────────
+
+  /// Submit a price fairness rating after job completion.
+  Future<void> submitRating({
+    required String escrowId,
+    required int rating,
+    String? comment,
+  }) async {
+    if (rating < 1 || rating > 5) {
+      throw Exception('Rating must be between 1 and 5');
+    }
+
+    await _db.collection(_collection).doc(escrowId).update({
+      'priceFairnessRating': rating,
+      if (comment != null && comment.isNotEmpty) 'ratingComment': comment,
+      'ratedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

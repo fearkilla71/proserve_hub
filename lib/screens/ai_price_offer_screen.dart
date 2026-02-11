@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -7,6 +8,10 @@ import '../theme/proserve_theme.dart';
 
 import '../services/ai_pricing_service.dart';
 import '../services/escrow_service.dart';
+import '../services/escrow_stats_service.dart';
+import '../widgets/price_lock_timer.dart';
+import '../widgets/savings_comparison.dart';
+import '../widgets/social_proof_banner.dart';
 
 /// Shown after a job request is submitted.
 ///
@@ -70,12 +75,22 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
   Future<void> _generatePrice() async {
     try {
+      // Get loyalty discount based on customer's escrow streak
+      double loyaltyDiscount = 0.0;
+      try {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          loyaltyDiscount = await EscrowStatsService().getLoyaltyDiscount(uid);
+        }
+      } catch (_) {}
+
       final pricing = await AiPricingService.instance.generatePrice(
         service: widget.service,
         quantity: widget.quantity,
         zip: widget.zip,
         urgent: widget.urgent,
         jobDetails: widget.jobDetails,
+        loyaltyDiscount: loyaltyDiscount,
       );
       if (mounted) {
         setState(() {
@@ -100,6 +115,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
     try {
       final aiPrice = (_pricing!['aiPrice'] as num).toDouble();
+      final priceLockExpiry = DateTime.now().add(const Duration(hours: 24));
       final escrowId = await EscrowService.instance.createOffer(
         jobId: widget.jobId,
         service: widget.service,
@@ -111,6 +127,13 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           'premium': (_pricing!['premium'] as num).toDouble(),
         },
         jobDetails: widget.jobDetails,
+        priceLockExpiry: priceLockExpiry,
+        estimatedMarketPrice: (_pricing!['estimatedMarketPrice'] as num?)
+            ?.toDouble(),
+        savingsAmount: (_pricing!['savingsAmount'] as num?)?.toDouble(),
+        savingsPercent: (_pricing!['savingsPercent'] as num?)?.toDouble(),
+        discountPercent: (_pricing!['discountPercent'] as num?)?.toDouble(),
+        originalAiPrice: (_pricing!['originalAiPrice'] as num?)?.toDouble(),
       );
 
       // Simulate payment (in production → Stripe checkout)
@@ -310,6 +333,16 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
     final confidence = (_pricing!['confidence'] as num).toDouble();
     final factors = (_pricing!['factors'] as List<dynamic>?) ?? [];
 
+    // New savings / discount fields
+    final estimatedMarketPrice =
+        (_pricing!['estimatedMarketPrice'] as num?)?.toDouble() ?? 0;
+    final savingsAmount = (_pricing!['savingsAmount'] as num?)?.toDouble() ?? 0;
+    final savingsPercent =
+        (_pricing!['savingsPercent'] as num?)?.toDouble() ?? 0;
+    final discountPercent = (_pricing!['discountPercent'] as num?)?.toDouble();
+    final originalAiPrice = (_pricing!['originalAiPrice'] as num?)?.toDouble();
+    final priceLockExpiry = DateTime.now().add(const Duration(hours: 24));
+
     return ListView(
       key: const ValueKey('offer'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -344,7 +377,30 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // ── Savings comparison (shows how much cheaper than contractor) ──
+        if (estimatedMarketPrice > 0)
+          SavingsComparison(
+            aiPrice: aiPrice,
+            estimatedMarketPrice: estimatedMarketPrice,
+            savingsAmount: savingsAmount,
+            savingsPercent: savingsPercent,
+            discountPercent: discountPercent,
+            originalAiPrice: originalAiPrice,
+          ),
+
+        const SizedBox(height: 16),
+
+        // ── Price lock timer (24hr countdown) ──
+        PriceLockTimer(
+          expiresAt: priceLockExpiry,
+          onExpired: () {
+            if (mounted) setState(() {});
+          },
+        ),
+
+        const SizedBox(height: 16),
 
         // ── Main price card ──
         Container(
@@ -502,48 +558,78 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
         const SizedBox(height: 16),
 
-        // ── Escrow trust badge ──
+        // ── Social proof banner ──
+        const SocialProofBanner(),
+
+        const SizedBox(height: 16),
+
+        // ── Satisfaction guarantee ──
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: scheme.primaryContainer.withValues(alpha: 0.2),
+            gradient: LinearGradient(
+              colors: [
+                ProServeColors.success.withValues(alpha: 0.08),
+                ProServeColors.accent2.withValues(alpha: 0.05),
+              ],
+            ),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: scheme.primary.withValues(alpha: 0.15)),
+            border: Border.all(
+              color: ProServeColors.success.withValues(alpha: 0.2),
+            ),
           ),
-          child: Row(
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.shield_outlined,
-                  color: scheme.primary,
-                  size: 22,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ProServeColors.success.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.verified_user,
+                      color: ProServeColors.success,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ProServe Guarantee',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Not satisfied? Your payment stays in escrow until you confirm the job is done right.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Escrow Protection',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Your payment is held securely until both you and the contractor confirm the job is complete.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _GuaranteePill(
+                    icon: Icons.shield_outlined,
+                    label: 'Secure Escrow',
+                  ),
+                  const SizedBox(width: 8),
+                  _GuaranteePill(icon: Icons.undo, label: 'Full Refund'),
+                  const SizedBox(width: 8),
+                  _GuaranteePill(
+                    icon: Icons.support_agent,
+                    label: '24/7 Support',
+                  ),
+                ],
               ),
             ],
           ),
@@ -790,6 +876,42 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GuaranteePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _GuaranteePill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: ProServeColors.success, size: 16),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

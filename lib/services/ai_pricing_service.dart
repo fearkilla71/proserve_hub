@@ -27,6 +27,7 @@ class AiPricingService {
     required String zip,
     bool urgent = false,
     Map<String, dynamic>? jobDetails,
+    double loyaltyDiscount = 0.0, // 0.0–0.08 from EscrowStatsService
   }) async {
     // 1. Get base pricing from the existing engine
     final basePrices = await PricingEngine.calculate(
@@ -60,9 +61,7 @@ class AiPricingService {
     // Round to nearest $5 for cleaner pricing
     final aiPrice = _roundTo5(adjustedRecommended);
 
-    // 4. Calculate platform split
-    final platformFee = _roundCents(aiPrice * platformFeeRate);
-    final contractorPayout = _roundCents(aiPrice - platformFee);
+    // 4. (platform split computed after discount below)
 
     // 5. Calculate confidence
     final confidence = _calculateConfidence(
@@ -75,13 +74,47 @@ class AiPricingService {
     if (urgent) factors.add('Urgency premium (+25%)');
     factors.add('Market rate for $zip area');
 
+    // 6. Calculate estimated market price (what contractors typically charge)
+    // Contractors mark up 18-25% over fair market value
+    final marketMultiplier = 1.0 + (0.18 + (confidence * 0.07));
+    final estimatedMarketPrice = _roundTo5(aiPrice * marketMultiplier);
+
+    // 7. Calculate instant booking discount (10% for booking now)
+    // Plus loyalty discount (0-8% for repeat customers)
+    final totalDiscountPercent = 10.0 + (loyaltyDiscount * 100);
+    final originalAiPrice = aiPrice;
+    final discountedAiPrice = _roundTo5(
+      aiPrice * (1 - totalDiscountPercent / 100),
+    );
+    final discountedFee = _roundCents(discountedAiPrice * platformFeeRate);
+    final discountedPayout = _roundCents(discountedAiPrice - discountedFee);
+
+    // Add loyalty factor if applicable
+    if (loyaltyDiscount > 0) {
+      factors.add(
+        'Loyalty reward (−${(loyaltyDiscount * 100).toStringAsFixed(0)}%)',
+      );
+    }
+
     return {
       'low': _roundTo5(adjustedLow),
       'recommended': _roundTo5(adjustedRecommended),
       'premium': _roundTo5(adjustedPremium),
-      'aiPrice': aiPrice,
-      'platformFee': platformFee,
-      'contractorPayout': contractorPayout,
+      'aiPrice': discountedAiPrice,
+      'originalAiPrice': originalAiPrice,
+      'discountPercent': totalDiscountPercent,
+      'loyaltyDiscountPercent': loyaltyDiscount * 100,
+      'platformFee': discountedFee,
+      'contractorPayout': discountedPayout,
+      'estimatedMarketPrice': estimatedMarketPrice,
+      'savingsAmount': _roundCents(estimatedMarketPrice - discountedAiPrice),
+      'savingsPercent': estimatedMarketPrice > 0
+          ? _roundCents(
+              ((estimatedMarketPrice - discountedAiPrice) /
+                      estimatedMarketPrice) *
+                  100,
+            )
+          : 0.0,
       'confidence': confidence,
       'factors': factors,
     };
