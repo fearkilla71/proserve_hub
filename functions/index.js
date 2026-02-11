@@ -5587,6 +5587,12 @@ exports.fulfillCheckoutSession = functions
       return;
     }
 
+    if (sessionType === 'escrow_payment') {
+      await fulfillEscrowPayment(session);
+      res.json({ ok: true });
+      return;
+    }
+
     // Nothing to fulfill for other session types here.
     res.json({ ok: true, ignored: true, type: sessionType || null });
   } catch (err) {
@@ -6631,3 +6637,331 @@ exports.recalculateReputationHttp = functions.https.onRequest(async (req, res) =
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================================
+// ESCROW STRIPE PAYMENT
+// ============================================================================
+
+/**
+ * Core: Create a Stripe Checkout Session for an escrow payment.
+ *
+ * The customer pays aiPrice into escrow. After both parties confirm,
+ * contractor receives contractorPayout via Stripe Transfer.
+ */
+async function createEscrowCheckoutSessionCore({ escrowId, uid }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+  if (!escrowId) {
+    throw new functions.https.HttpsError('invalid-argument', 'escrowId required');
+  }
+
+  const db = admin.firestore();
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
+  const escrowSnap = await escrowRef.get();
+  if (!escrowSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
+  }
+
+  const escrow = escrowSnap.data() || {};
+
+  // Only the customer who owns the escrow can pay
+  if (escrow.customerId !== uid) {
+    throw new functions.https.HttpsError('permission-denied', 'Not your escrow booking');
+  }
+
+  // Only pay if status is 'offered'
+  if (escrow.status !== 'offered') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      `Cannot pay — escrow status is "${escrow.status}"`
+    );
+  }
+
+  const aiPrice = Number(escrow.aiPrice);
+  if (!Number.isFinite(aiPrice) || aiPrice <= 0) {
+    throw new functions.https.HttpsError('failed-precondition', 'Invalid escrow price');
+  }
+
+  const amountCents = Math.round(aiPrice * 100);
+  const serviceName = (escrow.service || 'Service').toString();
+
+  const stripe = getStripeClient();
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `ProServe Escrow — ${serviceName}`,
+              description: `Secure escrow payment for ${serviceName}. Funds are held until you confirm the job is complete.`,
+              metadata: { escrowId },
+            },
+            unit_amount: amountCents,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        type: 'escrow_payment',
+        escrowId,
+        customerId: uid,
+        jobId: (escrow.jobId || '').toString(),
+      },
+      success_url: withCheckoutSessionId(getSuccessUrl()),
+      cancel_url: getCancelUrl(),
+    });
+  } catch (err) {
+    throw toStripeHttpsError(err, 'Unable to create escrow checkout session');
+  }
+
+  // Store session ID on escrow doc for tracking
+  await escrowRef.update({
+    'stripeCheckoutSessionId': session.id,
+  });
+
+  return {
+    url: session.url,
+    sessionId: session.id,
+  };
+}
+
+// Callable version
+exports.createEscrowCheckoutSession = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+    const escrowId = (data?.escrowId || '').toString().trim();
+    return await createEscrowCheckoutSessionCore({ escrowId, uid });
+  });
+
+// HTTP version (Windows/Linux fallback)
+exports.createEscrowCheckoutSessionHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.status(204).send('');
+      return;
+    }
+    res.set('Access-Control-Allow-Origin', '*');
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const authHeader = (req.headers.authorization || '').toString();
+      const match = authHeader.match(/^Bearer\s+(.+)$/i);
+      const idToken = match ? match[1] : '';
+      if (!idToken) {
+        res.status(401).json({ error: 'Missing Authorization Bearer token' });
+        return;
+      }
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+
+      const escrowId = (req.body?.escrowId || '').toString().trim();
+      const result = await createEscrowCheckoutSessionCore({ escrowId, uid });
+      res.json(result);
+    } catch (err) {
+      const code = err.httpErrorCode?.status || 500;
+      res.status(code).json({ error: err.message || 'Internal error' });
+    }
+  });
+
+/**
+ * Fulfill an escrow payment after Stripe Checkout completion.
+ *
+ * Called from the fulfillCheckoutSession handler when session type is
+ * 'escrow_payment'. Updates escrow to 'funded' and job to 'escrow_funded'.
+ */
+async function fulfillEscrowPayment(session) {
+  const escrowId = (session.metadata?.escrowId || '').toString().trim();
+  const customerId = (session.metadata?.customerId || '').toString().trim();
+  const jobId = (session.metadata?.jobId || '').toString().trim();
+
+  if (!escrowId) return;
+
+  const db = admin.firestore();
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
+
+  const paymentIntentId = (session.payment_intent || '').toString().trim();
+
+  await db.runTransaction(async (tx) => {
+    const escrowSnap = await tx.get(escrowRef);
+    if (!escrowSnap.exists) return;
+
+    const data = escrowSnap.data() || {};
+    // Don't double-fulfill
+    if (data.status === 'funded' || data.status === 'released') return;
+
+    tx.update(escrowRef, {
+      status: 'funded',
+      fundedAt: admin.firestore.FieldValue.serverTimestamp(),
+      stripePaymentIntentId: paymentIntentId || null,
+      stripeCheckoutSessionId: session.id,
+    });
+
+    // Update job_request
+    if (jobId) {
+      const jobRef = db.collection('job_requests').doc(jobId);
+      tx.update(jobRef, {
+        status: 'escrow_funded',
+        escrowId: escrowId,
+        escrowPrice: data.aiPrice || null,
+        instantBook: true,
+      });
+    }
+  });
+}
+
+/**
+ * Release escrow funds to the contractor's Stripe Connected Account.
+ *
+ * Called after both customer and contractor confirm job completion.
+ * Creates a Stripe Transfer to the contractor's connected account.
+ */
+async function releaseEscrowFundsCore({ escrowId, uid }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const db = admin.firestore();
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
+  const escrowSnap = await escrowRef.get();
+  if (!escrowSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
+  }
+
+  const escrow = escrowSnap.data() || {};
+
+  // Only released status triggers payout
+  if (escrow.status !== 'released') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Escrow must be in released status before funds transfer'
+    );
+  }
+
+  // Already transferred?
+  if (escrow.stripeTransferId) {
+    return { ok: true, alreadyTransferred: true };
+  }
+
+  const contractorId = (escrow.contractorId || '').toString().trim();
+  if (!contractorId) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'No contractor assigned to this escrow'
+    );
+  }
+
+  // Get contractor's Stripe Connected Account
+  const contractorSnap = await db.collection('contractors').doc(contractorId).get();
+  const contractorData = contractorSnap.data() || {};
+  const stripeAccountId = (contractorData.stripeAccountId || '').toString().trim();
+
+  if (!stripeAccountId) {
+    // If no Stripe account, mark as pending manual payout
+    await escrowRef.update({
+      payoutStatus: 'pending_manual',
+      payoutNote: 'Contractor has no Stripe Connected Account',
+    });
+    return { ok: true, pendingManual: true };
+  }
+
+  const payoutAmountCents = Math.round((escrow.contractorPayout || 0) * 100);
+  if (payoutAmountCents <= 0) {
+    throw new functions.https.HttpsError('failed-precondition', 'Invalid payout amount');
+  }
+
+  const stripe = getStripeClient();
+  try {
+    const transfer = await stripe.transfers.create({
+      amount: payoutAmountCents,
+      currency: 'usd',
+      destination: stripeAccountId,
+      description: `ProServe escrow payout — ${escrow.service || 'Job'}`,
+      metadata: {
+        escrowId,
+        jobId: escrow.jobId || '',
+        contractorId,
+      },
+    });
+
+    await escrowRef.update({
+      stripeTransferId: transfer.id,
+      payoutStatus: 'transferred',
+      payoutAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { ok: true, transferId: transfer.id };
+  } catch (err) {
+    await escrowRef.update({
+      payoutStatus: 'failed',
+      payoutError: (err.message || 'Transfer failed').toString(),
+    });
+    throw toStripeHttpsError(err, 'Contractor payout failed');
+  }
+}
+
+// Callable version
+exports.releaseEscrowFunds = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+    const escrowId = (data?.escrowId || '').toString().trim();
+    return await releaseEscrowFundsCore({ escrowId, uid });
+  });
+
+// HTTP version (Windows/Linux fallback)
+exports.releaseEscrowFundsHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.status(204).send('');
+      return;
+    }
+    res.set('Access-Control-Allow-Origin', '*');
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const authHeader = (req.headers.authorization || '').toString();
+      const match = authHeader.match(/^Bearer\s+(.+)$/i);
+      const idToken = match ? match[1] : '';
+      if (!idToken) {
+        res.status(401).json({ error: 'Missing Authorization Bearer token' });
+        return;
+      }
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+
+      const escrowId = (req.body?.escrowId || '').toString().trim();
+      const result = await releaseEscrowFundsCore({ escrowId, uid });
+      res.json(result);
+    } catch (err) {
+      const code = err.httpErrorCode?.status || 500;
+      res.status(code).json({ error: err.message || 'Internal error' });
+    }
+  });

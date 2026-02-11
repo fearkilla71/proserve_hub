@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/escrow_booking.dart';
 import 'ai_pricing_service.dart';
+import 'stripe_service.dart';
 
 /// Manages the escrow lifecycle: create → fund → confirm → release.
 class EscrowService {
@@ -202,8 +204,13 @@ class EscrowService {
         });
       }
 
-      // TODO: In production, trigger Stripe Transfer to contractor's
-      // connected account for `contractorPayout` amount.
+      // Trigger Stripe Transfer to contractor's connected account
+      try {
+        await StripeService().releaseEscrowFunds(escrowId: escrowId);
+      } catch (e) {
+        // Log but don't block — admin can retry payout manually
+        debugPrint('Escrow payout failed for $escrowId: $e');
+      }
     }
   }
 

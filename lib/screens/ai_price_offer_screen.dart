@@ -9,6 +9,7 @@ import '../theme/proserve_theme.dart';
 import '../services/ai_pricing_service.dart';
 import '../services/escrow_service.dart';
 import '../services/escrow_stats_service.dart';
+import '../services/stripe_service.dart';
 import '../widgets/price_lock_timer.dart';
 import '../widgets/savings_comparison.dart';
 import '../widgets/social_proof_banner.dart';
@@ -136,9 +137,11 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         originalAiPrice: (_pricing!['originalAiPrice'] as num?)?.toDouble(),
       );
 
-      // Simulate payment (in production → Stripe checkout)
-      await EscrowService.instance.acceptAndFund(escrowId: escrowId);
+      // Open Stripe Checkout for real payment
+      await StripeService().payForEscrow(escrowId: escrowId);
 
+      // After returning from Stripe Checkout, navigate to escrow status.
+      // The Cloud Function fulfillment handler updates escrow to 'funded'.
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       context.pushReplacement('/escrow-status/$escrowId');

@@ -36,6 +36,28 @@ class StripeService {
     await _launchCheckoutUrl(result['url'], label: 'Payment');
   }
 
+  /// Opens Stripe Checkout to fund an escrow booking.
+  Future<String?> payForEscrow({required String escrowId}) async {
+    final result = await _callFunction(
+      callableName: 'createEscrowCheckoutSession',
+      httpName: 'createEscrowCheckoutSessionHttp',
+      params: {'escrowId': escrowId.trim()},
+    );
+    await _launchCheckoutUrl(result['url'], label: 'Escrow Payment');
+    return result['sessionId'];
+  }
+
+  /// Triggers contractor payout after escrow is released.
+  Future<Map<String, String>> releaseEscrowFunds({
+    required String escrowId,
+  }) async {
+    return _callFunction(
+      callableName: 'releaseEscrowFunds',
+      httpName: 'releaseEscrowFundsHttp',
+      params: {'escrowId': escrowId.trim()},
+    );
+  }
+
   Future<void> payForContractorSubscription() async {
     final overrideUrl = _contractorProStripePaymentLinkOverride.trim();
     if (overrideUrl.isNotEmpty) {
