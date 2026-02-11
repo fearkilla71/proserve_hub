@@ -686,7 +686,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   .where('paidBy', arrayContains: user.uid)
                   .snapshots(),
               builder: (context, paidSnap) {
-                if (claimedSnap.hasError) {
+                if (claimedSnap.hasError && paidSnap.hasError) {
                   return const AnimatedStateSwitcher(
                     stateKey: 'claimed_error',
                     child: EmptyStateCard(
@@ -696,7 +696,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     ),
                   );
                 }
-                if (!claimedSnap.hasData) {
+                // Wait for BOTH streams to have data before deciding.
+                if (!claimedSnap.hasData || !paidSnap.hasData) {
                   return AnimatedStateSwitcher(
                     stateKey: 'claimed_loading',
                     child: Card(
@@ -720,10 +721,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 for (final doc in claimedSnap.data!.docs) {
                   merged[doc.id] = doc;
                 }
-                if (!paidSnap.hasError && paidSnap.hasData) {
-                  for (final doc in paidSnap.data!.docs) {
-                    merged[doc.id] = doc;
-                  }
+                for (final doc in paidSnap.data!.docs) {
+                  merged[doc.id] = doc;
                 }
 
                 final docs = merged.values.toList();
@@ -755,7 +754,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 }
 
                 return AnimatedStateSwitcher(
-                  stateKey: 'claimed_list',
+                  stateKey: 'claimed_list_${docs.length}',
                   child: Column(
                     children: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;

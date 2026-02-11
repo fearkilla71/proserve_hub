@@ -1156,71 +1156,73 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     }
 
     Widget unlockedLeadsSection({required String uid}) {
-      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .snapshots(),
-        builder: (context, userSnap) {
-          final data = userSnap.data?.data() ?? <String, dynamic>{};
-          final role = (data['role'] as String?)?.trim().toLowerCase() ?? '';
-          if (role != 'contractor') return const SizedBox.shrink();
+      // Query unlocked leads directly — no need to nest inside a user-doc
+      // StreamBuilder, which would recreate the inner stream on every user-doc
+      // emit and cause visible flickering.
+      // Remove .orderBy to avoid composite index dependency; sort client-side.
+      final q = FirebaseFirestore.instance
+          .collection('job_requests')
+          .where('paidBy', arrayContains: uid)
+          .limit(10);
 
-          final q = FirebaseFirestore.instance
-              .collection('job_requests')
-              .where('paidBy', arrayContains: uid)
-              .orderBy('createdAt', descending: true)
-              .limit(5);
+      return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: q.snapshots(),
+        builder: (context, snap) {
+          if (snap.hasError) return const SizedBox.shrink();
+          if (!snap.hasData) return const SizedBox.shrink();
 
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: q.snapshots(),
-            builder: (context, snap) {
-              if (snap.hasError) return const SizedBox.shrink();
-              if (!snap.hasData) return const SizedBox.shrink();
+          final docs = snap.data!.docs.toList();
+          if (docs.isEmpty) return const SizedBox.shrink();
 
-              final docs = snap.data!.docs;
-              if (docs.isEmpty) return const SizedBox.shrink();
+          // Sort newest first client-side.
+          docs.sort((a, b) {
+            final ta = a.data()['createdAt'] as Timestamp?;
+            final tb = b.data()['createdAt'] as Timestamp?;
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.compareTo(ta);
+          });
+          final limited = docs.take(5).toList();
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'My unlocked leads',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-                        for (final doc in docs)
-                          Builder(
-                            builder: (context) {
-                              final job = doc.data();
-                              final service = (job['service'] ?? 'Service')
-                                  .toString();
-                              final location = (job['location'] ?? 'Unknown')
-                                  .toString();
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const Icon(Icons.lock_open),
-                                title: Text(service),
-                                subtitle: Text(location),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () {
-                                  _openJobDetail(jobId: doc.id, jobData: job);
-                                },
-                              );
-                            },
-                          ),
-                      ],
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'My unlocked leads',
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    for (final doc in limited)
+                      Builder(
+                        builder: (context) {
+                          final job = doc.data();
+                          final service = (job['service'] ?? 'Service')
+                              .toString();
+                          final location = (job['location'] ?? 'Unknown')
+                              .toString();
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.lock_open),
+                            title: Text(service),
+                            subtitle: Text(location),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              _openJobDetail(jobId: doc.id, jobData: job);
+                            },
+                          );
+                        },
+                      ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ),
           );
         },
       );
