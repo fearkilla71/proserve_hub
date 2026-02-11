@@ -210,6 +210,16 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
+    // Trusted pros (customer's curated contractor shortlist).
+    match /users/{uid}/trusted_pros/{contractorId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Favorites subcollection (saved contractors).
+    match /users/{uid}/favorites/{contractorId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // --- ADMINS ---
     match /admins/{uid} {
       // Allow a user to read only their own admin marker doc.

@@ -14,10 +14,15 @@ import 'community_feed_screen.dart';
 
 import '../services/customer_portal_nav.dart';
 import '../services/fcm_service.dart';
+import '../services/conversation_service.dart';
+import '../services/favorites_service.dart';
+import '../services/trusted_pros_service.dart';
 import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/persistent_job_state_bar.dart';
 import 'onboarding_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 
 class _RequestsFetchResult {
   const _RequestsFetchResult({required this.docs, required this.usedFallback});
@@ -858,22 +863,467 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildTeamTab(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(child: Text('Please sign in.'));
+    }
+    final scheme = Theme.of(context).colorScheme;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
+        // ── Header ──
         Text(
-          'Team',
+          'My Team',
           style: Theme.of(
             context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
         Text(
-          'This section is not set up yet.',
-          style: Theme.of(context).textTheme.bodyMedium,
+          'Your hired pros and trusted contacts.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 20),
+
+        // ────────────────────────────────────────────
+        // SECTION 1 — My Hired Pros
+        // ────────────────────────────────────────────
+        _TeamSectionHeader(
+          title: 'Hired Pros',
+          subtitle: 'Contractors you\'ve completed jobs with.',
+          icon: Icons.handshake_outlined,
+        ),
+        const SizedBox(height: 10),
+        _HiredProsList(userId: user.uid),
+
+        const SizedBox(height: 28),
+
+        // ────────────────────────────────────────────
+        // SECTION 2 — Trusted Pros Circle
+        // ────────────────────────────────────────────
+        _TeamSectionHeader(
+          title: 'Trusted Pros',
+          subtitle: 'Your curated shortlist — add notes, organize by trade.',
+          icon: Icons.verified_user_outlined,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Share my list',
+                icon: const Icon(Icons.share_outlined, size: 20),
+                onPressed: () => _shareTrustedList(context),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => _showAddTrustedProSheet(context),
+                icon: const Icon(Icons.person_add_alt, size: 18),
+                label: const Text('Add'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        _TrustedProsList(
+          onEdit: (contractorId, currentTrade, currentNote) =>
+              _showEditTrustedSheet(
+                context,
+                contractorId: contractorId,
+                currentTrade: currentTrade,
+                currentNote: currentNote,
+              ),
         ),
       ],
     );
+  }
+
+  // ── Add trusted pro bottom sheet ──
+  Future<void> _showAddTrustedProSheet(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final contractorIdController = TextEditingController();
+    final tradeController = TextEditingController();
+    final noteController = TextEditingController();
+    String? selectedContractorId;
+    String? selectedContractorName;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Add Trusted Pro',
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // --- Search for contractor ---
+                  TextField(
+                    controller: contractorIdController,
+                    decoration: InputDecoration(
+                      labelText: 'Search contractor name',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Theme.of(
+                        ctx,
+                      ).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (val) => setSheetState(() {}),
+                  ),
+                  if (contractorIdController.text.trim().length >= 2) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 160,
+                      child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('contractors')
+                            .limit(50)
+                            .snapshots(),
+                        builder: (ctx, snap) {
+                          if (!snap.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          final query = contractorIdController.text
+                              .trim()
+                              .toLowerCase();
+                          final matches = snap.data!.docs.where((d) {
+                            final data = d.data();
+                            final name =
+                                (data['businessName'] ??
+                                        data['publicName'] ??
+                                        data['name'] ??
+                                        '')
+                                    .toString()
+                                    .toLowerCase();
+                            return name.contains(query);
+                          }).toList();
+
+                          if (matches.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No contractors found.',
+                                style: Theme.of(ctx).textTheme.bodySmall,
+                              ),
+                            );
+                          }
+
+                          return ListView.separated(
+                            itemCount: matches.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (ctx, i) {
+                              final d = matches[i];
+                              final data = d.data();
+                              final name =
+                                  (data['businessName'] ??
+                                          data['publicName'] ??
+                                          data['name'] ??
+                                          'Unnamed')
+                                      .toString();
+                              final profileImg = (data['profileImage'] ?? '')
+                                  .toString();
+                              final isSelected = selectedContractorId == d.id;
+                              return ListTile(
+                                dense: true,
+                                selected: isSelected,
+                                leading: CircleAvatar(
+                                  radius: 18,
+                                  backgroundImage: profileImg.isNotEmpty
+                                      ? CachedNetworkImageProvider(profileImg)
+                                      : null,
+                                  child: profileImg.isEmpty
+                                      ? Text(
+                                          name.isNotEmpty
+                                              ? name[0].toUpperCase()
+                                              : '?',
+                                        )
+                                      : null,
+                                ),
+                                title: Text(name),
+                                trailing: isSelected
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                      )
+                                    : null,
+                                onTap: () {
+                                  setSheetState(() {
+                                    selectedContractorId = d.id;
+                                    selectedContractorName = name;
+                                  });
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  if (selectedContractorName != null) ...[
+                    const SizedBox(height: 8),
+                    Chip(
+                      avatar: const Icon(Icons.person, size: 16),
+                      label: Text(selectedContractorName!),
+                      onDeleted: () => setSheetState(() {
+                        selectedContractorId = null;
+                        selectedContractorName = null;
+                      }),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: tradeController,
+                    decoration: InputDecoration(
+                      labelText: 'Trade / speciality',
+                      hintText: 'e.g. Plumber, Electrician',
+                      prefixIcon: const Icon(Icons.construction),
+                      filled: true,
+                      fillColor: Theme.of(
+                        ctx,
+                      ).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    decoration: InputDecoration(
+                      labelText: 'Private note',
+                      hintText: 'e.g. Great with tile, fast response',
+                      prefixIcon: const Icon(Icons.sticky_note_2_outlined),
+                      filled: true,
+                      fillColor: Theme.of(
+                        ctx,
+                      ).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: selectedContractorId == null
+                          ? null
+                          : () async {
+                              await TrustedProsService.instance.add(
+                                selectedContractorId!,
+                                trade: tradeController.text.trim(),
+                                note: noteController.text.trim(),
+                              );
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${selectedContractorName ?? 'Pro'} added to trusted list.',
+                                  ),
+                                ),
+                              );
+                            },
+                      child: const Text('Add to Trusted List'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Edit trusted pro ──
+  Future<void> _showEditTrustedSheet(
+    BuildContext context, {
+    required String contractorId,
+    required String currentTrade,
+    required String currentNote,
+  }) async {
+    final tradeController = TextEditingController(text: currentTrade);
+    final noteController = TextEditingController(text: currentNote);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edit Trusted Pro',
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: tradeController,
+                decoration: InputDecoration(
+                  labelText: 'Trade / speciality',
+                  prefixIcon: const Icon(Icons.construction),
+                  filled: true,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteController,
+                decoration: InputDecoration(
+                  labelText: 'Private note',
+                  prefixIcon: const Icon(Icons.sticky_note_2_outlined),
+                  filled: true,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: ctx,
+                          builder: (c) => AlertDialog(
+                            title: const Text('Remove?'),
+                            content: const Text(
+                              'Remove this contractor from your trusted list?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c, false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(c, true),
+                                child: const Text('Remove'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true || !ctx.mounted) return;
+                        await TrustedProsService.instance.remove(contractorId);
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Remove'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () async {
+                        await TrustedProsService.instance.update(
+                          contractorId,
+                          trade: tradeController.text.trim(),
+                          note: noteController.text.trim(),
+                        );
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Updated.')),
+                        );
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Share trusted list ──
+  Future<void> _shareTrustedList(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('trusted_pros')
+        .get();
+
+    if (snap.docs.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your trusted list is empty.')),
+      );
+      return;
+    }
+
+    // Fetch contractor names
+    final lines = <String>[];
+    for (final doc in snap.docs) {
+      final cSnap = await FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(doc.id)
+          .get();
+      final cData = cSnap.data() ?? {};
+      final name =
+          (cData['businessName'] ??
+                  cData['publicName'] ??
+                  cData['name'] ??
+                  'Unknown')
+              .toString();
+      final trade = (doc.data()['trade'] ?? '').toString();
+      lines.add(trade.isNotEmpty ? '$name ($trade)' : name);
+    }
+
+    final text =
+        'My trusted pros on ProServe Hub:\n\n${lines.map((l) => '• $l').join('\n')}\n\nDownload ProServe Hub to find & book verified pros!';
+
+    await Share.share(text);
   }
 
   @override
@@ -1420,6 +1870,589 @@ class _HeroPill extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: ProServeColors.accent,
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// Team tab helper widgets
+// ─────────────────────────────────────────────────────
+
+/// Section header used in the Team tab.
+class _TeamSectionHeader extends StatelessWidget {
+  const _TeamSectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: scheme.primary, size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              Text(
+                subtitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+/// Lists contractors the customer has completed jobs with.
+class _HiredProsList extends StatelessWidget {
+  const _HiredProsList({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('job_requests')
+          .where('requesterUid', isEqualTo: userId)
+          .limit(100)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error loading jobs: ${snap.error}'),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Deduplicate contractors — group by claimedBy
+        final hiredMap = <String, _HiredProInfo>{};
+        for (final doc in snap.data!.docs) {
+          final data = doc.data();
+          final claimed = data['claimed'] == true;
+          final contractorId = (data['claimedBy'] as String?)?.trim() ?? '';
+          if (!claimed || contractorId.isEmpty) continue;
+
+          final status = (data['status'] ?? 'open').toString();
+          final name = (data['claimedByName'] as String?)?.trim() ?? '';
+          final service = (data['service'] ?? '').toString();
+          final isCompleted =
+              status == 'completed' || status == 'completion_approved';
+
+          if (!hiredMap.containsKey(contractorId)) {
+            hiredMap[contractorId] = _HiredProInfo(
+              contractorId: contractorId,
+              displayName: name,
+              services: {service},
+              totalJobs: 1,
+              completedJobs: isCompleted ? 1 : 0,
+              activeJobs: (!isCompleted && status != 'cancelled') ? 1 : 0,
+              lastJobId: doc.id,
+              lastStatus: status,
+            );
+          } else {
+            final existing = hiredMap[contractorId]!;
+            existing.services.add(service);
+            existing.totalJobs++;
+            if (isCompleted) existing.completedJobs++;
+            if (!isCompleted && status != 'cancelled') existing.activeJobs++;
+            if (name.isNotEmpty && existing.displayName.isEmpty) {
+              existing.displayName = name;
+            }
+            existing.lastJobId = doc.id;
+            existing.lastStatus = status;
+          }
+        }
+
+        if (hiredMap.isEmpty) {
+          return _EmptyTeamCard(
+            icon: Icons.people_outline,
+            title: 'No pros yet',
+            message:
+                'Once you complete a job, your contractors will appear here.',
+          );
+        }
+
+        final pros = hiredMap.values.toList()
+          ..sort((a, b) => b.totalJobs.compareTo(a.totalJobs));
+
+        return Column(
+          children: pros.map((info) => _HiredProCard(info: info)).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _HiredProInfo {
+  _HiredProInfo({
+    required this.contractorId,
+    required this.displayName,
+    required this.services,
+    required this.totalJobs,
+    required this.completedJobs,
+    required this.activeJobs,
+    required this.lastJobId,
+    required this.lastStatus,
+  });
+
+  final String contractorId;
+  String displayName;
+  final Set<String> services;
+  int totalJobs;
+  int completedJobs;
+  int activeJobs;
+  String lastJobId;
+  String lastStatus;
+}
+
+/// Card for a single hired contractor.
+class _HiredProCard extends StatelessWidget {
+  const _HiredProCard({required this.info});
+
+  final _HiredProInfo info;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(info.contractorId)
+          .get(),
+      builder: (context, cSnap) {
+        final cData = cSnap.data?.data() ?? {};
+        final name =
+            (cData['businessName'] ??
+                    cData['publicName'] ??
+                    cData['name'] ??
+                    info.displayName)
+                .toString();
+        final profileImg = (cData['profileImage'] ?? '').toString();
+        final avgRating = (cData['averageRating'] as num?)?.toDouble() ?? 0.0;
+        final servicesText = info.services
+            .where((s) => s.isNotEmpty)
+            .take(3)
+            .join(', ');
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: scheme.outlineVariant),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: profileImg.isNotEmpty
+                          ? CachedNetworkImageProvider(profileImg)
+                          : null,
+                      child: profileImg.isEmpty
+                          ? Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                              style: const TextStyle(fontSize: 18),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name.isNotEmpty ? name : 'Contractor',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (servicesText.isNotEmpty)
+                            Text(
+                              servicesText,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _StatChip(
+                                label: '${info.totalJobs} jobs',
+                                icon: Icons.work_outline,
+                              ),
+                              const SizedBox(width: 8),
+                              if (info.activeJobs > 0)
+                                _StatChip(
+                                  label: '${info.activeJobs} active',
+                                  icon: Icons.timelapse,
+                                  color: Colors.orange,
+                                ),
+                              if (info.activeJobs == 0 &&
+                                  info.completedJobs > 0)
+                                _StatChip(
+                                  label: '${info.completedJobs} done',
+                                  icon: Icons.check_circle_outline,
+                                  color: Colors.green,
+                                ),
+                              if (avgRating > 0) ...[
+                                const SizedBox(width: 8),
+                                Icon(Icons.star, size: 14, color: Colors.amber),
+                                const SizedBox(width: 2),
+                                Text(
+                                  avgRating.toStringAsFixed(1),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final convId =
+                              await ConversationService.getOrCreateConversation(
+                                otherUserId: info.contractorId,
+                                otherUserName: name,
+                              );
+                          if (!context.mounted) return;
+                          context.push('/chat/$convId');
+                        },
+                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                        label: const Text('Message'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/contractor/${info.contractorId}');
+                        },
+                        icon: const Icon(Icons.person_outline, size: 16),
+                        label: const Text('Profile'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: () {
+                          // Rebook — go to service select
+                          context.push('/select-service');
+                        },
+                        icon: const Icon(Icons.replay, size: 16),
+                        label: const Text('Rebook'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Lists the customer's trusted/curated pros.
+class _TrustedProsList extends StatelessWidget {
+  const _TrustedProsList({required this.onEdit});
+
+  final void Function(String contractorId, String trade, String note) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: TrustedProsService.instance.watchAll(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final docs = snap.data!.docs;
+        if (docs.isEmpty) {
+          return _EmptyTeamCard(
+            icon: Icons.verified_user_outlined,
+            title: 'No trusted pros yet',
+            message:
+                'Add contractors you trust so you can find them fast, add notes, and share your list.',
+          );
+        }
+
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data();
+            final trade = (data['trade'] ?? '').toString();
+            final note = (data['note'] ?? '').toString();
+
+            return _TrustedProCard(
+              contractorId: doc.id,
+              trade: trade,
+              note: note,
+              onEdit: () => onEdit(doc.id, trade, note),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _TrustedProCard extends StatelessWidget {
+  const _TrustedProCard({
+    required this.contractorId,
+    required this.trade,
+    required this.note,
+    required this.onEdit,
+  });
+
+  final String contractorId;
+  final String trade;
+  final String note;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(contractorId)
+          .get(),
+      builder: (context, cSnap) {
+        final cData = cSnap.data?.data() ?? {};
+        final name =
+            (cData['businessName'] ??
+                    cData['publicName'] ??
+                    cData['name'] ??
+                    'Contractor')
+                .toString();
+        final profileImg = (cData['profileImage'] ?? '').toString();
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: scheme.outlineVariant),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => context.push('/contractor/$contractorId'),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundImage: profileImg.isNotEmpty
+                        ? CachedNetworkImageProvider(profileImg)
+                        : null,
+                    child: profileImg.isEmpty
+                        ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?')
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (trade.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.construction,
+                                  size: 13,
+                                  color: scheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  trade,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (note.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.sticky_note_2_outlined,
+                                  size: 13,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    note,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Edit',
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.label, required this.icon, this.color});
+
+  final String label;
+  final IconData icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: c),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: c,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyTeamCard extends StatelessWidget {
+  const _EmptyTeamCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 36, color: scheme.onSurfaceVariant),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
