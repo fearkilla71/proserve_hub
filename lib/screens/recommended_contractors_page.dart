@@ -322,19 +322,16 @@ class _RecommendedContractorsPageState
         DateTime.now().add(const Duration(days: 14)),
       );
 
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        final snap = await tx.get(ref);
-        if (snap.exists) return;
-
-        tx.set(ref, {
-          'jobId': widget.jobId,
-          'contractorId': safeContractorId,
-          'customerId': user.uid,
-          'status': 'pending',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'expiresAt': expiresAt,
-        });
+      // Use set directly (deterministic ID prevents duplicates).
+      // Avoids tx.get on a non-existent doc which fails read rules.
+      await ref.set({
+        'jobId': widget.jobId,
+        'contractorId': safeContractorId,
+        'customerId': user.uid,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'expiresAt': expiresAt,
       });
 
       if (!mounted) return;
@@ -1247,7 +1244,9 @@ class _RecommendedContractorsPageState
                 const SizedBox(height: 10),
 
                 // INFO ROW
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
                     _infoChip(
                       Icons.star,
@@ -1304,10 +1303,7 @@ class _RecommendedContractorsPageState
   }
 
   Widget _infoChip(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Chip(avatar: Icon(icon, size: 16), label: Text(label)),
-    );
+    return Chip(avatar: Icon(icon, size: 16), label: Text(label));
   }
 }
 
