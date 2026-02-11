@@ -155,9 +155,19 @@ class ReferralService {
         .collection('referrals')
         .doc(code)
         .collection('usedBy')
-        .orderBy('appliedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+        .map((snap) {
+      final list = snap.docs.map((d) => d.data()).toList();
+      list.sort((a, b) {
+        final ta = a['appliedAt'] as Timestamp?;
+        final tb = b['appliedAt'] as Timestamp?;
+        if (ta == null && tb == null) return 0;
+        if (ta == null) return 1;
+        if (tb == null) return -1;
+        return tb.compareTo(ta);
+      });
+      return list;
+    });
   }
 
   /// Stream the current user's own referral history (codes they redeemed).
@@ -169,8 +179,18 @@ class ReferralService {
         .collection('users')
         .doc(uid)
         .collection('referralHistory')
-        .orderBy('appliedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+        .map((snap) {
+      final list = snap.docs.map((d) => d.data()).toList();
+      list.sort((a, b) {
+        final ta = a['appliedAt'] as Timestamp?;
+        final tb = b['appliedAt'] as Timestamp?;
+        if (ta == null && tb == null) return 0;
+        if (ta == null) return 1;
+        if (tb == null) return -1;
+        return tb.compareTo(ta);
+      });
+      return list;
+    });
   }
 }

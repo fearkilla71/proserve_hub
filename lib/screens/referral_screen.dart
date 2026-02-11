@@ -18,6 +18,7 @@ class ReferralScreen extends StatefulWidget {
 class _ReferralScreenState extends State<ReferralScreen>
     with SingleTickerProviderStateMixin {
   String? _myCode;
+  String? _codeError;
   bool _loadingCode = true;
   final _applyController = TextEditingController();
   bool _applying = false;
@@ -38,11 +39,15 @@ class _ReferralScreenState extends State<ReferralScreen>
   }
 
   Future<void> _loadCode() async {
+    setState(() {
+      _loadingCode = true;
+      _codeError = null;
+    });
     try {
       final code = await ReferralService.instance.getOrCreateCode();
       if (mounted) setState(() => _myCode = code);
-    } catch (_) {
-      // ignore
+    } catch (e) {
+      if (mounted) setState(() => _codeError = e.toString());
     } finally {
       if (mounted) setState(() => _loadingCode = false);
     }
@@ -108,6 +113,13 @@ class _ReferralScreenState extends State<ReferralScreen>
           StreamBuilder<double>(
             stream: ReferralService.instance.watchCredits(),
             builder: (context, snap) {
+              if (snap.hasError) {
+                return _errorCard(
+                  scheme,
+                  'Could not load credit balance.',
+                  snap.error.toString(),
+                );
+              }
               final credits = snap.data ?? 0;
               return Card(
                 child: Padding(
@@ -123,9 +135,12 @@ class _ReferralScreenState extends State<ReferralScreen>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Promo Credit',
-                            style: TextStyle(fontSize: 14),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: scheme.onSurface,
+                            ),
                           ),
                           Text(
                             '\$${credits.toStringAsFixed(2)}',
@@ -153,7 +168,13 @@ class _ReferralScreenState extends State<ReferralScreen>
           ),
           const SizedBox(height: 8),
           if (_loadingCode)
-            const Center(child: CircularProgressIndicator())
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_codeError != null)
+            _errorCard(scheme, 'Could not generate referral code.', _codeError!,
+                retry: _loadCode)
           else
             Card(
               child: Padding(
@@ -181,25 +202,30 @@ class _ReferralScreenState extends State<ReferralScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         OutlinedButton.icon(
-                          onPressed: () {
-                            Clipboard.setData(
-                              ClipboardData(text: _myCode ?? ''),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Code copied!')),
-                            );
-                          },
+                          onPressed: _myCode == null
+                              ? null
+                              : () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: _myCode!),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Code copied!')),
+                                  );
+                                },
                           icon: const Icon(Icons.copy, size: 18),
                           label: const Text('Copy'),
                         ),
                         const SizedBox(width: 12),
                         FilledButton.icon(
-                          onPressed: () {
-                            Share.share(
-                              'Try ProServe Hub! Use my code ${_myCode ?? ''} '
-                              'to get \$${ReferralService.creditAmount.toStringAsFixed(0)} off your first job.',
-                            );
-                          },
+                          onPressed: _myCode == null
+                              ? null
+                              : () {
+                                  Share.share(
+                                    'Try ProServe Hub! Use my code $_myCode '
+                                    'to get \$${ReferralService.creditAmount.toStringAsFixed(0)} off your first job.',
+                                  );
+                                },
                           icon: const Icon(Icons.share, size: 18),
                           label: const Text('Share'),
                         ),
@@ -209,6 +235,44 @@ class _ReferralScreenState extends State<ReferralScreen>
                 ),
               ),
             ),
+
+          const SizedBox(height: 32),
+
+          // ── How it works ──
+          Text(
+            'How It Works',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _howItWorksRow(
+                    scheme,
+                    Icons.share,
+                    '1. Share your code',
+                    'Send your unique code to friends & family.',
+                  ),
+                  const Divider(height: 24),
+                  _howItWorksRow(
+                    scheme,
+                    Icons.person_add,
+                    '2. They sign up',
+                    'Your friend creates an account and enters your code.',
+                  ),
+                  const Divider(height: 24),
+                  _howItWorksRow(
+                    scheme,
+                    Icons.card_giftcard,
+                    '3. You both earn',
+                    'You each get \$${ReferralService.creditAmount.toStringAsFixed(0)} promo credit!',
+                  ),
+                ],
+              ),
+            ),
+          ),
 
           const SizedBox(height: 32),
 
@@ -251,11 +315,111 @@ class _ReferralScreenState extends State<ReferralScreen>
     );
   }
 
+  Widget _howItWorksRow(
+    ColorScheme scheme,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: scheme.primaryContainer,
+          child: Icon(icon, color: scheme.primary, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurface,
+                  )),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: scheme.onSurfaceVariant,
+                  )),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _errorCard(ColorScheme scheme, String message, String detail,
+      {VoidCallback? retry}) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 36, color: scheme.error),
+            const SizedBox(height: 8),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, color: scheme.onSurface)),
+            const SizedBox(height: 4),
+            Text(detail,
+                textAlign: TextAlign.center,
+                style:
+                    TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+            if (retry != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: retry,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Tab 2: Tracking Dashboard ─────────────────────────────────────
 
   Widget _trackingTab(ColorScheme scheme) {
-    if (_loadingCode || _myCode == null) {
+    if (_loadingCode) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (_codeError != null || _myCode == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.info_outline, size: 48,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+              const SizedBox(height: 12),
+              Text(
+                'Share your referral code first to start tracking.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+              if (_codeError != null) ...[
+                const SizedBox(height: 8),
+                Text(_codeError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12, color: scheme.onSurfaceVariant)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _loadCode,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
     }
 
     final code = _myCode!;
@@ -323,8 +487,15 @@ class _ReferralScreenState extends State<ReferralScreen>
           StreamBuilder<List<Map<String, dynamic>>>(
             stream: ReferralService.instance.watchMyCodeUsedBy(code),
             builder: (context, snap) {
+              if (snap.hasError) {
+                return _errorCard(
+                    scheme, 'Could not load referrals.', snap.error.toString());
+              }
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               final list = snap.data ?? [];
               if (list.isEmpty) {
@@ -394,8 +565,15 @@ class _ReferralScreenState extends State<ReferralScreen>
           StreamBuilder<List<Map<String, dynamic>>>(
             stream: ReferralService.instance.watchMyRedemptions(),
             builder: (context, snap) {
+              if (snap.hasError) {
+                return _errorCard(scheme, 'Could not load redemptions.',
+                    snap.error.toString());
+              }
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               final list = snap.data ?? [];
               if (list.isEmpty) {

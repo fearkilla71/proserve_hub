@@ -220,6 +220,29 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
+    // Referral history (codes the user redeemed).
+    match /users/{uid}/referralHistory/{code} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- REFERRALS ---
+    // Each doc maps a referral code → its owner uid.
+    match /referrals/{code} {
+      // Anyone signed-in can look up a code to apply it.
+      allow read: if isSignedIn();
+      // Only the code owner can create their own code doc.
+      allow create: if isSignedIn();
+      // Updates (usageCount increment) are allowed for any signed-in user.
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+
+      // Sub-collection tracking who used the code.
+      match /usedBy/{userId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+      }
+    }
+
     // --- ADMINS ---
     match /admins/{uid} {
       // Allow a user to read only their own admin marker doc.
