@@ -157,17 +157,17 @@ class ReferralService {
         .collection('usedBy')
         .snapshots()
         .map((snap) {
-      final list = snap.docs.map((d) => d.data()).toList();
-      list.sort((a, b) {
-        final ta = a['appliedAt'] as Timestamp?;
-        final tb = b['appliedAt'] as Timestamp?;
-        if (ta == null && tb == null) return 0;
-        if (ta == null) return 1;
-        if (tb == null) return -1;
-        return tb.compareTo(ta);
-      });
-      return list;
-    });
+          final list = snap.docs.map((d) => d.data()).toList();
+          list.sort((a, b) {
+            final ta = a['appliedAt'] as Timestamp?;
+            final tb = b['appliedAt'] as Timestamp?;
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.compareTo(ta);
+          });
+          return list;
+        });
   }
 
   /// Stream the current user's own referral history (codes they redeemed).
@@ -181,16 +181,16 @@ class ReferralService {
         .collection('referralHistory')
         .snapshots()
         .map((snap) {
-      final list = snap.docs.map((d) => d.data()).toList();
-      list.sort((a, b) {
-        final ta = a['appliedAt'] as Timestamp?;
-        final tb = b['appliedAt'] as Timestamp?;
-        if (ta == null && tb == null) return 0;
-        if (ta == null) return 1;
-        if (tb == null) return -1;
-        return tb.compareTo(ta);
-      });
-      return list;
-    });
+          final list = snap.docs.map((d) => d.data()).toList();
+          list.sort((a, b) {
+            final ta = a['appliedAt'] as Timestamp?;
+            final tb = b['appliedAt'] as Timestamp?;
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.compareTo(ta);
+          });
+          return list;
+        });
   }
 }

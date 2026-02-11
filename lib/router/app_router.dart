@@ -69,6 +69,7 @@ import '../screens/drywall_repair_request_flow_page.dart';
 import '../screens/pressure_washing_request_flow_page.dart';
 import '../screens/cabinet_request_flow_page.dart';
 import '../screens/landing_page.dart';
+import '../screens/account_profile_screen.dart';
 import '../widgets/offline_banner.dart';
 
 /// Centralised route path constants.
@@ -156,6 +157,7 @@ abstract final class AppRoutes {
   static const notificationCenter = '/notifications';
   static const savedEstimates = '/saved-estimates';
   static const landing = '/landing';
+  static const editCard = '/edit-card';
 
   // ── Service Request Flows ──
   static const flowPainting = '/flow/painting';
@@ -358,6 +360,10 @@ GoRouter createRouter() {
       GoRoute(
         path: '/contractor-profile-settings',
         builder: (context, state) => const ContractorProfileScreen(),
+      ),
+      GoRoute(
+        path: '/edit-card',
+        builder: (context, state) => const AccountProfileScreen(),
       ),
       GoRoute(
         path: '/contractor-analytics',

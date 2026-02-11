@@ -173,8 +173,12 @@ class _ReferralScreenState extends State<ReferralScreen>
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_codeError != null)
-            _errorCard(scheme, 'Could not generate referral code.', _codeError!,
-                retry: _loadCode)
+            _errorCard(
+              scheme,
+              'Could not generate referral code.',
+              _codeError!,
+              retry: _loadCode,
+            )
           else
             Card(
               child: Padding(
@@ -210,7 +214,8 @@ class _ReferralScreenState extends State<ReferralScreen>
                                   );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content: Text('Code copied!')),
+                                      content: Text('Code copied!'),
+                                    ),
                                   );
                                 },
                           icon: const Icon(Icons.copy, size: 18),
@@ -239,10 +244,7 @@ class _ReferralScreenState extends State<ReferralScreen>
           const SizedBox(height: 32),
 
           // ── How it works ──
-          Text(
-            'How It Works',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('How It Works', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -332,17 +334,18 @@ class _ReferralScreenState extends State<ReferralScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: scheme.onSurface,
-                  )),
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: scheme.onSurfaceVariant,
-                  )),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+              ),
             ],
           ),
         ),
@@ -350,8 +353,12 @@ class _ReferralScreenState extends State<ReferralScreen>
     );
   }
 
-  Widget _errorCard(ColorScheme scheme, String message, String detail,
-      {VoidCallback? retry}) {
+  Widget _errorCard(
+    ColorScheme scheme,
+    String message,
+    String detail, {
+    VoidCallback? retry,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -359,15 +366,20 @@ class _ReferralScreenState extends State<ReferralScreen>
           children: [
             Icon(Icons.error_outline, size: 36, color: scheme.error),
             const SizedBox(height: 8),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, color: scheme.onSurface)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(detail,
-                textAlign: TextAlign.center,
-                style:
-                    TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+            Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+            ),
             if (retry != null) ...[
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -395,8 +407,11 @@ class _ReferralScreenState extends State<ReferralScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.info_outline, size: 48,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+              Icon(
+                Icons.info_outline,
+                size: 48,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
               const SizedBox(height: 12),
               Text(
                 'Share your referral code first to start tracking.',
@@ -405,10 +420,14 @@ class _ReferralScreenState extends State<ReferralScreen>
               ),
               if (_codeError != null) ...[
                 const SizedBox(height: 8),
-                Text(_codeError!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 12, color: scheme.onSurfaceVariant)),
+                Text(
+                  _codeError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _loadCode,
@@ -489,7 +508,10 @@ class _ReferralScreenState extends State<ReferralScreen>
             builder: (context, snap) {
               if (snap.hasError) {
                 return _errorCard(
-                    scheme, 'Could not load referrals.', snap.error.toString());
+                  scheme,
+                  'Could not load referrals.',
+                  snap.error.toString(),
+                );
               }
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Padding(
@@ -566,8 +588,11 @@ class _ReferralScreenState extends State<ReferralScreen>
             stream: ReferralService.instance.watchMyRedemptions(),
             builder: (context, snap) {
               if (snap.hasError) {
-                return _errorCard(scheme, 'Could not load redemptions.',
-                    snap.error.toString());
+                return _errorCard(
+                  scheme,
+                  'Could not load redemptions.',
+                  snap.error.toString(),
+                );
               }
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Padding(

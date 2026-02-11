@@ -456,7 +456,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             totalJobsCompleted: totalJobsCompleted,
           ),
           onEdit: () {
-            context.push('/customer-profile');
+            context.push('/edit-card');
           },
         );
       },
