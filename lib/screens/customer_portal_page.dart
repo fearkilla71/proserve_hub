@@ -3,12 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../theme/proserve_theme.dart';
 import 'browse_contractors_screen.dart';
-import 'account_profile_screen.dart';
 import 'landing_page.dart';
 import 'community_feed_screen.dart';
 
@@ -270,78 +268,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             icon: Icon(Icons.forum_outlined),
             selectedIcon: Icon(Icons.forum),
             label: 'Community',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _homeServiceTile({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    String? assetSvg,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: () {
-        final handler = onTap;
-        if (handler != null) {
-          handler();
-          return;
-        }
-
-        context.push('/select-service');
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: ProServeColors.cardElevated,
-                  border: Border.all(color: ProServeColors.line),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: assetSvg == null
-                        ? Icon(icon, color: ProServeColors.accent2, size: 32)
-                        : SvgPicture.asset(
-                            assetSvg,
-                            fit: BoxFit.contain,
-                            colorFilter: const ColorFilter.mode(
-                              ProServeColors.accent2,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                    color: ProServeColors.ink,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -614,8 +540,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildHomeTab({required BuildContext context, required User user}) {
-    final scheme = Theme.of(context).colorScheme;
-
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -778,82 +702,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 16),
             const EscrowBookingsCard(isCustomer: true),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                context.push('/select-service');
-              },
-              child: AbsorbPointer(
-                child: TextField(
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    hintText: 'What do you need help with?',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ProfileCompletionCard(
-              onTapComplete: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AccountProfileScreen(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Recommended for you',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.78,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _homeServiceTile(
-                  context: context,
-                  title: 'Interior\nPainting',
-                  icon: Icons.format_paint,
-                  assetSvg: 'assets/tiles/interior_painting.svg',
-                ),
-                _homeServiceTile(
-                  context: context,
-                  title: 'Drywall\nRepair',
-                  icon: Icons.build,
-                  assetSvg: 'assets/tiles/handyman.svg',
-                ),
-                _homeServiceTile(
-                  context: context,
-                  title: 'Cabinet\nEstimate',
-                  icon: Icons.kitchen,
-                  onTap: () {
-                    context.push('/ai-estimator?service=cabinet_painting');
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  context.push('/select-service');
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: scheme.onSurface,
-                ),
-                child: const Text('Show more'),
-              ),
-            ),
           ],
         );
       },
