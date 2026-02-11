@@ -420,7 +420,7 @@ service cloud.firestore {
           // Requester can only move status to a small set of lifecycle states.
           && (
             !(request.resource.data.diff(resource.data).changedKeys().hasAny(['status']))
-            || (request.resource.data.status in ['open', 'cancelled', 'completion_approved'])
+            || (request.resource.data.status in ['open', 'cancelled', 'completion_approved', 'escrow_funded'])
           )
           && !(request.resource.data.status in ['funded', 'completed', 'funding'])
         ) ||

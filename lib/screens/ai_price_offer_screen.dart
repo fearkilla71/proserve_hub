@@ -497,61 +497,175 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           ),
         ),
 
-        // ── Factors ──
+        // ── AI Analysis ──
         if (factors.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Card(
-            elevation: 0,
-            color: scheme.surface,
-            shape: RoundedRectangleBorder(
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  ProServeColors.accent2.withValues(alpha: 0.06),
+                  ProServeColors.accent3.withValues(alpha: 0.04),
+                ],
+              ),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ProServeColors.accent2.withValues(alpha: 0.15),
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        size: 18,
-                        color: scheme.tertiary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'How we calculated this',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            ProServeColors.accent2.withValues(alpha: 0.2),
+                            ProServeColors.accent3.withValues(alpha: 0.15),
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ...factors.map(
-                    (f) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        size: 16,
+                        color: ProServeColors.accent2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AI Price Analysis',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ProServeColors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: scheme.primary,
+                            Icons.trending_up,
+                            size: 12,
+                            color: ProServeColors.accent,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              f.toString(),
-                              style: Theme.of(context).textTheme.bodySmall,
+                          const SizedBox(width: 3),
+                          Text(
+                            '${factors.length} factors',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: ProServeColors.accent,
                             ),
                           ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Our AI analyzed market data, job scope, and local conditions to build your price.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: ProServeColors.muted,
+                    height: 1.4,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 14),
+                ...factors.asMap().entries.map(
+                  (e) {
+                    final f = e.value.toString();
+                    // Parse percentage from factor string if available
+                    final pctMatch = RegExp(r'[+-]?(\d+)%').firstMatch(f);
+                    final pct = pctMatch != null
+                        ? int.tryParse(pctMatch.group(1)!) ?? 0
+                        : 0;
+                    final isPositive = !f.contains('−') && !f.contains('savings');
+                    final barColor = isPositive
+                        ? ProServeColors.accent2
+                        : ProServeColors.accent;
+                    // Categorize the factor
+                    IconData factorIcon;
+                    if (f.toLowerCase().contains('market') || f.toLowerCase().contains('area')) {
+                      factorIcon = Icons.location_on_outlined;
+                    } else if (f.toLowerCase().contains('wall') || f.toLowerCase().contains('ceiling') || f.toLowerCase().contains('scope') || f.toLowerCase().contains('surface')) {
+                      factorIcon = Icons.construction;
+                    } else if (f.toLowerCase().contains('urgency')) {
+                      factorIcon = Icons.speed;
+                    } else if (f.toLowerCase().contains('color') || f.toLowerCase().contains('paint')) {
+                      factorIcon = Icons.palette_outlined;
+                    } else if (f.toLowerCase().contains('loyalty') || f.toLowerCase().contains('reward')) {
+                      factorIcon = Icons.card_giftcard;
+                    } else if (f.toLowerCase().contains('repair') || f.toLowerCase().contains('damage')) {
+                      factorIcon = Icons.build_outlined;
+                    } else if (f.toLowerCase().contains('commercial') || f.toLowerCase().contains('business')) {
+                      factorIcon = Icons.business;
+                    } else {
+                      factorIcon = Icons.analytics_outlined;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: barColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(factorIcon, size: 14, color: barColor),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  f,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (pct > 0) ...[                              
+                                  const SizedBox(height: 4),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(3),
+                                    child: SizedBox(
+                                      height: 4,
+                                      child: LinearProgressIndicator(
+                                        value: (pct / 30).clamp(0.0, 1.0),
+                                        backgroundColor:
+                                            barColor.withValues(alpha: 0.08),
+                                        color: barColor.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],
