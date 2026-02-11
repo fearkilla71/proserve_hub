@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -26,13 +28,31 @@ class ContractorPortalPage extends StatefulWidget {
 class _ContractorPortalPageState extends State<ContractorPortalPage> {
   int _tabIndex = 0;
 
+  // Streams created once so nested StreamBuilder rebuilds don't recreate them.
+  Stream<QuerySnapshot>? _claimedStream;
+  Stream<QuerySnapshot>? _paidStream;
+
   @override
   void initState() {
     super.initState();
+    _initJobStreams();
     // Show role-specific onboarding the first time a contractor opens the portal.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) OnboardingScreen.showIfNeeded(context, 'contractor');
     });
+  }
+
+  void _initJobStreams() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    _claimedStream = FirebaseFirestore.instance
+        .collection('job_requests')
+        .where('claimedBy', isEqualTo: user.uid)
+        .snapshots();
+    _paidStream = FirebaseFirestore.instance
+        .collection('job_requests')
+        .where('paidBy', arrayContains: user.uid)
+        .snapshots();
   }
 
   Future<void> _openPricingToolsOrSubscribe({
@@ -659,6 +679,184 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     );
   }
 
+  /// Combines two state-level streams (claimedBy + paidBy) into a single
+  /// merged list. Streams are created once in [initState] so they are never
+  /// recreated on rebuild, which prevents the flash/flicker issue.
+  Widget _buildClaimedJobsList(String uid) {
+    if (_claimedStream == null || _paidStream == null) {
+      return const AnimatedStateSwitcher(
+        stateKey: 'claimed_empty',
+        child: EmptyStateCard(
+          icon: Icons.work_outline,
+          title: 'No claimed jobs yet',
+          subtitle:
+              'Browse leads and purchase one to start a conversation with the customer.',
+        ),
+      );
+    }
+
+    // Use a combined stream so both queries are stable references.
+    final combined = _combinedJobStream(_claimedStream!, _paidStream!);
+
+    return StreamBuilder<List<QueryDocumentSnapshot>>(
+      stream: combined,
+      builder: (context, snap) {
+        if (snap.hasError) {
+          debugPrint('[Jobs] combined stream error: ${snap.error}');
+          return const AnimatedStateSwitcher(
+            stateKey: 'claimed_error',
+            child: EmptyStateCard(
+              icon: Icons.error_outline,
+              title: 'Couldn\'t load jobs',
+              subtitle: 'Check your connection and try again.',
+            ),
+          );
+        }
+
+        if (!snap.hasData) {
+          return AnimatedStateSwitcher(
+            stateKey: 'claimed_loading',
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: const [
+                    ListTileSkeleton(),
+                    Divider(height: 1),
+                    ListTileSkeleton(),
+                    Divider(height: 1),
+                    ListTileSkeleton(),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        final docs = snap.data!;
+        if (docs.isEmpty) {
+          return const AnimatedStateSwitcher(
+            stateKey: 'claimed_empty',
+            child: EmptyStateCard(
+              icon: Icons.work_outline,
+              title: 'No claimed jobs yet',
+              subtitle:
+                  'Browse leads and purchase one to start a conversation with the customer.',
+            ),
+          );
+        }
+
+        return AnimatedStateSwitcher(
+          stateKey: 'claimed_list_${docs.length}',
+          child: Column(
+            children: docs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final service = (data['service'] ?? 'Service').toString();
+              final location = (data['location'] ?? 'Unknown').toString();
+              final claimedAt = formatTimestamp(data['claimedAt']);
+              final createdAt = formatTimestamp(data['createdAt']);
+
+              final subtitleParts = <String>[];
+              subtitleParts.add('Location: $location');
+              if (claimedAt.isNotEmpty) {
+                subtitleParts.add('Claimed: $claimedAt');
+              }
+              if (claimedAt.isEmpty && createdAt.isNotEmpty) {
+                subtitleParts.add('Created: $createdAt');
+              }
+
+              return Card(
+                child: ListTile(
+                  title: Text(service),
+                  subtitle: Text(subtitleParts.join('\n')),
+                  onTap: () {
+                    context.push('/job/${doc.id}', extra: {'jobData': data});
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Merges two Firestore query streams into a single de-duplicated,
+  /// sorted list. Emits whenever either source stream emits.
+  Stream<List<QueryDocumentSnapshot>> _combinedJobStream(
+    Stream<QuerySnapshot> claimedStream,
+    Stream<QuerySnapshot> paidStream,
+  ) {
+    List<QueryDocumentSnapshot>? lastClaimed;
+    List<QueryDocumentSnapshot>? lastPaid;
+
+    List<QueryDocumentSnapshot> merge() {
+      final merged = <String, QueryDocumentSnapshot>{};
+      if (lastClaimed != null) {
+        for (final doc in lastClaimed!) {
+          merged[doc.id] = doc;
+        }
+      }
+      if (lastPaid != null) {
+        for (final doc in lastPaid!) {
+          merged[doc.id] = doc;
+        }
+      }
+      final docs = merged.values.toList();
+      docs.sort((a, b) {
+        final ad = a.data() as Map<String, dynamic>;
+        final bd = b.data() as Map<String, dynamic>;
+        int ms(Map<String, dynamic> d) {
+          final ca = d['claimedAt'];
+          final cr = d['createdAt'];
+          if (ca is Timestamp) return ca.millisecondsSinceEpoch;
+          if (cr is Timestamp) return cr.millisecondsSinceEpoch;
+          return 0;
+        }
+
+        return ms(bd).compareTo(ms(ad));
+      });
+      return docs;
+    }
+
+    late final StreamController<List<QueryDocumentSnapshot>> controller;
+    StreamSubscription? subClaimed;
+    StreamSubscription? subPaid;
+
+    controller = StreamController<List<QueryDocumentSnapshot>>(
+      onListen: () {
+        subClaimed = claimedStream.listen(
+          (snap) {
+            lastClaimed = snap.docs;
+            controller.add(merge());
+          },
+          onError: (e) {
+            debugPrint('[Jobs] claimedBy stream error: $e');
+            lastClaimed ??= [];
+            if (lastPaid != null) controller.add(merge());
+          },
+        );
+        subPaid = paidStream.listen(
+          (snap) {
+            lastPaid = snap.docs;
+            controller.add(merge());
+          },
+          onError: (e) {
+            debugPrint('[Jobs] paidBy stream error: $e');
+            lastPaid ??= [];
+            if (lastClaimed != null) controller.add(merge());
+          },
+        );
+      },
+      onCancel: () {
+        subClaimed?.cancel();
+        subPaid?.cancel();
+      },
+    );
+
+    return controller.stream;
+  }
+
   Widget _buildSearchTab(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -674,148 +872,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
         ),
         Text('My Claimed Jobs', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('job_requests')
-              .where('claimedBy', isEqualTo: user.uid)
-              .snapshots(),
-          builder: (context, claimedSnap) {
-            return StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('job_requests')
-                  .where('paidBy', arrayContains: user.uid)
-                  .snapshots(),
-              builder: (context, paidSnap) {
-                // Treat each stream as "ready" when it has data OR an error.
-                final claimedReady =
-                    claimedSnap.hasData || claimedSnap.hasError;
-                final paidReady = paidSnap.hasData || paidSnap.hasError;
-
-                if (!claimedReady || !paidReady) {
-                  return AnimatedStateSwitcher(
-                    stateKey: 'claimed_loading',
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: const [
-                            ListTileSkeleton(),
-                            Divider(height: 1),
-                            ListTileSkeleton(),
-                            Divider(height: 1),
-                            ListTileSkeleton(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                // If BOTH streams errored, show a meaningful error.
-                if (claimedSnap.hasError && paidSnap.hasError) {
-                  debugPrint('[Jobs] claimedBy error: ${claimedSnap.error}');
-                  debugPrint('[Jobs] paidBy error: ${paidSnap.error}');
-                  return AnimatedStateSwitcher(
-                    stateKey: 'claimed_error',
-                    child: EmptyStateCard(
-                      icon: Icons.error_outline,
-                      title: 'Couldn\'t load jobs',
-                      subtitle: 'Check your connection and try again.',
-                    ),
-                  );
-                }
-
-                // Log individual errors but keep going with whatever data
-                // the other stream provided.
-                if (claimedSnap.hasError) {
-                  debugPrint(
-                    '[Jobs] claimedBy query error: ${claimedSnap.error}',
-                  );
-                }
-                if (paidSnap.hasError) {
-                  debugPrint('[Jobs] paidBy query error: ${paidSnap.error}');
-                }
-
-                // Merge docs from whichever streams succeeded.
-                final merged = <String, QueryDocumentSnapshot>{};
-                if (claimedSnap.hasData) {
-                  for (final doc in claimedSnap.data!.docs) {
-                    merged[doc.id] = doc;
-                  }
-                }
-                if (paidSnap.hasData) {
-                  for (final doc in paidSnap.data!.docs) {
-                    merged[doc.id] = doc;
-                  }
-                }
-
-                final docs = merged.values.toList();
-                int sortMs(QueryDocumentSnapshot doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final claimedAt = data['claimedAt'];
-                  final createdAt = data['createdAt'];
-                  if (claimedAt is Timestamp) {
-                    return claimedAt.millisecondsSinceEpoch;
-                  }
-                  if (createdAt is Timestamp) {
-                    return createdAt.millisecondsSinceEpoch;
-                  }
-                  return 0;
-                }
-
-                docs.sort((a, b) => sortMs(b).compareTo(sortMs(a)));
-
-                if (docs.isEmpty) {
-                  return AnimatedStateSwitcher(
-                    stateKey: 'claimed_empty',
-                    child: EmptyStateCard(
-                      icon: Icons.work_outline,
-                      title: 'No claimed jobs yet',
-                      subtitle:
-                          'Browse leads and purchase one to start a conversation with the customer.',
-                    ),
-                  );
-                }
-
-                return AnimatedStateSwitcher(
-                  stateKey: 'claimed_list_${docs.length}',
-                  child: Column(
-                    children: docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final service = (data['service'] ?? 'Service').toString();
-                      final location = (data['location'] ?? 'Unknown')
-                          .toString();
-                      final claimedAt = formatTimestamp(data['claimedAt']);
-                      final createdAt = formatTimestamp(data['createdAt']);
-
-                      final subtitleParts = <String>[];
-                      subtitleParts.add('Location: $location');
-                      if (claimedAt.isNotEmpty) {
-                        subtitleParts.add('Claimed: $claimedAt');
-                      }
-                      if (claimedAt.isEmpty && createdAt.isNotEmpty) {
-                        subtitleParts.add('Created: $createdAt');
-                      }
-
-                      return Card(
-                        child: ListTile(
-                          title: Text(service),
-                          subtitle: Text(subtitleParts.join('\n')),
-                          onTap: () {
-                            context.push(
-                              '/job/${doc.id}',
-                              extra: {'jobData': data},
-                            );
-                          },
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                );
-              },
-            );
-          },
-        ),
+        _buildClaimedJobsList(user.uid),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
