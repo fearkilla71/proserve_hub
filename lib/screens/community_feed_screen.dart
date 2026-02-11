@@ -1123,15 +1123,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              // Use a single query for everyone – order by createdAt only.
-              // Client-side filtering below hides non-active posts for
-              // non-admins. This avoids the composite index requirement
-              // on (moderationStatus + createdAt) which can take minutes
-              // to build after first deploy.
-              stream: _postsRef
-                  .orderBy('createdAt', descending: true)
-                  .limit(50)
-                  .snapshots(),
+              // Minimal query – no orderBy, no where – zero index deps.
+              // Sorting & filtering done client-side.
+              stream: _postsRef.limit(50).snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
                   debugPrint('Community feed error: ${snap.error}');
@@ -1176,14 +1170,22 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   );
                 }
 
-                final docs = snap.data!.docs.where((doc) {
-                  final data = doc.data();
-                  final status = (data['moderationStatus'] ?? 'active')
-                      .toString();
-                  // Non-admins see only 'active' (server-side filtered).
-                  // Admins see all statuses in-app.
-                  return isAdmin || status == 'active';
-                }).toList();
+                final docs =
+                    snap.data!.docs.where((doc) {
+                        final data = doc.data();
+                        final status = (data['moderationStatus'] ?? 'active')
+                            .toString();
+                        return isAdmin || status == 'active';
+                      }).toList()
+                      // Client-side sort: newest first
+                      ..sort((a, b) {
+                        final aTime = a.data()['createdAt'] as Timestamp?;
+                        final bTime = b.data()['createdAt'] as Timestamp?;
+                        if (aTime == null && bTime == null) return 0;
+                        if (aTime == null) return 1;
+                        if (bTime == null) return -1;
+                        return bTime.compareTo(aTime);
+                      });
 
                 if (docs.isEmpty) {
                   return Container(
