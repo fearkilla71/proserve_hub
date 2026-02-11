@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/escrow_booking.dart';
 import '../services/escrow_service.dart';
+import '../theme/proserve_theme.dart';
 
 /// A compact card that lists active escrow bookings.
 ///
@@ -24,6 +25,11 @@ class EscrowBookingsCard extends StatelessWidget {
     return StreamBuilder<List<EscrowBooking>>(
       stream: stream,
       builder: (context, snapshot) {
+        // Show subtle placeholder while loading to prevent layout jump
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
         final bookings = snapshot.data ?? [];
         final active = bookings.where((b) => _isActive(b.status)).toList();
 
@@ -126,15 +132,13 @@ class EscrowBookingsCard extends StatelessWidget {
                 children: [
                   Text(
                     booking.service,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
                     ),
                   ),
                   Text(
                     booking.statusLabel,
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: statusColor,
                       fontWeight: FontWeight.w600,
                     ),
@@ -168,14 +172,14 @@ class EscrowBookingsCard extends StatelessWidget {
   Color _statusColor(EscrowStatus status, ColorScheme scheme) {
     switch (status) {
       case EscrowStatus.offered:
-        return Colors.orange;
+        return ProServeColors.warning;
       case EscrowStatus.funded:
         return scheme.primary;
       case EscrowStatus.customerConfirmed:
       case EscrowStatus.contractorConfirmed:
-        return Colors.blue;
+        return ProServeColors.accent2;
       case EscrowStatus.released:
-        return Colors.green;
+        return ProServeColors.success;
       case EscrowStatus.declined:
       case EscrowStatus.cancelled:
         return scheme.error;

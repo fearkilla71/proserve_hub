@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
+import '../theme/proserve_theme.dart';
 
 import '../services/ai_pricing_service.dart';
 import '../services/escrow_service.dart';
@@ -92,6 +95,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
   Future<void> _acceptPrice() async {
     if (_pricing == null || _accepting) return;
+    HapticFeedback.heavyImpact();
     setState(() => _accepting = true);
 
     try {
@@ -113,15 +117,71 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
       await EscrowService.instance.acceptAndFund(escrowId: escrowId);
 
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
       context.pushReplacement('/escrow-status/$escrowId');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Payment failed: $e')));
+      _showPaymentError(e);
     } finally {
       if (mounted) setState(() => _accepting = false);
     }
+  }
+
+  void _showPaymentError(Object error) {
+    final scheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: scheme.error.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.payment, size: 40, color: scheme.error),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Payment Failed',
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'We couldn\'t process your payment. Please check your payment method and try again.',
+                textAlign: TextAlign.center,
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _acceptPrice();
+                  },
+                  child: const Text('Try Again'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _getEstimatesInstead() {
@@ -134,11 +194,15 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Instant Price'), centerTitle: true),
-      body: _loading
-          ? _buildLoadingState(scheme)
-          : _error != null
-          ? _buildErrorState(scheme)
-          : _buildPriceOffer(scheme),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOut,
+        child: _loading
+            ? _buildLoadingState(scheme)
+            : _error != null
+            ? _buildErrorState(scheme)
+            : _buildPriceOffer(scheme),
+      ),
     );
   }
 
@@ -146,6 +210,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
   Widget _buildLoadingState(ColorScheme scheme) {
     return Center(
+      key: const ValueKey('loading'),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -202,6 +267,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
   Widget _buildErrorState(ColorScheme scheme) {
     return Center(
+      key: const ValueKey('error'),
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -245,6 +311,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
     final factors = (_pricing!['factors'] as List<dynamic>?) ?? [];
 
     return ListView(
+      key: const ValueKey('offer'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         // ── AI badge ──
@@ -290,7 +357,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
                 scheme.tertiaryContainer.withValues(alpha: 0.3),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: scheme.primary.withValues(alpha: 0.2)),
           ),
           padding: const EdgeInsets.all(24),
@@ -490,21 +557,31 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           height: 54,
           child: FilledButton.icon(
             onPressed: _accepting ? null : _acceptPrice,
-            icon: _accepting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.bolt),
-            label: Text(
-              _accepting
-                  ? 'Processing Payment...'
-                  : 'Accept & Pay ${_currencyFmt.format(aiPrice)}',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _accepting
+                  ? const SizedBox(
+                      key: ValueKey('spinner'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.bolt, key: ValueKey('icon')),
+            ),
+            label: AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                _accepting
+                    ? 'Processing...'
+                    : 'Accept & Pay ${_currencyFmt.format(aiPrice)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
         ),
@@ -588,9 +665,9 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
                         borderRadius: BorderRadius.circular(3),
                         gradient: LinearGradient(
                           colors: [
-                            Colors.green.shade400,
+                            ProServeColors.success,
                             scheme.primary,
-                            Colors.orange.shade400,
+                            ProServeColors.warning,
                           ],
                         ),
                       ),
@@ -652,10 +729,10 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         ? 'Good confidence'
         : 'Moderate confidence';
     final color = pct >= 80
-        ? Colors.green
+        ? ProServeColors.success
         : pct >= 60
         ? scheme.primary
-        : Colors.orange;
+        : ProServeColors.warning;
 
     return Row(
       children: [

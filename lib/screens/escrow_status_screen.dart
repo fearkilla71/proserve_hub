@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../models/escrow_booking.dart';
 import '../services/escrow_service.dart';
+import '../theme/proserve_theme.dart';
 
 /// Real-time escrow status tracker.
 ///
@@ -28,28 +30,94 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     bool isCustomer,
   ) async {
     if (_confirming) return;
+    HapticFeedback.mediumImpact();
 
-    final confirmed = await showDialog<bool>(
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Job Complete?'),
-        content: Text(
-          isCustomer
-              ? 'By confirming, you verify the work was completed satisfactorily. '
-                    'Once the contractor also confirms, funds will be released.'
-              : 'By confirming, you verify the job has been completed. '
-                    'Once the customer also confirms, your payment will be released.',
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ProServeColors.success.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.verified_outlined, size: 40, color: ProServeColors.success),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Confirm Job Complete?',
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isCustomer
+                    ? 'You\'re verifying the work was completed to your satisfaction. Once the contractor also confirms, ${_currencyFmt.format(booking.contractorPayout)} will be released.'
+                    : 'You\'re verifying the job has been completed. Once the customer also confirms, your payment of ${_currencyFmt.format(booking.contractorPayout)} will be released.',
+                textAlign: TextAlign.center,
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _currencyFmt.format(booking.aiPrice),
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      booking.service,
+                      style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  icon: const Icon(Icons.check_circle_outline),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ProServeColors.success,
+                  ),
+                  label: const Text(
+                    'Confirm & Release',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Not Yet'),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Yes, Job is Complete'),
-          ),
-        ],
       ),
     );
 
@@ -65,12 +133,23 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Confirmation recorded!')));
+      ).showSnackBar(SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: ProServeColors.success, size: 20),
+            const SizedBox(width: 8),
+            const Text('Confirmation recorded!'),
+          ],
+        ),
+      ));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(
+        content: Text('Something went wrong. Please try again.'),
+        action: SnackBarAction(label: 'Retry', onPressed: () => _confirmCompletion(booking, isCustomer)),
+      ));
     } finally {
       if (mounted) setState(() => _confirming = false);
     }
@@ -78,28 +157,64 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
 
   Future<void> _cancelBooking() async {
     if (_cancelling) return;
+    HapticFeedback.mediumImpact();
 
-    final confirmed = await showDialog<bool>(
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Booking?'),
-        content: const Text(
-          'This will cancel the escrow booking and refund the payment. '
-          'This cannot be undone.',
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: scheme.error.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.warning_amber_rounded, size: 40, color: scheme.error),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Cancel Booking?',
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your payment will be fully refunded. This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: scheme.error,
+                  ),
+                  child: const Text(
+                    'Cancel & Refund',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Keep Booking'),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Keep Booking'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Cancel Booking'),
-          ),
-        ],
       ),
     );
 
@@ -117,7 +232,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(const SnackBar(
+        content: Text('Cancellation failed. Please try again.'),
+      ));
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
@@ -131,7 +248,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         stream: EscrowService.instance.watchBooking(widget.escrowId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildLoadingSkeleton(Theme.of(context).colorScheme);
           }
 
           final booking = snapshot.data;
@@ -140,10 +257,20 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48),
-                  const SizedBox(height: 12),
-                  const Text('Booking not found.'),
+                  Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(height: 16),
+                  Text(
+                    'Booking not found',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'It may have been deleted or the link is invalid.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => context.pop(),
                     child: const Text('Go Back'),
@@ -210,7 +337,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     final Color statusColor;
     final IconData statusIcon;
     if (isReleased) {
-      statusColor = Colors.green;
+      statusColor = ProServeColors.success;
       statusIcon = Icons.check_circle;
     } else if (isCancelled) {
       statusColor = scheme.error;
@@ -308,16 +435,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
             ),
           ),
@@ -398,7 +523,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _timelineItem(_TimelineStep step, bool isLast, ColorScheme scheme) {
-    final doneColor = Colors.green;
+    final doneColor = ProServeColors.success;
     final pendingColor = scheme.outlineVariant;
 
     return Row(
@@ -574,12 +699,12 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: ProServeColors.warning.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+              const Icon(Icons.info_outline, color: ProServeColors.warning, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -658,22 +783,22 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.green.withValues(alpha: 0.12),
-            Colors.green.withValues(alpha: 0.05),
+            ProServeColors.success.withValues(alpha: 0.12),
+            ProServeColors.success.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+        border: Border.all(color: ProServeColors.success.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.celebration, size: 40, color: Colors.green),
+          const Icon(Icons.celebration, size: 40, color: ProServeColors.success),
           const SizedBox(height: 10),
           Text(
             'Job Complete!',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: Colors.green,
+              color: ProServeColors.success,
             ),
           ),
           const SizedBox(height: 4),
@@ -732,6 +857,50 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
 
   String _formatDate(DateTime dt) {
     return DateFormat('MMM d, yyyy • h:mm a').format(dt);
+  }
+
+  Widget _buildLoadingSkeleton(ColorScheme scheme) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        // Status header skeleton
+        Container(
+          height: 180,
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: scheme.primary.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Payment summary skeleton
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Timeline skeleton
+        Container(
+          height: 260,
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ],
+    );
   }
 }
 

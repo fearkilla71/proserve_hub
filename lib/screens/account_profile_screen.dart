@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/location_service.dart';
 import '../utils/zip_locations.dart';
@@ -165,6 +166,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    HapticFeedback.lightImpact();
     setState(() => _saving = true);
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -203,14 +205,32 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile saved.')));
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.greenAccent, size: 20),
+              const SizedBox(width: 8),
+              const Text('Profile saved!'),
+            ],
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      final msg = e is FirebaseException
+          ? (e.message ?? 'Please try again.')
+          : 'Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Save failed. $msg'),
+          action: SnackBarAction(label: 'Retry', onPressed: _save),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -579,19 +599,25 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
           IconButton(
             tooltip: 'Save',
             onPressed: (_loading || _saving) ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save),
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _saving
+                  ? const SizedBox(
+                      key: ValueKey('saving'),
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save, key: ValueKey('save')),
+            ),
           ),
         ],
       ),
-      body: _loading
-          ? const ProfileSkeleton()
-          : Form(
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _loading
+            ? const ProfileSkeleton(key: ValueKey('skeleton'))
+            : Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -624,12 +650,18 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                           decoration: _fieldDecoration(
                             label: 'Phone',
                             icon: Icons.phone_outlined,
+                            hint: '(555) 123-4567',
                           ),
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                           validator: (v) {
                             final s = (v ?? '').trim();
                             if (s.isEmpty) return 'Phone is required.';
+                            if (s.length < 10) return 'Enter a 10-digit phone number.';
                             return null;
                           },
                         ),
@@ -648,17 +680,21 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                           },
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _zipController,
-                          decoration: _fieldDecoration(
-                            label: 'ZIP code',
-                            icon: Icons.markunread_mailbox_outlined,
-                            hint: 'e.g. 77005',
+                          TextFormField(
+                            controller: _zipController,
+                            decoration: _fieldDecoration(
+                              label: 'ZIP code',
+                              icon: Icons.markunread_mailbox_outlined,
+                              hint: 'e.g. 77005',
+                            ),
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(5),
+                            ],
+                            validator: _validateZip,
                           ),
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          validator: _validateZip,
-                        ),
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerLeft,
@@ -697,9 +733,19 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             decoration: _fieldDecoration(
                               label: 'Years of experience',
                               icon: Icons.timeline,
+                              hint: 'e.g. 5',
                             ),
                             keyboardType: TextInputType.number,
                             textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(2),
+                            ],
+                            validator: (v) {
+                              final n = int.tryParse(v ?? '');
+                              if (n != null && (n < 0 || n > 60)) return 'Enter 0-60.';
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
@@ -757,9 +803,14 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                 decoration: _fieldDecoration(
                                   label: 'Public phone',
                                   icon: Icons.phone_outlined,
+                                  hint: '(555) 123-4567',
                                 ),
                                 keyboardType: TextInputType.phone,
                                 textInputAction: TextInputAction.next,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -1188,6 +1239,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 }

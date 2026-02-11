@@ -482,9 +482,9 @@ class ProServeCTAButton extends StatelessWidget {
         boxShadow: onPressed != null
             ? [
                 BoxShadow(
-                  color: ProServeColors.accent.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
+                  color: ProServeColors.accent.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
                 ),
               ]
             : null,
@@ -517,9 +517,27 @@ class ProServeCTAButton extends StatelessWidget {
       child: expanded
           ? SizedBox(
               width: double.infinity,
-              child: GestureDetector(onTap: onPressed, child: buttonChild),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onPressed,
+                  borderRadius: BorderRadius.circular(999),
+                  splashColor: Colors.white.withValues(alpha: 0.15),
+                  highlightColor: Colors.white.withValues(alpha: 0.08),
+                  child: buttonChild,
+                ),
+              ),
             )
-          : GestureDetector(onTap: onPressed, child: buttonChild),
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onPressed,
+                borderRadius: BorderRadius.circular(999),
+                splashColor: Colors.white.withValues(alpha: 0.15),
+                highlightColor: Colors.white.withValues(alpha: 0.08),
+                child: buttonChild,
+              ),
+            ),
     );
   }
 }
