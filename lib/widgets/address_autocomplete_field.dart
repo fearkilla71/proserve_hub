@@ -100,8 +100,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
     _removeOverlay();
 
     // Fetch full details for structured fields
-    final details =
-        await PlacesService.instance.getDetails(prediction.placeId);
+    final details = await PlacesService.instance.getDetails(prediction.placeId);
 
     if (details != null) {
       // Use the street address for the field, not the full formatted address
@@ -188,16 +187,16 @@ class _SuggestionList extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? scheme.surfaceContainerHigh : scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: ListView.separated(
         padding: EdgeInsets.zero,
         shrinkWrap: true,
         itemCount: predictions.length + 1, // +1 for Google attribution
-        separatorBuilder: (_, _) =>
-            Divider(height: 1, color: scheme.outlineVariant.withValues(alpha: 0.2)),
+        separatorBuilder: (_, _) => Divider(
+          height: 1,
+          color: scheme.outlineVariant.withValues(alpha: 0.2),
+        ),
         itemBuilder: (context, index) {
           // Last item = Google attribution
           if (index == predictions.length) {
@@ -230,8 +229,7 @@ class _SuggestionList extends StatelessWidget {
           return InkWell(
             onTap: () => onTap(p),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   Icon(

@@ -10,11 +10,9 @@ class PlacesService {
   PlacesService._();
   static final PlacesService instance = PlacesService._();
 
-  static const String _apiKey =
-      String.fromEnvironment('GOOGLE_PLACES_API_KEY');
+  static const String _apiKey = String.fromEnvironment('GOOGLE_PLACES_API_KEY');
 
-  static const String _baseUrl =
-      'https://maps.googleapis.com/maps/api/place';
+  static const String _baseUrl = 'https://maps.googleapis.com/maps/api/place';
 
   /// Whether an API key is configured. If false, autocomplete won't work
   /// but the field degrades gracefully to a normal text input.

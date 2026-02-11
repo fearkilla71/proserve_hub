@@ -1398,85 +1398,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                           ),
                                         ),
                                       ...sorted.map((doc) {
-                                        final data = doc.data();
-                                        final service =
-                                            (data['service'] ?? 'Service')
-                                                .toString();
-                                        final location =
-                                            (data['location'] ?? 'Unknown')
-                                                .toString();
-                                        final description =
-                                            (data['description'] ?? '')
-                                                .toString();
-
-                                        final claimed = data['claimed'] == true;
-                                        final claimedByName =
-                                            (data['claimedByName'] as String?)
-                                                ?.trim() ??
-                                            '';
-                                        final contractorId =
-                                            (data['claimedBy'] as String?)
-                                                ?.trim() ??
-                                            '';
-                                        final canReview = _canLeaveReview(data);
-                                        final createdAt = _formatTimestamp(
-                                          data['createdAt'],
-                                        );
-                                        final claimedAt = _formatTimestamp(
-                                          data['claimedAt'],
-                                        );
-
-                                        final statusText = claimed
-                                            ? (claimedByName.isNotEmpty
-                                                  ? 'Assigned: $claimedByName'
-                                                  : 'Assigned')
-                                            : 'Pending';
-
-                                        return Card(
-                                          child: Column(
-                                            children: [
-                                              ListTile(
-                                                title: Text(service),
-                                                subtitle: Text(
-                                                  [
-                                                    'Location: $location',
-                                                    statusText,
-                                                    if (claimedAt.isNotEmpty)
-                                                      'Assigned at: $claimedAt',
-                                                    if (claimedAt.isEmpty &&
-                                                        createdAt.isNotEmpty)
-                                                      'Created at: $createdAt',
-                                                    if (description
-                                                        .trim()
-                                                        .isNotEmpty)
-                                                      'Notes: ${description.trim()}',
-                                                  ].join('\n'),
-                                                ),
-                                                isThreeLine: true,
-                                                onTap: () {
-                                                  context.push(
-                                                    '/job/${doc.id}',
-                                                    extra: {'jobData': data},
-                                                  );
-                                                },
-                                              ),
-                                              if (canReview)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.fromLTRB(
-                                                        12,
-                                                        0,
-                                                        12,
-                                                        12,
-                                                      ),
-                                                  child: _buildReviewAction(
-                                                    context: context,
-                                                    jobId: doc.id,
-                                                    contractorId: contractorId,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
+                                        return _buildRequestCard(
+                                          context: context,
+                                          docId: doc.id,
+                                          data: doc.data(),
                                         );
                                       }),
                                       const SizedBox(height: 8),
@@ -1519,169 +1444,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
                         return Column(
                           children: docs.map((doc) {
-                            final data = doc.data();
-                            final service = (data['service'] ?? 'Service')
-                                .toString();
-                            final location = (data['location'] ?? 'Unknown')
-                                .toString();
-                            final description = (data['description'] ?? '')
-                                .toString();
-                            final zip =
-                                (data['zip'] ??
-                                        data['zipcode'] ??
-                                        data['jobZip'] ??
-                                        '')
-                                    .toString()
-                                    .trim();
-
-                            final claimed = data['claimed'] == true;
-                            final claimedByName =
-                                (data['claimedByName'] as String?)?.trim() ??
-                                '';
-                            final contractorId =
-                                (data['claimedBy'] as String?)?.trim() ?? '';
-                            final canReview = _canLeaveReview(data);
-                            final createdAt = _formatTimestamp(
-                              data['createdAt'],
-                            );
-                            final claimedAt = _formatTimestamp(
-                              data['claimedAt'],
-                            );
-
-                            final statusText = claimed
-                                ? (claimedByName.isNotEmpty
-                                      ? 'Assigned: $claimedByName'
-                                      : 'Assigned')
-                                : 'Pending';
-
-                            return Card(
-                              child: Column(
-                                children: [
-                                  ListTile(
-                                    title: Text(service),
-                                    subtitle: Text(
-                                      [
-                                        'Location: $location',
-                                        statusText,
-                                        if (claimedAt.isNotEmpty)
-                                          'Assigned at: $claimedAt',
-                                        if (claimedAt.isEmpty &&
-                                            createdAt.isNotEmpty)
-                                          'Created at: $createdAt',
-                                        if (description.trim().isNotEmpty)
-                                          'Notes: ${description.trim()}',
-                                      ].join('\n'),
-                                    ),
-                                    isThreeLine: true,
-                                    onTap: () {
-                                      context.push(
-                                        '/job/${doc.id}',
-                                        extra: {'jobData': data},
-                                      );
-                                    },
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        StreamBuilder<
-                                          DocumentSnapshot<Map<String, dynamic>>
-                                        >(
-                                          stream: FirebaseFirestore.instance
-                                              .collection('chats')
-                                              .doc(doc.id)
-                                              .snapshots()
-                                              .handleError((_) {}),
-                                          builder: (context, chatSnap) {
-                                            final chatData = chatSnap.data
-                                                ?.data();
-                                            final unreadRaw =
-                                                chatData?['unread'];
-                                            final unreadMap = unreadRaw is Map
-                                                ? unreadRaw.map(
-                                                    (k, v) => MapEntry(
-                                                      k.toString(),
-                                                      v,
-                                                    ),
-                                                  )
-                                                : <String, dynamic>{};
-
-                                            final me = FirebaseAuth
-                                                .instance
-                                                .currentUser
-                                                ?.uid;
-                                            final unreadMeRaw = me == null
-                                                ? null
-                                                : unreadMap[me];
-                                            final unreadMe = unreadMeRaw is num
-                                                ? unreadMeRaw.toInt()
-                                                : 0;
-
-                                            if (unreadMe <= 0) {
-                                              return const SizedBox.shrink();
-                                            }
-
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 8,
-                                              ),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.error,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        999,
-                                                      ),
-                                                ),
-                                                child: Text(
-                                                  unreadMe.toString(),
-                                                  style: TextStyle(
-                                                    color: Theme.of(
-                                                      context,
-                                                    ).colorScheme.onError,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        if (zip.isNotEmpty)
-                                          IconButton(
-                                            tooltip: 'Nearby Contractors',
-                                            icon: const Icon(
-                                              Icons.near_me_outlined,
-                                            ),
-                                            onPressed: () {
-                                              context.push(
-                                                '/nearby-contractors/$zip',
-                                              );
-                                            },
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (canReview)
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        12,
-                                        0,
-                                        12,
-                                        12,
-                                      ),
-                                      child: _buildReviewAction(
-                                        context: context,
-                                        jobId: doc.id,
-                                        contractorId: contractorId,
-                                      ),
-                                    ),
-                                ],
-                              ),
+                            return _buildRequestCard(
+                              context: context,
+                              docId: doc.id,
+                              data: doc.data(),
                             );
                           }).toList(),
                         );
@@ -1697,6 +1463,296 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         );
       },
     );
+  }
+
+  // ────────────────── Request Card Builder ──────────────────────
+
+  Widget _buildRequestCard({
+    required BuildContext context,
+    required String docId,
+    required Map<String, dynamic> data,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final service = (data['service'] ?? 'Service').toString();
+    final location = (data['location'] ?? 'Unknown').toString();
+    final description = (data['description'] ?? '').toString();
+    final zip = (data['zip'] ?? data['zipcode'] ?? data['jobZip'] ?? '')
+        .toString()
+        .trim();
+
+    final claimed = data['claimed'] == true;
+    final claimedByName = (data['claimedByName'] as String?)?.trim() ?? '';
+    final contractorId = (data['claimedBy'] as String?)?.trim() ?? '';
+    final canReview = _canLeaveReview(data);
+    final createdAt = _formatTimestamp(data['createdAt']);
+    final claimedAt = _formatTimestamp(data['claimedAt']);
+
+    final isEscrow =
+        data['instantBook'] == true ||
+        (data['escrowId'] ?? '').toString().isNotEmpty;
+    final escrowPrice = data['escrowPrice'];
+    final status = (data['status'] ?? 'open').toString();
+    final escrowId = (data['escrowId'] ?? '').toString();
+
+    // Status pipeline
+    final statusInfo = _getStatusInfo(status, claimed, claimedByName);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header row with service title + status badge ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+            child: Row(
+              children: [
+                // AI / Escrow badge
+                if (isEscrow) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          ProServeColors.accent,
+                          ProServeColors.accent.withValues(alpha: 0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 12,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'AI Price',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    service,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Unread badge + nearby icon
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('chats')
+                      .doc(docId)
+                      .snapshots()
+                      .handleError((_) {}),
+                  builder: (context, chatSnap) {
+                    final chatData = chatSnap.data?.data();
+                    final unreadRaw = chatData?['unread'];
+                    final unreadMap = unreadRaw is Map
+                        ? unreadRaw.map((k, v) => MapEntry(k.toString(), v))
+                        : <String, dynamic>{};
+                    final me = FirebaseAuth.instance.currentUser?.uid;
+                    final unreadMeRaw = me == null ? null : unreadMap[me];
+                    final unreadMe = unreadMeRaw is num
+                        ? unreadMeRaw.toInt()
+                        : 0;
+
+                    if (unreadMe <= 0) return const SizedBox.shrink();
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.error,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        unreadMe.toString(),
+                        style: TextStyle(
+                          color: scheme.onError,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (zip.isNotEmpty)
+                  IconButton(
+                    tooltip: 'Nearby Contractors',
+                    icon: const Icon(Icons.near_me_outlined, size: 20),
+                    onPressed: () {
+                      context.push('/nearby-contractors/$zip');
+                    },
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+          ),
+
+          // ── Status indicator row ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusInfo.color,
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusInfo.color.withValues(alpha: 0.4),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  statusInfo.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: statusInfo.color,
+                  ),
+                ),
+                if (isEscrow && escrowPrice is num) ...[
+                  const Spacer(),
+                  Text(
+                    '\$${escrowPrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: ProServeColors.accent,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // ── Details ──
+          InkWell(
+            onTap: () {
+              if (isEscrow && escrowId.isNotEmpty) {
+                context.push('/escrow-status/$escrowId');
+              } else {
+                context.push('/job/$docId', extra: {'jobData': data});
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Location: $location',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (claimedAt.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Assigned at: $claimedAt',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  if (claimedAt.isEmpty && createdAt.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Created at: $createdAt',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  if (description.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        description.trim(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Review button ──
+          if (canReview)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: _buildReviewAction(
+                context: context,
+                jobId: docId,
+                contractorId: contractorId,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Returns status label + color for the pipeline indicator.
+  _StatusInfo _getStatusInfo(
+    String status,
+    bool claimed,
+    String claimedByName,
+  ) {
+    switch (status) {
+      case 'escrow_funded':
+        return _StatusInfo('Paid — Matching Contractor', Colors.amber);
+      case 'in_progress':
+        return _StatusInfo('In Progress', Colors.blue);
+      case 'completion_requested':
+        return _StatusInfo('Completion Requested', Colors.orange);
+      case 'completion_approved':
+        return _StatusInfo('Approved', ProServeColors.accent);
+      case 'completed':
+        return _StatusInfo('Completed', ProServeColors.accent);
+      case 'cancelled':
+        return _StatusInfo('Cancelled', Colors.red);
+      default:
+        if (claimed) {
+          final name = claimedByName.isNotEmpty
+              ? 'Assigned: $claimedByName'
+              : 'Assigned';
+          return _StatusInfo(name, Colors.blue);
+        }
+        return _StatusInfo('Pending', Colors.grey);
+    }
   }
 }
 
@@ -2263,6 +2319,12 @@ class _StatChip extends StatelessWidget {
       ],
     );
   }
+}
+
+class _StatusInfo {
+  final String label;
+  final Color color;
+  const _StatusInfo(this.label, this.color);
 }
 
 class _EmptyTeamCard extends StatelessWidget {

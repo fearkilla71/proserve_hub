@@ -6512,6 +6512,52 @@ exports.onJobClaimed = functions.firestore
       });
       
       console.log(`[onJobClaimed] Notification sent to customer ${customerId}`);
+      
+      // For escrow jobs, also notify the contractor they've been matched
+      if (after.instantBook === true || (after.escrowId && after.escrowId.length > 0)) {
+        try {
+          const contractorUserSnap = await admin.firestore()
+            .collection('users')
+            .doc(contractorId)
+            .get();
+          const contractorToken = contractorUserSnap.exists
+            ? contractorUserSnap.data()?.fcmToken
+            : null;
+          if (contractorToken) {
+            const serviceName = after.service || 'a service';
+            await admin.messaging().send({
+              token: contractorToken,
+              notification: {
+                title: 'New Escrow Job! 💰',
+                body: `You've been matched for ${serviceName}. Funds are secured in escrow.`,
+              },
+              data: {
+                type: 'escrow_match',
+                jobId: jobId,
+              },
+              android: {
+                priority: 'high',
+                notification: {
+                  channelId: 'proserve_hub_channel',
+                  priority: 'high',
+                  sound: 'default',
+                },
+              },
+              apns: {
+                payload: {
+                  aps: {
+                    sound: 'default',
+                    badge: 1,
+                  },
+                },
+              },
+            });
+            console.log(`[onJobClaimed] Escrow notification sent to contractor ${contractorId}`);
+          }
+        } catch (ce) {
+          console.error('[onJobClaimed] Error sending contractor escrow notification:', ce);
+        }
+      }
     } catch (e) {
       console.error('[onJobClaimed] Error sending notification:', e);
     }
@@ -6532,28 +6578,37 @@ exports.onJobStatusChanged = functions.firestore
       const customerId = after.requesterUid;
       const contractorId = after.claimedBy;
       
-      if (!customerId || !contractorId) return;
+      if (!customerId) return;
       
       let recipientId, title, body;
       const newStatus = (after.status || '').toString();
+      const serviceName = (after.service || 'your job').toString();
 
       // Determine recipient and message based on status (state-machine aware).
-      if (newStatus === 'in_progress') {
+      if (newStatus === 'escrow_funded') {
+        // Escrow paid — notify customer (no contractor yet)
+        recipientId = customerId;
+        title = 'Payment Confirmed ✅';
+        body = `Your escrow payment for ${serviceName} has been received. We're matching you with a contractor.`;
+      } else if (newStatus === 'in_progress') {
+        if (!contractorId) return;
         recipientId = customerId;
         title = 'Work Started! 🔨';
         body = 'Your contractor has started working on your job';
       } else if (newStatus === 'completion_requested') {
+        if (!contractorId) return;
         recipientId = customerId;
         title = 'Completion Requested ✅';
         body = 'Your contractor requested completion approval';
       } else if (newStatus === 'completion_approved') {
+        if (!contractorId) return;
         recipientId = contractorId;
         title = 'Completion Approved! 🎉';
         body = 'The customer approved completion';
       } else if (newStatus === 'completed') {
+        if (!contractorId) return;
         recipientId = contractorId;
-        title = 'Job Completed \u2705';
-        body = 'Your job has been marked as completed';
+        title = 'Job Completed ✅';
         body = 'Payment has been released for your job';
       } else {
         return;
