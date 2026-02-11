@@ -9,6 +9,20 @@
 			"**/.*",
 			"**/node_modules/**"
 		],
+		"headers": [
+			{
+				"source": "/stripe_*.html",
+				"headers": [
+					{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+				]
+			},
+			{
+				"source": "/index.html",
+				"headers": [
+					{ "key": "Cache-Control", "value": "no-cache" }
+				]
+			}
+		],
 		"rewrites": [
 			{ "source": "/admin/**", "destination": "/admin/index.html" },
 			{ "source": "/connect/return", "destination": "/connect/return.html" },
