@@ -305,6 +305,8 @@ class JobDetailPage extends StatelessWidget {
                           (contactData?['email'] as String?)?.trim() ?? '';
                       final phone =
                           (contactData?['phone'] as String?)?.trim() ?? '';
+                      final address =
+                          (contactData?['address'] as String?)?.trim() ?? '';
 
                       if (email.isEmpty && phone.isEmpty) {
                         // Fallback for legacy jobs that stored contact info on the public job doc.
@@ -323,6 +325,7 @@ class JobDetailPage extends StatelessWidget {
                               Text('Email: $legacyEmail'),
                             if (legacyPhone.isNotEmpty)
                               Text('Phone: $legacyPhone'),
+                            if (address.isNotEmpty) Text('Address: $address'),
                           ],
                         );
                       }
@@ -334,6 +337,7 @@ class JobDetailPage extends StatelessWidget {
                           if (name.isNotEmpty) Text('Name: $name'),
                           if (email.isNotEmpty) Text('Email: $email'),
                           if (phone.isNotEmpty) Text('Phone: $phone'),
+                          if (address.isNotEmpty) Text('Address: $address'),
                         ],
                       );
                     },

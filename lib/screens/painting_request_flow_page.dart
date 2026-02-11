@@ -332,6 +332,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
       final db = FirebaseFirestore.instance;
       String customerName = '';
+      String customerAddress = '';
       try {
         final userSnap = await db.collection('users').doc(uid).get();
         final userData = userSnap.data() ?? <String, dynamic>{};
@@ -342,6 +343,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
             .toString()
             .trim();
         customerName = profileName.isNotEmpty ? profileName : authName;
+        customerAddress = (userData['address'] ?? '').toString().trim();
       } catch (_) {
         // Best-effort only; contact info can be created without a name.
       }
@@ -403,6 +405,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
         if (customerName.isNotEmpty) 'name': customerName,
         'email': email,
         'phone': phone,
+        if (customerAddress.isNotEmpty) 'address': customerAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

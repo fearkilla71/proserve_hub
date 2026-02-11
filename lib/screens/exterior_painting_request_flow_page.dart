@@ -323,6 +323,7 @@ class _ExteriorPaintingRequestFlowPageState
 
       final db = FirebaseFirestore.instance;
       String customerName = '';
+      String customerAddress = '';
       try {
         final userSnap = await db.collection('users').doc(uid).get();
         final userData = userSnap.data() ?? <String, dynamic>{};
@@ -333,6 +334,7 @@ class _ExteriorPaintingRequestFlowPageState
             .toString()
             .trim();
         customerName = profileName.isNotEmpty ? profileName : authName;
+        customerAddress = (userData['address'] ?? '').toString().trim();
       } catch (_) {
         // Best-effort only.
       }
@@ -387,6 +389,7 @@ class _ExteriorPaintingRequestFlowPageState
         if (customerName.isNotEmpty) 'name': customerName,
         'email': email,
         'phone': phone,
+        if (customerAddress.isNotEmpty) 'address': customerAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

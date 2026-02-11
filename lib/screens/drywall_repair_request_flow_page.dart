@@ -89,9 +89,9 @@ class _DrywallRepairRequestFlowPageState
       setState(() {});
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -338,6 +338,7 @@ class _DrywallRepairRequestFlowPageState
       final db = FirebaseFirestore.instance;
 
       String customerName = '';
+      String customerAddress = '';
       try {
         final userSnap = await db.collection('users').doc(uid).get();
         final userData = userSnap.data() ?? <String, dynamic>{};
@@ -348,6 +349,7 @@ class _DrywallRepairRequestFlowPageState
             .toString()
             .trim();
         customerName = profileName.isNotEmpty ? profileName : authName;
+        customerAddress = (userData['address'] ?? '').toString().trim();
       } catch (_) {
         // Best-effort.
       }
@@ -458,6 +460,7 @@ class _DrywallRepairRequestFlowPageState
         if (customerName.isNotEmpty) 'name': customerName,
         'email': email,
         'phone': phone,
+        if (customerAddress.isNotEmpty) 'address': customerAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

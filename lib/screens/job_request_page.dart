@@ -57,6 +57,8 @@ class _JobRequestPageState extends State<JobRequestPage> {
   bool _submitting = false;
   bool _uploading = false;
   bool _estimating = false;
+  String _customerName = '';
+  String _customerAddress = '';
   List<String> _uploadedPaths = <String>[];
   Map<String, dynamic>? _aiResult;
   bool _locating = false;
@@ -114,6 +116,12 @@ class _JobRequestPageState extends State<JobRequestPage> {
         if (phone is String && phone.trim().isNotEmpty) {
           contactPhoneController.text = phone.trim();
         }
+        final name = (data?['name'] ?? data?['fullName'] ?? '')
+            .toString()
+            .trim();
+        if (name.isNotEmpty) _customerName = name;
+        final addr = (data?['address'] ?? '').toString().trim();
+        if (addr.isNotEmpty) _customerAddress = addr;
       });
     }
   }
@@ -931,8 +939,11 @@ class _JobRequestPageState extends State<JobRequestPage> {
                           });
 
                           batch.set(contactRef, {
+                            if (_customerName.isNotEmpty) 'name': _customerName,
                             'email': contactEmail,
                             'phone': contactPhone,
+                            if (_customerAddress.isNotEmpty)
+                              'address': _customerAddress,
                             'createdAt': FieldValue.serverTimestamp(),
                           });
 
