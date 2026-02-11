@@ -315,10 +315,18 @@ service cloud.firestore {
 
     // --- CHATS (one chat per jobId) ---
     match /chats/{jobId} {
-      // Participants can always read their own chats (even after job completes)
+      // Participants can read their chats, or job owner/contractor can check
+      // for unread counts even before the chat doc is fully set up.
       allow read: if isSignedIn()
-        && (resource.data.participants is list)
-        && resource.data.participants.hasAny([request.auth.uid]);
+        && (
+          // Chat participant
+          ((resource.data.participants is list)
+            && resource.data.participants.hasAny([request.auth.uid]))
+          // Or job requester / assigned contractor (for unread badge streams)
+          || (exists(/databases/$(database)/documents/job_requests/$(jobId))
+            && (job(jobId).requesterUid == request.auth.uid
+              || job(jobId).claimedBy == request.auth.uid))
+        );
 
       allow create: if chatIsUnlocked(jobId)
         && isChatParticipantFromJob(jobId)

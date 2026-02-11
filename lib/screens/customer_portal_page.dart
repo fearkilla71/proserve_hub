@@ -1588,7 +1588,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                           stream: FirebaseFirestore.instance
                                               .collection('chats')
                                               .doc(doc.id)
-                                              .snapshots(),
+                                              .snapshots()
+                                              .handleError((_) {}),
                                           builder: (context, chatSnap) {
                                             final chatData = chatSnap.data
                                                 ?.data();
