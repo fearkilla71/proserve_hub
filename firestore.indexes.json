@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "qa",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "contractorId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "bid_invites",
       "queryScope": "COLLECTION",
       "fields": [

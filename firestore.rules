@@ -1059,6 +1059,31 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // --- Q&A (public questions on contractor profiles) ---
+    match /qa/{qaId} {
+      // Anyone can read Q&A entries (public on contractor profiles)
+      allow read: if true;
+
+      // Signed-in users can ask a question
+      allow create: if isSignedIn()
+        && request.resource.data.askedBy == request.auth.uid
+        && (request.resource.data.contractorId is string)
+        && (request.resource.data.question is string)
+        && request.resource.data.question.size() > 0
+        && request.resource.data.question.size() <= 1000;
+
+      // The contractor can answer their own Q&A; the asker can edit their question
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || resource.data.contractorId == request.auth.uid
+        || resource.data.askedBy == request.auth.uid
+      );
+
+      // Admin or the asker can delete
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.askedBy == request.auth.uid);
+    }
+
     // --- COMMUNITY POSTS ---
     match /community_posts/{postId} {
       allow read: if isSignedIn();
