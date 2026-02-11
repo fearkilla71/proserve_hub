@@ -3,26 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Payment successful</title>
+  <title>Payment successful — ProServe Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 40px 16px; }
-    .card { max-width: 760px; margin: 0 auto; padding: 24px; border-radius: 16px; border: 1px solid rgba(127,127,127,.25); }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    p { margin: 0 0 12px; line-height: 1.45; }
-    .muted { opacity: .75; }
-    .btn { display: inline-block; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); text-decoration: none; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#071022;--bg-deep:#050b18;--ink:#e6f1ff;--muted:#9fb2d4;
+      --accent:#22e39b;--accent2:#36b3ff;--accent3:#8f5bff;
+      --card:rgba(12,23,44,.82);--line:rgba(255,255,255,.08);
+    }
+    body{font-family:'Manrope',system-ui,-apple-system,sans-serif;background:var(--bg-deep);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+    .wrapper{width:100%;max-width:440px;text-align:center}
+    /* Success icon */
+    .icon-ring{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 0 40px rgba(34,227,155,.25);animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
+    .icon-ring svg{width:44px;height:44px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .check-path{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .6s .3s ease forwards}
+    @keyframes pop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+    @keyframes draw{to{stroke-dashoffset:0}}
+    /* Card */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:36px 28px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 32px rgba(0,0,0,.35)}
+    h1{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-.3px}
+    .status{color:var(--accent);font-weight:600;font-size:14px;margin-bottom:16px;min-height:20px;transition:color .3s}
+    .status.error{color:#ff6b6b}
+    p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:12px}
+    .divider{height:1px;background:var(--line);margin:20px 0}
+    /* Buttons */
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;width:100%;justify-content:center;padding:14px 24px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),#1bc88a);color:#071022;font-family:inherit;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(34,227,155,.3)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(34,227,155,.4)}
+    .btn-primary:active{transform:translateY(0)}
+    .btn-primary svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    .link-secondary{display:inline-block;margin-top:16px;color:var(--accent2);font-size:13px;font-weight:600;text-decoration:none;opacity:.85;transition:opacity .15s}
+    .link-secondary:hover{opacity:1;text-decoration:underline}
+    .close-hint{color:var(--muted);font-size:12px;opacity:.6;margin-top:20px}
+    /* Pulse dot */
+    .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Thanks — payment successful</h1>
-    <p id="status" class="muted">Finalizing your purchase…</p>
-    <p>Return to the ProServe Hub app. Your credits should update automatically.</p>
-    <p class="muted">You can close this tab/window.</p>
-    <a class="btn" id="openApp" href="#">Return to ProServe Hub app</a>
-    <div style="height: 10px"></div>
-    <a class="muted" href="/">Go to ProServe Hub site</a>
+  <div class="wrapper">
+    <div class="icon-ring">
+      <svg viewBox="0 0 44 44"><polyline class="check-path" points="12 22 20 30 32 14" /></svg>
+    </div>
+    <div class="card">
+      <h1>Payment Successful</h1>
+      <p id="status" class="status"><span class="pulse-dot"></span>Finalizing your purchase…</p>
+      <p>Your credits should update automatically. Return to the app to continue.</p>
+      <div class="divider"></div>
+      <a class="btn-primary" id="openApp" href="#">
+        <svg viewBox="0 0 24 24"><path d="M15 3h6v6M14 10l6.1-6.1M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
+        Return to App
+      </a>
+      <br />
+      <a class="link-secondary" href="https://proservehub.netlify.app">Visit ProServe Hub website</a>
+      <p class="close-hint">You can safely close this tab.</p>
+    </div>
   </div>
 
   <script>
@@ -62,7 +99,7 @@
       }
 
       if (!sessionId) {
-        statusEl.textContent = 'Purchase complete.';
+        statusEl.innerHTML = '&#10003; Purchase complete';
         return;
       }
 
@@ -80,10 +117,11 @@
           return data;
         })
         .then(() => {
-          statusEl.textContent = 'Credits updated. You can return to the app.';
+          statusEl.innerHTML = '&#10003; Credits updated — you\'re all set!';
         })
         .catch((e) => {
-          statusEl.textContent = 'Purchase complete, but credits may take a moment. Return to the app and refresh.';
+          statusEl.classList.add('error');
+          statusEl.innerHTML = 'Purchase complete, but credits may take a moment. Return to the app and refresh.';
           console.error(e);
         });
     })();
