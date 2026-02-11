@@ -1123,16 +1123,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             ),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: isAdmin
-                  ? _postsRef
-                        .orderBy('createdAt', descending: true)
-                        .limit(50)
-                        .snapshots()
-                  : _postsRef
-                        .where('moderationStatus', isEqualTo: 'active')
-                        .orderBy('createdAt', descending: true)
-                        .limit(50)
-                        .snapshots(),
+              // Use a single query for everyone – order by createdAt only.
+              // Client-side filtering below hides non-active posts for
+              // non-admins. This avoids the composite index requirement
+              // on (moderationStatus + createdAt) which can take minutes
+              // to build after first deploy.
+              stream: _postsRef
+                  .orderBy('createdAt', descending: true)
+                  .limit(50)
+                  .snapshots(),
               builder: (context, snap) {
                 if (snap.hasError) {
                   debugPrint('Community feed error: ${snap.error}');
@@ -1151,9 +1150,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           const SizedBox(height: 4),
                           Text(
                             '${snap.error}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
