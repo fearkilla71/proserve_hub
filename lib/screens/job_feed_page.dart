@@ -179,144 +179,121 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     );
   }
 
-  Widget _distanceFilterCard() {
+  Widget _nearbyLeadsSection() {
     final scheme = Theme.of(context).colorScheme;
     final zip = _currentZip;
     final hasZip = zip != null && zip.isNotEmpty;
     final rangeLabel = '${_distanceMiles.toStringAsFixed(0)} mi';
 
-    return Card(
-      elevation: 0,
-      color: scheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.near_me_outlined, color: scheme.primary),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nearby leads',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        hasZip
-                            ? 'Using ZIP $zip'
-                            : 'Set your ZIP to filter by distance',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch.adaptive(
-                  value: _distanceEnabled && hasZip,
-                  onChanged: (value) {
-                    if (!hasZip) {
-                      _useMyLocation();
-                      return;
-                    }
-                    setState(() => _distanceEnabled = value);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Chip(
-                  label: Text(hasZip ? 'ZIP $zip' : 'ZIP needed'),
-                  avatar: Icon(
-                    hasZip ? Icons.location_on_outlined : Icons.location_off,
-                    size: 18,
-                    color: scheme.primary,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-                Chip(
-                  label: Text(rangeLabel),
-                  avatar: Icon(
-                    Icons.route_outlined,
-                    size: 18,
-                    color: scheme.primary,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  '5 mi',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: _distanceMiles,
-                    min: 5,
-                    max: 100,
-                    divisions: 19,
-                    label: rangeLabel,
-                    onChanged: (_distanceEnabled && hasZip)
-                        ? (value) {
-                            setState(() => _distanceMiles = value);
-                          }
-                        : null,
-                  ),
-                ),
-                Text(
-                  '100 mi',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: _loadingLocation ? null : _useMyLocation,
-                icon: _loadingLocation
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location),
-                label: const Text('Use my location'),
+            Icon(Icons.near_me_outlined, color: scheme.primary, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Nearby leads',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
+            ),
+            Switch.adaptive(
+              value: _distanceEnabled && hasZip,
+              onChanged: (value) {
+                if (!hasZip) {
+                  _useMyLocation();
+                  return;
+                }
+                setState(() => _distanceEnabled = value);
+              },
             ),
           ],
         ),
-      ),
+        if (hasZip)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'Using ZIP $zip',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Chip(
+              label: Text(hasZip ? 'ZIP $zip' : 'ZIP needed'),
+              avatar: Icon(
+                hasZip ? Icons.location_on_outlined : Icons.location_off,
+                size: 18,
+                color: scheme.primary,
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            Chip(
+              label: Text(rangeLabel),
+              avatar: Icon(
+                Icons.route_outlined,
+                size: 18,
+                color: scheme.primary,
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              '5 mi',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            Expanded(
+              child: Slider(
+                value: _distanceMiles,
+                min: 5,
+                max: 100,
+                divisions: 19,
+                label: rangeLabel,
+                onChanged: (_distanceEnabled && hasZip)
+                    ? (value) {
+                        setState(() => _distanceMiles = value);
+                      }
+                    : null,
+              ),
+            ),
+            Text(
+              '100 mi',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.tonalIcon(
+            onPressed: _loadingLocation ? null : _useMyLocation,
+            icon: _loadingLocation
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location),
+            label: const Text('Use my location'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -324,7 +301,8 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     return _serviceFilter != null ||
         _minPrice != null ||
         _maxPrice != null ||
-        _datePostedDays > 0;
+        _datePostedDays > 0 ||
+        _distanceEnabled;
   }
 
   void _clearAdvancedFilters() {
@@ -333,6 +311,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       _minPrice = null;
       _maxPrice = null;
       _datePostedDays = 0;
+      _distanceEnabled = false;
     });
   }
 
@@ -368,6 +347,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Nearby leads
+                _nearbyLeadsSection(),
+                const Divider(height: 28),
                 // Service type
                 Text(
                   'Service type',
@@ -1669,7 +1651,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   invitedSection(uid: user.uid),
                                   unlockedLeadsSection(uid: user.uid),
                                   _availableLeadsHeader(context),
-                                  _distanceFilterCard(),
                                   _advancedFiltersCard(),
                                   const SizedBox(height: 12),
                                   for (final doc in filteredDocs) ...[
@@ -1758,7 +1739,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           invitedSection(uid: user.uid),
                           unlockedLeadsSection(uid: user.uid),
                           _availableLeadsHeader(context),
-                          _distanceFilterCard(),
                           _advancedFiltersCard(),
                           const SizedBox(height: 12),
                           const EmptyStateCard(
@@ -1806,7 +1786,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           if (index == 3) {
                             return Column(
                               children: [
-                                _distanceFilterCard(),
                                 _advancedFiltersCard(),
                                 const SizedBox(height: 12),
                               ],
