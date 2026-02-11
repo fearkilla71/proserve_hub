@@ -5,12 +5,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../utils/zip_locations.dart';
 import '../utils/platform_file_bytes.dart';
-import '../services/customer_portal_nav.dart';
 
 class CabinetRequestFlowPage extends StatefulWidget {
   const CabinetRequestFlowPage({super.key});
@@ -476,8 +476,19 @@ class _CabinetRequestFlowPageState extends State<CabinetRequestFlowPage> {
       await batch.commit();
 
       if (!mounted) return;
-      CustomerPortalNav.requestTab(2);
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      context.push(
+        '/ai-price-offer/${jobRef.id}',
+        extra: {
+          'service': 'Cabinet Refinishing',
+          'zip': zip,
+          'quantity': size,
+          'urgent': _timeline == 'asap',
+          'jobDetails': {
+            'propertyType': propertyTypeLabel,
+            'description': description,
+          },
+        },
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

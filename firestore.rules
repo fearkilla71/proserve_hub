@@ -605,6 +605,34 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // --- ESCROW BOOKINGS (AI instant-booking with escrow) ---
+    match /escrow_bookings/{escrowId} {
+      // Customers can read their own escrow bookings
+      // Contractors can read bookings assigned to them
+      // Admins can read all
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || resource.data.customerId == request.auth.uid
+        || resource.data.contractorId == request.auth.uid
+      );
+
+      // Only the customer who owns the job can create an escrow booking
+      allow create: if isSignedIn()
+        && request.resource.data.customerId == request.auth.uid;
+
+      // Customer can update: fund, confirm completion, cancel, decline
+      // Contractor can update: confirm completion
+      // Admin can update anything
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || resource.data.customerId == request.auth.uid
+        || resource.data.contractorId == request.auth.uid
+      );
+
+      // Only admins can delete escrow records
+      allow delete: if isAdmin();
+    }
+
     // --- QUOTES (competitive bidding for jobs) ---
     match /quotes/{quoteId} {
       function quoteJobId() {

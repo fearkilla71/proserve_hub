@@ -12,6 +12,7 @@ import '../services/fcm_service.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/contractor_card.dart';
 import '../widgets/page_header.dart';
+import '../widgets/escrow_bookings_card.dart';
 import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/persistent_job_state_bar.dart';
@@ -579,6 +580,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 );
               },
             ),
+            const SizedBox(height: 16),
+            const EscrowBookingsCard(isCustomer: false),
             const SizedBox(height: 20),
             Text(
               'Quick actions',

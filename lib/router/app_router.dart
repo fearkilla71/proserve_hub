@@ -70,6 +70,8 @@ import '../screens/pressure_washing_request_flow_page.dart';
 import '../screens/cabinet_request_flow_page.dart';
 import '../screens/landing_page.dart';
 import '../screens/account_profile_screen.dart';
+import '../screens/ai_price_offer_screen.dart';
+import '../screens/escrow_status_screen.dart';
 import '../widgets/offline_banner.dart';
 
 /// Centralised route path constants.
@@ -158,6 +160,10 @@ abstract final class AppRoutes {
   static const savedEstimates = '/saved-estimates';
   static const landing = '/landing';
   static const editCard = '/edit-card';
+
+  // ── Escrow ──
+  static const aiPriceOffer = '/ai-price-offer/:jobId';
+  static const escrowStatus = '/escrow-status/:escrowId';
 
   // ── Service Request Flows ──
   static const flowPainting = '/flow/painting';
@@ -625,6 +631,30 @@ GoRouter createRouter() {
       GoRoute(
         path: '/landing',
         builder: (context, state) => const LandingPage(),
+      ),
+
+      // ── Escrow ──
+      GoRoute(
+        path: '/ai-price-offer/:jobId',
+        builder: (context, state) {
+          final jobId = state.pathParameters['jobId']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return AiPriceOfferScreen(
+            jobId: jobId,
+            service: extra['service'] as String? ?? '',
+            zip: extra['zip'] as String? ?? '',
+            quantity: (extra['quantity'] as num?)?.toDouble() ?? 0,
+            urgent: extra['urgent'] as bool? ?? false,
+            jobDetails: extra['jobDetails'] as Map<String, dynamic>? ?? {},
+          );
+        },
+      ),
+      GoRoute(
+        path: '/escrow-status/:escrowId',
+        builder: (context, state) {
+          final escrowId = state.pathParameters['escrowId']!;
+          return EscrowStatusScreen(escrowId: escrowId);
+        },
       ),
 
       // ── Service Request Flows ──

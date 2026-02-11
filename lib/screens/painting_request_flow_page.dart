@@ -413,7 +413,37 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
       if (!mounted) return;
 
-      context.push('/recommended/${jobRef.id}');
+      context.push(
+        '/ai-price-offer/${jobRef.id}',
+        extra: {
+          'service': 'Painting',
+          'zip': zip,
+          'quantity': sqft,
+          'urgent': false,
+          'jobDetails': {
+            'paintingScope': _paintingScope,
+            'propertyType': propertyTypeLabel,
+            'description': description,
+            'paintingQuestions': {
+              'scope': _paintingScope,
+              'sqft': sqft,
+              'property_type': _propertyType,
+              'new_construction': _isNewConstruction,
+              'rooms_painting': _roomsPainting,
+              'wall_condition': _wallCondition,
+              'ceiling_height': _ceilingHeight,
+              'what_to_paint': {
+                'walls': _paintWalls,
+                'trim': _paintTrim,
+                'ceiling': _paintCeilings,
+                'doors': _paintDoors,
+                'window_frames': _paintWindowFrames,
+              },
+              'color_finish': _colorFinish,
+            },
+          },
+        },
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

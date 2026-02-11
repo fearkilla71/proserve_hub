@@ -396,7 +396,19 @@ class _ExteriorPaintingRequestFlowPageState
       await batch.commit();
 
       if (!mounted) return;
-      context.push('/recommended/${jobRef.id}');
+      context.push(
+        '/ai-price-offer/${jobRef.id}',
+        extra: {
+          'service': 'Exterior Painting',
+          'zip': zip,
+          'quantity': homeSqft,
+          'urgent': false,
+          'jobDetails': {
+            'propertyType': propertyTypeLabel,
+            'description': description,
+          },
+        },
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

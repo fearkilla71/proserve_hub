@@ -983,9 +983,22 @@ class _JobRequestPageState extends State<JobRequestPage> {
                 height: 52,
                 child: OutlinedButton(
                   onPressed: () {
-                    context.push('/recommended/$_jobId');
+                    final qty = _parseQuantity(quantityController.text) ?? 0;
+                    context.push(
+                      '/ai-price-offer/$_jobId',
+                      extra: {
+                        'service': widget.serviceName,
+                        'zip': zipController.text.trim(),
+                        'quantity': qty,
+                        'urgent': isUrgent,
+                        'jobDetails': {
+                          'propertyType': propertyType,
+                          'description': descriptionController.text.trim(),
+                        },
+                      },
+                    );
                   },
-                  child: const Text('See Recommended Pros'),
+                  child: const Text('See AI Price & Recommended Pros'),
                 ),
               ),
             ],

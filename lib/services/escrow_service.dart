@@ -1,0 +1,248 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../models/escrow_booking.dart';
+import 'ai_pricing_service.dart';
+
+/// Manages the escrow lifecycle: create → fund → confirm → release.
+class EscrowService {
+  EscrowService._();
+  static final EscrowService instance = EscrowService._();
+
+  final _db = FirebaseFirestore.instance;
+
+  static const String _collection = 'escrow_bookings';
+
+  // ───────────────────────────────────── CREATE ─────────────────────────
+
+  /// Create an escrow booking when the customer sees the AI price.
+  ///
+  /// Status starts as [EscrowStatus.offered].
+  Future<String> createOffer({
+    required String jobId,
+    required String service,
+    required String zip,
+    required double aiPrice,
+    required Map<String, double> priceBreakdown,
+    required Map<String, dynamic> jobDetails,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    final platformFee = _roundCents(aiPrice * AiPricingService.platformFeeRate);
+    final contractorPayout = _roundCents(aiPrice - platformFee);
+
+    final ref = _db.collection(_collection).doc();
+    await ref.set({
+      'jobId': jobId,
+      'customerId': uid,
+      'contractorId': null,
+      'service': service,
+      'zip': zip,
+      'aiPrice': aiPrice,
+      'platformFee': platformFee,
+      'contractorPayout': contractorPayout,
+      'status': EscrowStatus.offered.value,
+      'jobDetails': jobDetails,
+      'priceBreakdown': priceBreakdown,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    return ref.id;
+  }
+
+  // ───────────────────────────────── CUSTOMER ACCEPTS ───────────────────
+
+  /// Customer accepts the AI price and "pays" → status becomes [funded].
+  ///
+  /// In production this would create a Stripe PaymentIntent and capture
+  /// funds into a connected escrow account. For now we record the intent.
+  Future<void> acceptAndFund({
+    required String escrowId,
+    String? stripePaymentIntentId,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    final ref = _db.collection(_collection).doc(escrowId);
+    await ref.update({
+      'status': EscrowStatus.funded.value,
+      'fundedAt': FieldValue.serverTimestamp(),
+      if (stripePaymentIntentId != null)
+        'stripePaymentIntentId': stripePaymentIntentId,
+    });
+
+    // Also update the job_request to mark it as booked via escrow
+    final snap = await ref.get();
+    final jobId = snap.data()?['jobId'] as String?;
+    if (jobId != null && jobId.isNotEmpty) {
+      await _db.collection('job_requests').doc(jobId).update({
+        'status': 'escrow_funded',
+        'escrowId': escrowId,
+        'escrowPrice': snap.data()?['aiPrice'],
+        'instantBook': true,
+      });
+    }
+  }
+
+  // ───────────────────────────────── CUSTOMER DECLINES ──────────────────
+
+  /// Customer declines the AI price — wants contractor estimates instead.
+  Future<void> decline(String escrowId) async {
+    await _db.collection(_collection).doc(escrowId).update({
+      'status': EscrowStatus.declined.value,
+    });
+  }
+
+  // ───────────────────────────── ASSIGN CONTRACTOR ──────────────────────
+
+  /// Assign a contractor to the escrow booking.
+  ///
+  /// Called when a contractor claims the job that has an escrow.
+  Future<void> assignContractor({
+    required String escrowId,
+    required String contractorId,
+  }) async {
+    await _db.collection(_collection).doc(escrowId).update({
+      'contractorId': contractorId,
+    });
+  }
+
+  // ──────────────────────────── CONFIRM COMPLETION ──────────────────────
+
+  /// Customer confirms the job is done.
+  Future<void> customerConfirm(String escrowId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    final ref = _db.collection(_collection).doc(escrowId);
+    await ref.update({
+      'customerConfirmedAt': FieldValue.serverTimestamp(),
+      'status': EscrowStatus.customerConfirmed.value,
+    });
+
+    // Check if both have confirmed
+    await _tryRelease(escrowId);
+  }
+
+  /// Contractor confirms the job is done.
+  Future<void> contractorConfirm(String escrowId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    final ref = _db.collection(_collection).doc(escrowId);
+    await ref.update({
+      'contractorConfirmedAt': FieldValue.serverTimestamp(),
+      'status': EscrowStatus.contractorConfirmed.value,
+    });
+
+    // Check if both have confirmed
+    await _tryRelease(escrowId);
+  }
+
+  /// If both customer and contractor have confirmed, release funds.
+  Future<void> _tryRelease(String escrowId) async {
+    final ref = _db.collection(_collection).doc(escrowId);
+    final snap = await ref.get();
+    final data = snap.data();
+    if (data == null) return;
+
+    final customerDone = data['customerConfirmedAt'] != null;
+    final contractorDone = data['contractorConfirmedAt'] != null;
+
+    if (customerDone && contractorDone) {
+      await ref.update({
+        'status': EscrowStatus.released.value,
+        'releasedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update job_request status
+      final jobId = data['jobId'] as String?;
+      if (jobId != null && jobId.isNotEmpty) {
+        await _db.collection('job_requests').doc(jobId).update({
+          'status': 'completed',
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // TODO: In production, trigger Stripe Transfer to contractor's
+      // connected account for `contractorPayout` amount.
+    }
+  }
+
+  // ────────────────────────────── CANCEL ─────────────────────────────────
+
+  /// Cancel an escrow booking. Only allowed before both confirmations.
+  Future<void> cancel(String escrowId) async {
+    final ref = _db.collection(_collection).doc(escrowId);
+    final snap = await ref.get();
+    final data = snap.data();
+    if (data == null) return;
+
+    final status = EscrowStatusX.fromString(data['status'] ?? '');
+    if (status == EscrowStatus.released) {
+      throw Exception('Cannot cancel — funds already released.');
+    }
+
+    await ref.update({'status': EscrowStatus.cancelled.value});
+
+    // Update job_request back to open
+    final jobId = data['jobId'] as String?;
+    if (jobId != null && jobId.isNotEmpty) {
+      await _db.collection('job_requests').doc(jobId).update({
+        'status': 'open',
+        'escrowId': FieldValue.delete(),
+        'escrowPrice': FieldValue.delete(),
+      });
+    }
+  }
+
+  // ────────────────────────────── WATCHERS ───────────────────────────────
+
+  /// Watch a single escrow booking.
+  Stream<EscrowBooking?> watchBooking(String escrowId) {
+    return _db.collection(_collection).doc(escrowId).snapshots().map((snap) {
+      if (!snap.exists) return null;
+      return EscrowBooking.fromDoc(snap);
+    });
+  }
+
+  /// Watch all escrow bookings for the current user (as customer).
+  Stream<List<EscrowBooking>> watchCustomerBookings() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const Stream.empty();
+
+    return _db
+        .collection(_collection)
+        .where('customerId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map(EscrowBooking.fromDoc).toList());
+  }
+
+  /// Watch all escrow bookings assigned to the current contractor.
+  Stream<List<EscrowBooking>> watchContractorBookings() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const Stream.empty();
+
+    return _db
+        .collection(_collection)
+        .where('contractorId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map(EscrowBooking.fromDoc).toList());
+  }
+
+  /// Find an escrow booking by jobId.
+  Future<EscrowBooking?> findByJobId(String jobId) async {
+    final snap = await _db
+        .collection(_collection)
+        .where('jobId', isEqualTo: jobId)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return EscrowBooking.fromDoc(snap.docs.first);
+  }
+
+  double _roundCents(double value) => (value * 100).round() / 100;
+}

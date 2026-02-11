@@ -5,12 +5,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../utils/zip_locations.dart';
 import '../utils/platform_file_bytes.dart';
-import '../services/customer_portal_nav.dart';
 
 class DrywallRepairRequestFlowPage extends StatefulWidget {
   const DrywallRepairRequestFlowPage({super.key});
@@ -467,8 +467,24 @@ class _DrywallRepairRequestFlowPageState
       await batch.commit();
 
       if (!mounted) return;
-      CustomerPortalNav.requestTab(2);
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      context.push(
+        '/ai-price-offer/${jobRef.id}',
+        extra: {
+          'service': 'Drywall Repair',
+          'zip': zip,
+          'quantity': size,
+          'urgent': _timeline == 'asap',
+          'jobDetails': {
+            'propertyType': propertyTypeLabel,
+            'description': description,
+            'drywallQuestions': {
+              'damage_type': _damageType,
+              'location': _location,
+              'timeline': _timeline,
+            },
+          },
+        },
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

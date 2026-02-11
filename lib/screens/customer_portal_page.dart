@@ -15,8 +15,8 @@ import 'community_feed_screen.dart';
 import '../services/customer_portal_nav.dart';
 import '../services/fcm_service.dart';
 import '../services/conversation_service.dart';
-import '../services/favorites_service.dart';
 import '../services/trusted_pros_service.dart';
+import '../widgets/escrow_bookings_card.dart';
 import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/persistent_job_state_bar.dart';
@@ -776,6 +776,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 },
               ),
             ),
+            const SizedBox(height: 16),
+            const EscrowBookingsCard(isCustomer: true),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () {
