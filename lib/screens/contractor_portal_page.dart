@@ -686,18 +686,13 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   .where('paidBy', arrayContains: user.uid)
                   .snapshots(),
               builder: (context, paidSnap) {
-                if (claimedSnap.hasError && paidSnap.hasError) {
-                  return const AnimatedStateSwitcher(
-                    stateKey: 'claimed_error',
-                    child: EmptyStateCard(
-                      icon: Icons.error_outline,
-                      title: 'Couldn\'t load claimed jobs',
-                      subtitle: 'Try again in a moment.',
-                    ),
-                  );
-                }
-                // Wait for BOTH streams to have data before deciding.
-                if (!claimedSnap.hasData || !paidSnap.hasData) {
+                // Treat each stream as "ready" when it has data OR an error
+                // (an error means it won't produce data, so stop waiting).
+                final claimedReady =
+                    claimedSnap.hasData || claimedSnap.hasError;
+                final paidReady = paidSnap.hasData || paidSnap.hasError;
+
+                if (!claimedReady || !paidReady) {
                   return AnimatedStateSwitcher(
                     stateKey: 'claimed_loading',
                     child: Card(
@@ -717,12 +712,17 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   );
                 }
 
+                // Merge whatever docs we have; skip errored streams.
                 final merged = <String, QueryDocumentSnapshot>{};
-                for (final doc in claimedSnap.data!.docs) {
-                  merged[doc.id] = doc;
+                if (claimedSnap.hasData) {
+                  for (final doc in claimedSnap.data!.docs) {
+                    merged[doc.id] = doc;
+                  }
                 }
-                for (final doc in paidSnap.data!.docs) {
-                  merged[doc.id] = doc;
+                if (paidSnap.hasData) {
+                  for (final doc in paidSnap.data!.docs) {
+                    merged[doc.id] = doc;
+                  }
                 }
 
                 final docs = merged.values.toList();

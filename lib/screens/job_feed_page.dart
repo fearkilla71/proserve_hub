@@ -1195,8 +1195,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   children: [
                     Text(
                       'My unlocked leads',
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     for (final doc in limited)
