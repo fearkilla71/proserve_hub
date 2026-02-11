@@ -315,8 +315,8 @@ service cloud.firestore {
 
     // --- CHATS (one chat per jobId) ---
     match /chats/{jobId} {
-      allow read: if chatIsUnlocked(jobId)
-        && isChatParticipantFromJob(jobId)
+      // Participants can always read their own chats (even after job completes)
+      allow read: if isSignedIn()
         && (resource.data.participants is list)
         && resource.data.participants.hasAny([request.auth.uid]);
 

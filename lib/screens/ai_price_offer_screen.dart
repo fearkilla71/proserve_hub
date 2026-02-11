@@ -586,85 +586,91 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
                   ),
                 ),
                 const SizedBox(height: 14),
-                ...factors.asMap().entries.map(
-                  (e) {
-                    final f = e.value.toString();
-                    // Parse percentage from factor string if available
-                    final pctMatch = RegExp(r'[+-]?(\d+)%').firstMatch(f);
-                    final pct = pctMatch != null
-                        ? int.tryParse(pctMatch.group(1)!) ?? 0
-                        : 0;
-                    final isPositive = !f.contains('−') && !f.contains('savings');
-                    final barColor = isPositive
-                        ? ProServeColors.accent2
-                        : ProServeColors.accent;
-                    // Categorize the factor
-                    IconData factorIcon;
-                    if (f.toLowerCase().contains('market') || f.toLowerCase().contains('area')) {
-                      factorIcon = Icons.location_on_outlined;
-                    } else if (f.toLowerCase().contains('wall') || f.toLowerCase().contains('ceiling') || f.toLowerCase().contains('scope') || f.toLowerCase().contains('surface')) {
-                      factorIcon = Icons.construction;
-                    } else if (f.toLowerCase().contains('urgency')) {
-                      factorIcon = Icons.speed;
-                    } else if (f.toLowerCase().contains('color') || f.toLowerCase().contains('paint')) {
-                      factorIcon = Icons.palette_outlined;
-                    } else if (f.toLowerCase().contains('loyalty') || f.toLowerCase().contains('reward')) {
-                      factorIcon = Icons.card_giftcard;
-                    } else if (f.toLowerCase().contains('repair') || f.toLowerCase().contains('damage')) {
-                      factorIcon = Icons.build_outlined;
-                    } else if (f.toLowerCase().contains('commercial') || f.toLowerCase().contains('business')) {
-                      factorIcon = Icons.business;
-                    } else {
-                      factorIcon = Icons.analytics_outlined;
-                    }
+                ...factors.asMap().entries.map((e) {
+                  final f = e.value.toString();
+                  // Parse percentage from factor string if available
+                  final pctMatch = RegExp(r'[+-]?(\d+)%').firstMatch(f);
+                  final pct = pctMatch != null
+                      ? int.tryParse(pctMatch.group(1)!) ?? 0
+                      : 0;
+                  final isPositive = !f.contains('−') && !f.contains('savings');
+                  final barColor = isPositive
+                      ? ProServeColors.accent2
+                      : ProServeColors.accent;
+                  // Categorize the factor
+                  IconData factorIcon;
+                  if (f.toLowerCase().contains('market') ||
+                      f.toLowerCase().contains('area')) {
+                    factorIcon = Icons.location_on_outlined;
+                  } else if (f.toLowerCase().contains('wall') ||
+                      f.toLowerCase().contains('ceiling') ||
+                      f.toLowerCase().contains('scope') ||
+                      f.toLowerCase().contains('surface')) {
+                    factorIcon = Icons.construction;
+                  } else if (f.toLowerCase().contains('urgency')) {
+                    factorIcon = Icons.speed;
+                  } else if (f.toLowerCase().contains('color') ||
+                      f.toLowerCase().contains('paint')) {
+                    factorIcon = Icons.palette_outlined;
+                  } else if (f.toLowerCase().contains('loyalty') ||
+                      f.toLowerCase().contains('reward')) {
+                    factorIcon = Icons.card_giftcard;
+                  } else if (f.toLowerCase().contains('repair') ||
+                      f.toLowerCase().contains('damage')) {
+                    factorIcon = Icons.build_outlined;
+                  } else if (f.toLowerCase().contains('commercial') ||
+                      f.toLowerCase().contains('business')) {
+                    factorIcon = Icons.business;
+                  } else {
+                    factorIcon = Icons.analytics_outlined;
+                  }
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: barColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(factorIcon, size: 14, color: barColor),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: barColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  f,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (pct > 0) ...[                              
-                                  const SizedBox(height: 4),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(3),
-                                    child: SizedBox(
-                                      height: 4,
-                                      child: LinearProgressIndicator(
-                                        value: (pct / 30).clamp(0.0, 1.0),
-                                        backgroundColor:
-                                            barColor.withValues(alpha: 0.08),
-                                        color: barColor.withValues(alpha: 0.6),
+                          child: Icon(factorIcon, size: 14, color: barColor),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                f,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              if (pct > 0) ...[
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(3),
+                                  child: SizedBox(
+                                    height: 4,
+                                    child: LinearProgressIndicator(
+                                      value: (pct / 30).clamp(0.0, 1.0),
+                                      backgroundColor: barColor.withValues(
+                                        alpha: 0.08,
                                       ),
+                                      color: barColor.withValues(alpha: 0.6),
                                     ),
                                   ),
-                                ],
+                                ),
                               ],
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           ),
