@@ -686,8 +686,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   .where('paidBy', arrayContains: user.uid)
                   .snapshots(),
               builder: (context, paidSnap) {
-                // Treat each stream as "ready" when it has data OR an error
-                // (an error means it won't produce data, so stop waiting).
+                // Treat each stream as "ready" when it has data OR an error.
                 final claimedReady =
                     claimedSnap.hasData || claimedSnap.hasError;
                 final paidReady = paidSnap.hasData || paidSnap.hasError;
@@ -712,7 +711,32 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   );
                 }
 
-                // Merge whatever docs we have; skip errored streams.
+                // If BOTH streams errored, show a meaningful error.
+                if (claimedSnap.hasError && paidSnap.hasError) {
+                  debugPrint('[Jobs] claimedBy error: ${claimedSnap.error}');
+                  debugPrint('[Jobs] paidBy error: ${paidSnap.error}');
+                  return AnimatedStateSwitcher(
+                    stateKey: 'claimed_error',
+                    child: EmptyStateCard(
+                      icon: Icons.error_outline,
+                      title: 'Couldn\'t load jobs',
+                      subtitle: 'Check your connection and try again.',
+                    ),
+                  );
+                }
+
+                // Log individual errors but keep going with whatever data
+                // the other stream provided.
+                if (claimedSnap.hasError) {
+                  debugPrint(
+                    '[Jobs] claimedBy query error: ${claimedSnap.error}',
+                  );
+                }
+                if (paidSnap.hasError) {
+                  debugPrint('[Jobs] paidBy query error: ${paidSnap.error}');
+                }
+
+                // Merge docs from whichever streams succeeded.
                 final merged = <String, QueryDocumentSnapshot>{};
                 if (claimedSnap.hasData) {
                   for (final doc in claimedSnap.data!.docs) {
