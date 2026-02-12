@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
 import '../theme/proserve_theme.dart';
@@ -67,6 +68,9 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
   // Collected data from conversation
   String _zip = '';
 
+  // Pending photo attachments
+  final List<_PendingImage> _pendingImages = [];
+
   @override
   void initState() {
     super.initState();
@@ -89,30 +93,115 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
     await _sendToAi(isInitial: true);
   }
 
+  // ──────────────────── Photo Handling ────────────────────
+
+  Future<void> _pickPhoto({required ImageSource source}) async {
+    try {
+      final picker = ImagePicker();
+      if (source == ImageSource.gallery) {
+        // Allow multiple photos from gallery
+        final picks = await picker.pickMultiImage(
+          maxWidth: 1200,
+          maxHeight: 1200,
+          imageQuality: 70,
+        );
+        for (final xf in picks) {
+          final bytes = await xf.readAsBytes();
+          final mime = xf.mimeType ?? 'image/jpeg';
+          setState(
+            () => _pendingImages.add(_PendingImage(bytes: bytes, mime: mime)),
+          );
+        }
+      } else {
+        final xf = await picker.pickImage(
+          source: source,
+          maxWidth: 1200,
+          maxHeight: 1200,
+          imageQuality: 70,
+        );
+        if (xf != null) {
+          final bytes = await xf.readAsBytes();
+          final mime = xf.mimeType ?? 'image/jpeg';
+          setState(
+            () => _pendingImages.add(_PendingImage(bytes: bytes, mime: mime)),
+          );
+        }
+      }
+      _scrollToBottom();
+    } catch (_) {}
+  }
+
+  void _showPhotoOptions() {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(source: ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(source: ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _sendMessage([String? overrideText]) async {
     final text = overrideText ?? _chatController.text.trim();
-    if (text.isEmpty || _isTyping) return;
+    if (text.isEmpty && _pendingImages.isEmpty) return;
+    if (_isTyping) return;
 
     _chatController.clear();
     HapticFeedback.selectionClick();
 
-    // Add user message to display
+    // Capture pending images for this message
+    final attachedImages = List<_PendingImage>.from(_pendingImages);
+
+    // Add user message to display (with any attached images)
     setState(() {
+      _pendingImages.clear();
       _displayMessages.add(
-        _ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+        _ChatMessage(
+          text: text.isNotEmpty
+              ? text
+              : '📷 ${attachedImages.length} photo${attachedImages.length > 1 ? 's' : ''} attached',
+          isUser: true,
+          timestamp: DateTime.now(),
+          imageAttachments: attachedImages,
+        ),
       );
     });
 
     _scrollToBottom();
 
     // Add to conversation history
-    _messages.add({'role': 'user', 'content': text});
+    final msgText = text.isNotEmpty
+        ? text
+        : 'Here are photos of the project area.';
+    _messages.add({'role': 'user', 'content': msgText});
 
-    // Send to AI
-    await _sendToAi();
+    // Send to AI (with images if present)
+    await _sendToAi(attachedImages: attachedImages);
   }
 
-  Future<void> _sendToAi({bool isInitial = false}) async {
+  Future<void> _sendToAi({
+    bool isInitial = false,
+    List<_PendingImage>? attachedImages,
+  }) async {
     setState(() => _isTyping = true);
     _scrollToBottom();
 
@@ -120,20 +209,30 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
       final idToken =
           await FirebaseAuth.instance.currentUser?.getIdToken() ?? '';
 
+      // Convert images to base64 payload
+      final imagePayload = <Map<String, String>>[];
+      for (final img in (attachedImages ?? [])) {
+        imagePayload.add({'b64': base64Encode(img.bytes), 'mime': img.mime});
+      }
+
       // Build the request
-      final payload = {
+      final payload = <String, dynamic>{
         'serviceType': widget.serviceType,
         'serviceName': widget.serviceName,
         'messages': _messages,
         'isInitial': isInitial,
+        if (imagePayload.isNotEmpty) 'images': imagePayload,
       };
 
       Map<String, dynamic> result;
+      // Use HTTP for image uploads (callable has payload size limits)
+      final useHttp = imagePayload.isNotEmpty;
       try {
-        // Try callable first
+        if (useHttp) throw Exception('prefer HTTP for images');
+        // Try callable first (text-only)
         final callable = FirebaseFunctions.instance.httpsCallable(
           'aiEstimateChat',
-          options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
         );
         final response = await callable.call(payload);
         result = _deepCast(response.data) as Map<String, dynamic>;
@@ -464,32 +563,61 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
   Widget _buildUserBubble(_ChatMessage msg, ColorScheme scheme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const SizedBox(width: 48), // Left padding for alignment
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: ProServeColors.accent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  topRight: Radius.circular(18),
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(4),
-                ),
-              ),
-              child: Text(
-                msg.text,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
+          // Show attached images above the message text
+          if (msg.imageAttachments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 48, bottom: 6),
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 6,
+                runSpacing: 6,
+                children: msg.imageAttachments.map((img) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      img.bytes,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                }).toList(),
               ),
             ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const SizedBox(width: 48), // Left padding for alignment
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ProServeColors.accent,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(18),
+                      topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(18),
+                      bottomRight: Radius.circular(4),
+                    ),
+                  ),
+                  child: Text(
+                    msg.text,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -732,70 +860,145 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
   }
 
   Widget _buildInputArea(ColorScheme scheme) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        12,
-        8,
-        12,
-        MediaQuery.of(context).padding.bottom + 8,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        border: Border(
-          top: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.3)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _chatController,
-              focusNode: _focusNode,
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-              decoration: InputDecoration(
-                hintText: 'Type your answer...',
-                hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-                filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Pending images preview strip
+        if (_pendingImages.isNotEmpty)
           Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isTyping
-                  ? scheme.surfaceContainerHighest
-                  : ProServeColors.accent,
+            height: 80,
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            alignment: Alignment.centerLeft,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _pendingImages.length,
+              separatorBuilder: (_, i2) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        _pendingImages[i].bytes,
+                        width: 68,
+                        height: 68,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _pendingImages.removeAt(i)),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black54,
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            child: IconButton(
-              onPressed: _isTyping ? null : () => _sendMessage(),
-              icon: Icon(
-                Icons.arrow_upward,
-                color: _isTyping ? scheme.onSurfaceVariant : Colors.black87,
+          ),
+
+        Container(
+          padding: EdgeInsets.fromLTRB(
+            12,
+            8,
+            12,
+            MediaQuery.of(context).padding.bottom + 8,
+          ),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              // Photo button
+              IconButton(
+                onPressed: _isTyping ? null : _showPhotoOptions,
+                icon: Icon(
+                  Icons.add_photo_alternate_outlined,
+                  color: _isTyping
+                      ? scheme.onSurfaceVariant.withValues(alpha: 0.4)
+                      : ProServeColors.accent,
+                ),
+                tooltip: 'Attach photos',
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: TextField(
+                  controller: _chatController,
+                  focusNode: _focusNode,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: null,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendMessage(),
+                  decoration: InputDecoration(
+                    hintText: 'Type your answer...',
+                    hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+                    filled: true,
+                    fillColor: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      (_isTyping ||
+                          (_chatController.text.trim().isEmpty &&
+                              _pendingImages.isEmpty))
+                      ? scheme.surfaceContainerHighest
+                      : ProServeColors.accent,
+                ),
+                child: IconButton(
+                  onPressed: _isTyping ? null : () => _sendMessage(),
+                  icon: Icon(
+                    Icons.arrow_upward,
+                    color: _isTyping ? scheme.onSurfaceVariant : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-// ──────────────────── Data Model ────────────────────
+// ──────────────────── Data Models ────────────────────
+
+class _PendingImage {
+  final Uint8List bytes;
+  final String mime;
+  const _PendingImage({required this.bytes, required this.mime});
+}
 
 class _ChatMessage {
   final String text;
@@ -803,6 +1006,7 @@ class _ChatMessage {
   final DateTime timestamp;
   final List<String> quickReplies;
   final bool isError;
+  final List<_PendingImage> imageAttachments;
 
   _ChatMessage({
     required this.text,
@@ -810,5 +1014,6 @@ class _ChatMessage {
     required this.timestamp,
     this.quickReplies = const [],
     this.isError = false,
+    this.imageAttachments = const [],
   });
 }

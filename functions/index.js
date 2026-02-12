@@ -7283,91 +7283,131 @@ function buildEstimatorSystemPrompt(serviceType, serviceName) {
   const serviceGuides = {
     interior_painting: `
 SERVICE: Interior Painting
-KEY QUESTIONS TO ASK (in natural order):
-- Which rooms need painting? (bedrooms, living room, kitchen, bathroom, hallway, etc.)
-- Roughly how many rooms total?
-- Are you painting just walls, or also ceilings and/or trim/baseboards?
-- What's the current wall color vs desired new color? (same/similar shade, light-to-light change, or dramatic dark-to-light change?)
-- Do any walls need repair work first? (nail holes are normal, but large cracks or water damage add cost)
-- How tall are the ceilings? (standard ~8-9ft, or tall/vaulted?)
-- What's the ZIP code for the property?
-- Any special requests? (accent walls, two-tone, specific paint brand preference)
+KEY QUESTIONS TO ASK (in natural order, 1-2 per message):
+1. Which rooms need painting? (bedrooms, living room, kitchen, bathroom, hallway, etc.) — and roughly how many rooms total?
+2. Labor only or labor + materials? (Do they already have paint, or do they need the contractor to supply everything?)
+3. Are you painting just walls, or also ceilings and/or trim/baseboards/doors?
+4. What's the current wall color vs desired new color? (same/similar shade, light-to-light, or dramatic dark-to-light?)
+5. Do any walls need prep work? (nail holes are normal, but large cracks, peeling, or water damage add cost)
+6. How tall are the ceilings? (standard ~8-9ft is typical, or tall/vaulted 10ft+?)
+7. Will furniture need to be moved, or will rooms be cleared out? (Moving/covering furniture adds labor time)
+8. What's the ZIP code for the property?
+9. Any special requests? (accent walls, two-tone, specific paint brand, textured walls)
 
-PRICING GUIDANCE:
-- Small job (1-2 rooms, ~300 sqft): $400-$900
-- Medium job (3-4 rooms, ~800 sqft): $1,200-$2,800
-- Large job (whole house, 1500+ sqft): $3,000-$8,000+
-- Ceilings add ~$0.50-0.80/sqft
-- Trim/baseboards add ~$1-2/linear foot
+IMPORTANT: If the user has uploaded photos, analyze them carefully for:
+- Room size estimates (small/medium/large rooms)
+- Current wall condition (clean, marks, holes, peeling)
+- Ceiling height clues (standard vs tall)
+- Amount of trim, doors, and windows visible
+- Furniture that would need to be moved/covered
+- Color of current walls
+Use photo observations to refine your estimate and skip questions you can answer from the photos.
+
+PRICING GUIDANCE (per room, labor + materials):
+- 1 room: $300-$500 (small), $400-$700 (medium), $500-$900 (large)
+- 2 rooms: $550-$900 (small), $750-$1,300 (medium), $950-$1,700 (large)
+- 3 rooms: $800-$1,300 (small), $1,100-$1,800 (medium), $1,400-$2,400 (large)
+- 4 rooms: $1,000-$1,600 (small), $1,400-$2,200 (medium), $1,800-$3,000 (large)
+- 5 rooms: $1,200-$1,900 (small), $1,700-$2,700 (medium), $2,200-$3,600 (large)
+- 6+ rooms: scale proportionally with a 5-8% volume discount
+- Labor only: reduce by 25-35% (customer provides paint and materials)
+- Labor + materials: full price (includes paint, primer, tape, drop cloths, etc.)
+- Ceilings add approximately $150-$300 per room
+- Trim/baseboards add approximately $1.25-$2.00 per linear foot
+- Doors add $75-$150 each (per side)
 - Color change from dark to light adds 10-15%
-- High ceilings (10ft+) add 15-25%`,
+- High ceilings (10ft+) adds 15-25%
+- Furniture moving/covering adds $50-$100 per room
+- Textured walls add 10-15%
+- Accent walls: $150-$300 each`,
 
     exterior_painting: `
 SERVICE: Exterior Painting
 KEY QUESTIONS TO ASK:
-- What type of home? (single story, two story, ranch, colonial, etc.)
-- What's the exterior material? (wood siding, stucco, brick, vinyl, hardie board)
-- Roughly how large is the home? (small/medium/large or approximate sqft if known)
-- Are you changing the color or keeping it similar?
-- Does any surface need scraping, sanding, or repair before painting?
-- Any special areas? (shutters, trim, fascia, soffits, doors)
-- What's the ZIP code?
-- Any HOA color requirements?
+1. What type of home? (single story, two story, ranch, colonial, etc.)
+2. What's the exterior material? (wood siding, stucco, brick, vinyl, hardie board, mixed)
+3. Roughly how large is the home? (small/medium/large — or approximate sqft if known)
+4. Labor only or labor + materials? (Do they have paint already?)
+5. Are you changing the color or keeping it similar?
+6. Does any surface need scraping, sanding, or repair before painting?
+7. Any special areas? (shutters, trim, fascia, soffits, front door, garage door)
+8. What's the ZIP code?
+9. Any HOA color requirements or timeline needs?
+
+PHOTO ANALYSIS: If photos provided, assess home size, stories, siding condition, trim complexity, and prep work needed.
 
 PRICING GUIDANCE:
-- Small home (under 1,200 sqft): $2,500-$5,000
+- Small home (under 1,200 sqft, 1 story): $2,500-$5,000
 - Medium home (1,200-2,500 sqft): $4,000-$9,000
 - Large home (2,500+ sqft): $7,000-$15,000+
-- Wood repair adds $200-800+
-- Two-story homes cost 20-40% more than single story`,
+- Labor only: reduce by 25-30%
+- Wood repair adds $200-$800+
+- Two-story homes cost 20-40% more than single story
+- Full prep (scraping/sanding): adds $500-$2,000
+- Shutters: $40-$80 each
+- Garage door: $150-$400`,
 
     drywall_repair: `
 SERVICE: Drywall Repair
 KEY QUESTIONS TO ASK:
-- What kind of damage? (small holes/nail pops, medium holes, large holes, cracks, water damage)
-- How many areas need repair?
-- Roughly what size are the damaged areas? (fist-sized, basketball-sized, larger?)
-- Is there any water damage or mold concern?
-- Do you need texture matching? (smooth, orange peel, knockdown, popcorn)
-- Will you also need the repaired area painted?
-- What's the ZIP code?
+1. What kind of damage? (small holes/nail pops, medium holes, large holes, cracks, water damage)
+2. How many areas need repair?
+3. Roughly what size are the damaged areas? (fist-sized, basketball-sized, larger?)
+4. Is there any water damage or mold concern?
+5. Do you need texture matching? (smooth, orange peel, knockdown, popcorn)
+6. Will you also need the repaired area painted to match?
+7. Labor only or labor + materials?
+8. What's the ZIP code?
+
+PHOTO ANALYSIS: If photos provided, assess damage type, size, wall condition, texture type, and whether painting is needed.
 
 PRICING GUIDANCE:
 - Small patches (nail holes, small dings): $75-$200 per patch
 - Medium holes (fist-sized): $150-$350 per hole
 - Large repairs (water damage, large holes): $300-$800+
-- Full ceiling or wall replacement: $1,500-$4,000+
-- Texture matching adds 15-25%`,
+- Full ceiling or wall section: $1,500-$4,000+
+- Texture matching adds 15-25%
+- Painting the repaired area adds $100-$250 per area
+- Labor only: reduce by 20-25%`,
 
     pressure_washing: `
 SERVICE: Pressure Washing
 KEY QUESTIONS TO ASK:
-- What surfaces need washing? (driveway, sidewalk, patio, deck, house siding, fence)
-- Roughly how large is the area? (single car driveway, large patio, full house exterior, etc.)
-- What material is the surface? (concrete, wood deck, brick, vinyl siding)
-- How dirty is it? (light buildup, heavy mold/mildew, oil stains, years of neglect)
-- Is the area easily accessible with a truck/equipment?
-- What's the ZIP code?
+1. What surfaces need washing? (driveway, sidewalk, patio, deck, house siding, fence, pool area)
+2. Roughly how large is the area? (single car driveway, large patio, full house exterior, etc.)
+3. What material is the surface? (concrete, wood deck, brick, vinyl siding, pavers)
+4. How dirty is it? (light dust/buildup, moderate grime, heavy mold/mildew, oil stains, years of neglect)
+5. Is the area easily accessible with a truck/equipment?
+6. Any areas that need special care? (delicate plants nearby, freshly sealed surfaces)
+7. What's the ZIP code?
+
+PHOTO ANALYSIS: If photos provided, assess surface type, dirt/mold level, area size estimates, and accessibility.
 
 PRICING GUIDANCE:
 - Driveway (standard 2-car): $150-$300
+- Driveway (3-car or extra long): $250-$450
 - Sidewalk/walkway: $75-$175
-- Patio/deck (average): $150-$350
+- Patio/deck (average 200-400 sqft): $150-$350
 - House siding (average home): $300-$600
-- Fence: $150-$400
-- Full property package: $400-$1,000+`,
+- Fence (per 100 linear ft): $100-$250
+- Full property package: $400-$1,000+
+- Heavy mold/mildew treatment adds 25-40%
+- Oil stain removal adds $50-$150 per stain`,
 
     cabinets: `
 SERVICE: Cabinet Refinishing / Painting
 KEY QUESTIONS TO ASK:
-- Are you looking to paint, stain, or refinish the cabinets?
-- Kitchen cabinets, bathroom cabinets, or other?
-- How many cabinet doors and drawers (roughly)?
-- What's the current finish? (stained wood, painted, laminate)
-- What's the desired new color/finish?
-- Do the cabinets need repairs? (loose hinges, damaged doors, etc.)
-- Are you keeping the same hardware or replacing it?
-- What's the ZIP code?
+1. Are you looking to paint, stain, or refinish the cabinets?
+2. Kitchen cabinets, bathroom cabinets, or other?
+3. How many cabinet doors and drawer fronts (roughly)?
+4. What's the current finish? (stained wood, painted, laminate, thermofoil)
+5. What's the desired new color/finish?
+6. Do the cabinets need repairs? (loose hinges, damaged doors, water damage, delaminating)
+7. Are you keeping the same hardware or replacing it?
+8. Labor only or labor + materials?
+9. What's the ZIP code?
+
+PHOTO ANALYSIS: If photos provided, count doors/drawers, assess current finish condition, cabinet style, and hardware.
 
 PRICING GUIDANCE:
 - Small kitchen (10-15 doors): $1,500-$3,500
@@ -7375,7 +7415,9 @@ PRICING GUIDANCE:
 - Large kitchen (30+ doors): $5,000-$9,000+
 - Bathroom vanity: $500-$1,500
 - Staining costs 10-20% more than painting
-- New hardware is extra`,
+- Labor only: reduce by 20-30%
+- Cabinet repairs add $50-$200 per door
+- New hardware is extra ($5-$30 per piece)`,
   };
 
   const serviceGuide = serviceGuides[serviceType] || `
@@ -7395,11 +7437,33 @@ ROLE & PERSONALITY:
 
 ${serviceGuide}
 
+CRITICAL — LABOR vs MATERIALS:
+You MUST ask whether they want "labor only" or "labor + materials" before giving any estimate. This significantly affects pricing:
+- Labor + materials (full service): contractor provides all paint, primer, supplies — use full pricing
+- Labor only: customer already has paint/materials — reduce estimate by 25-35%
+
+CRITICAL — ACCURATE PRICING:
+- Price MUST scale proportionally with the scope (more rooms/areas = higher price, fewer = lower)
+- When a user changes details (e.g., 5 rooms → 4 rooms), the price MUST decrease accordingly
+- Use per-room or per-unit pricing so changes are mathematically accurate
+- Show your math briefly in the description (e.g., "4 medium rooms × ~$400 + ceiling work")
+
+PHOTO ANALYSIS:
+If the user uploads photos, analyze them carefully to:
+- Assess room sizes, wall conditions, surface types, existing damage
+- Estimate scope of work more accurately
+- Identify details the user might not think to mention (trim, wall texture, prep work needed)
+- Reference what you see in the photos in your conversation ("I can see from your photo that...")
+- Use photo observations to skip questions you can already answer
+Photos significantly improve estimate accuracy — mention this early in conversation.
+
 CONVERSATION FLOW:
-1. Greet warmly and ask the first 1-2 questions based on the service
+1. Greet warmly and ask the first 1-2 questions based on the service. Mention they can also share photos for a better estimate.
 2. Ask follow-up questions one or two at a time based on their answers
-3. After collecting enough info (usually 4-6 exchanges), provide the estimate
-4. IMPORTANT: You MUST ask for the ZIP code at some point before giving the estimate
+3. MUST ask about labor only vs labor + materials
+4. For interior work, ask if furniture needs to be moved/covered or if rooms will be cleared
+5. After collecting enough info (usually 5-7 exchanges), provide the estimate
+6. IMPORTANT: You MUST ask for the ZIP code at some point before giving the estimate
 
 WHEN READY TO GIVE ESTIMATE:
 After you have enough details, you MUST respond with a JSON block (and ONLY the JSON block, no other text) in this exact format:
@@ -7412,21 +7476,24 @@ After you have enough details, you MUST respond with a JSON block (and ONLY the 
     "recommended": <number>,
     "premium": <number>,
     "quantity": <estimated_sqft_or_units_as_number>,
-    "description": "<brief 1-line summary of the job>",
+    "description": "<brief breakdown showing how you calculated: e.g. '4 medium rooms (walls only), same color, standard ceilings, labor + materials. Rooms cleared by homeowner.'>",
     "collectedDetails": {
-      "rooms": "<what they told you>",
-      "scope": "<walls/ceilings/trim/etc>",
-      "condition": "<current condition>",
-      "color_change": "<type of color change>",
+      "rooms": "<what rooms and how many>",
+      "scope": "<walls/ceilings/trim/doors — be specific>",
+      "condition": "<current wall/surface condition>",
+      "color_change": "<same/light-to-light/dark-to-light>",
+      "labor_type": "<labor_only or labor_and_materials>",
+      "furniture_moving": "<yes/no/rooms_cleared>",
+      "ceiling_height": "<standard/tall/vaulted>",
       "special_requests": "<any special requests>",
-      "ceiling_height": "<standard/tall/vaulted>"
+      "photo_observations": "<what you observed from photos, if any>"
     }
   },
   "collectedData": {
     "zip": "<zip code>",
     "service": "${serviceType}"
   },
-  "message": "<a friendly summary message like 'Based on what you've described, here's your estimate for painting 3 bedrooms and the living room:'>"
+  "message": "<a friendly summary message like 'Based on what you've described, here's your estimate for painting 4 bedrooms (walls only, same color):'>"
 }
 \`\`\`
 
@@ -7454,6 +7521,9 @@ Your response format for regular messages should be a JSON block:
 IMPORTANT RULES:
 - ALWAYS respond with valid JSON inside a json code block
 - Never ask for exact square footage — help them estimate or ask about rooms/areas instead
+- Price MUST accurately reflect the number of rooms/areas and scope collected
+- Always ask about labor only vs labor + materials
+- For interior work, always ask about furniture
 - Be encouraging and make the process feel easy
 - If they give vague answers, work with what you have and make reasonable assumptions
 - Remember: this is a quick estimate, not a binding quote`;
@@ -7462,8 +7532,9 @@ IMPORTANT RULES:
 /**
  * Core logic for conversational AI estimate chat.
  */
-async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial }) {
+async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial, images }) {
   const openai = getOpenAiClient();
+  const hasImages = Array.isArray(images) && images.length > 0;
 
   // Build the conversation for OpenAI
   const openAiMessages = [
@@ -7472,19 +7543,47 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
 
   if (isInitial) {
     // First message — AI starts the conversation
-    openAiMessages.push({
-      role: 'user',
-      content: `I need a ${serviceName} estimate. Please start by introducing yourself and asking your first question.`,
-    });
+    const content = [
+      { type: 'text', text: `I need a ${serviceName} estimate. Please start by introducing yourself and asking your first question.` },
+    ];
+    // Attach any initial photos
+    if (hasImages) {
+      for (const img of images) {
+        content.push({
+          type: 'image_url',
+          image_url: { url: `data:${img.mime || 'image/jpeg'};base64,${img.b64}` },
+        });
+      }
+      content.push({ type: 'text', text: '(I\'ve attached photos of the project area for reference.)' });
+    }
+    openAiMessages.push({ role: 'user', content });
   } else {
     // Ongoing conversation — include history
-    for (const msg of (messages || [])) {
+    for (let i = 0; i < (messages || []).length; i++) {
+      const msg = messages[i];
       const role = msg.role === 'user' ? 'user' : 'assistant';
-      openAiMessages.push({ role, content: msg.content || '' });
+
+      // Check if this is the last user message and has images attached
+      const isLastUserMsg = role === 'user' && i === messages.length - 1;
+      if (isLastUserMsg && hasImages) {
+        // Build multi-part content with text + images
+        const content = [{ type: 'text', text: msg.content || '' }];
+        for (const img of images) {
+          content.push({
+            type: 'image_url',
+            image_url: { url: `data:${img.mime || 'image/jpeg'};base64,${img.b64}` },
+          });
+        }
+        openAiMessages.push({ role, content });
+      } else {
+        openAiMessages.push({ role, content: msg.content || '' });
+      }
     }
   }
 
-  console.log(`[aiEstimateChat] Sending ${openAiMessages.length} messages to OpenAI for service: ${serviceType}`);
+  // Use gpt-4o for vision (when images), gpt-4o-mini for text-only
+  const model = hasImages ? 'gpt-4o' : 'gpt-4o-mini';
+  console.log(`[aiEstimateChat] Sending ${openAiMessages.length} messages to OpenAI (${model}) for service: ${serviceType}, images: ${hasImages ? images.length : 0}`);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -7555,24 +7654,25 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
 
 // Callable version
 exports.aiEstimateChat = functions
-  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 60, memory: '256MB' })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onCall(async (data, context) => {
     const uid = context.auth?.uid || '';
     const serviceType = (data?.serviceType || '').toString().trim();
     const serviceName = (data?.serviceName || '').toString().trim();
     const messages = Array.isArray(data?.messages) ? data.messages : [];
     const isInitial = data?.isInitial === true;
+    const images = Array.isArray(data?.images) ? data.images : [];
 
     if (!serviceType) {
       throw new functions.https.HttpsError('invalid-argument', 'serviceType is required.');
     }
 
-    return aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial });
+    return aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial, images });
   });
 
 // HTTP fallback version
 exports.aiEstimateChatHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 60, memory: '256MB' })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
     // CORS
     res.set('Access-Control-Allow-Origin', '*');
@@ -7586,6 +7686,7 @@ exports.aiEstimateChatHttp = functions
       const serviceName = (body.serviceName || '').toString().trim();
       const messages = Array.isArray(body.messages) ? body.messages : [];
       const isInitial = body.isInitial === true;
+      const images = Array.isArray(body.images) ? body.images : [];
 
       if (!serviceType) {
         res.status(400).json({ error: 'serviceType is required.' });
@@ -7598,6 +7699,7 @@ exports.aiEstimateChatHttp = functions
         serviceName,
         messages,
         isInitial,
+        images,
       });
       res.status(200).json(result);
     } catch (err) {
