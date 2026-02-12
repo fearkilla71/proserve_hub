@@ -87,6 +87,14 @@ class EscrowService {
       throw Exception('Only the customer can fund this escrow');
     }
 
+    // Enforce price lock expiry
+    final lockTs = snap.data()?['priceLockExpiry'] as Timestamp?;
+    if (lockTs != null && DateTime.now().isAfter(lockTs.toDate())) {
+      throw Exception(
+        'This price offer has expired. Please request a new estimate.',
+      );
+    }
+
     final ref = _db.collection(_collection).doc(escrowId);
     await ref.update({
       'status': EscrowStatus.funded.value,
@@ -165,9 +173,7 @@ class EscrowService {
         });
       }
 
-      tx.update(escrowRef, {
-        'contractorId': contractorId,
-      });
+      tx.update(escrowRef, {'contractorId': contractorId});
     });
   }
 

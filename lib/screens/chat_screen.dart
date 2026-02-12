@@ -375,6 +375,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (image == null) return;
 
+    // Enforce 10 MB file size limit
+    final fileSize = await image.length();
+    if (fileSize > 10 * 1024 * 1024) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image too large. Maximum size is 10 MB.'),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isSending = true);
 
     try {

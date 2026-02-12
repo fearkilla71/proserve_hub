@@ -25,6 +25,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   final Map<String, TextEditingController> _inlineCommentControllers = {};
   final Map<String, FocusNode> _inlineCommentFocusNodes = {};
 
+  /// Number of posts to stream. Users can tap "Load more" to increase.
+  int _postLimit = 20;
+  static const int _postPageSize = 20;
+
+  /// Per-post flag to show all comments instead of top 3.
+  final Set<String> _expandedComments = {};
+
   TextEditingController _commentControllerFor(String postId) {
     return _inlineCommentControllers.putIfAbsent(
       postId,
@@ -507,6 +514,22 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     if (!mounted || confirmed != true) return;
 
     try {
+      // Delete subcollections first (comments, likes, reports)
+      final batch = FirebaseFirestore.instance.batch();
+      final comments = await _postsRef.doc(postId).collection('comments').get();
+      for (final c in comments.docs) {
+        batch.delete(c.reference);
+      }
+      final likes = await _postsRef.doc(postId).collection('likes').get();
+      for (final l in likes.docs) {
+        batch.delete(l.reference);
+      }
+      final reports = await _postsRef.doc(postId).collection('reports').get();
+      for (final r in reports.docs) {
+        batch.delete(r.reference);
+      }
+      await batch.commit();
+
       await _postsRef.doc(postId).delete();
       if (!mounted) return;
       HapticFeedback.selectionClick();
@@ -745,12 +768,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   Widget _buildComments(String postId) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     final colorScheme = Theme.of(context).colorScheme;
+    final showAll = _expandedComments.contains(postId);
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _postsRef
           .doc(postId)
           .collection('comments')
           .orderBy('createdAt', descending: true)
-          .limit(3)
+          .limit(showAll ? 100 : 3)
           .snapshots(),
       builder: (context, snap) {
         final docs = snap.data?.docs ?? const [];
@@ -764,61 +788,78 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         final ordered = docs.toList().reversed.toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: ordered.map((doc) {
-            final data = doc.data();
-            final name = (data['authorName'] ?? 'Member').toString();
-            final text = (data['text'] ?? '').toString();
-            final authorId = (data['authorId'] ?? '').toString();
-            final canDelete = currentUid != null && authorId == currentUid;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            text,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (canDelete)
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        iconSize: 16,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 28,
-                          minHeight: 28,
+          children: [
+            ...ordered.map((doc) {
+              final data = doc.data();
+              final name = (data['authorName'] ?? 'Member').toString();
+              final text = (data['text'] ?? '').toString();
+              final authorId = (data['authorId'] ?? '').toString();
+              final canDelete = currentUid != null && authorId == currentUid;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              text,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ),
-                        tooltip: 'Delete comment',
-                        onPressed: () => _deleteComment(postId, doc.id),
-                        icon: const Icon(Icons.close),
                       ),
-                  ],
+                      if (canDelete)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 16,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          tooltip: 'Delete comment',
+                          onPressed: () => _deleteComment(postId, doc.id),
+                          icon: const Icon(Icons.close),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            // Show "View all comments" when capped at 3 and there might be more
+            if (!showAll && docs.length >= 3)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: GestureDetector(
+                  onTap: () => setState(() => _expandedComments.add(postId)),
+                  child: Text(
+                    'View all comments',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            );
-          }).toList(),
+          ],
         );
       },
     );
@@ -1083,177 +1124,206 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       builder: (context, adminSnap) {
         final isAdmin = adminSnap.data?.exists == true;
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.title,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Share wins, tips, and project updates.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isAdmin)
-                  TextButton.icon(
-                    onPressed: _showAdminReview,
-                    icon: const Icon(Icons.flag_outlined),
-                    label: const Text('Review reports'),
-                  ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: _showNewPostSheet,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: const Text('New Post'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              // Minimal query – no orderBy, no where – zero index deps.
-              // Sorting & filtering done client-side.
-              stream: _postsRef.limit(50).snapshots(),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  debugPrint('Community feed error: ${snap.error}');
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.cloud_off, size: 40),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Could not load community posts.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${snap.error}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () => setState(() {}),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (!snap.hasData) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final docs =
-                    snap.data!.docs.where((doc) {
-                        final data = doc.data();
-                        final status = (data['moderationStatus'] ?? 'active')
-                            .toString();
-                        return isAdmin || status == 'active';
-                      }).toList()
-                      // Client-side sort: newest first
-                      ..sort((a, b) {
-                        final aTime = a.data()['createdAt'] as Timestamp?;
-                        final bTime = b.data()['createdAt'] as Timestamp?;
-                        if (aTime == null && bTime == null) return 0;
-                        if (aTime == null) return 1;
-                        if (bTime == null) return -1;
-                        return bTime.compareTo(aTime);
-                      });
-
-                if (docs.isEmpty) {
-                  return Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primaryContainer,
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Reset pagination and force re-render
+            setState(() {
+              _postLimit = _postPageSize;
+              _expandedComments.clear();
+            });
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              Row(
+                children: [
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
+                        Text(
+                          widget.title,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Share wins, tips, and project updates.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(16),
+                                ).colorScheme.onSurfaceVariant,
                               ),
-                              child: Icon(
-                                Icons.auto_awesome,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Start the conversation',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w800),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Share a before/after, a win, or a quick tip to help the community.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 14),
-                        FilledButton.icon(
-                          onPressed: _showNewPostSheet,
-                          icon: const Icon(Icons.add_photo_alternate_outlined),
-                          label: const Text('Start a post'),
                         ),
                       ],
                     ),
-                  );
-                }
+                  ),
+                  if (isAdmin)
+                    TextButton.icon(
+                      onPressed: _showAdminReview,
+                      icon: const Icon(Icons.flag_outlined),
+                      label: const Text('Review reports'),
+                    ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _showNewPostSheet,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: const Text('New Post'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                // Minimal query – no orderBy, no where – zero index deps.
+                // Sorting & filtering done client-side.
+                stream: _postsRef.limit(_postLimit).snapshots(),
+                builder: (context, snap) {
+                  if (snap.hasError) {
+                    debugPrint('Community feed error: ${snap.error}');
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.cloud_off, size: 40),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Could not load community posts.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${snap.error}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () => setState(() {}),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
 
-                return Column(
-                  children: docs
-                      .map((doc) => _buildPostCard(doc, isAdmin: isAdmin))
-                      .toList(),
-                );
-              },
-            ),
-          ],
+                  if (!snap.hasData) {
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final docs =
+                      snap.data!.docs.where((doc) {
+                          final data = doc.data();
+                          final status = (data['moderationStatus'] ?? 'active')
+                              .toString();
+                          return isAdmin || status == 'active';
+                        }).toList()
+                        // Client-side sort: newest first
+                        ..sort((a, b) {
+                          final aTime = a.data()['createdAt'] as Timestamp?;
+                          final bTime = b.data()['createdAt'] as Timestamp?;
+                          if (aTime == null && bTime == null) return 0;
+                          if (aTime == null) return 1;
+                          if (bTime == null) return -1;
+                          return bTime.compareTo(aTime);
+                        });
+
+                  if (docs.isEmpty) {
+                    return Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primaryContainer,
+                            Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Icons.auto_awesome,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Start the conversation',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Share a before/after, a win, or a quick tip to help the community.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 14),
+                          FilledButton.icon(
+                            onPressed: _showNewPostSheet,
+                            icon: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                            ),
+                            label: const Text('Start a post'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...docs.map(
+                        (doc) => _buildPostCard(doc, isAdmin: isAdmin),
+                      ),
+                      // "Load more" button when the page is full
+                      if (docs.length >= _postLimit)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                setState(() => _postLimit += _postPageSize),
+                            icon: const Icon(Icons.expand_more),
+                            label: const Text('Load more posts'),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         );
       },
     );

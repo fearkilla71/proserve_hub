@@ -101,8 +101,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
 
     // Fetch full details for structured fields
     try {
-      final details =
-          await PlacesService.instance.getDetails(prediction.placeId);
+      final details = await PlacesService.instance.getDetails(
+        prediction.placeId,
+      );
 
       if (details != null) {
         // Use the street address for the field, not the full formatted address

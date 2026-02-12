@@ -95,11 +95,12 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
         final contractorSnap = await tx.get(contractorRef);
         final liveAvailability =
             (contractorSnap.data()?['availability'] as Map<String, dynamic>?) ??
-                {};
+            {};
         final key = _dateKey(_selectedDate);
         final liveSlots =
-            (liveAvailability[key] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
-                [];
+            (liveAvailability[key] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>() ??
+            [];
         final slot = liveSlots.firstWhere(
           (s) => s['time'] == _selectedSlot,
           orElse: () => <String, dynamic>{},
@@ -242,15 +243,36 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final today = DateTime.now();
-    final days = List.generate(14, (i) => today.add(Duration(days: i)));
 
     return Scaffold(
-      appBar: AppBar(title: Text('Book ${widget.contractorName}')),
+      appBar: AppBar(
+        title: Text('Book ${widget.contractorName}'),
+        actions: [
+          IconButton(
+            tooltip: 'Pick date',
+            icon: const Icon(Icons.calendar_month),
+            onPressed: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: today,
+                lastDate: today.add(const Duration(days: 90)),
+              );
+              if (picked != null && mounted) {
+                setState(() {
+                  _selectedDate = picked;
+                  _selectedSlot = null;
+                });
+              }
+            },
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Date strip
+                // Date strip — 30 days
                 SizedBox(
                   height: 90,
                   child: ListView.builder(
@@ -259,9 +281,9 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    itemCount: days.length,
+                    itemCount: 30,
                     itemBuilder: (context, i) {
-                      final day = days[i];
+                      final day = today.add(Duration(days: i));
                       final selected = _dateKey(day) == _dateKey(_selectedDate);
                       final hasSlots = _dateHasSlots(day);
 

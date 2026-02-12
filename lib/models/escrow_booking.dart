@@ -179,8 +179,7 @@ class EscrowBooking {
     if (savingsPercent != null) 'savingsPercent': savingsPercent,
     if (discountPercent != null) 'discountPercent': discountPercent,
     if (originalAiPrice != null) 'originalAiPrice': originalAiPrice,
-    if (priceFairnessRating != null)
-      'priceFairnessRating': priceFairnessRating,
+    if (priceFairnessRating != null) 'priceFairnessRating': priceFairnessRating,
     if (ratingComment != null) 'ratingComment': ratingComment,
     if (ratedAt != null) 'ratedAt': Timestamp.fromDate(ratedAt!),
     'premiumLeadCost': premiumLeadCost,

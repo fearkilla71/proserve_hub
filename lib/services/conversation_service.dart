@@ -5,8 +5,24 @@ import '../models/marketplace_models.dart';
 class ConversationService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Gets or creates a conversation between two users
-  /// Returns the conversation ID
+  /// Cached user display name to avoid re-fetching on every message send.
+  static String? _cachedUserName;
+  static String? _cachedUid;
+
+  static Future<String> _getUserName(User user) async {
+    if (_cachedUid == user.uid && _cachedUserName != null) {
+      return _cachedUserName!;
+    }
+    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+    _cachedUserName =
+        userDoc.data()?['name'] as String? ?? user.email ?? 'Unknown';
+    _cachedUid = user.uid;
+    return _cachedUserName!;
+  }
+
+  /// Gets or creates a conversation between two users.
+  /// Uses a transaction to prevent duplicate conversations.
+  /// Returns the conversation ID.
   static Future<String> getOrCreateConversation({
     required String otherUserId,
     required String otherUserName,
@@ -18,42 +34,42 @@ class ConversationService {
     }
 
     // Get current user name
-    final userDoc = await _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .get();
-    final currentUserName =
-        userDoc.data()?['name'] ?? currentUser.email ?? 'Unknown';
+    final currentUserName = await _getUserName(currentUser);
 
-    // Check if conversation already exists
+    // Use a transaction to prevent duplicate conversations
     final participantIds = [currentUser.uid, otherUserId]..sort();
 
-    final existingConversations = await _firestore
-        .collection('conversations')
-        .where('participantIds', isEqualTo: participantIds)
-        .limit(1)
-        .get();
+    final conversationId = await _firestore.runTransaction<String>((tx) async {
+      final existing = await _firestore
+          .collection('conversations')
+          .where('participantIds', isEqualTo: participantIds)
+          .limit(1)
+          .get();
 
-    if (existingConversations.docs.isNotEmpty) {
-      return existingConversations.docs.first.id;
-    }
+      if (existing.docs.isNotEmpty) {
+        return existing.docs.first.id;
+      }
 
-    // Create new conversation.
-    // IMPORTANT: firestore.rules restricts conversation creation to ONLY these
-    // keys. Do not add extra fields here unless rules are updated.
-    final docRef = await _firestore.collection('conversations').add({
-      'participantIds': participantIds,
-      'participantNames': {
-        currentUser.uid: currentUserName,
-        otherUserId: otherUserName,
-      },
-      'jobId': jobId,
-      'lastMessage': '',
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'unreadCount': {currentUser.uid: 0, otherUserId: 0},
+      // Create new conversation.
+      // IMPORTANT: firestore.rules restricts conversation creation to ONLY these
+      // keys. Do not add extra fields here unless rules are updated.
+      final docRef = _firestore.collection('conversations').doc();
+      tx.set(docRef, {
+        'participantIds': participantIds,
+        'participantNames': {
+          currentUser.uid: currentUserName,
+          otherUserId: otherUserName,
+        },
+        'jobId': jobId,
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'unreadCount': {currentUser.uid: 0, otherUserId: 0},
+      });
+
+      return docRef.id;
     });
 
-    return docRef.id;
+    return conversationId;
   }
 
   /// Sends a message in a conversation
@@ -67,8 +83,7 @@ class ConversationService {
       throw Exception('User must be authenticated');
     }
 
-    final userDoc = await _firestore.collection('users').doc(user.uid).get();
-    final userName = userDoc.data()?['name'] ?? user.email ?? 'Unknown';
+    final userName = await _getUserName(user);
 
     // Get conversation to find other user
     final conversationDoc = await _firestore

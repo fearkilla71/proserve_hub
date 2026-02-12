@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/invoice_models.dart';
@@ -177,8 +179,47 @@ abstract final class AppRoutes {
 
 /// Creates and returns the application's [GoRouter].
 GoRouter createRouter() {
+  /// Routes that don't require authentication.
+  const publicPaths = <String>{
+    '/',
+    '/landing',
+    '/customer-login',
+    '/customer-signup',
+    '/contractor-login',
+    '/contractor-signup',
+    '/select-service',
+  };
+
   return GoRouter(
     initialLocation: '/',
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(title: const Text('Page Not Found')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              '404 — "${state.uri}" not found',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context.go('/'),
+              icon: const Icon(Icons.home),
+              label: const Text('Go Home'),
+            ),
+          ],
+        ),
+      ),
+    ),
+    redirect: (context, state) {
+      final loggedIn = FirebaseAuth.instance.currentUser != null;
+      final isPublic = publicPaths.contains(state.matchedLocation);
+      if (!loggedIn && !isPublic) return '/';
+      return null;
+    },
     routes: [
       // ── Root ──
       GoRoute(

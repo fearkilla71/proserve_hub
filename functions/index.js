@@ -60,6 +60,34 @@ async function authenticateHttpRequest(req) {
 }
 
 /**
+ * DRY wrapper for authenticated HTTP endpoints.
+ * Handles CORS, OPTIONS preflight, method check, auth, and error mapping.
+ *
+ * Usage:
+ *   exports.myEndpointHttp = functions
+ *     .runWith({ secrets: [...] })
+ *     .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+ *       // return result object — sent as JSON 200
+ *     }));
+ */
+function wrapHttpEndpoint(handler) {
+  return async (req, res) => {
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+    if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+
+    try {
+      const uid = await authenticateHttpRequest(req);
+      const result = await handler(req, uid);
+      res.json(result);
+    } catch (err) {
+      const code = err.httpErrorCode?.status || err.status || 500;
+      res.status(code).json({ error: err.message || 'Internal error' });
+    }
+  };
+}
+
+/**
  * Check if uid is a ProServe admin (role stored in users doc).
  */
 async function isAdminUser(uid) {
@@ -1729,44 +1757,6 @@ function estimateInteriorPaintingRange({ sqft, q }) {
   return { low, high, notes: notes.join(' ') };
 }
 
-function computePaintingMultiplier(job) {
-  const q = job?.paintingQuestions || {};
-  let m = 1.0;
-
-  const wallCondition = (q.wallCondition || '').toString().trim().toLowerCase();
-  if (wallCondition === 'fair') m *= 1.1;
-  if (wallCondition === 'poor') m *= 1.25;
-
-  const ceilingHeight = (q.ceilingHeight || '').toString().trim().toLowerCase();
-  if (ceilingHeight === '8_10') m *= 1.06;
-  if (ceilingHeight === '10_14') m *= 1.12;
-  if (ceilingHeight === 'over_14') m *= 1.2;
-  if (ceilingHeight === 'not_sure') m *= 1.04;
-
-  const movingHelp = (q.movingHelp || '').toString().trim().toLowerCase();
-  // If homeowner moves everything, painter is usually faster.
-  if (movingHelp === 'yes') m *= 1.08;
-
-  const homeOrBusiness = (q.homeOrBusiness || '').toString().trim().toLowerCase();
-  if (homeOrBusiness === 'business') m *= 1.12;
-
-  const newConstruction = q.newConstruction;
-  if (newConstruction === true) m *= 1.08;
-
-  const items = Array.isArray(q.paintedItems)
-    ? q.paintedItems.map((s) => (s || '').toString().trim().toLowerCase())
-    : [];
-
-  // Walls is the baseline. Add-ons increase time/materials.
-  if (items.includes('trim')) m *= 1.12;
-  if (items.includes('ceiling')) m *= 1.15;
-  if (items.includes('doors')) m *= 1.08;
-  if (items.includes('window_frames')) m *= 1.06;
-
-  // Keep rough estimator from blowing up.
-  return clampNumber(m, 0.85, 1.9);
-}
-
 async function estimateJobCore({ uid, jobId }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
@@ -3061,13 +3051,6 @@ exports.claimJobHttp = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: errMessage || 'Internal error' });
   }
 });
-
-async function getContractorStripeAccountId(uid) {
-  const snap = await admin.firestore().collection('users').doc(uid).get();
-  if (!snap.exists) return null;
-  const acct = (snap.data()?.stripeAccountId || '').toString().trim();
-  return acct || null;
-}
 
 async function createConnectOnboardingLinkCore({ uid }) {
   if (!uid) {
@@ -5532,6 +5515,70 @@ exports.stripeWebhook = functions
     }
   }
 
+  // ---------- Dispute: freeze escrow and notify admin ----------
+  if (event.type === 'charge.dispute.created') {
+    const dispute = event.data.object;
+    const paymentIntentId = (dispute.payment_intent || '').toString().trim();
+    if (paymentIntentId) {
+      const db = admin.firestore();
+      const escrows = await db
+        .collection('escrow_bookings')
+        .where('stripePaymentIntentId', '==', paymentIntentId)
+        .limit(1)
+        .get();
+
+      if (!escrows.empty) {
+        const escrowDoc = escrows.docs[0];
+        await escrowDoc.ref.update({
+          status: 'disputed',
+          disputeId: dispute.id,
+          disputeReason: dispute.reason || 'unknown',
+          disputeAmount: dispute.amount || 0,
+          disputedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Log for admin dashboard
+        await db.collection('admin_alerts').add({
+          type: 'escrow_dispute',
+          escrowId: escrowDoc.id,
+          disputeId: dispute.id,
+          reason: dispute.reason || 'unknown',
+          amount: dispute.amount || 0,
+          paymentIntentId,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  }
+
+  // ---------- Refund confirmation from Stripe ----------
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    const paymentIntentId = (charge.payment_intent || '').toString().trim();
+    if (paymentIntentId) {
+      const db = admin.firestore();
+      const escrows = await db
+        .collection('escrow_bookings')
+        .where('stripePaymentIntentId', '==', paymentIntentId)
+        .limit(1)
+        .get();
+
+      if (!escrows.empty) {
+        const escrowDoc = escrows.docs[0];
+        const escrow = escrowDoc.data() || {};
+
+        // Only update if not already cancelled (avoid overwriting refundEscrow's update)
+        if (escrow.status !== 'cancelled') {
+          await escrowDoc.ref.update({
+            status: 'cancelled',
+            refundConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+            stripeRefundConfirmed: true,
+          });
+        }
+      }
+    }
+  }
+
   res.json({ received: true });
   });
 
@@ -6894,25 +6941,10 @@ exports.createEscrowCheckoutSession = functions
 // HTTP version (Windows/Linux fallback)
 exports.createEscrowCheckoutSessionHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
-  .https.onRequest(async (req, res) => {
-    setCorsHeaders(req, res);
-    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method Not Allowed' });
-      return;
-    }
-
-    try {
-      const uid = await authenticateHttpRequest(req);
-
-      const escrowId = (req.body?.escrowId || '').toString().trim();
-      const result = await createEscrowCheckoutSessionCore({ escrowId, uid });
-      res.json(result);
-    } catch (err) {
-      const code = err.httpErrorCode?.status || err.status || 500;
-      res.status(code).json({ error: err.message || 'Internal error' });
-    }
-  });
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const escrowId = (req.body?.escrowId || '').toString().trim();
+    return await createEscrowCheckoutSessionCore({ escrowId, uid });
+  }));
 
 /**
  * Fulfill an escrow payment after Stripe Checkout completion.
@@ -7073,25 +7105,10 @@ exports.releaseEscrowFunds = functions
 // HTTP version (Windows/Linux fallback)
 exports.releaseEscrowFundsHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
-  .https.onRequest(async (req, res) => {
-    setCorsHeaders(req, res);
-    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method Not Allowed' });
-      return;
-    }
-
-    try {
-      const uid = await authenticateHttpRequest(req);
-
-      const escrowId = (req.body?.escrowId || '').toString().trim();
-      const result = await releaseEscrowFundsCore({ escrowId, uid });
-      res.json(result);
-    } catch (err) {
-      const code = err.httpErrorCode?.status || err.status || 500;
-      res.status(code).json({ error: err.message || 'Internal error' });
-    }
-  });
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const escrowId = (req.body?.escrowId || '').toString().trim();
+    return await releaseEscrowFundsCore({ escrowId, uid });
+  }));
 
 // ============================================================================
 // ESCROW REFUND
@@ -7196,25 +7213,10 @@ exports.refundEscrow = functions
 // HTTP version (Windows/Linux fallback)
 exports.refundEscrowHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
-  .https.onRequest(async (req, res) => {
-    setCorsHeaders(req, res);
-    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method Not Allowed' });
-      return;
-    }
-
-    try {
-      const uid = await authenticateHttpRequest(req);
-
-      const escrowId = (req.body?.escrowId || '').toString().trim();
-      const result = await refundEscrowCore({ escrowId, uid });
-      res.json(result);
-    } catch (err) {
-      const code = err.httpErrorCode?.status || err.status || 500;
-      res.status(code).json({ error: err.message || 'Internal error' });
-    }
-  });
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const escrowId = (req.body?.escrowId || '').toString().trim();
+    return await refundEscrowCore({ escrowId, uid });
+  }));
 
 // ============================================================================
 // AUTO-REFUND EXPIRED ESCROWS (runs daily)
@@ -7742,38 +7744,181 @@ exports.aiEstimateChat = functions
 // HTTP fallback version (auth required)
 exports.aiEstimateChatHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
-  .https.onRequest(async (req, res) => {
-    setCorsHeaders(req, res);
-    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
-    if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const body = req.body || {};
+    const serviceType = (body.serviceType || '').toString().trim();
+    const serviceName = (body.serviceName || '').toString().trim();
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const isInitial = body.isInitial === true;
+    const images = Array.isArray(body.images) ? body.images : [];
 
-    try {
-      const uid = await authenticateHttpRequest(req);
-
-      const body = req.body || {};
-      const serviceType = (body.serviceType || '').toString().trim();
-      const serviceName = (body.serviceName || '').toString().trim();
-      const messages = Array.isArray(body.messages) ? body.messages : [];
-      const isInitial = body.isInitial === true;
-      const images = Array.isArray(body.images) ? body.images : [];
-
-      if (!serviceType) {
-        res.status(400).json({ error: 'serviceType is required.' });
-        return;
-      }
-
-      const result = await aiEstimateChatCore({
-        uid,
-        serviceType,
-        serviceName,
-        messages,
-        isInitial,
-        images,
-      });
-      res.status(200).json(result);
-    } catch (err) {
-      console.error('[aiEstimateChatHttp] Error:', err);
-      const status = err.status || 500;
-      res.status(status).json({ error: err.message || 'Internal error' });
+    if (!serviceType) {
+      throw { status: 400, message: 'serviceType is required.' };
     }
+
+    return await aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial, images });
+  }));
+
+// ============================================================================
+// ADMIN ESCROW OVERRIDES
+// ============================================================================
+
+/**
+ * Admin force-release: marks escrow as released and triggers fund transfer.
+ * Only callable by users with role === 'admin'.
+ */
+async function adminForceReleaseEscrowCore({ escrowId, uid, reason }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+  if (!(await isAdminUser(uid))) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+  }
+  if (!escrowId) {
+    throw new functions.https.HttpsError('invalid-argument', 'escrowId is required');
+  }
+
+  const db = admin.firestore();
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
+  const escrowSnap = await escrowRef.get();
+  if (!escrowSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
+  }
+
+  const escrow = escrowSnap.data() || {};
+  const terminalStatuses = ['released', 'cancelled', 'transferred'];
+  if (terminalStatuses.includes(escrow.status)) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      `Cannot force-release escrow in "${escrow.status}" status`
+    );
+  }
+
+  await escrowRef.update({
+    status: 'released',
+    adminForceReleased: true,
+    adminForceReleasedBy: uid,
+    adminForceReleaseReason: reason || 'Admin override',
+    adminForceReleasedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
+
+  // Attempt fund transfer
+  try {
+    await releaseEscrowFundsCore({ escrowId, uid });
+  } catch (transferErr) {
+    console.error(`[adminForceRelease] Transfer failed for ${escrowId}:`, transferErr.message);
+    // Release status is set — transfer can be retried manually
+  }
+
+  console.log(`[adminForceRelease] Admin ${uid} force-released escrow ${escrowId}`);
+  return { success: true, escrowId };
+}
+
+exports.adminForceReleaseEscrow = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    const escrowId = (data?.escrowId || '').toString().trim();
+    const reason = (data?.reason || '').toString().trim();
+    return await adminForceReleaseEscrowCore({ escrowId, uid, reason });
+  });
+
+exports.adminForceReleaseEscrowHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const escrowId = (req.body?.escrowId || '').toString().trim();
+    const reason = (req.body?.reason || '').toString().trim();
+    return await adminForceReleaseEscrowCore({ escrowId, uid, reason });
+  }));
+
+/**
+ * Admin force-cancel: refunds the customer and cancels the escrow.
+ * Only callable by users with role === 'admin'.
+ */
+async function adminForceCancelEscrowCore({ escrowId, uid, reason }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+  if (!(await isAdminUser(uid))) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+  }
+  if (!escrowId) {
+    throw new functions.https.HttpsError('invalid-argument', 'escrowId is required');
+  }
+
+  const db = admin.firestore();
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
+  const escrowSnap = await escrowRef.get();
+  if (!escrowSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
+  }
+
+  const escrow = escrowSnap.data() || {};
+  if (escrow.status === 'cancelled') {
+    return { success: true, alreadyCancelled: true };
+  }
+  if (escrow.status === 'transferred') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Funds already transferred to contractor — cannot cancel'
+    );
+  }
+
+  const paymentIntentId = escrow.stripePaymentIntentId;
+  let refundId = null;
+
+  // Attempt Stripe refund if payment exists
+  if (paymentIntentId) {
+    try {
+      const stripe = getStripeClient();
+      const refund = await stripe.refunds.create({
+        payment_intent: paymentIntentId,
+        reason: 'requested_by_customer',
+      });
+      refundId = refund.id;
+    } catch (refundErr) {
+      console.error(`[adminForceCancel] Stripe refund failed for ${escrowId}:`, refundErr.message);
+      // Still cancel the escrow — mark refund as failed for manual follow-up
+    }
+  }
+
+  await escrowRef.update({
+    status: 'cancelled',
+    adminForceCancelled: true,
+    adminForceCancelledBy: uid,
+    adminForceCancelReason: reason || 'Admin override',
+    adminForceCancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+    ...(refundId ? { stripeRefundId: refundId } : { refundFailed: !paymentIntentId ? false : true }),
+  });
+
+  // Reset the job_request back to open
+  const jobId = escrow.jobId;
+  if (jobId) {
+    await db.collection('job_requests').doc(jobId).update({
+      status: 'open',
+      escrowId: admin.firestore.FieldValue.delete(),
+      escrowPrice: admin.firestore.FieldValue.delete(),
+      instantBook: admin.firestore.FieldValue.delete(),
+    });
+  }
+
+  console.log(`[adminForceCancel] Admin ${uid} force-cancelled escrow ${escrowId}`);
+  return { success: true, escrowId, refundId };
+}
+
+exports.adminForceCancelEscrow = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    const escrowId = (data?.escrowId || '').toString().trim();
+    const reason = (data?.reason || '').toString().trim();
+    return await adminForceCancelEscrowCore({ escrowId, uid, reason });
+  });
+
+exports.adminForceCancelEscrowHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const escrowId = (req.body?.escrowId || '').toString().trim();
+    const reason = (req.body?.reason || '').toString().trim();
+    return await adminForceCancelEscrowCore({ escrowId, uid, reason });
+  }));

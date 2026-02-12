@@ -59,6 +59,14 @@ class SubscriptionService {
     }
   }
 
+  /// Restores previously purchased subscriptions (required by App Store).
+  Future<void> restorePurchases() async {
+    if (!supportsStoreIap) {
+      throw Exception('Store subscription is not supported on this platform');
+    }
+    await InAppPurchase.instance.restorePurchases();
+  }
+
   Future<void> verifyAndActivateContractorPro(PurchaseDetails purchase) async {
     // Best-effort server verification (recommended for real entitlements).
     // This expects you to implement a Cloud Function to validate the receipt

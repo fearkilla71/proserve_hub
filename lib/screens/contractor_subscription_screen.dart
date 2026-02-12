@@ -523,6 +523,36 @@ class _ContractorSubscriptionScreenState
                   context,
                 ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
+              const SizedBox(height: 8),
+              if (_iapAvailable)
+                TextButton.icon(
+                  onPressed: _isLoadingIap
+                      ? null
+                      : () async {
+                          setState(() => _isLoadingIap = true);
+                          try {
+                            await _subs.restorePurchases();
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Restore complete. Subscription status will update shortly.',
+                                ),
+                              ),
+                            );
+                            _autoRefreshEntitlement();
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Restore failed: $e')),
+                            );
+                          } finally {
+                            if (mounted) setState(() => _isLoadingIap = false);
+                          }
+                        },
+                  icon: const Icon(Icons.restore),
+                  label: const Text('Restore Purchases'),
+                ),
             ],
           );
         },

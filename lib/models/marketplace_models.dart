@@ -76,7 +76,6 @@ class Conversation {
   final String? jobId;
   final String? lastMessage;
   final DateTime? lastMessageTime;
-  final DateTime? lastMessageAt;
   final DateTime? createdAt;
   final DateTime? expiresAt;
   final Map<String, int> unreadCount;
@@ -88,7 +87,6 @@ class Conversation {
     this.jobId,
     this.lastMessage,
     this.lastMessageTime,
-    this.lastMessageAt,
     this.createdAt,
     this.expiresAt,
     required this.unreadCount,
@@ -102,8 +100,9 @@ class Conversation {
       return null;
     }
 
-    final lastTime = tsToDate(data['lastMessageTime']);
-    final lastAt = tsToDate(data['lastMessageAt']);
+    // Unified: prefer lastMessageTime, fall back to lastMessageAt for legacy docs
+    final lastTime =
+        tsToDate(data['lastMessageTime']) ?? tsToDate(data['lastMessageAt']);
     return Conversation(
       id: doc.id,
       participantIds: List<String>.from(data['participantIds'] ?? []),
@@ -112,8 +111,7 @@ class Conversation {
       ),
       jobId: data['jobId'],
       lastMessage: data['lastMessage'],
-      lastMessageTime: lastTime ?? lastAt,
-      lastMessageAt: lastAt ?? lastTime,
+      lastMessageTime: lastTime,
       createdAt: tsToDate(data['createdAt']),
       expiresAt: tsToDate(data['expiresAt']),
       unreadCount: Map<String, int>.from(data['unreadCount'] ?? {}),
@@ -121,19 +119,17 @@ class Conversation {
   }
 
   Map<String, dynamic> toMap() {
+    final ts = lastMessageTime != null
+        ? Timestamp.fromDate(lastMessageTime!)
+        : null;
     return {
       'participantIds': participantIds,
       'participantNames': participantNames,
       'jobId': jobId,
       'lastMessage': lastMessage,
-      'lastMessageTime': lastMessageTime != null
-          ? Timestamp.fromDate(lastMessageTime!)
-          : null,
-      'lastMessageAt': lastMessageAt != null
-          ? Timestamp.fromDate(lastMessageAt!)
-          : (lastMessageTime != null
-                ? Timestamp.fromDate(lastMessageTime!)
-                : null),
+      'lastMessageTime': ts,
+      'lastMessageAt':
+          ts, // Keep both Firestore fields in sync for index compatibility
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'unreadCount': unreadCount,
