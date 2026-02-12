@@ -1694,67 +1694,112 @@ function asLowerStringArray(value) {
     .filter((v) => v.length > 0);
 }
 
-function estimateInteriorPaintingRange({ sqft, q }) {
-  // Base rule (walls): $1.45–$2.35 per sqft.
-  // Add-ons are input-driven (no approximations).
-
-  const safeSqft = Number(sqft);
+/**
+ * Room-based interior painting estimate.
+ *
+ * Pricing (per room):
+ *   Bedrooms / Bathrooms / Closets:  $450 labor-only,  $500 with paint
+ *   Kitchens:                        $500 labor-only,  $560 with paint
+ *   Living / Dining rooms:           $500 labor-only,  $560 with paint
+ *
+ * Ceilings (per room):
+ *   Standard rooms:                  $125 labor-only,  $150 with paint
+ *   Kitchens / Dining rooms:         $200 labor-only,  $225 with paint
+ *
+ * Future: doors, trim, baseboards, accent walls, etc. will be added separately.
+ */
+function estimateInteriorPaintingRange({ q }) {
   const questions = q || {};
 
-  const accentWalls = clampNumber(questions.accent_walls, 0, 9999);
-  const twoToneWalls = clampNumber(questions.two_tone_walls, 0, 9999);
-  const trimLinearFeet = clampNumber(questions.trim_linear_feet, 0, 1000000);
+  // Room counts
+  const bedrooms       = clampNumber(questions.bedrooms, 0, 50);
+  const bathrooms      = clampNumber(questions.bathrooms, 0, 50);
+  const closets        = clampNumber(questions.closets, 0, 50);
+  const kitchens       = clampNumber(questions.kitchens, 0, 10);
+  const livingRooms    = clampNumber(questions.living_rooms, 0, 20);
+  const diningRooms    = clampNumber(questions.dining_rooms, 0, 20);
 
-  const doors = questions.doors && typeof questions.doors === 'object' ? questions.doors : {};
-  const doorsStandardOneSide = clampNumber(doors.standard_one_side, 0, 9999);
-  const doorsStandardBothSides = clampNumber(doors.standard_both_sides, 0, 9999);
-  const doorsFrenchPair = clampNumber(doors.french_pair, 0, 9999);
-  const doorsClosetSlab = clampNumber(doors.closet_slab, 0, 9999);
+  // Paint supply
+  const includesPaint = questions.includes_paint !== false; // default: with paint
 
-  const paintCeilings = questions.paint_ceilings === true;
-  const colorChangeType = (questions.color_change_type || 'same_color')
-    .toString()
-    .trim()
-    .toLowerCase();
+  // Ceiling flags (per category)
+  const ceilBedrooms   = questions.ceiling_bedrooms   === true;
+  const ceilBathrooms  = questions.ceiling_bathrooms  === true;
+  const ceilClosets    = questions.ceiling_closets    === true;
+  const ceilKitchens   = questions.ceiling_kitchens   === true;
+  const ceilLiving     = questions.ceiling_living     === true;
+  const ceilDining     = questions.ceiling_dining     === true;
 
-  // Fixed add-on pricing.
-  const accentCost = accentWalls * 150;
-  const twoToneCost = twoToneWalls * 210;
-  const trimCost = trimLinearFeet * 1.25;
-  const doorsCost =
-    doorsStandardOneSide * 75 +
-    doorsStandardBothSides * 110 +
-    doorsFrenchPair * 160 +
-    doorsClosetSlab * 60;
-  const ceilingCost = paintCeilings ? safeSqft * 0.65 : 0;
+  // Convenience: single "paint ceilings" flag applies to ALL rooms when per-room flags aren't set
+  const paintAllCeilings = questions.paint_ceilings === true;
 
-  // Color change multiplier.
-  let colorMultiplier = 1.0;
-  if (colorChangeType === 'light_to_light') colorMultiplier = 1.04;
-  if (colorChangeType === 'dark_to_light') colorMultiplier = 1.12;
-  if (colorChangeType === 'high_pigment') colorMultiplier = 1.15;
+  // ---- Per-room pricing ----
+  const ROOM_LABOR = 450;
+  const ROOM_PAINT = 500;
+  const KITCHEN_LABOR = 500;
+  const KITCHEN_PAINT = 560;
+  const LIVING_LABOR = 500;
+  const LIVING_PAINT = 560;
 
-  // Base low/high range from sqft; add-ons apply equally to low/high.
-  const baseLow = safeSqft * 1.45;
-  const baseHigh = safeSqft * 2.35;
-  const addOns = accentCost + twoToneCost + trimCost + doorsCost + ceilingCost;
+  const CEIL_STD_LABOR  = 125;
+  const CEIL_STD_PAINT  = 150;
+  const CEIL_KD_LABOR   = 200;
+  const CEIL_KD_PAINT   = 225;
 
-  let low = (baseLow + addOns) * colorMultiplier;
-  let high = (baseHigh + addOns) * colorMultiplier;
+  // Standard rooms (bedrooms, bathrooms, closets)
+  const stdCount = bedrooms + bathrooms + closets;
+  const stdRate  = includesPaint ? ROOM_PAINT : ROOM_LABOR;
+  const stdTotal = stdCount * stdRate;
 
-  // Defensive: keep order, avoid negative numbers.
-  low = Math.max(0, low);
-  high = Math.max(low, high);
+  // Kitchen
+  const kitRate  = includesPaint ? KITCHEN_PAINT : KITCHEN_LABOR;
+  const kitTotal = kitchens * kitRate;
 
-  const notes = [];
-  notes.push(
-    'Estimated Interior Painting Cost (final price may vary after inspection).'
-  );
-  notes.push('Base: $1.45–$2.35/sqft for interior walls.');
-  notes.push('Add-ons: accent walls ($150 each), two-tone walls ($210 each), trim/baseboards ($1.25/lf), doors (by type), ceilings ($0.65/sqft).');
-  notes.push('Minimum interior job: $1,200.');
+  // Living / Dining
+  const ldCount  = livingRooms + diningRooms;
+  const ldRate   = includesPaint ? LIVING_PAINT : LIVING_LABOR;
+  const ldTotal  = ldCount * ldRate;
 
-  return { low, high, notes: notes.join(' ') };
+  // Ceilings — standard rooms
+  const ceilStdCount = (ceilBedrooms || paintAllCeilings ? bedrooms : 0)
+                     + (ceilBathrooms || paintAllCeilings ? bathrooms : 0)
+                     + (ceilClosets || paintAllCeilings ? closets : 0);
+  const ceilStdRate  = includesPaint ? CEIL_STD_PAINT : CEIL_STD_LABOR;
+  const ceilStdTotal = ceilStdCount * ceilStdRate;
+
+  // Ceilings — kitchens & dining
+  const ceilKdCount  = (ceilKitchens || paintAllCeilings ? kitchens : 0)
+                     + (ceilDining || paintAllCeilings ? diningRooms : 0);
+  const ceilKdRate   = includesPaint ? CEIL_KD_PAINT : CEIL_KD_LABOR;
+  const ceilKdTotal  = ceilKdCount * ceilKdRate;
+
+  // Living room ceilings use standard ceiling pricing
+  const ceilLivCount = ceilLiving || paintAllCeilings ? livingRooms : 0;
+  const ceilLivTotal = ceilLivCount * ceilStdRate;
+
+  const totalRooms = stdCount + kitchens + ldCount;
+  const total = stdTotal + kitTotal + ldTotal + ceilStdTotal + ceilKdTotal + ceilLivTotal;
+
+  // Build breakdown
+  const breakdown = [];
+  if (bedrooms  > 0) breakdown.push(`${bedrooms} bedroom(s) × $${stdRate}`);
+  if (bathrooms > 0) breakdown.push(`${bathrooms} bathroom(s) × $${stdRate}`);
+  if (closets   > 0) breakdown.push(`${closets} closet(s) × $${stdRate}`);
+  if (kitchens  > 0) breakdown.push(`${kitchens} kitchen(s) × $${kitRate}`);
+  if (livingRooms > 0) breakdown.push(`${livingRooms} living room(s) × $${ldRate}`);
+  if (diningRooms > 0) breakdown.push(`${diningRooms} dining room(s) × $${ldRate}`);
+
+  const ceilCount = ceilStdCount + ceilKdCount + ceilLivCount;
+  if (ceilCount > 0) breakdown.push(`${ceilCount} ceiling(s)`);
+
+  const notes = [
+    `Interior Painting Estimate — ${totalRooms} room(s), ${includesPaint ? 'with paint' : 'labor only'}.`,
+    breakdown.join(', ') + '.',
+    ceilCount > 0 ? `Ceilings included for ${ceilCount} room(s).` : 'No ceilings.',
+    'Doors, trim, baseboards, and accent walls are priced separately.',
+  ].join(' ');
+
+  return { total, totalRooms, notes };
 }
 
 async function estimateJobCore({ uid, jobId }) {
@@ -1839,13 +1884,21 @@ async function estimateRulesForJob({ uid, job, jobRef }) {
     }
   }
 
-  // Special-case painting: per-sqft range rule + add-ons.
+  // Special-case painting: room-based pricing.
   if (serviceKey === 'painting') {
-    const sqft = Number(job?.quantity);
-    if (!Number.isFinite(sqft) || sqft <= 0) {
+    const pq = job?.paintingQuestions || {};
+    const totalRoomsInput =
+      clampNumber(pq.bedrooms, 0, 50) +
+      clampNumber(pq.bathrooms, 0, 50) +
+      clampNumber(pq.closets, 0, 50) +
+      clampNumber(pq.kitchens, 0, 10) +
+      clampNumber(pq.living_rooms, 0, 20) +
+      clampNumber(pq.dining_rooms, 0, 20);
+
+    if (totalRoomsInput <= 0) {
       throw new functions.https.HttpsError(
         'failed-precondition',
-        'Home square footage is missing. Please enter a valid sqft number to estimate.'
+        'Room information is missing. Please specify how many rooms need painting.'
       );
     }
 
@@ -1857,50 +1910,41 @@ async function estimateRulesForJob({ uid, job, jobRef }) {
       seededBy: 'estimateJob',
     });
 
-    const range = estimateInteriorPaintingRange({
-      sqft,
-      q: job?.paintingQuestions || {},
-    });
+    const range = estimateInteriorPaintingRange({ q: pq });
 
-    let low = range.low * zipMultiplier;
-    let high = range.high * zipMultiplier;
+    let price = range.total * zipMultiplier;
     if (urgent) {
-      low *= ESTIMATE_URGENCY_MULTIPLIER;
-      high *= ESTIMATE_URGENCY_MULTIPLIER;
+      price *= ESTIMATE_URGENCY_MULTIPLIER;
     }
 
-    // Minimum job rule (protect contractors).
-    low = Math.max(low, 1200);
-    high = Math.max(high, 1200);
-    if (high < low) high = low;
+    // Round to whole dollars
+    price = Math.round(price);
 
-    const recommended = (low + high) / 2;
+    // Minimum job rule (protect contractors).
+    price = Math.max(price, 450);
+
+    // Build low / recommended / premium tiers
+    const low = Math.round(price * ESTIMATE_RANGE_LOW_MULTIPLIER);
+    const recommended = price;
+    const premium = Math.round(price * ESTIMATE_RANGE_PREMIUM_MULTIPLIER);
+
     const result = {
       service: serviceKey,
-      unit: 'sqft',
-      quantity: sqft,
+      unit: 'rooms',
+      quantity: range.totalRooms,
       zip,
       zipMultiplier,
       urgent,
-      confidence: 0.62,
+      confidence: 0.85,
       notes: range.notes,
-      prices: {
-        low,
-        recommended,
-        premium: high,
-      },
+      prices: { low, recommended, premium },
       imagePaths: [],
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       source: 'rules',
     };
 
     if (jobRef) {
-      await jobRef.set(
-        {
-          aiEstimate: result,
-        },
-        { merge: true }
-      );
+      await jobRef.set({ aiEstimate: result }, { merge: true });
     }
 
     return {
@@ -7352,42 +7396,55 @@ function buildEstimatorSystemPrompt(serviceType, serviceName) {
     interior_painting: `
 SERVICE: Interior Painting
 KEY QUESTIONS TO ASK (in natural order, 1-2 per message):
-1. Which rooms need painting? (bedrooms, living room, kitchen, bathroom, hallway, etc.) — and roughly how many rooms total?
-2. Labor only or labor + materials? (Do they already have paint, or do they need the contractor to supply everything?)
-3. Are you painting just walls, or also ceilings and/or trim/baseboards/doors?
-4. What's the current wall color vs desired new color? (same/similar shade, light-to-light, or dramatic dark-to-light?)
-5. Do any walls need prep work? (nail holes are normal, but large cracks, peeling, or water damage add cost)
-6. How tall are the ceilings? (standard ~8-9ft is typical, or tall/vaulted 10ft+?)
-7. Will furniture need to be moved, or will rooms be cleared out? (Moving/covering furniture adds labor time)
-8. What's the ZIP code for the property?
-9. Any special requests? (accent walls, two-tone, specific paint brand, textured walls)
+1. Which rooms need painting and how many of each? Ask specifically:
+   - Bedrooms (count)
+   - Bathrooms (count, including half-baths)
+   - Closets (walk-in closets count, skip small reach-in closets)
+   - Kitchens (count)
+   - Living rooms (count)
+   - Dining rooms (count)
+2. Labor only or labor + materials? (Do they already have paint, or do they need the contractor to supply paint?)
+3. Do any rooms need the ceiling painted too? If so, which rooms?
+4. What's the ZIP code for the property?
+5. Any special requests? (accent walls, specific paint brand, prep work needed)
 
 IMPORTANT: If the user has uploaded photos, analyze them carefully for:
-- Room size estimates (small/medium/large rooms)
+- Room type identification (bedroom, bathroom, kitchen, living room, etc.)
 - Current wall condition (clean, marks, holes, peeling)
-- Ceiling height clues (standard vs tall)
-- Amount of trim, doors, and windows visible
-- Furniture that would need to be moved/covered
-- Color of current walls
+- Ceiling condition and whether it needs painting
+- Number of rooms visible
 Use photo observations to refine your estimate and skip questions you can answer from the photos.
 
-PRICING GUIDANCE (per room, labor + materials):
-- 1 room: $300-$500 (small), $400-$700 (medium), $500-$900 (large)
-- 2 rooms: $550-$900 (small), $750-$1,300 (medium), $950-$1,700 (large)
-- 3 rooms: $800-$1,300 (small), $1,100-$1,800 (medium), $1,400-$2,400 (large)
-- 4 rooms: $1,000-$1,600 (small), $1,400-$2,200 (medium), $1,800-$3,000 (large)
-- 5 rooms: $1,200-$1,900 (small), $1,700-$2,700 (medium), $2,200-$3,600 (large)
-- 6+ rooms: scale proportionally with a 5-8% volume discount
-- Labor only: reduce by 25-35% (customer provides paint and materials)
-- Labor + materials: full price (includes paint, primer, tape, drop cloths, etc.)
-- Ceilings add approximately $150-$300 per room
-- Trim/baseboards add approximately $1.25-$2.00 per linear foot
-- Doors add $75-$150 each (per side)
-- Color change from dark to light adds 10-15%
-- High ceilings (10ft+) adds 15-25%
-- Furniture moving/covering adds $50-$100 per room
-- Textured walls add 10-15%
-- Accent walls: $150-$300 each`,
+PRICING — EXACT ROOM-BASED RATES (use these numbers precisely):
+
+Walls per room:
+- Bedrooms, Bathrooms, Closets: $450 labor only / $500 with paint
+- Kitchens: $500 labor only / $560 with paint
+- Living rooms, Dining rooms: $500 labor only / $560 with paint
+
+Ceilings per room (only if customer wants ceilings painted):
+- Bedrooms, Bathrooms, Closets, Living rooms: $125 labor only / $150 with paint
+- Kitchens, Dining rooms: $200 labor only / $225 with paint
+
+CALCULATION RULES:
+1. Count each room type × the rate above
+2. Add ceiling costs only for rooms where customer wants ceilings painted
+3. Sum all rooms + ceilings = total estimate
+4. The "recommended" price is the exact calculated total
+5. "low" = recommended × 0.88 (discount for simple/standard conditions)
+6. "premium" = recommended × 1.15 (for extras, difficult access, or premium paint)
+
+EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all:
+- 3 bedrooms × $500 = $1,500
+- 1 kitchen × $560 = $560
+- 1 living room × $560 = $560
+- 3 bedroom ceilings × $150 = $450
+- 1 kitchen ceiling × $225 = $225
+- 1 living room ceiling × $150 = $150
+- Total recommended = $3,445
+- Low = $3,032, Premium = $3,962
+
+NOTE: Doors, trim, baseboards, and accent walls will be priced separately in a future update. If the customer asks about these, let them know these add-ons are not yet included in the estimate and can be discussed with the contractor.`,
 
     exterior_painting: `
 SERVICE: Exterior Painting

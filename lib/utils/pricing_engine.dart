@@ -70,12 +70,7 @@ class PricingEngine {
 
   static Future<String?> getUnit({required String service}) async {
     if (_isPainting(service)) {
-      final pricingDoc = await _getPricingDoc(service: service);
-      final unit = pricingDoc.data?['unit'];
-      final unitStr = unit is String ? unit.trim() : '';
-      if (unitStr.toLowerCase() == 'room') return 'sqft';
-      if (unitStr.isNotEmpty) return unitStr;
-      return 'sqft';
+      return 'rooms';
     }
 
     final pricingDoc = await _getPricingDoc(service: service);
@@ -85,6 +80,64 @@ class PricingEngine {
     return unit is String && unit.trim().isNotEmpty ? unit.trim() : null;
   }
 
+  /// Room-based interior painting pricing (client-side fallback).
+  ///
+  /// Standard rooms (bedroom/bath/closet): $450 labor, $500 with paint.
+  /// Kitchen: $500 labor, $560 with paint.
+  /// Living/Dining: $500 labor, $560 with paint.
+  /// Ceilings (standard): $125 labor, $150 with paint.
+  /// Ceilings (kitchen/dining): $200 labor, $225 with paint.
+  static Map<String, double> calculatePaintingFromRooms({
+    required Map<String, dynamic> paintingQuestions,
+    required String zip,
+    bool urgent = false,
+  }) {
+    int asInt(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
+    bool asBool(dynamic v) => v == true;
+
+    final bedrooms = asInt(paintingQuestions['bedrooms']);
+    final bathrooms = asInt(paintingQuestions['bathrooms']);
+    final closets = asInt(paintingQuestions['closets']);
+    final kitchens = asInt(paintingQuestions['kitchens']);
+    final livingRooms = asInt(paintingQuestions['living_rooms']);
+    final diningRooms = asInt(paintingQuestions['dining_rooms']);
+    final includesPaint = asBool(paintingQuestions['includes_paint']);
+
+    final ceilingBedrooms = asBool(paintingQuestions['ceiling_bedrooms']);
+    final ceilingKitchens = asBool(paintingQuestions['ceiling_kitchens']);
+    final ceilingLivingDining = asBool(
+      paintingQuestions['ceiling_living_dining'],
+    );
+
+    final stdRooms = bedrooms + bathrooms + closets;
+    final kitchenRooms = kitchens;
+    final livingDiningRooms = livingRooms + diningRooms;
+
+    double total = 0;
+
+    // Wall painting
+    total += stdRooms * (includesPaint ? 500 : 450);
+    total += kitchenRooms * (includesPaint ? 560 : 500);
+    total += livingDiningRooms * (includesPaint ? 560 : 500);
+
+    // Ceilings
+    if (ceilingBedrooms) {
+      total += stdRooms * (includesPaint ? 150 : 125);
+    }
+    if (ceilingKitchens) {
+      total += kitchenRooms * (includesPaint ? 225 : 200);
+    }
+    if (ceilingLivingDining) {
+      total += livingDiningRooms * (includesPaint ? 225 : 200);
+    }
+
+    if (urgent) {
+      total *= 1.25;
+    }
+
+    return {'low': total * 0.88, 'recommended': total, 'premium': total * 1.15};
+  }
+
   static Future<Map<String, double>> calculate({
     required String service,
     required double quantity,
@@ -92,25 +145,13 @@ class PricingEngine {
     bool urgent = false,
   }) async {
     if (_isPainting(service)) {
-      // Interior painting baseline (walls only): $1.75–$2.75 per sqft.
-      final zipKey = zip.trim();
-      final zipDoc = await _getCachedDoc('zip_costs', zipKey);
-
-      final zipMultiplier = zipDoc.exists
-          ? (zipDoc.data?['multiplier'] as num?)?.toDouble() ?? 1.0
-          : 1.0;
-
-      double low = 1.75 * quantity * zipMultiplier;
-      double high = 2.75 * quantity * zipMultiplier;
-      double rec = 2.25 * quantity * zipMultiplier;
-
-      if (urgent) {
-        low *= 1.25;
-        rec *= 1.25;
-        high *= 1.25;
-      }
-
-      return {'low': low, 'recommended': rec, 'premium': high};
+      // Room-based pricing – delegate to calculatePaintingFromRooms if we have
+      // painting questions data, otherwise fall back to a simple per-room rate.
+      return {
+        'low': 450.0 * quantity * 0.88,
+        'recommended': 450.0 * quantity,
+        'premium': 450.0 * quantity * 1.15,
+      };
     }
 
     final serviceKey = service.trim().toLowerCase();

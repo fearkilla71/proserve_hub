@@ -46,20 +46,17 @@ class _CustomerAiEstimatorWizardPageState
   final TextEditingController _quantityController = TextEditingController();
   String _urgency = 'normal';
 
-  // Painting add-ons (matches backend keys in estimateInteriorPaintingRange).
-  final TextEditingController _accentWallsController = TextEditingController();
-  final TextEditingController _twoToneWallsController = TextEditingController();
-  final TextEditingController _trimLinearFeetController =
-      TextEditingController();
-  final TextEditingController _doorsOneSideController = TextEditingController();
-  final TextEditingController _doorsBothSidesController =
-      TextEditingController();
-  final TextEditingController _doorsFrenchPairController =
-      TextEditingController();
-  final TextEditingController _doorsClosetSlabController =
-      TextEditingController();
-  bool _paintCeilings = false;
-  String _colorChangeType = 'same_color';
+  // Room-based interior painting (matches backend estimateInteriorPaintingRange).
+  int _bedrooms = 0;
+  int _bathrooms = 0;
+  int _closets = 0;
+  int _kitchens = 0;
+  int _livingRooms = 0;
+  int _diningRooms = 0;
+  bool _includesPaint = false;
+  bool _ceilingBedrooms = false;
+  bool _ceilingKitchens = false;
+  bool _ceilingLivingDining = false;
 
   List<String> _uploadedPaths = <String>[];
   Map<String, dynamic>? _aiResult;
@@ -98,13 +95,7 @@ class _CustomerAiEstimatorWizardPageState
   void dispose() {
     _zipController.dispose();
     _quantityController.dispose();
-    _accentWallsController.dispose();
-    _twoToneWallsController.dispose();
-    _trimLinearFeetController.dispose();
-    _doorsOneSideController.dispose();
-    _doorsBothSidesController.dispose();
-    _doorsFrenchPairController.dispose();
-    _doorsClosetSlabController.dispose();
+
     super.dispose();
   }
 
@@ -219,12 +210,6 @@ class _CustomerAiEstimatorWizardPageState
     }
   }
 
-  int _asInt(String raw) {
-    final t = raw.trim();
-    if (t.isEmpty) return 0;
-    return int.tryParse(t) ?? 0;
-  }
-
   double? _parseQuantity(String raw) {
     final text = raw.trim();
     if (text.isEmpty) return null;
@@ -235,7 +220,7 @@ class _CustomerAiEstimatorWizardPageState
   }
 
   String _unitForServiceKey(String serviceKey) {
-    if (serviceKey == 'painting') return 'sqft';
+    if (serviceKey == 'painting') return 'rooms';
     if (serviceKey == 'cabinet_painting') return 'sqft';
     if (serviceKey == 'drywall') return 'sqft';
     if (serviceKey == 'pressure_washing') return 'sqft';
@@ -243,21 +228,31 @@ class _CustomerAiEstimatorWizardPageState
   }
 
   Map<String, dynamic> _paintingQuestions() {
+    if (_service == 'cabinet_painting') {
+      return {'scope': 'cabinets'};
+    }
     return {
-      'scope': _service == 'cabinet_painting' ? 'cabinets' : 'interior',
-      'accent_walls': _asInt(_accentWallsController.text),
-      'two_tone_walls': _asInt(_twoToneWallsController.text),
-      'trim_linear_feet': _asInt(_trimLinearFeetController.text),
-      'doors': {
-        'standard_one_side': _asInt(_doorsOneSideController.text),
-        'standard_both_sides': _asInt(_doorsBothSidesController.text),
-        'french_pair': _asInt(_doorsFrenchPairController.text),
-        'closet_slab': _asInt(_doorsClosetSlabController.text),
-      },
-      'paint_ceilings': _paintCeilings,
-      'color_change_type': _colorChangeType,
+      'scope': 'interior',
+      'bedrooms': _bedrooms,
+      'bathrooms': _bathrooms,
+      'closets': _closets,
+      'kitchens': _kitchens,
+      'living_rooms': _livingRooms,
+      'dining_rooms': _diningRooms,
+      'includes_paint': _includesPaint,
+      'ceiling_bedrooms': _ceilingBedrooms,
+      'ceiling_kitchens': _ceilingKitchens,
+      'ceiling_living_dining': _ceilingLivingDining,
     };
   }
+
+  int get _totalPaintingRooms =>
+      _bedrooms +
+      _bathrooms +
+      _closets +
+      _kitchens +
+      _livingRooms +
+      _diningRooms;
 
   Future<void> _saveDraftFields() async {
     final id = _estimateId;
@@ -272,7 +267,7 @@ class _CustomerAiEstimatorWizardPageState
           'service': _service,
           'zip': _zipController.text.trim(),
           'urgency': _urgency,
-          'quantity': quantity,
+          'quantity': _service == 'painting' ? _totalPaintingRooms : quantity,
           'paintingQuestions':
               (_service == 'painting' || _service == 'cabinet_painting')
               ? _paintingQuestions()
@@ -346,12 +341,24 @@ class _CustomerAiEstimatorWizardPageState
     final uid = await _ensureSignedInUid();
     if (uid == null) return;
 
-    final quantity = _parseQuantity(_quantityController.text);
-    if (quantity == null || quantity <= 0) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Enter a valid project size first.')),
-      );
-      return;
+    double quantity;
+    if (_service == 'painting') {
+      if (_totalPaintingRooms <= 0) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Add at least one room.')),
+        );
+        return;
+      }
+      quantity = _totalPaintingRooms.toDouble();
+    } else {
+      final parsed = _parseQuantity(_quantityController.text);
+      if (parsed == null || parsed <= 0) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Enter a valid project size first.')),
+        );
+        return;
+      }
+      quantity = parsed;
     }
 
     setState(() {
@@ -712,12 +719,24 @@ class _CustomerAiEstimatorWizardPageState
       return;
     }
 
-    final quantity = _parseQuantity(_quantityController.text);
-    if (quantity == null || quantity <= 0) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Enter a valid project size first.')),
-      );
-      return;
+    double quantity;
+    if (_service == 'painting') {
+      if (_totalPaintingRooms <= 0) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Add at least one room.')),
+        );
+        return;
+      }
+      quantity = _totalPaintingRooms.toDouble();
+    } else {
+      final parsed = _parseQuantity(_quantityController.text);
+      if (parsed == null || parsed <= 0) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Enter a valid project size first.')),
+        );
+        return;
+      }
+      quantity = parsed;
     }
 
     if (_uploadedPaths.isEmpty || _uploadedPaths.length > 10) {
@@ -939,16 +958,39 @@ class _CustomerAiEstimatorWizardPageState
     );
   }
 
+  Widget _roomCounterRow(String label, int value, ValueChanged<int> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            onPressed: value > 0 ? () => onChanged(value - 1) : null,
+          ),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: value < 20 ? () => onChanged(value + 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _detailsStep(BuildContext context) {
     final unit = _unitForServiceKey(_service);
-
-    Widget numberField(TextEditingController c, String label) {
-      return TextField(
-        controller: c,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(labelText: label),
-      );
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -992,115 +1034,107 @@ class _CustomerAiEstimatorWizardPageState
           ],
           onChanged: (v) => setState(() => _urgency = v ?? 'normal'),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _quantityController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: _service == 'cabinet_painting'
-                ? 'Kitchen size ($unit)'
-                : 'Project size ($unit)',
-            hintText: _service == 'painting'
-                ? 'e.g. 1800'
-                : (_service == 'cabinet_painting' ? 'e.g. 150' : 'e.g. 250'),
+        if (_service != 'painting') ...[
+          const SizedBox(height: 12),
+          TextField(
+            controller: _quantityController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: _service == 'cabinet_painting'
+                  ? 'Kitchen size ($unit)'
+                  : 'Project size ($unit)',
+              hintText: _service == 'cabinet_painting'
+                  ? 'e.g. 150'
+                  : 'e.g. 250',
+            ),
           ),
-        ),
+        ],
         if (_service == 'painting') ...[
           const SizedBox(height: 18),
           Text(
-            'Add-ons (optional)',
+            'Room counts',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: numberField(_accentWallsController, 'Accent walls'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: numberField(_twoToneWallsController, 'Two-tone walls'),
-              ),
-            ],
+          const SizedBox(height: 8),
+          _roomCounterRow(
+            'Bedrooms',
+            _bedrooms,
+            (v) => setState(() => _bedrooms = v),
           ),
-          const SizedBox(height: 12),
-          numberField(
-            _trimLinearFeetController,
-            'Trim/baseboards (linear feet)',
+          _roomCounterRow(
+            'Bathrooms',
+            _bathrooms,
+            (v) => setState(() => _bathrooms = v),
           ),
-          const SizedBox(height: 12),
+          _roomCounterRow(
+            'Closets',
+            _closets,
+            (v) => setState(() => _closets = v),
+          ),
+          _roomCounterRow(
+            'Kitchens',
+            _kitchens,
+            (v) => setState(() => _kitchens = v),
+          ),
+          _roomCounterRow(
+            'Living rooms',
+            _livingRooms,
+            (v) => setState(() => _livingRooms = v),
+          ),
+          _roomCounterRow(
+            'Dining rooms',
+            _diningRooms,
+            (v) => setState(() => _diningRooms = v),
+          ),
+          if (_totalPaintingRooms > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Total: $_totalPaintingRooms room${_totalPaintingRooms == 1 ? '' : 's'}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+          const SizedBox(height: 16),
           SwitchListTile(
-            value: _paintCeilings,
-            onChanged: (v) => setState(() => _paintCeilings = v),
-            title: const Text('Paint ceilings'),
+            value: _includesPaint,
+            onChanged: (v) => setState(() => _includesPaint = v),
+            title: const Text('Include paint'),
+            subtitle: const Text(
+              '+\$50 per standard room, +\$60 per kitchen/living/dining',
+            ),
             contentPadding: EdgeInsets.zero,
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _colorChangeType,
-            decoration: const InputDecoration(labelText: 'Color change'),
-            items: const [
-              DropdownMenuItem(value: 'same_color', child: Text('Same color')),
-              DropdownMenuItem(
-                value: 'light_to_light',
-                child: Text('Light → Light'),
-              ),
-              DropdownMenuItem(
-                value: 'dark_to_light',
-                child: Text('Dark → Light'),
-              ),
-              DropdownMenuItem(
-                value: 'high_pigment',
-                child: Text('High pigment colors'),
-              ),
-            ],
-            onChanged: (v) =>
-                setState(() => _colorChangeType = v ?? 'same_color'),
+          const Divider(),
+          Text(
+            'Ceilings (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 12),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: const Text('Doors (optional)'),
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: numberField(
-                      _doorsOneSideController,
-                      'Standard (one side)',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: numberField(
-                      _doorsBothSidesController,
-                      'Standard (both sides)',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: numberField(
-                      _doorsFrenchPairController,
-                      'French pair',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: numberField(
-                      _doorsClosetSlabController,
-                      'Closet slab',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
+          const SizedBox(height: 4),
+          SwitchListTile(
+            value: _ceilingBedrooms,
+            onChanged: (v) => setState(() => _ceilingBedrooms = v),
+            title: const Text('Bedroom / bath / closet ceilings'),
+            subtitle: Text(_includesPaint ? '\$150 each' : '\$125 each'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _ceilingKitchens,
+            onChanged: (v) => setState(() => _ceilingKitchens = v),
+            title: const Text('Kitchen ceilings'),
+            subtitle: Text(_includesPaint ? '\$225 each' : '\$200 each'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _ceilingLivingDining,
+            onChanged: (v) => setState(() => _ceilingLivingDining = v),
+            title: const Text('Living / dining ceilings'),
+            subtitle: Text(_includesPaint ? '\$225 each' : '\$200 each'),
+            contentPadding: EdgeInsets.zero,
           ),
         ],
       ],
