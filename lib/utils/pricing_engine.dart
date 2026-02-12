@@ -91,6 +91,14 @@ class PricingEngine {
   /// Door both sides: $100 labor, $115 with paint.
   /// Trim std room: $40 labor, $55 with paint.
   /// Trim kitchen/living/dining: $55 labor, $70 with paint.
+  /// Crown molding: same rates as trim.
+  /// Stairwells: $225 labor, $260 with paint.
+  /// Railings: $200 labor, $240 with paint.
+  /// Accent walls: $150 labor, $200 with paint.
+  /// Wallpaper removal: $125 std, $280 living, $250 kitchen.
+  /// Windows: $35 labor, $50 with paint.
+  /// Garage: $500 labor, $625 with paint.
+  /// Laundry: $175 labor, $220 with paint.
   static Map<String, double> calculatePaintingFromRooms({
     required Map<String, dynamic> paintingQuestions,
     required String zip,
@@ -121,6 +129,22 @@ class PricingEngine {
     final trimStandard = asBool(paintingQuestions['trim_standard']);
     final trimKitchens = asBool(paintingQuestions['trim_kitchens']);
     final trimLivingDining = asBool(paintingQuestions['trim_living_dining']);
+
+    // Crown molding
+    final crownStandard = asBool(paintingQuestions['crown_standard']);
+    final crownKitchens = asBool(paintingQuestions['crown_kitchens']);
+    final crownLivingDining = asBool(paintingQuestions['crown_living_dining']);
+
+    // Additional items
+    final stairwells = asInt(paintingQuestions['stairwells']);
+    final railings = asInt(paintingQuestions['railings']);
+    final accentWalls = asInt(paintingQuestions['accent_walls']);
+    final wpStdRooms = asInt(paintingQuestions['wallpaper_std_rooms']);
+    final wpLivingRooms = asInt(paintingQuestions['wallpaper_living_rooms']);
+    final wpKitchens = asInt(paintingQuestions['wallpaper_kitchens']);
+    final windows = asInt(paintingQuestions['windows']);
+    final garages = asInt(paintingQuestions['garages']);
+    final laundryRooms = asInt(paintingQuestions['laundry_rooms']);
 
     final stdRooms = bedrooms + bathrooms + closets;
     final kitchenRooms = kitchens;
@@ -158,6 +182,40 @@ class PricingEngine {
     if (trimLivingDining) {
       total += livingDiningRooms * (includesPaint ? 70 : 55);
     }
+
+    // Crown molding (same rates as trim)
+    if (crownStandard) {
+      total += stdRooms * (includesPaint ? 55 : 40);
+    }
+    if (crownKitchens) {
+      total += kitchenRooms * (includesPaint ? 70 : 55);
+    }
+    if (crownLivingDining) {
+      total += livingDiningRooms * (includesPaint ? 70 : 55);
+    }
+
+    // Stairwells
+    total += stairwells * (includesPaint ? 260 : 225);
+
+    // Railings
+    total += railings * (includesPaint ? 240 : 200);
+
+    // Accent walls
+    total += accentWalls * (includesPaint ? 200 : 150);
+
+    // Wallpaper removal (labor only)
+    total += wpStdRooms * 125;
+    total += wpLivingRooms * 280;
+    total += wpKitchens * 250;
+
+    // Windows
+    total += windows * (includesPaint ? 50 : 35);
+
+    // Garage
+    total += garages * (includesPaint ? 625 : 500);
+
+    // Laundry
+    total += laundryRooms * (includesPaint ? 220 : 175);
 
     if (urgent) {
       total *= 1.25;

@@ -67,6 +67,22 @@ class _CustomerAiEstimatorWizardPageState
   bool _trimKitchens = false;
   bool _trimLivingDining = false;
 
+  // Crown molding
+  bool _crownStandard = false;
+  bool _crownKitchens = false;
+  bool _crownLivingDining = false;
+
+  // Additional interior items
+  int _stairwells = 0;
+  int _railings = 0;
+  int _accentWalls = 0;
+  int _wpStdRooms = 0;
+  int _wpLivingRooms = 0;
+  int _wpKitchens = 0;
+  int _windows = 0;
+  int _garages = 0;
+  int _laundryRooms = 0;
+
   List<String> _uploadedPaths = <String>[];
   Map<String, dynamic>? _aiResult;
   String? _lastEstimateMode; // 'rough' | 'photo'
@@ -257,6 +273,18 @@ class _CustomerAiEstimatorWizardPageState
       'trim_standard': _trimStandard,
       'trim_kitchens': _trimKitchens,
       'trim_living_dining': _trimLivingDining,
+      'crown_standard': _crownStandard,
+      'crown_kitchens': _crownKitchens,
+      'crown_living_dining': _crownLivingDining,
+      'stairwells': _stairwells,
+      'railings': _railings,
+      'accent_walls': _accentWalls,
+      'wallpaper_std_rooms': _wpStdRooms,
+      'wallpaper_living_rooms': _wpLivingRooms,
+      'wallpaper_kitchens': _wpKitchens,
+      'windows': _windows,
+      'garages': _garages,
+      'laundry_rooms': _laundryRooms,
     };
   }
 
@@ -266,7 +294,9 @@ class _CustomerAiEstimatorWizardPageState
       _closets +
       _kitchens +
       _livingRooms +
-      _diningRooms;
+      _diningRooms +
+      _laundryRooms +
+      _garages;
 
   Future<void> _saveDraftFields() async {
     final id = _estimateId;
@@ -1098,9 +1128,19 @@ class _CustomerAiEstimatorWizardPageState
             (v) => setState(() => _livingRooms = v),
           ),
           _roomCounterRow(
-            'Dining rooms',
+            'Dining rooms / Hallways',
             _diningRooms,
             (v) => setState(() => _diningRooms = v),
+          ),
+          _roomCounterRow(
+            'Laundry rooms',
+            _laundryRooms,
+            (v) => setState(() => _laundryRooms = v),
+          ),
+          _roomCounterRow(
+            'Garage interior',
+            _garages,
+            (v) => setState(() => _garages = v),
           ),
           if (_totalPaintingRooms > 0) ...[
             const SizedBox(height: 8),
@@ -1212,6 +1252,137 @@ class _CustomerAiEstimatorWizardPageState
             title: const Text('Living / dining trim'),
             subtitle: Text(_includesPaint ? '\$70 per room' : '\$55 per room'),
             contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(),
+          Text(
+            'Crown Molding (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          SwitchListTile(
+            value: _crownStandard,
+            onChanged: (v) => setState(() => _crownStandard = v),
+            title: const Text('Bedroom / bath / closet crown'),
+            subtitle: Text(_includesPaint ? '\$55 per room' : '\$40 per room'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _crownKitchens,
+            onChanged: (v) => setState(() => _crownKitchens = v),
+            title: const Text('Kitchen crown'),
+            subtitle: Text(
+              _includesPaint ? '\$70 per kitchen' : '\$55 per kitchen',
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _crownLivingDining,
+            onChanged: (v) => setState(() => _crownLivingDining = v),
+            title: const Text('Living / dining crown'),
+            subtitle: Text(_includesPaint ? '\$70 per room' : '\$55 per room'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(),
+          Text(
+            'Extras',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          _roomCounterRow(
+            'Stairwells / Staircases',
+            _stairwells,
+            (v) => setState(() => _stairwells = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$260 each' : '\$225 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Railings / Spindles',
+            _railings,
+            (v) => setState(() => _railings = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$240 each' : '\$200 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Accent / Feature walls',
+            _accentWalls,
+            (v) => setState(() => _accentWalls = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$200 each' : '\$150 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Windows / Frames',
+            _windows,
+            (v) => setState(() => _windows = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$50 each' : '\$35 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const Divider(),
+          Text(
+            'Wallpaper Removal (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          _roomCounterRow(
+            'Standard rooms',
+            _wpStdRooms,
+            (v) => setState(() => _wpStdRooms = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              '\$125 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Living areas',
+            _wpLivingRooms,
+            (v) => setState(() => _wpLivingRooms = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              '\$280 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Kitchens',
+            _wpKitchens,
+            (v) => setState(() => _wpKitchens = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              '\$250 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
         ],
       ],

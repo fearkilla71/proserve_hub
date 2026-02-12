@@ -1717,7 +1717,9 @@ function estimateInteriorPaintingRange({ q }) {
   const closets        = clampNumber(questions.closets, 0, 50);
   const kitchens       = clampNumber(questions.kitchens, 0, 10);
   const livingRooms    = clampNumber(questions.living_rooms, 0, 20);
-  const diningRooms    = clampNumber(questions.dining_rooms, 0, 20);
+  const diningRooms    = clampNumber(questions.dining_rooms, 0, 20); // includes hallways
+  const laundryRooms   = clampNumber(questions.laundry_rooms, 0, 5);
+  const garages        = clampNumber(questions.garages, 0, 5);
 
   // Paint supply
   const includesPaint = questions.includes_paint !== false; // default: with paint
@@ -1760,6 +1762,24 @@ function estimateInteriorPaintingRange({ q }) {
   const TRIM_LD_LABOR    = 55;
   const TRIM_LD_PAINT    = 70;
 
+  // ---- Additional interior items ----
+  const STAIRWELL_LABOR  = 225;
+  const STAIRWELL_PAINT  = 260;
+  const RAILING_LABOR    = 200;
+  const RAILING_PAINT    = 240;
+  const ACCENT_WALL_LABOR = 150;
+  const ACCENT_WALL_PAINT = 200;
+  const WALLPAPER_STD    = 125;  // per standard room
+  const WALLPAPER_LIVING = 280;  // living areas
+  const WALLPAPER_KITCHEN = 250; // kitchen
+  const WINDOW_LABOR     = 35;
+  const WINDOW_PAINT     = 50;
+  const GARAGE_LABOR     = 500;
+  const GARAGE_PAINT     = 625;
+  const LAUNDRY_LABOR    = 175;
+  const LAUNDRY_PAINT    = 220;
+  // Crown molding uses same rates as trim
+
   // Doors
   const doorsOneSide  = clampNumber(questions.doors_one_side, 0, 100);
   const doorsBothSides = clampNumber(questions.doors_both_sides, 0, 100);
@@ -1779,6 +1799,48 @@ function estimateInteriorPaintingRange({ q }) {
   const trimTotal = (trimStd ? stdCount * trimStdRate : 0)
                   + (trimKit ? kitchens * trimKitRate : 0)
                   + (trimLD ? ldCount * trimLDRate : 0);
+
+  // Crown molding (same rates as trim)
+  const crownStd = questions.crown_standard === true;
+  const crownKit = questions.crown_kitchens === true;
+  const crownLD  = questions.crown_living_dining === true;
+  const crownTotal = (crownStd ? stdCount * trimStdRate : 0)
+                   + (crownKit ? kitchens * trimKitRate : 0)
+                   + (crownLD ? ldCount * trimLDRate : 0);
+
+  // Stairwells / staircases
+  const stairwells = clampNumber(questions.stairwells, 0, 20);
+  const stairwellRate = includesPaint ? STAIRWELL_PAINT : STAIRWELL_LABOR;
+  const stairwellTotal = stairwells * stairwellRate;
+
+  // Railings / spindles
+  const railings = clampNumber(questions.railings, 0, 20);
+  const railingRate = includesPaint ? RAILING_PAINT : RAILING_LABOR;
+  const railingTotal = railings * railingRate;
+
+  // Accent / feature walls
+  const accentWalls = clampNumber(questions.accent_walls, 0, 50);
+  const accentRate = includesPaint ? ACCENT_WALL_PAINT : ACCENT_WALL_LABOR;
+  const accentTotal = accentWalls * accentRate;
+
+  // Wallpaper removal (labor only — no paint option)
+  const wpStd     = clampNumber(questions.wallpaper_std_rooms, 0, 50);
+  const wpLiving  = clampNumber(questions.wallpaper_living_rooms, 0, 20);
+  const wpKitchen = clampNumber(questions.wallpaper_kitchens, 0, 10);
+  const wpTotal = (wpStd * WALLPAPER_STD) + (wpLiving * WALLPAPER_LIVING) + (wpKitchen * WALLPAPER_KITCHEN);
+
+  // Windows / window frames
+  const windows = clampNumber(questions.windows, 0, 100);
+  const windowRate = includesPaint ? WINDOW_PAINT : WINDOW_LABOR;
+  const windowTotal = windows * windowRate;
+
+  // Garage interior
+  const garageRate = includesPaint ? GARAGE_PAINT : GARAGE_LABOR;
+  const garageTotal = garages * garageRate;
+
+  // Laundry rooms
+  const laundryRate = includesPaint ? LAUNDRY_PAINT : LAUNDRY_LABOR;
+  const laundryTotal = laundryRooms * laundryRate;
 
   // Standard rooms (bedrooms, bathrooms, closets)
   const stdCount = bedrooms + bathrooms + closets;
@@ -1811,9 +1873,12 @@ function estimateInteriorPaintingRange({ q }) {
   const ceilLivCount = ceilLiving || paintAllCeilings ? livingRooms : 0;
   const ceilLivTotal = ceilLivCount * ceilStdRate;
 
-  const totalRooms = stdCount + kitchens + ldCount;
+  const totalRooms = stdCount + kitchens + ldCount + laundryRooms + garages;
   const totalDoors = doorsOneSide + doorsBothSides;
-  const total = stdTotal + kitTotal + ldTotal + ceilStdTotal + ceilKdTotal + ceilLivTotal + doorTotal + trimTotal;
+  const total = stdTotal + kitTotal + ldTotal + ceilStdTotal + ceilKdTotal + ceilLivTotal
+              + doorTotal + trimTotal + crownTotal
+              + stairwellTotal + railingTotal + accentTotal + wpTotal
+              + windowTotal + garageTotal + laundryTotal;
 
   // Build breakdown
   const breakdown = [];
@@ -1822,22 +1887,25 @@ function estimateInteriorPaintingRange({ q }) {
   if (closets   > 0) breakdown.push(`${closets} closet(s) × $${stdRate}`);
   if (kitchens  > 0) breakdown.push(`${kitchens} kitchen(s) × $${kitRate}`);
   if (livingRooms > 0) breakdown.push(`${livingRooms} living room(s) × $${ldRate}`);
-  if (diningRooms > 0) breakdown.push(`${diningRooms} dining room(s) × $${ldRate}`);
+  if (diningRooms > 0) breakdown.push(`${diningRooms} dining/hallway(s) × $${ldRate}`);
+  if (laundryRooms > 0) breakdown.push(`${laundryRooms} laundry room(s) × $${laundryRate}`);
+  if (garages > 0) breakdown.push(`${garages} garage(s) × $${garageRate}`);
 
   const ceilCount = ceilStdCount + ceilKdCount + ceilLivCount;
   if (ceilCount > 0) breakdown.push(`${ceilCount} ceiling(s)`);
   if (doorsOneSide > 0) breakdown.push(`${doorsOneSide} door(s) one-side × $${doorOneSideRate}`);
   if (doorsBothSides > 0) breakdown.push(`${doorsBothSides} door(s) both-sides × $${doorBothSidesRate}`);
-  if (trimStd) breakdown.push(`Trim for ${stdCount} std room(s) × $${trimStdRate}`);
-  if (trimKit) breakdown.push(`Trim for ${kitchens} kitchen(s) × $${trimKitRate}`);
-  if (trimLD) breakdown.push(`Trim for ${ldCount} living/dining × $${trimLDRate}`);
+  if (trimStd || trimKit || trimLD) breakdown.push('Trim/baseboards');
+  if (crownStd || crownKit || crownLD) breakdown.push('Crown molding');
+  if (stairwells > 0) breakdown.push(`${stairwells} stairwell(s) × $${stairwellRate}`);
+  if (railings > 0) breakdown.push(`${railings} railing(s) × $${railingRate}`);
+  if (accentWalls > 0) breakdown.push(`${accentWalls} accent wall(s) × $${accentRate}`);
+  if (wpStd + wpLiving + wpKitchen > 0) breakdown.push(`${wpStd + wpLiving + wpKitchen} wallpaper removal`);
+  if (windows > 0) breakdown.push(`${windows} window frame(s) × $${windowRate}`);
 
   const notes = [
     `Interior Painting Estimate — ${totalRooms} room(s), ${includesPaint ? 'with paint' : 'labor only'}.`,
     breakdown.join(', ') + '.',
-    ceilCount > 0 ? `Ceilings included for ${ceilCount} room(s).` : 'No ceilings.',
-    totalDoors > 0 ? `${totalDoors} door(s) included.` : '',
-    (trimStd || trimKit || trimLD) ? 'Trim/baseboards included.' : '',
   ].filter(s => s.length > 0).join(' ');
 
   return { total, totalRooms, notes };
@@ -7443,13 +7511,20 @@ KEY QUESTIONS TO ASK (in natural order, 1-2 per message):
    - Closets (walk-in closets count, skip small reach-in closets)
    - Kitchens (count)
    - Living rooms (count)
-   - Dining rooms (count)
+   - Dining rooms / Hallways (count together)
+   - Laundry rooms (count)
+   - Garage interior (count)
 2. Labor only or labor + materials? (Do they already have paint, or do they need the contractor to supply paint?)
 3. Do any rooms need the ceiling painted too? If so, which rooms?
-4. What's the ZIP code for the property?
-5. Any special requests? (accent walls, specific paint brand, prep work needed)
-6. How many doors need painting? One side or both sides?
-7. Do you need trim / baseboards painted? If so, which rooms?
+4. How many doors need painting? One side or both sides?
+5. Do you need trim / baseboards painted? Crown molding?
+6. Any stairwells or staircases? How many?
+7. Any railings / spindles to paint?
+8. Any accent / feature walls (different color)?
+9. Does any room have wallpaper that needs removal? Which rooms?
+10. How many windows / window frames need painting?
+11. What is the ZIP code for the property?
+12. Any special requests? (specific paint brand, prep work needed)
 
 IMPORTANT: If the user has uploaded photos, analyze them carefully for:
 - Room type identification (bedroom, bathroom, kitchen, living room, etc.)
@@ -7478,31 +7553,53 @@ Trim / Baseboards per room:
 - Kitchen: $55 labor only / $70 with paint
 - Living / Dining room: $55 labor only / $70 with paint
 
+Crown Molding per room (same rates as trim):
+- Standard rooms: $40 labor only / $55 with paint
+- Kitchen: $55 labor only / $70 with paint
+- Living / Dining: $55 labor only / $70 with paint
+
+Stairwells / Staircases: $225 labor only / $260 with paint (each)
+Railings / Spindles: $200 labor only / $240 with paint (each)
+Accent / Feature Walls: $150 labor only / $200 with paint (each)
+
+Wallpaper Removal (labor only, no paint option):
+- Standard room: $125 each
+- Living area: $280 each
+- Kitchen: $250 each
+
+Windows / Window Frames: $35 labor only / $50 with paint (each)
+Garage Interior: $500 labor only / $625 with paint (each)
+Laundry Room: $175 labor only / $220 with paint (each)
+
 CALCULATION RULES:
-1. Count each room type × the wall rate above
+1. Count each room type x the wall rate above
 2. Add ceiling costs only for rooms where customer wants ceilings painted
 3. Add door costs based on count and one-side vs both-sides
-4. Add trim costs for each room category where customer wants trim painted
-5. Sum all = total estimate
-6. The "recommended" price is the exact calculated total
-7. "low" = recommended × 0.88 (discount for simple/standard conditions)
-8. "premium" = recommended × 1.15 (for extras, difficult access, or premium paint)
+4. Add trim and/or crown molding costs for each room category
+5. Add stairwells, railings, accent walls, wallpaper removal, windows, garage, laundry
+6. Sum all = total estimate
+7. The "recommended" price is the exact calculated total
+8. "low" = recommended x 0.88 (discount for simple/standard conditions)
+9. "premium" = recommended x 1.15 (for extras, difficult access, or premium paint)
 
-EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all, 8 doors (one side), trim on all rooms:
-- 3 bedrooms × $500 = $1,500
-- 1 kitchen × $560 = $560
-- 1 living room × $560 = $560
-- 3 bedroom ceilings × $150 = $450
-- 1 kitchen ceiling × $225 = $225
-- 1 living room ceiling × $150 = $150
-- 8 doors (one side) × $90 = $720
-- 3 std rooms trim × $55 = $165
-- 1 kitchen trim × $70 = $70
-- 1 living room trim × $70 = $70
-- Total recommended = $4,470
-- Low = $3,934, Premium = $5,141
+EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all, 8 doors (one side), trim on all, 1 stairwell, 1 railing, 2 accent walls, 1 laundry, 4 windows:
+- 3 bedrooms x $500 = $1,500
+- 1 kitchen x $560 = $560
+- 1 living room x $560 = $560
+- 1 laundry x $220 = $220
+- 3 bedroom ceilings x $150 = $450
+- 1 kitchen ceiling x $225 = $225
+- 1 living room ceiling x $150 = $150
+- 8 doors (one side) x $90 = $720
+- Trim: 3 std x $55 + 1 kit x $70 + 1 ld x $70 = $305
+- 1 stairwell x $260 = $260
+- 1 railing x $240 = $240
+- 2 accent walls x $200 = $400
+- 4 windows x $50 = $200
+- Total recommended = $5,790
+- Low = $5,095, Premium = $6,659
 
-NOTE: Accent walls will be priced separately in a future update. If the customer asks, let them know this add-on is not yet included.`,
+NOTE: Hallways are counted together with dining rooms. Wallpaper removal is labor only (no paint add-on).`,
 
     exterior_painting: `
 SERVICE: Exterior Painting
