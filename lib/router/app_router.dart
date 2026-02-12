@@ -301,11 +301,21 @@ GoRouter createRouter() {
         path: '/invoice-preview',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
+          final draft = extra['draft'] as InvoiceDraft?;
+          final buildPdf =
+              extra['buildPdf'] as Future<Uint8List> Function()?;
+          if (draft == null || buildPdf == null) {
+            return const Scaffold(
+              body: Center(child: Text('Missing invoice data')),
+            );
+          }
           return InvoicePreviewScreen(
-            draft: extra['draft'] as InvoiceDraft,
-            issuedDate: extra['issuedDate'] as DateTime,
-            total: extra['total'] as double,
-            buildPdf: extra['buildPdf'] as Future<Uint8List> Function(),
+            draft: draft,
+            issuedDate: extra['issuedDate'] is DateTime
+                ? extra['issuedDate'] as DateTime
+                : DateTime.now(),
+            total: (extra['total'] as num?)?.toDouble() ?? 0,
+            buildPdf: buildPdf,
           );
         },
       ),
@@ -514,7 +524,9 @@ GoRouter createRouter() {
           return CancellationScreen(
             jobId: jobId,
             collection: extra['collection'] as String? ?? 'job_requests',
-            scheduledDate: extra['scheduledDate'] as DateTime,
+            scheduledDate: extra['scheduledDate'] is DateTime
+                ? extra['scheduledDate'] as DateTime
+                : DateTime.now(),
             jobPrice: (extra['jobPrice'] as num?)?.toDouble() ?? 0,
             jobTitle: extra['jobTitle'] as String? ?? '',
           );

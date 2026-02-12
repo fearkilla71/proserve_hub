@@ -484,7 +484,8 @@ class RootGate extends StatelessWidget {
     }
 
     // Require verified email + phone before allowing portal access.
-    final user = state.user!;
+    final user = state.user;
+    if (user == null) return const LandingPage();
     if (!user.emailVerified || !state.phoneVerified) {
       return const VerifyContactInfoPage();
     }
