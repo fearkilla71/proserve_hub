@@ -202,14 +202,18 @@ class _CancellationScreenState extends State<CancellationScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            ...CancelReason.values.map((r) {
-              return RadioListTile<CancelReason>(
-                title: Text(cancelReasonLabel(r)),
-                value: r,
-                groupValue: _reason,
-                onChanged: (v) => setState(() => _reason = v),
-              );
-            }),
+            RadioGroup<CancelReason>(
+              groupValue: _reason,
+              onChanged: (v) => setState(() => _reason = v),
+              child: Column(
+                children: CancelReason.values.map((r) {
+                  return RadioListTile<CancelReason>(
+                    title: Text(cancelReasonLabel(r)),
+                    value: r,
+                  );
+                }).toList(),
+              ),
+            ),
 
             const SizedBox(height: 16),
 

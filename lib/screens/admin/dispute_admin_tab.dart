@@ -230,7 +230,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
-                        value: _sortBy,
+                        initialValue: _sortBy,
                         decoration: const InputDecoration(
                           labelText: 'Sort by',
                           border: OutlineInputBorder(),

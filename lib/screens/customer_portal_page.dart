@@ -882,7 +882,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
                           return ListView.separated(
                             itemCount: matches.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const Divider(height: 1),
                             itemBuilder: (ctx, i) {
                               final d = matches[i];

@@ -533,7 +533,7 @@ class _ContractorSubscriptionScreenState
                           try {
                             await _subs.restorePurchases();
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(this.context).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'Restore complete. Subscription status will update shortly.',
@@ -543,7 +543,7 @@ class _ContractorSubscriptionScreenState
                             _autoRefreshEntitlement();
                           } catch (e) {
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(this.context).showSnackBar(
                               SnackBar(content: Text('Restore failed: $e')),
                             );
                           } finally {

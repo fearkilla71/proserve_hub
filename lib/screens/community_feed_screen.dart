@@ -456,6 +456,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       return;
     }
 
+    if (!mounted) return;
     final result = await showDialog<_ReportResult>(
       context: context,
       builder: (context) => const _ReportDialog(),

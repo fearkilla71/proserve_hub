@@ -188,7 +188,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value: _sortBy,
+                      initialValue: _sortBy,
                       decoration: const InputDecoration(
                         labelText: 'Sort by',
                         border: OutlineInputBorder(),
