@@ -86,7 +86,41 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
 
     setState(() => _submitting = true);
     try {
-      // Create booking doc with rich fields for tracking
+      // Use a transaction to prevent double-booking the same slot
+      final contractorRef = FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(widget.contractorId);
+
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final contractorSnap = await tx.get(contractorRef);
+        final liveAvailability =
+            (contractorSnap.data()?['availability'] as Map<String, dynamic>?) ??
+                {};
+        final key = _dateKey(_selectedDate);
+        final liveSlots =
+            (liveAvailability[key] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+                [];
+        final slot = liveSlots.firstWhere(
+          (s) => s['time'] == _selectedSlot,
+          orElse: () => <String, dynamic>{},
+        );
+        if (slot.isEmpty || slot['booked'] == true) {
+          throw Exception(
+            'This slot was just booked by someone else. Please choose another.',
+          );
+        }
+
+        // Mark slot as booked
+        for (final s in liveSlots) {
+          if (s['time'] == _selectedSlot) {
+            s['booked'] = true;
+          }
+        }
+        liveAvailability[key] = liveSlots;
+        tx.update(contractorRef, {'availability': liveAvailability});
+      });
+
+      // Create booking doc outside the transaction
       final bookingRef = await FirebaseFirestore.instance
           .collection('bookings')
           .add({
@@ -100,7 +134,7 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      // Mark slot as booked on contractor doc
+      // Update local state
       final key = _dateKey(_selectedDate);
       final slots = _availability[key] ?? [];
       for (final slot in slots) {
@@ -108,10 +142,6 @@ class _BookingCalendarScreenState extends State<BookingCalendarScreen> {
           slot['booked'] = true;
         }
       }
-      await FirebaseFirestore.instance
-          .collection('contractors')
-          .doc(widget.contractorId)
-          .set({'availability': _availability}, SetOptions(merge: true));
 
       // Send booking confirmation notification via Cloud Function
       try {

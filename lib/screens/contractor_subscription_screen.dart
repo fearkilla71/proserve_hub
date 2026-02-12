@@ -320,9 +320,12 @@ class _ContractorSubscriptionScreenState
           final unlocked = _isProFromUserDoc(data);
 
           if (!unlocked) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _autoRefreshEntitlement();
-            });
+            // Only trigger once, not every rebuild
+            if (!_isAutoRefreshing) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _autoRefreshEntitlement();
+              });
+            }
           }
 
           return ListView(

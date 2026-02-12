@@ -791,7 +791,14 @@ exports.removeFreeSignupCredits = functions.https.onCall(
     const dryRun = data?.dryRun === true;
 
     // Rate limiting: 30 runs per day per admin.
-    await checkRateLimit(uid, 'removeFreeSignupCredits', 30, 24 * 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(uid, 'removeFreeSignupCredits', 30, 24 * 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      const resetTime = new Date(rateLimit.resetTime).toISOString();
+      throw new functions.https.HttpsError(
+        'resource-exhausted',
+        `Rate limit exceeded. Try again after ${resetTime}.`
+      );
+    }
 
     return await removeFreeSignupCreditsCore({ adminUid: uid, freeCredits, dryRun });
   }
@@ -834,7 +841,15 @@ exports.removeFreeSignupCreditsHttp = functions.https.onRequest(async (req, res)
     const freeCredits = req.body?.freeCredits ?? 3;
     const dryRun = req.body?.dryRun === true;
 
-    await checkRateLimit(uid, 'removeFreeSignupCredits', 30, 24 * 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(uid, 'removeFreeSignupCredits', 30, 24 * 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      const resetTime = new Date(rateLimit.resetTime).toISOString();
+      res.status(429).json({
+        error: `Rate limit exceeded. Try again after ${resetTime}.`,
+        code: 'resource-exhausted',
+      });
+      return;
+    }
 
     const result = await removeFreeSignupCreditsCore({ adminUid: uid, freeCredits, dryRun });
     res.json(result);
@@ -1525,8 +1540,8 @@ async function checkRateLimit(uid, functionName, maxCalls, windowMs) {
     return result;
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    // On error, allow the request (fail open)
-    return { allowed: true, remainingCalls: maxCalls };
+    // On error, deny the request (fail closed) to prevent abuse
+    return { allowed: false, remainingCalls: 0, resetTime: Date.now() + 60000 };
   }
 }
 
@@ -2616,8 +2631,7 @@ exports.aiRenderPromptAny = functions
       }
 
       // Rate limiting: 6 renders per hour per user
-      // Rate limiting: allow higher throughput during testing.
-      const rateLimit = await checkRateLimit(uid, 'aiRenderPromptAny', 30, 60 * 60 * 1000);
+      const rateLimit = await checkRateLimit(uid, 'aiRenderPromptAny', 6, 60 * 60 * 1000);
       if (!rateLimit.allowed) {
         const resetTime = new Date(rateLimit.resetTime).toISOString();
         throw new functions.https.HttpsError(
@@ -3646,7 +3660,7 @@ async function estimateFromImagesInputsCore({
   }
 
   let price = baseRate * resolvedQuantity * zipMultiplier * complexityMultiplier;
-  if (urgent) price *= 1.25;
+  if (urgent) price *= ESTIMATE_URGENCY_MULTIPLIER;
   price = clampNumber(price, minPrice, maxPrice);
 
   const result = {
@@ -7123,11 +7137,20 @@ async function refundEscrowCore({ escrowId, uid }) {
   }
 
   // Issue full refund via Stripe
-  const stripe = getStripeClient();
-  const refund = await stripe.refunds.create({
-    payment_intent: paymentIntentId,
-    reason: 'requested_by_customer',
-  });
+  let refund;
+  try {
+    const stripe = getStripeClient();
+    refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      reason: 'requested_by_customer',
+    });
+  } catch (stripeErr) {
+    console.error(`[refundEscrow] Stripe refund failed for escrow ${escrowId}:`, stripeErr.message);
+    throw new functions.https.HttpsError(
+      'internal',
+      'Refund failed. Please try again or contact support.'
+    );
+  }
 
   // Update escrow booking
   await escrowRef.update({

@@ -100,18 +100,23 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
     _removeOverlay();
 
     // Fetch full details for structured fields
-    final details = await PlacesService.instance.getDetails(prediction.placeId);
+    try {
+      final details =
+          await PlacesService.instance.getDetails(prediction.placeId);
 
-    if (details != null) {
-      // Use the street address for the field, not the full formatted address
-      final street = details.streetAddress;
-      if (street.isNotEmpty) {
-        widget.controller.text = street;
+      if (details != null) {
+        // Use the street address for the field, not the full formatted address
+        final street = details.streetAddress;
+        if (street.isNotEmpty) {
+          widget.controller.text = street;
+        }
+        widget.onPlaceSelected?.call(details);
       }
-      widget.onPlaceSelected?.call(details);
+    } catch (e) {
+      debugPrint('Place details fetch failed: $e');
+    } finally {
+      _suppressSearch = false;
     }
-
-    _suppressSearch = false;
   }
 
   // ────────────────────── Overlay ──────────────────────────────

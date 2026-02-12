@@ -142,30 +142,33 @@ class EscrowService {
       throw Exception('You can only assign yourself to an escrow');
     }
 
-    await _db.collection(_collection).doc(escrowId).update({
-      'contractorId': contractorId,
-    });
+    // Use a transaction to atomically check credits and deduct
+    await _db.runTransaction((tx) async {
+      final escrowRef = _db.collection(_collection).doc(escrowId);
+      final escrowSnap = await tx.get(escrowRef);
+      final premiumCost =
+          (escrowSnap.data()?['premiumLeadCost'] as num?)?.toInt() ?? 3;
 
-    // Deduct premium lead credits (3x normal cost)
-    final escrowSnap = await _db.collection(_collection).doc(escrowId).get();
-    final premiumCost =
-        (escrowSnap.data()?['premiumLeadCost'] as num?)?.toInt() ?? 3;
-
-    final contractorRef = _db.collection('contractors').doc(contractorId);
-    final contractorSnap = await contractorRef.get();
-    if (contractorSnap.exists) {
-      final currentCredits =
-          (contractorSnap.data()?['leadCredits'] as num?)?.toInt() ?? 0;
-      if (currentCredits < premiumCost) {
-        throw Exception(
-          'Insufficient credits. Escrow leads require $premiumCost credits.',
-        );
+      final contractorRef = _db.collection('contractors').doc(contractorId);
+      final contractorSnap = await tx.get(contractorRef);
+      if (contractorSnap.exists) {
+        final currentCredits =
+            (contractorSnap.data()?['leadCredits'] as num?)?.toInt() ?? 0;
+        if (currentCredits < premiumCost) {
+          throw Exception(
+            'Insufficient credits. Escrow leads require $premiumCost credits.',
+          );
+        }
+        tx.update(contractorRef, {
+          'leadCredits': FieldValue.increment(-premiumCost),
+          'premiumLeadsUsed': FieldValue.increment(1),
+        });
       }
-      await contractorRef.update({
-        'leadCredits': FieldValue.increment(-premiumCost),
-        'premiumLeadsUsed': FieldValue.increment(1),
+
+      tx.update(escrowRef, {
+        'contractorId': contractorId,
       });
-    }
+    });
   }
 
   // ──────────────────────────── CONFIRM COMPLETION ──────────────────────
@@ -215,21 +218,33 @@ class EscrowService {
   /// If both customer and contractor have confirmed, release funds.
   Future<void> _tryRelease(String escrowId) async {
     final ref = _db.collection(_collection).doc(escrowId);
-    final snap = await ref.get();
-    final data = snap.data();
-    if (data == null) return;
 
-    final customerDone = data['customerConfirmedAt'] != null;
-    final contractorDone = data['contractorConfirmedAt'] != null;
+    // Use a transaction to prevent double-release from simultaneous confirms
+    final released = await _db.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data();
+      if (data == null) return false;
 
-    if (customerDone && contractorDone) {
-      await ref.update({
-        'status': EscrowStatus.released.value,
-        'releasedAt': FieldValue.serverTimestamp(),
-      });
+      // Already released — nothing to do
+      if (data['status'] == EscrowStatus.released.value) return false;
 
-      // Update job_request status
-      final jobId = data['jobId'] as String?;
+      final customerDone = data['customerConfirmedAt'] != null;
+      final contractorDone = data['contractorConfirmedAt'] != null;
+
+      if (customerDone && contractorDone) {
+        tx.update(ref, {
+          'status': EscrowStatus.released.value,
+          'releasedAt': FieldValue.serverTimestamp(),
+        });
+        return true;
+      }
+      return false;
+    });
+
+    if (released) {
+      // Update job_request status (outside transaction — best effort)
+      final snap = await ref.get();
+      final jobId = snap.data()?['jobId'] as String?;
       if (jobId != null && jobId.isNotEmpty) {
         await _db.collection('job_requests').doc(jobId).update({
           'status': 'completed',

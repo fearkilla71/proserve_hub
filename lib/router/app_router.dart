@@ -302,8 +302,7 @@ GoRouter createRouter() {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           final draft = extra['draft'] as InvoiceDraft?;
-          final buildPdf =
-              extra['buildPdf'] as Future<Uint8List> Function()?;
+          final buildPdf = extra['buildPdf'] as Future<Uint8List> Function()?;
           if (draft == null || buildPdf == null) {
             return const Scaffold(
               body: Center(child: Text('Missing invoice data')),

@@ -161,8 +161,16 @@ class EscrowBooking {
     'contractorPayout': contractorPayout,
     'status': status.value,
     'jobDetails': jobDetails,
-    'createdAt': FieldValue.serverTimestamp(),
+    'createdAt': Timestamp.fromDate(createdAt),
     'priceBreakdown': priceBreakdown,
+    if (fundedAt != null) 'fundedAt': Timestamp.fromDate(fundedAt!),
+    if (customerConfirmedAt != null)
+      'customerConfirmedAt': Timestamp.fromDate(customerConfirmedAt!),
+    if (contractorConfirmedAt != null)
+      'contractorConfirmedAt': Timestamp.fromDate(contractorConfirmedAt!),
+    if (releasedAt != null) 'releasedAt': Timestamp.fromDate(releasedAt!),
+    if (stripePaymentIntentId != null)
+      'stripePaymentIntentId': stripePaymentIntentId,
     if (priceLockExpiry != null)
       'priceLockExpiry': Timestamp.fromDate(priceLockExpiry!),
     if (estimatedMarketPrice != null)
@@ -171,6 +179,10 @@ class EscrowBooking {
     if (savingsPercent != null) 'savingsPercent': savingsPercent,
     if (discountPercent != null) 'discountPercent': discountPercent,
     if (originalAiPrice != null) 'originalAiPrice': originalAiPrice,
+    if (priceFairnessRating != null)
+      'priceFairnessRating': priceFairnessRating,
+    if (ratingComment != null) 'ratingComment': ratingComment,
+    if (ratedAt != null) 'ratedAt': Timestamp.fromDate(ratedAt!),
     'premiumLeadCost': premiumLeadCost,
   };
 
