@@ -11,6 +11,18 @@ import 'dart:convert';
 
 import '../theme/proserve_theme.dart';
 
+/// Recursively converts nested maps (from Firebase callable
+/// responses) into `Map<String,dynamic>` so that `as` casts don't throw.
+dynamic _deepCast(dynamic value) {
+  if (value is Map) {
+    return <String, dynamic>{
+      for (final e in value.entries) e.key.toString(): _deepCast(e.value),
+    };
+  }
+  if (value is List) return value.map(_deepCast).toList();
+  return value;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI Estimate Chat Screen
 //
@@ -124,7 +136,7 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
           options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
         );
         final response = await callable.call(payload);
-        result = Map<String, dynamic>.from(response.data as Map);
+        result = _deepCast(response.data) as Map<String, dynamic>;
       } catch (_) {
         // Fall back to HTTP
         final url = Uri.parse(
@@ -151,7 +163,9 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
               .toList() ??
           [];
       final done = result['estimateReady'] == true;
-      final estimate = result['estimate'] as Map<String, dynamic>?;
+      final estimate = result['estimate'] != null
+          ? _deepCast(result['estimate']) as Map<String, dynamic>
+          : null;
       final collectedZip = (result['collectedData']?['zip'] ?? '').toString();
 
       if (collectedZip.isNotEmpty) _zip = collectedZip;
