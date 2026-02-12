@@ -1,12 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'recommended_contractors_page.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/contractor_reputation_card.dart';
 import '../services/location_service.dart';
 import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
-import 'favorite_contractors_screen.dart';
 
 class BrowseContractorsScreen extends StatefulWidget {
   const BrowseContractorsScreen({super.key, this.showBackButton = true});
@@ -180,12 +180,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
           IconButton(
             tooltip: 'Saved contractors',
             icon: const Icon(Icons.favorite_border),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const FavoriteContractorsScreen(),
-              ),
-            ),
+            onPressed: () => context.push('/favorites'),
           ),
         ],
         bottom: PreferredSize(
@@ -807,12 +802,7 @@ class _ContractorCardState extends State<_ContractorCard> {
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ContractorProfilePage(contractorId: contractorId),
-            ),
-          );
+          context.push('/contractor/$contractorId');
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -824,7 +814,7 @@ class _ContractorCardState extends State<_ContractorCard> {
                 radius: 40,
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 backgroundImage: profileImage != null
-                    ? NetworkImage(profileImage)
+                    ? CachedNetworkImageProvider(profileImage)
                     : null,
                 child: profileImage == null
                     ? Text(

@@ -97,7 +97,7 @@ class PricingEngine {
       final zipDoc = await _getCachedDoc('zip_costs', zipKey);
 
       final zipMultiplier = zipDoc.exists
-          ? (zipDoc.data!['multiplier'] as num).toDouble()
+          ? (zipDoc.data?['multiplier'] as num?)?.toDouble() ?? 1.0
           : 1.0;
 
       double low = 1.75 * quantity * zipMultiplier;
@@ -124,15 +124,15 @@ class PricingEngine {
       );
     }
 
-    final pricing = pricingDoc.data!;
-    final baseRate = (pricing['baseRate'] as num).toDouble();
-    final minPrice = (pricing['minPrice'] as num).toDouble();
-    final maxPrice = (pricing['maxPrice'] as num).toDouble();
+    final pricing = pricingDoc.data ?? {};
+    final baseRate = (pricing['baseRate'] as num?)?.toDouble() ?? 0.0;
+    final minPrice = (pricing['minPrice'] as num?)?.toDouble() ?? 0.0;
+    final maxPrice = (pricing['maxPrice'] as num?)?.toDouble() ?? 10000.0;
 
     final zipDoc = await _getCachedDoc('zip_costs', zipKey);
 
     final zipMultiplier = zipDoc.exists
-        ? (zipDoc.data!['multiplier'] as num).toDouble()
+        ? (zipDoc.data?['multiplier'] as num?)?.toDouble() ?? 1.0
         : 1.0;
 
     double price = baseRate * quantity * zipMultiplier;

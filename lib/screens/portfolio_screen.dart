@@ -677,7 +677,7 @@ class _VideoControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<VideoPlayerValue>(
       valueListenable: controller,
-      builder: (_, value, _2) {
+      builder: (_, value, 2) {
         return Container(
           color: Colors.black38,
           padding: const EdgeInsets.symmetric(horizontal: 8),

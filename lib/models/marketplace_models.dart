@@ -32,7 +32,7 @@ class Message {
   });
 
   factory Message.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
     final durationRaw = data['audioDurationMs'];
     return Message(
       id: doc.id,
@@ -95,7 +95,7 @@ class Conversation {
   });
 
   factory Conversation.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
 
     DateTime? tsToDate(dynamic v) {
       if (v is Timestamp) return v.toDate();
@@ -173,7 +173,7 @@ class Bid {
   });
 
   factory Bid.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
     return Bid(
       id: doc.id,
       jobId: data['jobId'] ?? '',
@@ -245,7 +245,7 @@ class Review {
   });
 
   factory Review.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
 
     double? numToDouble(dynamic v) {
       if (v == null) return null;

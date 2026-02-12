@@ -226,7 +226,7 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Help')),
+      appBar: AppBar(title: const Text('Profile')),
       body: _loading
           ? const ProfileSkeleton()
           : ListView(

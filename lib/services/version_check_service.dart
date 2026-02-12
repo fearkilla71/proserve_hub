@@ -91,6 +91,13 @@ class VersionCheckService {
           title: const Text('Update Required'),
           content: Text(message),
           actions: [
+            // Allow dismissing on desktop where no store URL exists
+            if (Theme.of(ctx).platform != TargetPlatform.iOS &&
+                Theme.of(ctx).platform != TargetPlatform.android)
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Dismiss'),
+              ),
             FilledButton.icon(
               icon: const Icon(Icons.download),
               label: const Text('Update Now'),
@@ -103,6 +110,9 @@ class VersionCheckService {
                     Uri.parse(url),
                     mode: LaunchMode.externalApplication,
                   );
+                } else {
+                  // No store URL — dismiss the dialog so user isn't trapped
+                  Navigator.of(ctx).pop();
                 }
               },
             ),

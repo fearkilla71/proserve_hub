@@ -7152,7 +7152,7 @@ async function refundEscrowCore({ escrowId, uid }) {
   console.log(`[refundEscrow] Refund ${refund.id} (${refund.status}) for escrow ${escrowId}`);
 
   return {
-    success: 'true',
+    success: true,
     refundId: refund.id,
     refundStatus: refund.status,
   };

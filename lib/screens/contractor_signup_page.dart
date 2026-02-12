@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
 import '../utils/zip_locations.dart';
-import '../widgets/signup_step_widgets.dart';
-import 'verify_contact_info_page.dart';
-import 'contractor_login_page.dart';
 
 class ContractorSignupPage extends StatefulWidget {
   const ContractorSignupPage({super.key});
@@ -454,54 +452,254 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   Widget _buildStepContent() {
     switch (_step) {
       case 0:
-        return SignupStepEmail(
-          emailController: email,
-          awaitingVerification: _awaitingEmailVerification,
-          emailVerified: _emailVerified,
-          inputDecoration: _inputDecoration,
-          onRefreshVerification: () async {
-            await _refreshEmailVerificationStatus();
-            if (!mounted) return;
-            if (!_emailVerified) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Not verified yet. Try again in a moment.'),
-                ),
-              );
-            }
-          },
+        return Column(
+          children: [
+            TextField(
+              controller: email,
+              keyboardType: TextInputType.emailAddress,
+              enabled: !_awaitingEmailVerification,
+              decoration: _inputDecoration(
+                label: 'Email',
+                hint: 'you@company.com',
+                icon: Icons.email_outlined,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _awaitingEmailVerification
+                  ? 'Check your email, verify, then return to continue.'
+                  : 'We’ll email a verification link after you create the account.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (_awaitingEmailVerification) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () async {
+                  await _refreshEmailVerificationStatus();
+                  if (!mounted) return;
+                  if (!_emailVerified) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Not verified yet. Try again in a moment.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('I verified, refresh status'),
+              ),
+            ],
+          ],
         );
       case 1:
-        return SignupStepPassword(
-          passwordController: password,
-          obscure: _obscurePassword,
-          onToggleObscure: () =>
-              setState(() => _obscurePassword = !_obscurePassword),
-          inputDecoration: _inputDecoration,
+        return Column(
+          children: [
+            TextField(
+              controller: password,
+              obscureText: _obscurePassword,
+              decoration: _inputDecoration(
+                label: 'Password',
+                hint: 'At least 6 characters',
+                icon: Icons.lock_outline,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                ),
+              ),
+            ),
+          ],
         );
       case 2:
-        return SignupStepProfile(
-          nameController: name,
-          companyController: company,
-          inputDecoration: _inputDecoration,
+        return Column(
+          children: [
+            TextField(
+              controller: name,
+              decoration: _inputDecoration(
+                label: 'Full name',
+                icon: Icons.person_outline,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: company,
+              decoration: _inputDecoration(
+                label: 'Company',
+                icon: Icons.business_outlined,
+              ),
+            ),
+          ],
         );
       case 3:
-        return SignupStepPhone(
-          phoneController: phone,
-          codeController: phoneCode,
-          phoneVerified: _phoneVerified,
-          phoneVerificationId: _phoneVerificationId,
-          inputDecoration: _inputDecoration,
+        return Column(
+          children: [
+            Center(
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  color: ProServeColors.cardElevated,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.phone_iphone,
+                    size: 72,
+                    color: ProServeColors.accent2,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: phone,
+              keyboardType: TextInputType.phone,
+              enabled: !_phoneVerified,
+              decoration: _inputDecoration(
+                label: 'Phone',
+                hint: '(123) 456-7890',
+                icon: Icons.phone_outlined,
+              ),
+            ),
+            if (_phoneVerificationId != null) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneCode,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration(
+                  label: 'Verification code',
+                  hint: '123456',
+                  icon: Icons.sms_outlined,
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Text(
+              'By creating an account, you agree to the ProServe Hub Privacy Policy and Terms of Service.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         );
       case 4:
       default:
-        return SignupStepLocation(
-          zipController: zip,
-          radiusController: radiusMiles,
-          showZipPreview: _showZipPreview,
-          zipAreaLabel: _zipAreaLabel,
-          onZipChanged: _updateZipPreview,
-          inputDecoration: _inputDecoration,
+        return Column(
+          children: [
+            Center(
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  color: ProServeColors.cardElevated,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/pitch/pin_card.png',
+                      width: 110,
+                      height: 110,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              height: 230,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        color: ProServeColors.cardElevated,
+                        child: Image.asset(
+                          'assets/pitch/zipcode_card.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 18,
+                    right: 18,
+                    bottom: 14,
+                    child: AnimatedSlide(
+                      duration: const Duration(milliseconds: 220),
+                      offset: _showZipPreview
+                          ? Offset.zero
+                          : const Offset(0, 0.08),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 220),
+                        opacity: _showZipPreview ? 1 : 0.92,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: ProServeColors.card,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            _showZipPreview
+                                ? 'ProServe Hub is active in $_zipAreaLabel — join local pros on the platform!'
+                                : 'Enter your ZIP code to check availability in your area',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: ProServeColors.muted,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            TextField(
+              controller: zip,
+              keyboardType: TextInputType.number,
+              onChanged: _updateZipPreview,
+              decoration: _inputDecoration(
+                label: 'ZIP code',
+                icon: Icons.location_on_outlined,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: radiusMiles,
+              keyboardType: TextInputType.number,
+              decoration: _inputDecoration(
+                label: 'Service radius (miles)',
+                icon: Icons.radar_outlined,
+              ),
+            ),
+          ],
         );
     }
   }
@@ -588,7 +786,6 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     setState(() => loading = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
 
     final radiusParsed = int.tryParse(radiusMiles.text.trim());
     final radius = (radiusParsed != null && radiusParsed > 0)
@@ -612,13 +809,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       );
 
       if (!mounted) return;
-      navigator.pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) =>
-              const VerifyContactInfoPage(showPitchAfterVerify: true),
-        ),
-        (r) => false,
-      );
+      context.go('/verify-contact', extra: {'showPitchAfterVerify': true});
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceFirst('Exception: ', '');
@@ -772,13 +963,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                               onPressed: loading
                                   ? null
                                   : () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const ContractorLoginPage(),
-                                        ),
-                                      );
+                                      context.push('/contractor-login');
                                     },
                               child: const Text(
                                 'Already have an account? Sign in',

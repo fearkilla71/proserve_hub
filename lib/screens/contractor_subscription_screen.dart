@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -298,11 +299,12 @@ class _ContractorSubscriptionScreenState
       appBar: AppBar(
         title: const Text('Subscription Plans'),
         actions: [
-          IconButton(
-            tooltip: 'Stripe diagnostics',
-            icon: const Icon(Icons.bug_report),
-            onPressed: _debugStripeStatus,
-          ),
+          if (!kReleaseMode)
+            IconButton(
+              tooltip: 'Stripe diagnostics',
+              icon: const Icon(Icons.bug_report),
+              onPressed: _debugStripeStatus,
+            ),
         ],
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -461,7 +463,7 @@ class _ContractorSubscriptionScreenState
                             width: double.infinity,
                             child: FilledButton.icon(
                               onPressed:
-                                  (_isLoadingIap || !_iapAvailable) &&
+                                  (_isLoadingIap || !_iapAvailable) ||
                                       _isLoadingStripe
                                   ? null
                                   : _startStripeCheckout,

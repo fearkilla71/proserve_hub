@@ -22,7 +22,7 @@ class CallSchedulingScreen extends StatefulWidget {
 class _CallSchedulingScreenState extends State<CallSchedulingScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _callType = 'audio';
+  final String _callType = 'audio';
   final _notesController = TextEditingController();
   bool _isScheduling = false;
 
