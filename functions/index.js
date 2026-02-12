@@ -21,6 +21,54 @@ const STRIPE_CONNECT_RETURN_URL = defineSecret('STRIPE_CONNECT_RETURN_URL');
 const STRIPE_CONNECT_REFRESH_URL = defineSecret('STRIPE_CONNECT_REFRESH_URL');
 const STRIPE_CONTRACTOR_PRO_PRICE_ID = defineSecret('STRIPE_CONTRACTOR_PRO_PRICE_ID');
 
+// -------------------- SECURITY: CORS & AUTH HELPERS --------------------
+const ALLOWED_ORIGINS = [
+  'https://proserve-hub-ada0e.web.app',
+  'https://proserve-hub-ada0e.firebaseapp.com',
+  'https://proservehub.netlify.app',
+  'http://localhost:5000',
+  'http://localhost:3000',
+];
+
+/**
+ * Set restricted CORS headers. Only whitelisted origins are allowed.
+ * Mobile/native apps don't send Origin headers, so they are unaffected.
+ */
+function setCorsHeaders(req, res) {
+  const origin = (req.headers.origin || '').toString();
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  }
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Vary', 'Origin');
+}
+
+/**
+ * Authenticate an HTTP request via Bearer token.
+ * Returns the uid on success, throws { status, message } on failure.
+ */
+async function authenticateHttpRequest(req) {
+  const authHeader = (req.headers.authorization || '').toString();
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const idToken = match ? match[1] : '';
+  if (!idToken) {
+    throw { status: 401, message: 'Missing Authorization Bearer token' };
+  }
+  const decoded = await admin.auth().verifyIdToken(idToken);
+  return decoded.uid;
+}
+
+/**
+ * Check if uid is a ProServe admin (role stored in users doc).
+ */
+async function isAdminUser(uid) {
+  if (!uid) return false;
+  const userSnap = await admin.firestore().collection('users').doc(uid).get();
+  const data = userSnap.data() || {};
+  return data.role === 'admin';
+}
+
 // -------------------- ESTIMATOR TUNING --------------------
 // Keep these conservative; pricing_rules/* can still be customized.
 const PRICING_RULES_SEED_VERSION = 2;
@@ -5553,15 +5601,11 @@ async function fulfillLeadPackFromCheckoutSession(session) {
 exports.fulfillCheckoutSession = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.status(204).send('');
     return;
   }
-
-  res.set('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5569,6 +5613,9 @@ exports.fulfillCheckoutSession = functions
   }
 
   try {
+    // Auth required — only authenticated users can trigger fulfillment
+    const uid = await authenticateHttpRequest(req);
+
     const sessionId = (req.body?.sessionId || req.query?.sessionId || '')
       .toString()
       .trim();
@@ -5604,15 +5651,11 @@ exports.fulfillCheckoutSession = functions
 exports.fulfillPaymentIntent = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.status(204).send('');
     return;
   }
-
-  res.set('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5620,6 +5663,9 @@ exports.fulfillPaymentIntent = functions
   }
 
   try {
+    // Auth required — only authenticated users can trigger fulfillment
+    const uid = await authenticateHttpRequest(req);
+
     const paymentIntentId = (req.body?.paymentIntentId || req.query?.paymentIntentId || '')
       .toString()
       .trim();
@@ -6670,9 +6716,20 @@ exports.updateReputationOnJobComplete = reputationModule.updateReputationOnJobCo
 exports.updateReputationOnQuoteAccept = reputationModule.updateReputationOnQuoteAccept;
 exports.recalculateAllReputations = reputationModule.recalculateAllReputations;
 
-// Manual reputation recalculation endpoint (for admin/testing)
+// Manual reputation recalculation endpoint (admin only)
 exports.recalculateReputationHttp = functions.https.onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+
   try {
+    const uid = await authenticateHttpRequest(req);
+    const admin_check = await isAdminUser(uid);
+    if (!admin_check) {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
     const contractorId = req.body?.contractorId || req.query?.contractorId;
     
     if (!contractorId) {
@@ -6689,7 +6746,8 @@ exports.recalculateReputationHttp = functions.https.onRequest(async (req, res) =
     });
   } catch (error) {
     console.error('Error recalculating reputation:', error);
-    res.status(500).json({ error: error.message });
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message });
   }
 });
 
@@ -6736,6 +6794,28 @@ async function createEscrowCheckoutSessionCore({ escrowId, uid }) {
   const aiPrice = Number(escrow.aiPrice);
   if (!Number.isFinite(aiPrice) || aiPrice <= 0) {
     throw new functions.https.HttpsError('failed-precondition', 'Invalid escrow price');
+  }
+
+  // Server-side price validation — reject obviously tampered prices
+  if (aiPrice < 25) {
+    throw new functions.https.HttpsError('failed-precondition', 'Price below minimum ($25)');
+  }
+  if (aiPrice > 50000) {
+    throw new functions.https.HttpsError('failed-precondition', 'Price exceeds maximum ($50,000)');
+  }
+
+  // Validate platform fee matches expected rate (5%)
+  const expectedFee = Math.round(aiPrice * 0.05 * 100) / 100;
+  const storedFee = Number(escrow.platformFee || 0);
+  if (Math.abs(storedFee - expectedFee) > 0.02) {
+    console.warn(`[createEscrowCheckout] Fee mismatch for ${escrowId}: stored=${storedFee}, expected=${expectedFee}`);
+    // Recalculate and fix the fee server-side
+    const correctFee = expectedFee;
+    const correctPayout = Math.round((aiPrice - correctFee) * 100) / 100;
+    await escrowRef.update({
+      platformFee: correctFee,
+      contractorPayout: correctPayout,
+    });
   }
 
   const amountCents = Math.round(aiPrice * 100);
@@ -6801,36 +6881,21 @@ exports.createEscrowCheckoutSession = functions
 exports.createEscrowCheckoutSessionHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.status(204).send('');
-      return;
-    }
-    res.set('Access-Control-Allow-Origin', '*');
-
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
       return;
     }
 
     try {
-      const authHeader = (req.headers.authorization || '').toString();
-      const match = authHeader.match(/^Bearer\s+(.+)$/i);
-      const idToken = match ? match[1] : '';
-      if (!idToken) {
-        res.status(401).json({ error: 'Missing Authorization Bearer token' });
-        return;
-      }
-      const decoded = await admin.auth().verifyIdToken(idToken);
-      const uid = decoded.uid;
+      const uid = await authenticateHttpRequest(req);
 
       const escrowId = (req.body?.escrowId || '').toString().trim();
       const result = await createEscrowCheckoutSessionCore({ escrowId, uid });
       res.json(result);
     } catch (err) {
-      const code = err.httpErrorCode?.status || 500;
+      const code = err.httpErrorCode?.status || err.status || 500;
       res.status(code).json({ error: err.message || 'Internal error' });
     }
   });
@@ -6900,6 +6965,14 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
   }
 
   const escrow = escrowSnap.data() || {};
+
+  // Authorization: only customer, contractor, or admin can trigger release
+  const isCustomer = escrow.customerId === uid;
+  const isContractor = escrow.contractorId === uid;
+  const isAdmin = await isAdminUser(uid);
+  if (!isCustomer && !isContractor && !isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized for this escrow');
+  }
 
   // Only released status triggers payout
   if (escrow.status !== 'released') {
@@ -6987,36 +7060,21 @@ exports.releaseEscrowFunds = functions
 exports.releaseEscrowFundsHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.status(204).send('');
-      return;
-    }
-    res.set('Access-Control-Allow-Origin', '*');
-
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
       return;
     }
 
     try {
-      const authHeader = (req.headers.authorization || '').toString();
-      const match = authHeader.match(/^Bearer\s+(.+)$/i);
-      const idToken = match ? match[1] : '';
-      if (!idToken) {
-        res.status(401).json({ error: 'Missing Authorization Bearer token' });
-        return;
-      }
-      const decoded = await admin.auth().verifyIdToken(idToken);
-      const uid = decoded.uid;
+      const uid = await authenticateHttpRequest(req);
 
       const escrowId = (req.body?.escrowId || '').toString().trim();
       const result = await releaseEscrowFundsCore({ escrowId, uid });
       res.json(result);
     } catch (err) {
-      const code = err.httpErrorCode?.status || 500;
+      const code = err.httpErrorCode?.status || err.status || 500;
       res.status(code).json({ error: err.message || 'Internal error' });
     }
   });
@@ -7116,36 +7174,21 @@ exports.refundEscrow = functions
 exports.refundEscrowHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.status(204).send('');
-      return;
-    }
-    res.set('Access-Control-Allow-Origin', '*');
-
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
       return;
     }
 
     try {
-      const authHeader = (req.headers.authorization || '').toString();
-      const match = authHeader.match(/^Bearer\s+(.+)$/i);
-      const idToken = match ? match[1] : '';
-      if (!idToken) {
-        res.status(401).json({ error: 'Missing Authorization Bearer token' });
-        return;
-      }
-      const decoded = await admin.auth().verifyIdToken(idToken);
-      const uid = decoded.uid;
+      const uid = await authenticateHttpRequest(req);
 
       const escrowId = (req.body?.escrowId || '').toString().trim();
       const result = await refundEscrowCore({ escrowId, uid });
       res.json(result);
     } catch (err) {
-      const code = err.httpErrorCode?.status || 500;
+      const code = err.httpErrorCode?.status || err.status || 500;
       res.status(code).json({ error: err.message || 'Internal error' });
     }
   });
@@ -7586,7 +7629,7 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
   console.log(`[aiEstimateChat] Sending ${openAiMessages.length} messages to OpenAI (${model}) for service: ${serviceType}, images: ${hasImages ? images.length : 0}`);
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     messages: openAiMessages,
     temperature: 0.7,
     max_tokens: 800,
@@ -7656,7 +7699,10 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
 exports.aiEstimateChat = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onCall(async (data, context) => {
-    const uid = context.auth?.uid || '';
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
     const serviceType = (data?.serviceType || '').toString().trim();
     const serviceName = (data?.serviceName || '').toString().trim();
     const messages = Array.isArray(data?.messages) ? data.messages : [];
@@ -7670,17 +7716,17 @@ exports.aiEstimateChat = functions
     return aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial, images });
   });
 
-// HTTP fallback version
+// HTTP fallback version (auth required)
 exports.aiEstimateChatHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
-    // CORS
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    setCorsHeaders(req, res);
     if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
     if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
 
     try {
+      const uid = await authenticateHttpRequest(req);
+
       const body = req.body || {};
       const serviceType = (body.serviceType || '').toString().trim();
       const serviceName = (body.serviceName || '').toString().trim();
@@ -7694,7 +7740,7 @@ exports.aiEstimateChatHttp = functions
       }
 
       const result = await aiEstimateChatCore({
-        uid: '',
+        uid,
         serviceType,
         serviceName,
         messages,
@@ -7704,6 +7750,7 @@ exports.aiEstimateChatHttp = functions
       res.status(200).json(result);
     } catch (err) {
       console.error('[aiEstimateChatHttp] Error:', err);
-      res.status(500).json({ error: err.message || 'Internal error' });
+      const status = err.status || 500;
+      res.status(status).json({ error: err.message || 'Internal error' });
     }
   });

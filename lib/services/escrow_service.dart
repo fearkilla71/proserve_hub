@@ -81,6 +81,12 @@ class EscrowService {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
 
+    // Verify caller is the escrow customer
+    final snap = await _db.collection(_collection).doc(escrowId).get();
+    if (snap.data()?['customerId'] != uid) {
+      throw Exception('Only the customer can fund this escrow');
+    }
+
     final ref = _db.collection(_collection).doc(escrowId);
     await ref.update({
       'status': EscrowStatus.funded.value,
@@ -90,7 +96,6 @@ class EscrowService {
     });
 
     // Also update the job_request to mark it as booked via escrow
-    final snap = await ref.get();
     final jobId = snap.data()?['jobId'] as String?;
     if (jobId != null && jobId.isNotEmpty) {
       await _db.collection('job_requests').doc(jobId).update({
@@ -106,6 +111,14 @@ class EscrowService {
 
   /// Customer declines the AI price — wants contractor estimates instead.
   Future<void> decline(String escrowId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    final snap = await _db.collection(_collection).doc(escrowId).get();
+    if (snap.data()?['customerId'] != uid) {
+      throw Exception('Only the customer can decline this escrow');
+    }
+
     await _db.collection(_collection).doc(escrowId).update({
       'status': EscrowStatus.declined.value,
     });
@@ -121,6 +134,14 @@ class EscrowService {
     required String escrowId,
     required String contractorId,
   }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    // Only the contractor being assigned can claim
+    if (uid != contractorId) {
+      throw Exception('You can only assign yourself to an escrow');
+    }
+
     await _db.collection(_collection).doc(escrowId).update({
       'contractorId': contractorId,
     });
@@ -154,6 +175,12 @@ class EscrowService {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
 
+    // Verify caller is the customer
+    final snap = await _db.collection(_collection).doc(escrowId).get();
+    if (snap.data()?['customerId'] != uid) {
+      throw Exception('Only the customer can confirm completion');
+    }
+
     final ref = _db.collection(_collection).doc(escrowId);
     await ref.update({
       'customerConfirmedAt': FieldValue.serverTimestamp(),
@@ -168,6 +195,12 @@ class EscrowService {
   Future<void> contractorConfirm(String escrowId) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
+
+    // Verify caller is the contractor
+    final snap = await _db.collection(_collection).doc(escrowId).get();
+    if (snap.data()?['contractorId'] != uid) {
+      throw Exception('Only the contractor can confirm completion');
+    }
 
     final ref = _db.collection(_collection).doc(escrowId);
     await ref.update({
@@ -219,10 +252,18 @@ class EscrowService {
   /// Cancel an escrow booking and issue a Stripe refund.
   /// Only allowed before funds are released to the contractor.
   Future<void> cancel(String escrowId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
     final ref = _db.collection(_collection).doc(escrowId);
     final snap = await ref.get();
     final data = snap.data();
     if (data == null) return;
+
+    // Verify caller is the customer
+    if (data['customerId'] != uid) {
+      throw Exception('Only the customer can cancel this escrow');
+    }
 
     final status = EscrowStatusX.fromString(data['status'] ?? '');
     if (status == EscrowStatus.released) {
@@ -312,6 +353,17 @@ class EscrowService {
   }) async {
     if (rating < 1 || rating > 5) {
       throw Exception('Rating must be between 1 and 5');
+    }
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+
+    // Verify caller is customer or contractor on this escrow
+    final snap = await _db.collection(_collection).doc(escrowId).get();
+    final data = snap.data();
+    if (data == null) throw Exception('Escrow not found');
+    if (data['customerId'] != uid && data['contractorId'] != uid) {
+      throw Exception('Only participants can rate this escrow');
     }
 
     await _db.collection(_collection).doc(escrowId).update({
