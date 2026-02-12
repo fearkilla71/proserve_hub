@@ -216,7 +216,8 @@ class EscrowService {
 
   // ────────────────────────────── CANCEL ─────────────────────────────────
 
-  /// Cancel an escrow booking. Only allowed before both confirmations.
+  /// Cancel an escrow booking and issue a Stripe refund.
+  /// Only allowed before funds are released to the contractor.
   Future<void> cancel(String escrowId) async {
     final ref = _db.collection(_collection).doc(escrowId);
     final snap = await ref.get();
@@ -228,16 +229,26 @@ class EscrowService {
       throw Exception('Cannot cancel — funds already released.');
     }
 
-    await ref.update({'status': EscrowStatus.cancelled.value});
+    final hasPaid = data['stripePaymentIntentId'] != null &&
+        (data['stripePaymentIntentId'] as String).isNotEmpty;
 
-    // Update job_request back to open
-    final jobId = data['jobId'] as String?;
-    if (jobId != null && jobId.isNotEmpty) {
-      await _db.collection('job_requests').doc(jobId).update({
-        'status': 'open',
-        'escrowId': FieldValue.delete(),
-        'escrowPrice': FieldValue.delete(),
-      });
+    if (hasPaid) {
+      // Issue real Stripe refund via Cloud Function
+      await StripeService().refundEscrow(escrowId: escrowId);
+      // The Cloud Function handles setting status to 'cancelled',
+      // saving refund details, and resetting the job_request.
+    } else {
+      // No payment was made — just cancel locally
+      await ref.update({'status': EscrowStatus.cancelled.value});
+
+      final jobId = data['jobId'] as String?;
+      if (jobId != null && jobId.isNotEmpty) {
+        await _db.collection('job_requests').doc(jobId).update({
+          'status': 'open',
+          'escrowId': FieldValue.delete(),
+          'escrowPrice': FieldValue.delete(),
+        });
+      }
     }
   }
 

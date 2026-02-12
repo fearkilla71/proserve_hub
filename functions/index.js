@@ -7020,3 +7020,250 @@ exports.releaseEscrowFundsHttp = functions
       res.status(code).json({ error: err.message || 'Internal error' });
     }
   });
+
+// ============================================================================
+// ESCROW REFUND
+// ============================================================================
+
+/**
+ * Core refund logic — issues a full Stripe refund for an escrow booking.
+ * Only allowed when status is 'funded', 'customerConfirmed', or 'contractorConfirmed'
+ * (i.e. before funds are released to the contractor).
+ */
+async function refundEscrowCore({ escrowId, uid }) {
+  if (!escrowId) {
+    throw new functions.https.HttpsError('invalid-argument', 'escrowId is required');
+  }
+
+  const escrowRef = admin.firestore().collection('escrow_bookings').doc(escrowId);
+  const escrowSnap = await escrowRef.get();
+  if (!escrowSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
+  }
+
+  const escrow = escrowSnap.data();
+
+  // Only the customer who paid can request a refund
+  if (escrow.customerId !== uid) {
+    throw new functions.https.HttpsError('permission-denied', 'Only the customer can request a refund');
+  }
+
+  const refundableStatuses = ['funded', 'customerConfirmed', 'contractorConfirmed'];
+  if (!refundableStatuses.includes(escrow.status)) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      `Cannot refund escrow in status "${escrow.status}". Refund is only available before funds are released.`
+    );
+  }
+
+  const paymentIntentId = escrow.stripePaymentIntentId;
+  if (!paymentIntentId) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'No Stripe payment intent found for this escrow.'
+    );
+  }
+
+  // Issue full refund via Stripe
+  const stripe = getStripeClient();
+  const refund = await stripe.refunds.create({
+    payment_intent: paymentIntentId,
+    reason: 'requested_by_customer',
+  });
+
+  // Update escrow booking
+  await escrowRef.update({
+    status: 'cancelled',
+    refundedAt: admin.firestore.FieldValue.serverTimestamp(),
+    stripeRefundId: refund.id,
+    refundStatus: refund.status, // 'succeeded', 'pending', etc.
+    refundAmountCents: refund.amount,
+  });
+
+  // Reset the job_request back to open
+  const jobId = escrow.jobId;
+  if (jobId) {
+    await admin.firestore().collection('job_requests').doc(jobId).update({
+      status: 'open',
+      escrowId: admin.firestore.FieldValue.delete(),
+      escrowPrice: admin.firestore.FieldValue.delete(),
+      instantBook: admin.firestore.FieldValue.delete(),
+    });
+  }
+
+  console.log(`[refundEscrow] Refund ${refund.id} (${refund.status}) for escrow ${escrowId}`);
+
+  return {
+    success: 'true',
+    refundId: refund.id,
+    refundStatus: refund.status,
+  };
+}
+
+// Callable version
+exports.refundEscrow = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+    const escrowId = (data?.escrowId || '').toString().trim();
+    return await refundEscrowCore({ escrowId, uid });
+  });
+
+// HTTP version (Windows/Linux fallback)
+exports.refundEscrowHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.status(204).send('');
+      return;
+    }
+    res.set('Access-Control-Allow-Origin', '*');
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const authHeader = (req.headers.authorization || '').toString();
+      const match = authHeader.match(/^Bearer\s+(.+)$/i);
+      const idToken = match ? match[1] : '';
+      if (!idToken) {
+        res.status(401).json({ error: 'Missing Authorization Bearer token' });
+        return;
+      }
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+
+      const escrowId = (req.body?.escrowId || '').toString().trim();
+      const result = await refundEscrowCore({ escrowId, uid });
+      res.json(result);
+    } catch (err) {
+      const code = err.httpErrorCode?.status || 500;
+      res.status(code).json({ error: err.message || 'Internal error' });
+    }
+  });
+
+// ============================================================================
+// AUTO-REFUND EXPIRED ESCROWS (runs daily)
+// ============================================================================
+
+/**
+ * Scheduled function — runs every day at midnight UTC.
+ * Finds escrow bookings that have been in 'funded' status for more than 7 days
+ * with no contractor assigned, and automatically refunds them.
+ */
+exports.autoRefundExpiredEscrows = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY], timeoutSeconds: 300, memory: '512MB' })
+  .pubsub.schedule('every 24 hours')
+  .timeZone('UTC')
+  .onRun(async () => {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Find funded escrows older than 7 days with no contractor
+    const snapshot = await admin.firestore()
+      .collection('escrow_bookings')
+      .where('status', '==', 'funded')
+      .where('fundedAt', '<=', admin.firestore.Timestamp.fromDate(sevenDaysAgo))
+      .get();
+
+    if (snapshot.empty) {
+      console.log('[autoRefundExpiredEscrows] No expired escrows found.');
+      return null;
+    }
+
+    const stripe = getStripeClient();
+    let refunded = 0;
+    let failed = 0;
+
+    for (const doc of snapshot.docs) {
+      const escrow = doc.data();
+      const escrowId = doc.id;
+
+      // Skip if contractor already assigned
+      if (escrow.contractorId) {
+        console.log(`[autoRefundExpiredEscrows] Skipping ${escrowId} — contractor assigned`);
+        continue;
+      }
+
+      const paymentIntentId = escrow.stripePaymentIntentId;
+      if (!paymentIntentId) {
+        console.log(`[autoRefundExpiredEscrows] Skipping ${escrowId} — no payment intent`);
+        continue;
+      }
+
+      try {
+        const refund = await stripe.refunds.create({
+          payment_intent: paymentIntentId,
+          reason: 'requested_by_customer',
+        });
+
+        await doc.ref.update({
+          status: 'cancelled',
+          refundedAt: admin.firestore.FieldValue.serverTimestamp(),
+          stripeRefundId: refund.id,
+          refundStatus: refund.status,
+          refundAmountCents: refund.amount,
+          autoRefunded: true,
+          autoRefundReason: 'No contractor claimed within 7 days',
+        });
+
+        // Reset the job_request
+        if (escrow.jobId) {
+          await admin.firestore().collection('job_requests').doc(escrow.jobId).update({
+            status: 'open',
+            escrowId: admin.firestore.FieldValue.delete(),
+            escrowPrice: admin.firestore.FieldValue.delete(),
+            instantBook: admin.firestore.FieldValue.delete(),
+          });
+        }
+
+        // Notify customer
+        try {
+          const userSnap = await admin.firestore().collection('users').doc(escrow.customerId).get();
+          const fcmToken = userSnap.exists ? userSnap.data()?.fcmToken : null;
+          if (fcmToken) {
+            await admin.messaging().send({
+              token: fcmToken,
+              notification: {
+                title: 'Escrow Refunded 💸',
+                body: `No contractor was found for ${escrow.service || 'your job'} within 7 days. Your payment has been fully refunded.`,
+              },
+              data: {
+                type: 'escrow_refund',
+                escrowId: escrowId,
+              },
+              android: {
+                priority: 'high',
+                notification: {
+                  channelId: 'proserve_hub_channel',
+                  priority: 'high',
+                  sound: 'default',
+                },
+              },
+              apns: {
+                payload: { aps: { sound: 'default', badge: 1 } },
+              },
+            });
+          }
+        } catch (notifErr) {
+          console.error(`[autoRefundExpiredEscrows] Notification failed for ${escrowId}:`, notifErr);
+        }
+
+        refunded++;
+        console.log(`[autoRefundExpiredEscrows] Refunded ${escrowId} (refund: ${refund.id})`);
+      } catch (refundErr) {
+        failed++;
+        console.error(`[autoRefundExpiredEscrows] Failed to refund ${escrowId}:`, refundErr);
+      }
+    }
+
+    console.log(`[autoRefundExpiredEscrows] Done. Refunded: ${refunded}, Failed: ${failed}`);
+    return null;
+  });
