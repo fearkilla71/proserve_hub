@@ -58,6 +58,15 @@ class _CustomerAiEstimatorWizardPageState
   bool _ceilingKitchens = false;
   bool _ceilingLivingDining = false;
 
+  // Doors
+  int _doorsOneSide = 0;
+  int _doorsBothSides = 0;
+
+  // Trim / baseboards
+  bool _trimStandard = false;
+  bool _trimKitchens = false;
+  bool _trimLivingDining = false;
+
   List<String> _uploadedPaths = <String>[];
   Map<String, dynamic>? _aiResult;
   String? _lastEstimateMode; // 'rough' | 'photo'
@@ -243,6 +252,11 @@ class _CustomerAiEstimatorWizardPageState
       'ceiling_bedrooms': _ceilingBedrooms,
       'ceiling_kitchens': _ceilingKitchens,
       'ceiling_living_dining': _ceilingLivingDining,
+      'doors_one_side': _doorsOneSide,
+      'doors_both_sides': _doorsBothSides,
+      'trim_standard': _trimStandard,
+      'trim_kitchens': _trimKitchens,
+      'trim_living_dining': _trimLivingDining,
     };
   }
 
@@ -1134,6 +1148,69 @@ class _CustomerAiEstimatorWizardPageState
             onChanged: (v) => setState(() => _ceilingLivingDining = v),
             title: const Text('Living / dining ceilings'),
             subtitle: Text(_includesPaint ? '\$225 each' : '\$200 each'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(),
+          Text(
+            'Doors (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          _roomCounterRow(
+            'Doors (one side)',
+            _doorsOneSide,
+            (v) => setState(() => _doorsOneSide = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$90 each' : '\$75 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          _roomCounterRow(
+            'Doors (both sides)',
+            _doorsBothSides,
+            (v) => setState(() => _doorsBothSides = v),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              _includesPaint ? '\$115 each' : '\$100 each',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const Divider(),
+          Text(
+            'Trim / Baseboards (optional)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          SwitchListTile(
+            value: _trimStandard,
+            onChanged: (v) => setState(() => _trimStandard = v),
+            title: const Text('Bedroom / bath / closet trim'),
+            subtitle: Text(_includesPaint ? '\$55 per room' : '\$40 per room'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _trimKitchens,
+            onChanged: (v) => setState(() => _trimKitchens = v),
+            title: const Text('Kitchen trim'),
+            subtitle: Text(
+              _includesPaint ? '\$70 per kitchen' : '\$55 per kitchen',
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: _trimLivingDining,
+            onChanged: (v) => setState(() => _trimLivingDining = v),
+            title: const Text('Living / dining trim'),
+            subtitle: Text(_includesPaint ? '\$70 per room' : '\$55 per room'),
             contentPadding: EdgeInsets.zero,
           ),
         ],

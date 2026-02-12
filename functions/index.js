@@ -1746,6 +1746,40 @@ function estimateInteriorPaintingRange({ q }) {
   const CEIL_KD_LABOR   = 200;
   const CEIL_KD_PAINT   = 225;
 
+  // ---- Door pricing ----
+  const DOOR_ONE_SIDE_LABOR  = 75;
+  const DOOR_ONE_SIDE_PAINT  = 90;
+  const DOOR_BOTH_SIDES_LABOR = 100;
+  const DOOR_BOTH_SIDES_PAINT = 115;
+
+  // ---- Trim / baseboards per room ----
+  const TRIM_STD_LABOR   = 40;
+  const TRIM_STD_PAINT   = 55;
+  const TRIM_KIT_LABOR   = 55;
+  const TRIM_KIT_PAINT   = 70;
+  const TRIM_LD_LABOR    = 55;
+  const TRIM_LD_PAINT    = 70;
+
+  // Doors
+  const doorsOneSide  = clampNumber(questions.doors_one_side, 0, 100);
+  const doorsBothSides = clampNumber(questions.doors_both_sides, 0, 100);
+  const doorOneSideRate  = includesPaint ? DOOR_ONE_SIDE_PAINT : DOOR_ONE_SIDE_LABOR;
+  const doorBothSidesRate = includesPaint ? DOOR_BOTH_SIDES_PAINT : DOOR_BOTH_SIDES_LABOR;
+  const doorTotal = (doorsOneSide * doorOneSideRate) + (doorsBothSides * doorBothSidesRate);
+
+  // Trim / baseboards
+  const trimStd = questions.trim_standard === true;
+  const trimKit = questions.trim_kitchens === true;
+  const trimLD  = questions.trim_living_dining === true;
+
+  const trimStdRate = includesPaint ? TRIM_STD_PAINT : TRIM_STD_LABOR;
+  const trimKitRate = includesPaint ? TRIM_KIT_PAINT : TRIM_KIT_LABOR;
+  const trimLDRate  = includesPaint ? TRIM_LD_PAINT : TRIM_LD_LABOR;
+
+  const trimTotal = (trimStd ? stdCount * trimStdRate : 0)
+                  + (trimKit ? kitchens * trimKitRate : 0)
+                  + (trimLD ? ldCount * trimLDRate : 0);
+
   // Standard rooms (bedrooms, bathrooms, closets)
   const stdCount = bedrooms + bathrooms + closets;
   const stdRate  = includesPaint ? ROOM_PAINT : ROOM_LABOR;
@@ -1778,7 +1812,8 @@ function estimateInteriorPaintingRange({ q }) {
   const ceilLivTotal = ceilLivCount * ceilStdRate;
 
   const totalRooms = stdCount + kitchens + ldCount;
-  const total = stdTotal + kitTotal + ldTotal + ceilStdTotal + ceilKdTotal + ceilLivTotal;
+  const totalDoors = doorsOneSide + doorsBothSides;
+  const total = stdTotal + kitTotal + ldTotal + ceilStdTotal + ceilKdTotal + ceilLivTotal + doorTotal + trimTotal;
 
   // Build breakdown
   const breakdown = [];
@@ -1791,13 +1826,19 @@ function estimateInteriorPaintingRange({ q }) {
 
   const ceilCount = ceilStdCount + ceilKdCount + ceilLivCount;
   if (ceilCount > 0) breakdown.push(`${ceilCount} ceiling(s)`);
+  if (doorsOneSide > 0) breakdown.push(`${doorsOneSide} door(s) one-side × $${doorOneSideRate}`);
+  if (doorsBothSides > 0) breakdown.push(`${doorsBothSides} door(s) both-sides × $${doorBothSidesRate}`);
+  if (trimStd) breakdown.push(`Trim for ${stdCount} std room(s) × $${trimStdRate}`);
+  if (trimKit) breakdown.push(`Trim for ${kitchens} kitchen(s) × $${trimKitRate}`);
+  if (trimLD) breakdown.push(`Trim for ${ldCount} living/dining × $${trimLDRate}`);
 
   const notes = [
     `Interior Painting Estimate — ${totalRooms} room(s), ${includesPaint ? 'with paint' : 'labor only'}.`,
     breakdown.join(', ') + '.',
     ceilCount > 0 ? `Ceilings included for ${ceilCount} room(s).` : 'No ceilings.',
-    'Doors, trim, baseboards, and accent walls are priced separately.',
-  ].join(' ');
+    totalDoors > 0 ? `${totalDoors} door(s) included.` : '',
+    (trimStd || trimKit || trimLD) ? 'Trim/baseboards included.' : '',
+  ].filter(s => s.length > 0).join(' ');
 
   return { total, totalRooms, notes };
 }
@@ -7407,6 +7448,8 @@ KEY QUESTIONS TO ASK (in natural order, 1-2 per message):
 3. Do any rooms need the ceiling painted too? If so, which rooms?
 4. What's the ZIP code for the property?
 5. Any special requests? (accent walls, specific paint brand, prep work needed)
+6. How many doors need painting? One side or both sides?
+7. Do you need trim / baseboards painted? If so, which rooms?
 
 IMPORTANT: If the user has uploaded photos, analyze them carefully for:
 - Room type identification (bedroom, bathroom, kitchen, living room, etc.)
@@ -7426,25 +7469,40 @@ Ceilings per room (only if customer wants ceilings painted):
 - Bedrooms, Bathrooms, Closets, Living rooms: $125 labor only / $150 with paint
 - Kitchens, Dining rooms: $200 labor only / $225 with paint
 
-CALCULATION RULES:
-1. Count each room type × the rate above
-2. Add ceiling costs only for rooms where customer wants ceilings painted
-3. Sum all rooms + ceilings = total estimate
-4. The "recommended" price is the exact calculated total
-5. "low" = recommended × 0.88 (discount for simple/standard conditions)
-6. "premium" = recommended × 1.15 (for extras, difficult access, or premium paint)
+Doors:
+- One side: $75 labor only / $90 with paint
+- Both sides: $100 labor only / $115 with paint
 
-EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all:
+Trim / Baseboards per room:
+- Standard rooms (bed/bath/closet): $40 labor only / $55 with paint
+- Kitchen: $55 labor only / $70 with paint
+- Living / Dining room: $55 labor only / $70 with paint
+
+CALCULATION RULES:
+1. Count each room type × the wall rate above
+2. Add ceiling costs only for rooms where customer wants ceilings painted
+3. Add door costs based on count and one-side vs both-sides
+4. Add trim costs for each room category where customer wants trim painted
+5. Sum all = total estimate
+6. The "recommended" price is the exact calculated total
+7. "low" = recommended × 0.88 (discount for simple/standard conditions)
+8. "premium" = recommended × 1.15 (for extras, difficult access, or premium paint)
+
+EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all, 8 doors (one side), trim on all rooms:
 - 3 bedrooms × $500 = $1,500
 - 1 kitchen × $560 = $560
 - 1 living room × $560 = $560
 - 3 bedroom ceilings × $150 = $450
 - 1 kitchen ceiling × $225 = $225
 - 1 living room ceiling × $150 = $150
-- Total recommended = $3,445
-- Low = $3,032, Premium = $3,962
+- 8 doors (one side) × $90 = $720
+- 3 std rooms trim × $55 = $165
+- 1 kitchen trim × $70 = $70
+- 1 living room trim × $70 = $70
+- Total recommended = $4,470
+- Low = $3,934, Premium = $5,141
 
-NOTE: Doors, trim, baseboards, and accent walls will be priced separately in a future update. If the customer asks about these, let them know these add-ons are not yet included in the estimate and can be discussed with the contractor.`,
+NOTE: Accent walls will be priced separately in a future update. If the customer asks, let them know this add-on is not yet included.`,
 
     exterior_painting: `
 SERVICE: Exterior Painting

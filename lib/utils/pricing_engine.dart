@@ -87,6 +87,10 @@ class PricingEngine {
   /// Living/Dining: $500 labor, $560 with paint.
   /// Ceilings (standard): $125 labor, $150 with paint.
   /// Ceilings (kitchen/dining): $200 labor, $225 with paint.
+  /// Door one side: $75 labor, $90 with paint.
+  /// Door both sides: $100 labor, $115 with paint.
+  /// Trim std room: $40 labor, $55 with paint.
+  /// Trim kitchen/living/dining: $55 labor, $70 with paint.
   static Map<String, double> calculatePaintingFromRooms({
     required Map<String, dynamic> paintingQuestions,
     required String zip,
@@ -109,6 +113,15 @@ class PricingEngine {
       paintingQuestions['ceiling_living_dining'],
     );
 
+    // Doors
+    final doorsOneSide = asInt(paintingQuestions['doors_one_side']);
+    final doorsBothSides = asInt(paintingQuestions['doors_both_sides']);
+
+    // Trim
+    final trimStandard = asBool(paintingQuestions['trim_standard']);
+    final trimKitchens = asBool(paintingQuestions['trim_kitchens']);
+    final trimLivingDining = asBool(paintingQuestions['trim_living_dining']);
+
     final stdRooms = bedrooms + bathrooms + closets;
     final kitchenRooms = kitchens;
     final livingDiningRooms = livingRooms + diningRooms;
@@ -129,6 +142,21 @@ class PricingEngine {
     }
     if (ceilingLivingDining) {
       total += livingDiningRooms * (includesPaint ? 225 : 200);
+    }
+
+    // Doors
+    total += doorsOneSide * (includesPaint ? 90 : 75);
+    total += doorsBothSides * (includesPaint ? 115 : 100);
+
+    // Trim / baseboards
+    if (trimStandard) {
+      total += stdRooms * (includesPaint ? 55 : 40);
+    }
+    if (trimKitchens) {
+      total += kitchenRooms * (includesPaint ? 70 : 55);
+    }
+    if (trimLivingDining) {
+      total += livingDiningRooms * (includesPaint ? 70 : 55);
     }
 
     if (urgent) {
