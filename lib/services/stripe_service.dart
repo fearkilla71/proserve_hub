@@ -59,9 +59,7 @@ class StripeService {
   }
 
   /// Issues a full Stripe refund for an escrow booking.
-  Future<Map<String, String>> refundEscrow({
-    required String escrowId,
-  }) async {
+  Future<Map<String, String>> refundEscrow({required String escrowId}) async {
     return _callFunction(
       callableName: 'refundEscrow',
       httpName: 'refundEscrowHttp',

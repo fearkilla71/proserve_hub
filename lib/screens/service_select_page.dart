@@ -50,32 +50,30 @@ const List<Map<String, dynamic>> _fallbackServices = [
 class ServiceSelectPage extends StatelessWidget {
   const ServiceSelectPage({super.key});
 
+  /// Services that have AI chat estimates enabled.
+  static const _aiChatServices = {
+    'interior_painting': 'Interior Painting',
+    'exterior_painting': 'Exterior Painting',
+    'drywall_repair': 'Drywall Repair',
+    'pressure_washing': 'Pressure Washing',
+    'cabinets': 'Cabinet Refinishing',
+    'painting': 'Painting',
+  };
+
   void _navigateToFlow(BuildContext context, String type) {
-    switch (type) {
-      case 'interior_painting':
-        context.push('/flow/painting?scope=interior');
-        break;
-      case 'exterior_painting':
-        context.push('/flow/exterior-painting');
-        break;
-      case 'painting':
-        context.push('/flow/painting');
-        break;
-      case 'drywall_repair':
-        context.push('/flow/drywall-repair');
-        break;
-      case 'pressure_washing':
-        context.push('/flow/pressure-washing');
-        break;
-      case 'cabinets':
-        context.push('/flow/cabinets');
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Service "$type" is coming soon!')),
-        );
-        return;
+    // Route all supported services to the conversational AI estimator.
+    if (_aiChatServices.containsKey(type)) {
+      context.push(
+        '/ai-estimate-chat',
+        extra: {'serviceType': type, 'serviceName': _aiChatServices[type]!},
+      );
+      return;
     }
+
+    // Fallback for services not yet supported
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Service "$type" is coming soon!')));
   }
 
   @override

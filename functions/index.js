@@ -7267,3 +7267,341 @@ exports.autoRefundExpiredEscrows = functions
     console.log(`[autoRefundExpiredEscrows] Done. Refunded: ${refunded}, Failed: ${failed}`);
     return null;
   });
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI ESTIMATE CHAT — Conversational estimator powered by OpenAI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Builds the OpenAI system prompt for the conversational estimator.
+ * The prompt instructs the AI to act as a friendly home-services estimator that
+ * asks smart, service-specific questions and eventually returns a price estimate.
+ */
+function buildEstimatorSystemPrompt(serviceType, serviceName) {
+  // Service-specific question guidance
+  const serviceGuides = {
+    interior_painting: `
+SERVICE: Interior Painting
+KEY QUESTIONS TO ASK (in natural order):
+- Which rooms need painting? (bedrooms, living room, kitchen, bathroom, hallway, etc.)
+- Roughly how many rooms total?
+- Are you painting just walls, or also ceilings and/or trim/baseboards?
+- What's the current wall color vs desired new color? (same/similar shade, light-to-light change, or dramatic dark-to-light change?)
+- Do any walls need repair work first? (nail holes are normal, but large cracks or water damage add cost)
+- How tall are the ceilings? (standard ~8-9ft, or tall/vaulted?)
+- What's the ZIP code for the property?
+- Any special requests? (accent walls, two-tone, specific paint brand preference)
+
+PRICING GUIDANCE:
+- Small job (1-2 rooms, ~300 sqft): $400-$900
+- Medium job (3-4 rooms, ~800 sqft): $1,200-$2,800
+- Large job (whole house, 1500+ sqft): $3,000-$8,000+
+- Ceilings add ~$0.50-0.80/sqft
+- Trim/baseboards add ~$1-2/linear foot
+- Color change from dark to light adds 10-15%
+- High ceilings (10ft+) add 15-25%`,
+
+    exterior_painting: `
+SERVICE: Exterior Painting
+KEY QUESTIONS TO ASK:
+- What type of home? (single story, two story, ranch, colonial, etc.)
+- What's the exterior material? (wood siding, stucco, brick, vinyl, hardie board)
+- Roughly how large is the home? (small/medium/large or approximate sqft if known)
+- Are you changing the color or keeping it similar?
+- Does any surface need scraping, sanding, or repair before painting?
+- Any special areas? (shutters, trim, fascia, soffits, doors)
+- What's the ZIP code?
+- Any HOA color requirements?
+
+PRICING GUIDANCE:
+- Small home (under 1,200 sqft): $2,500-$5,000
+- Medium home (1,200-2,500 sqft): $4,000-$9,000
+- Large home (2,500+ sqft): $7,000-$15,000+
+- Wood repair adds $200-800+
+- Two-story homes cost 20-40% more than single story`,
+
+    drywall_repair: `
+SERVICE: Drywall Repair
+KEY QUESTIONS TO ASK:
+- What kind of damage? (small holes/nail pops, medium holes, large holes, cracks, water damage)
+- How many areas need repair?
+- Roughly what size are the damaged areas? (fist-sized, basketball-sized, larger?)
+- Is there any water damage or mold concern?
+- Do you need texture matching? (smooth, orange peel, knockdown, popcorn)
+- Will you also need the repaired area painted?
+- What's the ZIP code?
+
+PRICING GUIDANCE:
+- Small patches (nail holes, small dings): $75-$200 per patch
+- Medium holes (fist-sized): $150-$350 per hole
+- Large repairs (water damage, large holes): $300-$800+
+- Full ceiling or wall replacement: $1,500-$4,000+
+- Texture matching adds 15-25%`,
+
+    pressure_washing: `
+SERVICE: Pressure Washing
+KEY QUESTIONS TO ASK:
+- What surfaces need washing? (driveway, sidewalk, patio, deck, house siding, fence)
+- Roughly how large is the area? (single car driveway, large patio, full house exterior, etc.)
+- What material is the surface? (concrete, wood deck, brick, vinyl siding)
+- How dirty is it? (light buildup, heavy mold/mildew, oil stains, years of neglect)
+- Is the area easily accessible with a truck/equipment?
+- What's the ZIP code?
+
+PRICING GUIDANCE:
+- Driveway (standard 2-car): $150-$300
+- Sidewalk/walkway: $75-$175
+- Patio/deck (average): $150-$350
+- House siding (average home): $300-$600
+- Fence: $150-$400
+- Full property package: $400-$1,000+`,
+
+    cabinets: `
+SERVICE: Cabinet Refinishing / Painting
+KEY QUESTIONS TO ASK:
+- Are you looking to paint, stain, or refinish the cabinets?
+- Kitchen cabinets, bathroom cabinets, or other?
+- How many cabinet doors and drawers (roughly)?
+- What's the current finish? (stained wood, painted, laminate)
+- What's the desired new color/finish?
+- Do the cabinets need repairs? (loose hinges, damaged doors, etc.)
+- Are you keeping the same hardware or replacing it?
+- What's the ZIP code?
+
+PRICING GUIDANCE:
+- Small kitchen (10-15 doors): $1,500-$3,500
+- Medium kitchen (16-30 doors): $3,000-$6,000
+- Large kitchen (30+ doors): $5,000-$9,000+
+- Bathroom vanity: $500-$1,500
+- Staining costs 10-20% more than painting
+- New hardware is extra`,
+  };
+
+  const serviceGuide = serviceGuides[serviceType] || `
+SERVICE: ${serviceName}
+Ask relevant questions about scope, size, materials, condition, location (ZIP code), and timeline.
+Use industry-standard pricing for this type of home service.`;
+
+  return `You are ProServe AI, a friendly and knowledgeable home services estimator. You help homeowners get quick, accurate price estimates through natural conversation.
+
+ROLE & PERSONALITY:
+- You're warm, professional, and helpful — like a trusted neighbor who happens to be an expert
+- Keep responses concise (2-3 sentences per message, max 4 sentences)
+- Use casual but professional language — no jargon
+- If someone seems unsure about a measurement, help them estimate ("A standard bedroom is about 10x12 feet" or "If you're not sure, a rough guess works!")
+- Don't ask too many questions at once — 1-2 per message maximum
+- Always acknowledge what the person told you before asking the next question
+
+${serviceGuide}
+
+CONVERSATION FLOW:
+1. Greet warmly and ask the first 1-2 questions based on the service
+2. Ask follow-up questions one or two at a time based on their answers
+3. After collecting enough info (usually 4-6 exchanges), provide the estimate
+4. IMPORTANT: You MUST ask for the ZIP code at some point before giving the estimate
+
+WHEN READY TO GIVE ESTIMATE:
+After you have enough details, you MUST respond with a JSON block (and ONLY the JSON block, no other text) in this exact format:
+
+\`\`\`json
+{
+  "estimateReady": true,
+  "estimate": {
+    "low": <number>,
+    "recommended": <number>,
+    "premium": <number>,
+    "quantity": <estimated_sqft_or_units_as_number>,
+    "description": "<brief 1-line summary of the job>",
+    "collectedDetails": {
+      "rooms": "<what they told you>",
+      "scope": "<walls/ceilings/trim/etc>",
+      "condition": "<current condition>",
+      "color_change": "<type of color change>",
+      "special_requests": "<any special requests>",
+      "ceiling_height": "<standard/tall/vaulted>"
+    }
+  },
+  "collectedData": {
+    "zip": "<zip code>",
+    "service": "${serviceType}"
+  },
+  "message": "<a friendly summary message like 'Based on what you've described, here's your estimate for painting 3 bedrooms and the living room:'>"
+}
+\`\`\`
+
+The THREE price tiers should be:
+- low: Budget option (basic materials, simpler scope) — roughly 85-90% of recommended
+- recommended: Best value (quality materials, thorough job) — your best estimate
+- premium: Premium option (top materials, extra prep, premium brand paint) — roughly 115-120% of recommended
+
+UNTIL YOU'RE READY:
+Respond with natural text. After your message, suggest 2-4 quick reply options the user could tap (common answers to your question).
+
+Your response format for regular messages should be a JSON block:
+\`\`\`json
+{
+  "estimateReady": false,
+  "message": "<your conversational message>",
+  "quickReplies": ["Option 1", "Option 2", "Option 3"],
+  "collectedData": {
+    "zip": "<if collected, else empty string>",
+    "service": "${serviceType}"
+  }
+}
+\`\`\`
+
+IMPORTANT RULES:
+- ALWAYS respond with valid JSON inside a json code block
+- Never ask for exact square footage — help them estimate or ask about rooms/areas instead
+- Be encouraging and make the process feel easy
+- If they give vague answers, work with what you have and make reasonable assumptions
+- Remember: this is a quick estimate, not a binding quote`;
+}
+
+/**
+ * Core logic for conversational AI estimate chat.
+ */
+async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial }) {
+  const openai = getOpenAiClient();
+
+  // Build the conversation for OpenAI
+  const openAiMessages = [
+    { role: 'system', content: buildEstimatorSystemPrompt(serviceType, serviceName) },
+  ];
+
+  if (isInitial) {
+    // First message — AI starts the conversation
+    openAiMessages.push({
+      role: 'user',
+      content: `I need a ${serviceName} estimate. Please start by introducing yourself and asking your first question.`,
+    });
+  } else {
+    // Ongoing conversation — include history
+    for (const msg of (messages || [])) {
+      const role = msg.role === 'user' ? 'user' : 'assistant';
+      openAiMessages.push({ role, content: msg.content || '' });
+    }
+  }
+
+  console.log(`[aiEstimateChat] Sending ${openAiMessages.length} messages to OpenAI for service: ${serviceType}`);
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: openAiMessages,
+    temperature: 0.7,
+    max_tokens: 800,
+  });
+
+  const raw = (completion.choices?.[0]?.message?.content || '').trim();
+  console.log(`[aiEstimateChat] Raw response: ${raw.substring(0, 300)}...`);
+
+  // Parse the JSON response from the AI
+  let parsed;
+  try {
+    // Try to extract JSON from markdown code block
+    const jsonMatch = raw.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1]);
+    } else {
+      // Try parsing the raw response as JSON
+      parsed = JSON.parse(raw);
+    }
+  } catch (parseErr) {
+    console.warn(`[aiEstimateChat] Failed to parse AI response as JSON, wrapping as message. Error: ${parseErr.message}`);
+    // If parsing fails, wrap the raw text as a conversational reply
+    parsed = {
+      estimateReady: false,
+      message: raw.replace(/```json[\s\S]*?```/g, '').trim() || raw,
+      quickReplies: [],
+      collectedData: { zip: '', service: serviceType },
+    };
+  }
+
+  // Validate and sanitize output
+  const result = {
+    message: (parsed.message || '').toString(),
+    quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies.map(String).slice(0, 5) : [],
+    estimateReady: parsed.estimateReady === true,
+    collectedData: {
+      zip: ((parsed.collectedData?.zip) || '').toString(),
+      service: serviceType,
+    },
+  };
+
+  // If estimate is ready, include estimate data
+  if (result.estimateReady && parsed.estimate) {
+    const est = parsed.estimate;
+    result.estimate = {
+      low: Number(est.low) || 0,
+      recommended: Number(est.recommended) || 0,
+      premium: Number(est.premium) || 0,
+      quantity: Number(est.quantity) || 0,
+      description: (est.description || '').toString(),
+      collectedDetails: est.collectedDetails || {},
+    };
+
+    // Sanity check — low < recommended < premium
+    if (result.estimate.low >= result.estimate.recommended) {
+      result.estimate.low = Math.round(result.estimate.recommended * 0.87);
+    }
+    if (result.estimate.premium <= result.estimate.recommended) {
+      result.estimate.premium = Math.round(result.estimate.recommended * 1.17);
+    }
+  }
+
+  return result;
+}
+
+// Callable version
+exports.aiEstimateChat = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 60, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid || '';
+    const serviceType = (data?.serviceType || '').toString().trim();
+    const serviceName = (data?.serviceName || '').toString().trim();
+    const messages = Array.isArray(data?.messages) ? data.messages : [];
+    const isInitial = data?.isInitial === true;
+
+    if (!serviceType) {
+      throw new functions.https.HttpsError('invalid-argument', 'serviceType is required.');
+    }
+
+    return aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial });
+  });
+
+// HTTP fallback version
+exports.aiEstimateChatHttp = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 60, memory: '256MB' })
+  .https.onRequest(async (req, res) => {
+    // CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+    if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+
+    try {
+      const body = req.body || {};
+      const serviceType = (body.serviceType || '').toString().trim();
+      const serviceName = (body.serviceName || '').toString().trim();
+      const messages = Array.isArray(body.messages) ? body.messages : [];
+      const isInitial = body.isInitial === true;
+
+      if (!serviceType) {
+        res.status(400).json({ error: 'serviceType is required.' });
+        return;
+      }
+
+      const result = await aiEstimateChatCore({
+        uid: '',
+        serviceType,
+        serviceName,
+        messages,
+        isInitial,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('[aiEstimateChatHttp] Error:', err);
+      res.status(500).json({ error: err.message || 'Internal error' });
+    }
+  });

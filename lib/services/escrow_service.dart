@@ -229,7 +229,8 @@ class EscrowService {
       throw Exception('Cannot cancel — funds already released.');
     }
 
-    final hasPaid = data['stripePaymentIntentId'] != null &&
+    final hasPaid =
+        data['stripePaymentIntentId'] != null &&
         (data['stripePaymentIntentId'] as String).isNotEmpty;
 
     if (hasPaid) {

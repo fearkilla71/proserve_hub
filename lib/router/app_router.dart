@@ -73,6 +73,7 @@ import '../screens/account_profile_screen.dart';
 import '../screens/ai_price_offer_screen.dart';
 import '../screens/escrow_status_screen.dart';
 import '../screens/escrow_rating_screen.dart';
+import '../screens/ai_estimate_chat_screen.dart';
 import '../widgets/offline_banner.dart';
 
 /// Centralised route path constants.
@@ -662,6 +663,18 @@ GoRouter createRouter() {
         builder: (context, state) {
           final escrowId = state.pathParameters['escrowId']!;
           return EscrowRatingScreen(escrowId: escrowId);
+        },
+      ),
+
+      // ── AI Estimate Chat ──
+      GoRoute(
+        path: '/ai-estimate-chat',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return AiEstimateChatScreen(
+            serviceType: extra['serviceType'] as String? ?? '',
+            serviceName: extra['serviceName'] as String? ?? '',
+          );
         },
       ),
 
