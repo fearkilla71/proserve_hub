@@ -1,26 +1,17 @@
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import '../widgets/contractor_reputation_card.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
 
 import '../models/marketplace_models.dart';
-import '../utils/platform_file_bytes.dart';
+import '../services/zip_lookup_service.dart';
 import '../utils/zip_locations.dart';
 
 class RecommendedContractorsPage extends StatefulWidget {
@@ -35,13 +26,6 @@ class RecommendedContractorsPage extends StatefulWidget {
 
 class _RecommendedContractorsPageState
     extends State<RecommendedContractorsPage> {
-  bool _uploading = false;
-  bool _estimating = false;
-  List<String> _uploadedPaths = <String>[];
-  Map<String, dynamic>? _aiResult;
-
-  final ImagePicker _imagePicker = ImagePicker();
-
   final Set<String> _invitingContractorIds = <String>{};
 
   String _sortBy = 'match'; // match, distance, rating, response
@@ -85,14 +69,18 @@ class _RecommendedContractorsPageState
   }
 
   double? _zipLat(String zip) {
-    final loc = zipLocations[zip.trim()];
+    final loc =
+        ZipLookupService.instance.lookupCached(zip.trim()) ??
+        zipLocations[zip.trim()];
     final lat = loc?['lat'];
     if (lat == null) return null;
     return (lat as num).toDouble();
   }
 
   double? _zipLng(String zip) {
-    final loc = zipLocations[zip.trim()];
+    final loc =
+        ZipLookupService.instance.lookupCached(zip.trim()) ??
+        zipLocations[zip.trim()];
     final lng = loc?['lng'];
     if (lng == null) return null;
     return (lng as num).toDouble();
@@ -350,468 +338,6 @@ class _RecommendedContractorsPageState
     }
   }
 
-  Future<void> _pickAndUploadPhotos() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please sign in first.')));
-      return;
-    }
-
-    final remaining = (10 - _uploadedPaths.length).clamp(0, 10);
-    if (remaining == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can upload up to 10 photos.')),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-      withData: true,
-    );
-
-    if (result == null || result.files.isEmpty) return;
-
-    final files = result.files.take(remaining).toList();
-    setState(() {
-      _uploading = true;
-      _aiResult = null;
-    });
-
-    try {
-      final storage = FirebaseStorage.instance;
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      final uploaded = <String>[];
-      for (var i = 0; i < files.length; i++) {
-        final f = files[i];
-        final bytes = await readPlatformFileBytes(f);
-        if (bytes == null || bytes.isEmpty) {
-          throw Exception('Unable to read selected file.');
-        }
-
-        Uint8List uploadBytes = Uint8List.fromList(bytes);
-
-        // Compress image if larger than 1MB
-        if (uploadBytes.length > 1024 * 1024) {
-          try {
-            final compressed = await FlutterImageCompress.compressWithList(
-              uploadBytes,
-              minWidth: 1920,
-              minHeight: 1920,
-              quality: 85,
-              format: CompressFormat.jpeg,
-            );
-            if (compressed.isNotEmpty &&
-                compressed.length < uploadBytes.length) {
-              uploadBytes = Uint8List.fromList(compressed);
-            }
-          } catch (e) {
-            // If compression fails, use original
-            debugPrint('Image compression failed: $e');
-          }
-        }
-
-        String contentTypeForName(String name) {
-          final lower = name.toLowerCase();
-          if (lower.endsWith('.png')) return 'image/png';
-          if (lower.endsWith('.webp')) return 'image/webp';
-          if (lower.endsWith('.gif')) return 'image/gif';
-          return 'image/jpeg';
-        }
-
-        final safeName = (f.name.isNotEmpty ? f.name : 'photo_$i').replaceAll(
-          RegExp(r'[^a-zA-Z0-9._-]'),
-          '_',
-        );
-        final path =
-            'job_images/${widget.jobId}/${user.uid}/${now}_${i}_$safeName';
-
-        final ref = storage.ref(path);
-        await ref.putData(
-          uploadBytes,
-          SettableMetadata(contentType: contentTypeForName(safeName)),
-        );
-        uploaded.add(path);
-      }
-
-      if (!mounted) return;
-      setState(() {
-        final merged = <String>[..._uploadedPaths, ...uploaded];
-        _uploadedPaths = merged.length <= 10
-            ? merged
-            : merged.take(10).toList();
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Uploaded ${uploaded.length} photo(s).')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _uploading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _takeAndUploadPhoto() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please sign in first.')));
-      return;
-    }
-
-    if (_uploadedPaths.length >= 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can upload up to 10 photos.')),
-      );
-      return;
-    }
-
-    final XFile? image = await _imagePicker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
-    if (image == null) return;
-
-    setState(() {
-      _uploading = true;
-      _aiResult = null;
-    });
-
-    try {
-      final storage = FirebaseStorage.instance;
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      Uint8List uploadBytes = Uint8List.fromList(await image.readAsBytes());
-      if (uploadBytes.isEmpty) {
-        throw Exception('Unable to read captured photo.');
-      }
-
-      if (uploadBytes.length > 1024 * 1024) {
-        try {
-          final compressed = await FlutterImageCompress.compressWithList(
-            uploadBytes,
-            minWidth: 1920,
-            minHeight: 1920,
-            quality: 85,
-            format: CompressFormat.jpeg,
-          );
-          if (compressed.isNotEmpty && compressed.length < uploadBytes.length) {
-            uploadBytes = Uint8List.fromList(compressed);
-          }
-        } catch (e) {
-          debugPrint('Image compression failed: $e');
-        }
-      }
-
-      String contentTypeForName(String name) {
-        final lower = name.toLowerCase();
-        if (lower.endsWith('.png')) return 'image/png';
-        if (lower.endsWith('.webp')) return 'image/webp';
-        if (lower.endsWith('.gif')) return 'image/gif';
-        return 'image/jpeg';
-      }
-
-      final rawName = (image.name.isNotEmpty)
-          ? image.name
-          : (image.path.split('/').last.split('\\').last);
-      final safeName = (rawName.isNotEmpty ? rawName : 'camera.jpg').replaceAll(
-        RegExp(r'[^a-zA-Z0-9._-]'),
-        '_',
-      );
-
-      final index = _uploadedPaths.length;
-      final path =
-          'job_images/${widget.jobId}/${user.uid}/${now}_${index}_$safeName';
-
-      final ref = storage.ref(path);
-      await ref.putData(
-        uploadBytes,
-        SettableMetadata(contentType: contentTypeForName(safeName)),
-      );
-
-      if (!mounted) return;
-      setState(() {
-        final merged = <String>[..._uploadedPaths, path];
-        _uploadedPaths = merged.length <= 10
-            ? merged
-            : merged.take(10).toList();
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Photo uploaded.')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _uploading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _showPhotoSourceSheet() async {
-    if (_uploading) return;
-
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Take a photo'),
-                onTap: () => Navigator.pop(context, 'camera'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Upload from gallery'),
-                onTap: () => Navigator.pop(context, 'gallery'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (!mounted || choice == null) return;
-    if (choice == 'camera') {
-      await _takeAndUploadPhoto();
-    } else if (choice == 'gallery') {
-      await _pickAndUploadPhotos();
-    }
-  }
-
-  Future<void> _generateAiEstimate() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final hasPhotos = _uploadedPaths.isNotEmpty;
-
-    setState(() {
-      _estimating = true;
-      _aiResult = null;
-    });
-
-    try {
-      bool shouldFallbackToHttp(FirebaseFunctionsException e) {
-        final msg = (e.message ?? '').toLowerCase();
-        if (msg.contains('openai key')) return false;
-        if (msg.contains('app check') || msg.contains('appcheck')) return true;
-        if (msg.contains('attest') || msg.contains('integrity')) return true;
-        if (e.code == 'failed-precondition') return true;
-        if (e.code == 'not-found') return true;
-        // Some platforms surface App Check failures as INTERNAL.
-        if (e.code == 'internal') return true;
-        return false;
-      }
-
-      Future<Map<String, dynamic>> estimateViaHttp() async {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) {
-          throw Exception('Please sign in first.');
-        }
-
-        final idToken = await user.getIdToken();
-        if (idToken == null || idToken.trim().isEmpty) {
-          throw Exception('Auth token unavailable');
-        }
-
-        final projectId = Firebase.app().options.projectId;
-        if (projectId.trim().isEmpty) {
-          throw Exception('Firebase projectId missing');
-        }
-
-        const useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
-        final uri = useEmulators
-            ? Uri.parse(
-                hasPhotos
-                    ? 'http://localhost:5001/$projectId/us-central1/estimateJobFromImagesHttp'
-                    : 'http://localhost:5001/$projectId/us-central1/estimateJobHttp',
-              )
-            : Uri.parse(
-                hasPhotos
-                    ? 'https://us-central1-$projectId.cloudfunctions.net/estimateJobFromImagesHttp'
-                    : 'https://us-central1-$projectId.cloudfunctions.net/estimateJobHttp',
-              );
-
-        Future<Map<String, dynamic>> postEstimate(Uri target, Map body) async {
-          final r = await http.post(
-            target,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $idToken',
-            },
-            body: jsonEncode(body),
-          );
-
-          if (r.statusCode < 200 || r.statusCode >= 300) {
-            String message = 'Estimate failed';
-            try {
-              final decoded = jsonDecode(r.body);
-              if (decoded is Map && decoded['error'] is String) {
-                message = decoded['error'] as String;
-              }
-            } catch (_) {
-              // ignore
-            }
-            throw Exception(message);
-          }
-
-          final decoded = jsonDecode(r.body);
-          if (decoded is! Map) {
-            throw Exception('Estimate failed');
-          }
-          return Map<String, dynamic>.from(decoded);
-        }
-
-        return await postEstimate(uri, {
-          'jobId': widget.jobId,
-          if (hasPhotos) 'imagePaths': _uploadedPaths,
-        }).catchError((e) async {
-          final msg = e.toString().toLowerCase();
-          final canFallback = hasPhotos && msg.contains('openai key');
-          if (!canFallback) throw e;
-
-          final fallbackUri = useEmulators
-              ? Uri.parse(
-                  'http://localhost:5001/$projectId/us-central1/estimateJobHttp',
-                )
-              : Uri.parse(
-                  'https://us-central1-$projectId.cloudfunctions.net/estimateJobHttp',
-                );
-
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Photo AI is unavailable; using rough estimate instead.',
-              ),
-            ),
-          );
-
-          return await postEstimate(fallbackUri, {'jobId': widget.jobId});
-        });
-      }
-
-      final useCallable =
-          kIsWeb ||
-          defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS;
-
-      if (useCallable) {
-        try {
-          final callable = FirebaseFunctions.instance.httpsCallable(
-            hasPhotos ? 'estimateJobFromImages' : 'estimateJob',
-          );
-          final resp = await callable.call({
-            'jobId': widget.jobId,
-            if (hasPhotos) 'imagePaths': _uploadedPaths,
-          });
-
-          if (!mounted) return;
-          setState(() {
-            _aiResult = (resp.data as Map).cast<String, dynamic>();
-          });
-          return;
-        } on FirebaseFunctionsException catch (e) {
-          final message = (e.message ?? '').toLowerCase();
-          final canFallback = hasPhotos && message.contains('openai key');
-          if (!canFallback && shouldFallbackToHttp(e)) {
-            final respDecoded = await estimateViaHttp();
-            if (!mounted) return;
-            setState(() {
-              _aiResult = respDecoded;
-            });
-            return;
-          }
-
-          if (!canFallback) rethrow;
-
-          final fallback = FirebaseFunctions.instance.httpsCallable(
-            'estimateJob',
-          );
-          final resp = await fallback.call({'jobId': widget.jobId});
-          if (!mounted) return;
-          setState(() {
-            _aiResult = (resp.data as Map).cast<String, dynamic>();
-          });
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Photo AI is unavailable right now; used a rough estimate instead.',
-              ),
-            ),
-          );
-          return;
-        } catch (e) {
-          final msg = e.toString().toLowerCase();
-          final looksInternalOrAppCheck =
-              msg.contains('firebase_functions/internal') ||
-              msg.contains('[firebase_functions/internal]') ||
-              msg.contains('app check') ||
-              msg.contains('appcheck') ||
-              msg.contains('integrity') ||
-              msg.contains('attest') ||
-              msg.contains(' internal');
-
-          if (looksInternalOrAppCheck) {
-            final respDecoded = await estimateViaHttp();
-            if (!mounted) return;
-            setState(() {
-              _aiResult = respDecoded;
-            });
-            return;
-          }
-          rethrow;
-        }
-      }
-
-      final respDecoded = await estimateViaHttp();
-
-      if (!mounted) return;
-      setState(() {
-        _aiResult = respDecoded;
-      });
-    } on FirebaseFunctionsException catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message ?? e.code)));
-    } catch (e) {
-      if (!mounted) return;
-      final text = e.toString();
-      final firstLine = text.split('\n').first;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Estimate failed: $firstLine')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _estimating = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -865,85 +391,9 @@ class _RecommendedContractorsPageState
                 if (cid.isNotEmpty) invited.add(cid);
               }
 
-              final paintingScope =
-                  (job?['paintingScope'] as String?)?.trim().toLowerCase() ??
-                  ((job?['paintingQuestions'] is Map)
-                      ? (((job?['paintingQuestions'] as Map)['scope']
-                                    as String?)
-                                ?.trim()
-                                .toLowerCase() ??
-                            '')
-                      : '');
-
-              // Back-compat: older exterior jobs may not have paintingScope yet.
-              final description = (job?['description'] as String?) ?? '';
-              final looksExteriorByDescription = description
-                  .trimLeft()
-                  .toLowerCase()
-                  .startsWith('exterior painting');
-              final isExteriorPainting =
-                  paintingScope == 'exterior' || looksExteriorByDescription;
-
               return ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Estimate',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _uploadedPaths.isEmpty
-                                ? 'Generate a rough estimate now, or upload 1–10 photos to improve it.'
-                                : 'Uploaded ${_uploadedPaths.length} photo(s).',
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _uploading
-                                      ? null
-                                      : _showPhotoSourceSheet,
-                                  child: Text(
-                                    _uploading ? 'Uploading…' : 'Upload Photos',
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: FilledButton(
-                                  onPressed: _estimating || _uploading
-                                      ? null
-                                      : _generateAiEstimate,
-                                  child: Text(
-                                    _estimating
-                                        ? 'Estimating…'
-                                        : 'Generate Estimate',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_aiResult != null) ...[
-                            const SizedBox(height: 12),
-                            _aiEstimateResult(
-                              context,
-                              _aiResult!,
-                              isExteriorPainting: isExteriorPainting,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirebaseFirestore.instance
                         .collection('job_matches')
@@ -1108,54 +558,6 @@ class _RecommendedContractorsPageState
           );
         },
       ),
-    );
-  }
-
-  Widget _aiEstimateResult(
-    BuildContext context,
-    Map<String, dynamic> data, {
-    required bool isExteriorPainting,
-  }) {
-    final prices = (data['prices'] as Map?)?.cast<String, dynamic>() ?? {};
-    double asDouble(dynamic v) =>
-        v is num ? v.toDouble() : double.tryParse('$v') ?? 0;
-
-    final low = asDouble(prices['low']);
-    final rec = asDouble(prices['recommended']);
-    final prem = asDouble(prices['premium']);
-
-    final unit = (data['unit'] ?? '').toString();
-    final qty = asDouble(data['quantity']);
-    final conf = asDouble(data['confidence']);
-    String notes = (data['notes'] ?? '').toString();
-    if (isExteriorPainting) {
-      final n = notes.toLowerCase();
-      final looksInterior =
-          n.contains('interior') ||
-          n.contains('interior walls') ||
-          n.contains('ceiling') ||
-          n.contains('baseboards');
-      if (notes.trim().isEmpty || looksInterior) {
-        notes =
-            'Estimated Exterior Painting Cost (final price may vary after inspection). '
-            'Typically includes exterior siding/walls; add-ons may include trim, fascia, soffit, doors, garage door, deck/fence, scraping/peeling, and multi-story access.';
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Estimated Range: \$${low.toStringAsFixed(0)} – \$${prem.toStringAsFixed(0)}',
-        ),
-        Text('Midpoint: \$${rec.toStringAsFixed(0)}'),
-        const SizedBox(height: 6),
-        Text(
-          'Assumed: ${qty.toStringAsFixed(0)} ${unit.isEmpty ? "units" : unit}',
-        ),
-        Text('Confidence: ${(conf * 100).toStringAsFixed(0)}%'),
-        if (notes.isNotEmpty) Text('Notes: $notes'),
-      ],
     );
   }
 

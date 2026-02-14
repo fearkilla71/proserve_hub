@@ -65,10 +65,36 @@ String formatTimestamp(dynamic raw) {
   return DateFormat.yMMMd().add_jm().format(ts.toDate());
 }
 
-/// Check whether the user doc indicates pricing tools are unlocked.
-bool pricingToolsUnlockedFromUserDoc(Map<String, dynamic>? data) {
-  if (data == null) return false;
-  return data['pricingToolsPro'] == true ||
+/// Canonical subscription tier check.
+///
+/// Returns the effective tier as a lowercase string: 'basic', 'pro', or
+/// 'enterprise'.  Falls back to legacy boolean fields so existing users
+/// aren't locked out while the migration to `subscriptionTier` rolls out.
+String effectiveSubscriptionTier(Map<String, dynamic>? data) {
+  if (data == null) return 'basic';
+
+  // Prefer the canonical field.
+  final tier = (data['subscriptionTier'] as String?)?.toLowerCase();
+  if (tier == 'enterprise') return 'enterprise';
+  if (tier == 'pro') return 'pro';
+
+  // Legacy boolean fallback — treat any of these as 'pro'.
+  if (data['pricingToolsPro'] == true ||
       data['contractorPro'] == true ||
-      data['isPro'] == true;
+      data['isPro'] == true) {
+    return 'pro';
+  }
+
+  return 'basic';
+}
+
+/// Check whether the user doc indicates pricing tools are unlocked (Pro+).
+bool pricingToolsUnlockedFromUserDoc(Map<String, dynamic>? data) {
+  final tier = effectiveSubscriptionTier(data);
+  return tier == 'pro' || tier == 'enterprise';
+}
+
+/// Check whether the user doc indicates Enterprise tier.
+bool isEnterpriseFromUserDoc(Map<String, dynamic>? data) {
+  return effectiveSubscriptionTier(data) == 'enterprise';
 }

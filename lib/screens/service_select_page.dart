@@ -15,16 +15,6 @@ IconData _iconFromName(String? name) {
       return Icons.water;
     case 'kitchen':
       return Icons.kitchen;
-    case 'electrical_services':
-      return Icons.electrical_services;
-    case 'plumbing':
-      return Icons.plumbing;
-    case 'roofing':
-      return Icons.roofing;
-    case 'yard':
-      return Icons.yard;
-    case 'cleaning_services':
-      return Icons.cleaning_services;
     default:
       return Icons.home_repair_service;
   }

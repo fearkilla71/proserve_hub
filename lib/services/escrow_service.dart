@@ -65,6 +65,15 @@ class EscrowService {
       'premiumLeadCost': 3,
     });
 
+    // Mark the job_request as escrow so the customer portal shows it correctly
+    if (jobId.isNotEmpty) {
+      await _db.collection('job_requests').doc(jobId).update({
+        'escrowId': ref.id,
+        'escrowPrice': aiPrice,
+        'instantBook': true,
+      });
+    }
+
     return ref.id;
   }
 
@@ -222,33 +231,47 @@ class EscrowService {
   }
 
   /// If both customer and contractor have confirmed, release funds.
+  /// Safe order: mark payout_pending → call Stripe → mark released / failed.
   Future<void> _tryRelease(String escrowId) async {
     final ref = _db.collection(_collection).doc(escrowId);
 
-    // Use a transaction to prevent double-release from simultaneous confirms
-    final released = await _db.runTransaction<bool>((tx) async {
+    // Use a transaction to prevent double-release from simultaneous confirms.
+    // Set an intermediate status so the UI shows "Payout Processing".
+    final readyToPay = await _db.runTransaction<bool>((tx) async {
       final snap = await tx.get(ref);
       final data = snap.data();
       if (data == null) return false;
 
-      // Already released — nothing to do
-      if (data['status'] == EscrowStatus.released.value) return false;
+      final status = data['status'] as String?;
+      // Already releasing or released — nothing to do
+      if (status == EscrowStatus.released.value ||
+          status == EscrowStatus.payoutPending.value) {
+        return false;
+      }
 
       final customerDone = data['customerConfirmedAt'] != null;
       final contractorDone = data['contractorConfirmedAt'] != null;
 
       if (customerDone && contractorDone) {
-        tx.update(ref, {
-          'status': EscrowStatus.released.value,
-          'releasedAt': FieldValue.serverTimestamp(),
-        });
+        tx.update(ref, {'status': EscrowStatus.payoutPending.value});
         return true;
       }
       return false;
     });
 
-    if (released) {
-      // Update job_request status (outside transaction — best effort)
+    if (!readyToPay) return;
+
+    // Trigger Stripe Transfer to contractor's connected account
+    try {
+      await StripeService().releaseEscrowFunds(escrowId: escrowId);
+
+      // Stripe succeeded — mark as released
+      await ref.update({
+        'status': EscrowStatus.released.value,
+        'releasedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update job_request status (best effort)
       final snap = await ref.get();
       final jobId = snap.data()?['jobId'] as String?;
       if (jobId != null && jobId.isNotEmpty) {
@@ -257,14 +280,14 @@ class EscrowService {
           'completedAt': FieldValue.serverTimestamp(),
         });
       }
-
-      // Trigger Stripe Transfer to contractor's connected account
-      try {
-        await StripeService().releaseEscrowFunds(escrowId: escrowId);
-      } catch (e) {
-        // Log but don't block — admin can retry payout manually
-        debugPrint('Escrow payout failed for $escrowId: $e');
-      }
+    } catch (e) {
+      // Stripe failed — mark as payout_failed so admin can retry
+      debugPrint('Escrow payout failed for $escrowId: $e');
+      await ref.update({
+        'status': EscrowStatus.payoutFailed.value,
+        'payoutError': e.toString(),
+        'payoutFailedAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 
@@ -299,18 +322,21 @@ class EscrowService {
       // Issue real Stripe refund via Cloud Function
       await StripeService().refundEscrow(escrowId: escrowId);
       // The Cloud Function handles setting status to 'cancelled',
-      // saving refund details, and resetting the job_request.
+      // saving refund details, and deleting the job_request.
+
+      // Also delete the job_request so it disappears everywhere
+      final jobId = data['jobId'] as String?;
+      if (jobId != null && jobId.isNotEmpty) {
+        await _db.collection('job_requests').doc(jobId).delete();
+      }
     } else {
       // No payment was made — just cancel locally
       await ref.update({'status': EscrowStatus.cancelled.value});
 
+      // Delete the job_request entirely so it doesn't show anywhere
       final jobId = data['jobId'] as String?;
       if (jobId != null && jobId.isNotEmpty) {
-        await _db.collection('job_requests').doc(jobId).update({
-          'status': 'open',
-          'escrowId': FieldValue.delete(),
-          'escrowPrice': FieldValue.delete(),
-        });
+        await _db.collection('job_requests').doc(jobId).delete();
       }
     }
   }
@@ -363,6 +389,58 @@ class EscrowService {
   }
 
   double _roundCents(double value) => (value * 100).round() / 100;
+
+  // ──────────────────── ONE-TIME MIGRATION ──────────────────────────────
+
+  /// Patch any job_requests linked to escrow_bookings that are missing the
+  /// `escrowId` / `escrowPrice` / `instantBook` fields.
+  /// Safe to call multiple times — skips already-patched docs.
+  Future<void> syncEscrowFieldsToJobRequests() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snap = await _db
+          .collection(_collection)
+          .where('customerId', isEqualTo: uid)
+          .get();
+
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final jobId = (data['jobId'] ?? '').toString();
+        if (jobId.isEmpty) continue;
+
+        final status = EscrowStatusX.fromString(data['status'] ?? '');
+        // Skip cancelled / declined — those should be deleted
+        if (status == EscrowStatus.cancelled ||
+            status == EscrowStatus.declined) {
+          continue;
+        }
+
+        final aiPrice = (data['aiPrice'] as num?)?.toDouble();
+
+        // Check if the job_request still exists
+        final jobSnap = await _db.collection('job_requests').doc(jobId).get();
+        if (!jobSnap.exists) {
+          // Job was deleted — cancel the orphaned escrow booking
+          await doc.reference.update({'status': EscrowStatus.cancelled.value});
+          continue;
+        }
+        final jobData = jobSnap.data() ?? {};
+        final existingEscrowId = (jobData['escrowId'] ?? '').toString();
+
+        if (existingEscrowId.isEmpty) {
+          await _db.collection('job_requests').doc(jobId).update({
+            'escrowId': doc.id,
+            'escrowPrice': aiPrice,
+            'instantBook': true,
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('syncEscrowFieldsToJobRequests error: $e');
+    }
+  }
 
   // ────────────────────────────── POST-JOB RATING ──────────────────────
 

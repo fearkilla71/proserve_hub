@@ -1,16 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'invoice_preview_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/invoice_models.dart';
 import '../services/invoice_ai_service.dart';
+import '../services/invoice_number_service.dart';
 import '../services/invoice_pdf_builder.dart';
+import '../services/ai_usage_service.dart';
 import '../widgets/animated_states.dart';
+import '../widgets/contractor_portal_helpers.dart';
+import '../services/stripe_service.dart';
 
 class InvoiceMakerScreen extends StatefulWidget {
   final InvoiceDraft? initialDraft;
@@ -39,6 +45,9 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
   double _taxRatePercent = 0.0;
   final List<String> _paymentMethods = <String>[];
   final List<XFile> _photos = <XFile>[];
+  final List<String> _photoUrls = <String>[]; // persisted URLs from Storage
+  final List<_PaymentMilestone> _milestones = <_PaymentMilestone>[];
+  String _invoiceStatus = 'draft';
 
   late final Map<String, Object?> _initialFingerprint;
   late Map<String, Object?> _lastSavedFingerprint;
@@ -60,6 +69,16 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
 
     _initialFingerprint = _draftFingerprint(_draft);
     _lastSavedFingerprint = Map<String, Object?>.from(_initialFingerprint);
+
+    // Fetch a sequential invoice number if this is a fresh draft.
+    if (widget.initialDraft == null) {
+      InvoiceNumberService.nextInvoiceNumber().then((invoiceNum) {
+        if (!mounted) return;
+        setState(() {
+          _draft = _draft.copyWith(invoiceNumber: invoiceNum);
+        });
+      });
+    }
   }
 
   @override
@@ -115,6 +134,16 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
   Future<void> _generateWithAi() async {
     _syncDraftFromControllers();
 
+    // ── AI rate-limit check ──
+    final limitMsg = await AiUsageService.instance.checkLimit('invoiceAi');
+    if (limitMsg != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(limitMsg)));
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
@@ -128,6 +157,9 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
         _syncControllersFromDraft();
         _loading = false;
       });
+
+      // Record successful AI invoice usage.
+      AiUsageService.instance.recordUsage('invoiceAi');
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -137,11 +169,24 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
     }
   }
 
+  static bool _isValidEmail(String v) {
+    if (v.trim().isEmpty) return true; // optional
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
+  }
+
+  static bool _isValidPhone(String v) {
+    if (v.trim().isEmpty) return true; // optional
+    final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
   Future<void> _editClientSheet() async {
     final name = TextEditingController(text: _clientName.text);
     final email = TextEditingController(text: _clientEmail.text);
     final phone = TextEditingController(text: _clientPhone.text);
     final address = TextEditingController(text: _clientAddress.text);
+    String? emailError;
+    String? phoneError;
 
     final ok = await _showEditorSheet<bool>(
       title: 'Client',
@@ -157,13 +202,29 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
             TextField(
               controller: email,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email (optional)'),
+              decoration: InputDecoration(
+                labelText: 'Email (optional)',
+                errorText: emailError,
+              ),
+              onChanged: (v) {
+                setSheetState(() {
+                  emailError = _isValidEmail(v) ? null : 'Invalid email format';
+                });
+              },
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phone,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Phone (optional)'),
+              decoration: InputDecoration(
+                labelText: 'Phone (optional)',
+                errorText: phoneError,
+              ),
+              onChanged: (v) {
+                setSheetState(() {
+                  phoneError = _isValidPhone(v) ? null : 'Invalid phone number';
+                });
+              },
             ),
             const SizedBox(height: 12),
             TextField(
@@ -176,7 +237,11 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
           ],
         );
       },
-      onPrimary: () => true,
+      onPrimary: () {
+        if (!_isValidEmail(email.text)) return false;
+        if (!_isValidPhone(phone.text)) return false;
+        return true;
+      },
     );
 
     if (ok != true) return;
@@ -187,6 +252,182 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
       _clientPhone.text = phone.text;
       _clientAddress.text = address.text;
       _syncDraftFromControllers();
+    });
+  }
+
+  Future<void> _editPaymentScheduleSheet() async {
+    final localMilestones = _milestones
+        .map(
+          (m) => _PaymentMilestone(
+            label: m.label,
+            percent: m.percent,
+            dueDate: m.dueDate,
+          ),
+        )
+        .toList();
+
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final totalPercent = localMilestones.fold<double>(
+              0,
+              (acc, m) => acc + m.percent,
+            );
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16 + MediaQuery.of(ctx).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Payment Schedule',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...localMilestones.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final m = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                controller: TextEditingController(
+                                  text: m.label,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Milestone ${i + 1}',
+                                  isDense: true,
+                                ),
+                                onChanged: (v) => m.label = v,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 72,
+                              child: TextField(
+                                controller: TextEditingController(
+                                  text: m.percent.toStringAsFixed(0),
+                                ),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: '%',
+                                  isDense: true,
+                                ),
+                                onChanged: (v) {
+                                  setSheetState(() {
+                                    m.percent = double.tryParse(v) ?? 0;
+                                  });
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              onPressed: () {
+                                setSheetState(
+                                  () => localMilestones.removeAt(i),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    if (localMilestones.length < 5)
+                      TextButton.icon(
+                        onPressed: () {
+                          setSheetState(() {
+                            localMilestones.add(
+                              _PaymentMilestone(
+                                label:
+                                    'Milestone ${localMilestones.length + 1}',
+                                percent: 0,
+                              ),
+                            );
+                          });
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add milestone'),
+                      ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: totalPercent == 100
+                            ? const Color(0xFFD1FAE5)
+                            : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Total: ${totalPercent.toStringAsFixed(0)}%'
+                        '${totalPercent != 100 ? ' (must equal 100%)' : ''}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: totalPercent == 100
+                              ? const Color(0xFF059669)
+                              : const Color(0xFFDC2626),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton(
+                        onPressed:
+                            totalPercent == 100 || localMilestones.isEmpty
+                            ? () => Navigator.pop(ctx, true)
+                            : null,
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (ok != true) return;
+    setState(() {
+      _milestones
+        ..clear()
+        ..addAll(localMilestones);
     });
   }
 
@@ -536,6 +777,237 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
     }
   }
 
+  Future<void> _sendViaEmail() async {
+    _syncDraftFromControllers();
+    final email = _draft.clientEmail.trim();
+    final subject = Uri.encodeComponent(
+      'Invoice ${_draft.invoiceNumber} – ${_draft.jobTitle}',
+    );
+    final body = Uri.encodeComponent(
+      'Hi ${_draft.clientName},\n\n'
+      'Please find your invoice details below.\n\n'
+      'Invoice #: ${_draft.invoiceNumber}\n'
+      'Amount Due: \$${_total.toStringAsFixed(2)}\n'
+      'Payment Terms: ${_draft.paymentTerms}\n\n'
+      'Thank you for your business!',
+    );
+    final uri = Uri.parse('mailto:$email?subject=$subject&body=$body');
+    try {
+      await launchUrl(uri);
+      setState(() => _invoiceStatus = 'sent');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open email client: $e')),
+      );
+    }
+  }
+
+  Future<void> _sendViaSms() async {
+    _syncDraftFromControllers();
+    final phone = _draft.clientPhone.trim();
+    final body = Uri.encodeComponent(
+      'Invoice ${_draft.invoiceNumber} from ${_draft.businessName.isEmpty ? "your contractor" : _draft.businessName}\n'
+      'Amount Due: \$${_total.toStringAsFixed(2)}\n'
+      'Payment Terms: ${_draft.paymentTerms}',
+    );
+    final uri = Uri.parse('sms:$phone?body=$body');
+    try {
+      await launchUrl(uri);
+      setState(() => _invoiceStatus = 'sent');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open SMS: $e')));
+    }
+  }
+
+  Future<void> _sendWithPaymentLink() async {
+    _syncDraftFromControllers();
+
+    // Check Enterprise tier.
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sign in required')));
+      return;
+    }
+
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    if (!isEnterpriseFromUserDoc(userDoc.data())) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enterprise plan required for payment collection'),
+        ),
+      );
+      return;
+    }
+
+    if (_total <= 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invoice total must be > \$0')),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      final invoiceId = _draft.invoiceNumber.isNotEmpty
+          ? _draft.invoiceNumber
+          : 'inv_${DateTime.now().millisecondsSinceEpoch}';
+
+      final description = _draft.jobTitle.isNotEmpty
+          ? 'Invoice $invoiceId — ${_draft.jobTitle}'
+          : 'Invoice $invoiceId';
+
+      final paymentUrl = await StripeService().createInvoicePaymentLink(
+        invoiceId: invoiceId,
+        amount: _total,
+        clientEmail: _draft.clientEmail.trim(),
+        description: description,
+      );
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      // Share the payment link.
+      final clientEmail = _draft.clientEmail.trim();
+      final businessName = _draft.businessName.isEmpty
+          ? 'your contractor'
+          : _draft.businessName;
+
+      final message =
+          'Invoice $invoiceId from $businessName\n'
+          'Amount Due: \$${_total.toStringAsFixed(2)}\n\n'
+          'Pay securely here:\n$paymentUrl';
+
+      if (clientEmail.isNotEmpty) {
+        final subject = Uri.encodeComponent(
+          'Invoice $invoiceId — $businessName',
+        );
+        final body = Uri.encodeComponent(message);
+        final mailUri = Uri.parse(
+          'mailto:$clientEmail?subject=$subject&body=$body',
+        );
+        try {
+          await launchUrl(mailUri);
+        } catch (_) {
+          // Fall through to snackbar.
+        }
+      }
+
+      if (!mounted) return;
+      setState(() => _invoiceStatus = 'sent');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Payment link created!'),
+          action: SnackBarAction(
+            label: 'Copy link',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: paymentUrl));
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Payment link failed: $msg')));
+    }
+  }
+
+  void _showSendOptions() {
+    _syncDraftFromControllers();
+    final hasEmail = _draft.clientEmail.trim().isNotEmpty;
+    final hasPhone = _draft.clientPhone.trim().isNotEmpty;
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  'Send Invoice',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.email_outlined),
+                title: const Text('Send via Email'),
+                subtitle: hasEmail
+                    ? Text(_draft.clientEmail)
+                    : const Text('No client email set'),
+                enabled: hasEmail,
+                onTap: () {
+                  Navigator.pop(context);
+                  _sendViaEmail();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.sms_outlined),
+                title: const Text('Send via SMS'),
+                subtitle: hasPhone
+                    ? Text(_draft.clientPhone)
+                    : const Text('No client phone set'),
+                enabled: hasPhone,
+                onTap: () {
+                  Navigator.pop(context);
+                  _sendViaSms();
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.payment_outlined),
+                title: const Text('Send & Collect Payment'),
+                subtitle: const Text('Enterprise — pay via Stripe link'),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade700,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Enterprise',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sendWithPaymentLink();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   String _formatDate(BuildContext context, DateTime value) {
     return MaterialLocalizations.of(context).formatShortDate(value);
   }
@@ -661,10 +1133,34 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
           .collection('invoice_drafts')
           .doc(draftId);
 
+      // Upload any new photos to Firebase Storage.
+      if (_photos.isNotEmpty) {
+        for (final photo in _photos) {
+          try {
+            final bytes = await photo.readAsBytes();
+            final ext = photo.name.split('.').last;
+            final ref = FirebaseStorage.instance.ref(
+              'invoices/${user.uid}/$draftId/${DateTime.now().millisecondsSinceEpoch}.$ext',
+            );
+            await ref.putData(bytes);
+            final url = await ref.getDownloadURL();
+            _photoUrls.add(url);
+          } catch (_) {
+            // Skip individual photo failures silently.
+          }
+        }
+        _photos.clear();
+      }
+
       final payload = <String, Object?>{
-        'status': 'draft',
+        'status': _invoiceStatus,
         'updatedAt': FieldValue.serverTimestamp(),
         'draft': _draft.toJson(),
+        if (_photoUrls.isNotEmpty) 'photoUrls': _photoUrls,
+        if (_milestones.isNotEmpty)
+          'milestones': _milestones
+              .map((m) => {'label': m.label, 'percent': m.percent})
+              .toList(),
       };
       if (!_everSavedDraft) {
         payload['createdAt'] = FieldValue.serverTimestamp();
@@ -872,6 +1368,11 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
           ),
           actions: [
             IconButton(
+              tooltip: 'Send Invoice',
+              onPressed: _loading ? null : _showSendOptions,
+              icon: const Icon(Icons.send_outlined),
+            ),
+            IconButton(
               tooltip: 'AI Assist',
               onPressed: _loading ? null : _generateWithAi,
               icon: const Icon(Icons.auto_awesome),
@@ -945,46 +1446,44 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
               ),
               if (_loading || (_error != null && _error!.trim().isNotEmpty))
                 const SizedBox(height: 12),
-              InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Import from estimate coming soon.'),
+              // Only show the import banner when the draft is empty (no pre-filled data).
+              if (widget.initialDraft == null && !_isMeaningfulDraft(_draft))
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    context.push('/invoice-drafts');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
                     ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDBF3F8),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.file_download_outlined,
-                        color: Color(0xFF00A8C6),
-                        size: 30,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Import from estimate',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: const Color(0xFF00A8C6),
-                                fontWeight: FontWeight.w900,
-                              ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDBF3F8),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.file_download_outlined,
+                          color: Color(0xFF00A8C6),
+                          size: 30,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Open saved invoices',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: const Color(0xFF00A8C6),
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 18),
               Row(
                 children: [
@@ -1136,15 +1635,32 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
               const SizedBox(height: 18),
               _sectionHeader(title: 'Payment Schedule'),
               const SizedBox(height: 10),
-              _dashedAddTile(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Payment schedule coming soon.'),
-                    ),
-                  );
-                },
-              ),
+              if (_milestones.isNotEmpty) ...[
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: scheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: _milestones.asMap().entries.map((entry) {
+                      final m = entry.value;
+                      final amount = _total * m.percent / 100;
+                      return ListTile(
+                        dense: true,
+                        title: Text(m.label),
+                        subtitle: Text('${m.percent.toStringAsFixed(0)}%'),
+                        trailing: Text(
+                          '\$${amount.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              _dashedAddTile(onTap: _editPaymentScheduleSheet),
               const SizedBox(height: 18),
               _sectionHeader(title: 'Notes'),
               const SizedBox(height: 10),
@@ -1441,4 +1957,12 @@ class _DashedBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) {
     return oldDelegate.radius != radius || oldDelegate.color != color;
   }
+}
+
+class _PaymentMilestone {
+  String label;
+  double percent;
+  DateTime? dueDate;
+
+  _PaymentMilestone({required this.label, required this.percent, this.dueDate});
 }

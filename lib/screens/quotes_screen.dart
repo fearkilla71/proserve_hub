@@ -2,7 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
@@ -442,6 +444,45 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
 
   bool _isSubmitting = false;
 
+  // --- New fields: expiration, SOW, revision ---
+  DateTime? _expiresAt;
+  PlatformFile? _sowAttachment;
+  String? _existingQuoteId; // non-null when revising
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingQuote();
+  }
+
+  Future<void> _checkExistingQuote() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('quotes')
+          .where('jobId', isEqualTo: widget.jobId)
+          .where('contractorId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (snap.docs.isNotEmpty && mounted) {
+        final data = snap.docs.first.data();
+        setState(() {
+          _existingQuoteId = snap.docs.first.id;
+          _priceController.text =
+              (data['price'] as num?)?.toStringAsFixed(0) ?? '';
+          _durationController.text =
+              (data['estimatedDuration'] as String?) ?? '';
+          _notesController.text = (data['notes'] as String?) ?? '';
+          final expiresRaw = data['expiresAt'];
+          if (expiresRaw is Timestamp) {
+            _expiresAt = expiresRaw.toDate();
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _priceController.dispose();
@@ -522,25 +563,28 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
         throw Exception('Please explain why you adjusted the AI price.');
       }
 
-      // Check if already submitted
+      // Check if already submitted — allow revision instead of blocking.
       final existing = await FirebaseFirestore.instance
           .collection('quotes')
           .where('jobId', isEqualTo: widget.jobId)
           .where('contractorId', isEqualTo: user.uid)
           .get();
 
-      if (existing.docs.isNotEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You have already submitted a quote for this job'),
-            ),
+      String? sowUrl;
+      // Upload SOW attachment if provided.
+      if (_sowAttachment != null && _sowAttachment!.bytes != null) {
+        try {
+          final ref = FirebaseStorage.instance.ref(
+            'quotes/${user.uid}/${widget.jobId}/sow_${DateTime.now().millisecondsSinceEpoch}.${_sowAttachment!.extension}',
           );
+          await ref.putData(_sowAttachment!.bytes!);
+          sowUrl = await ref.getDownloadURL();
+        } catch (_) {
+          // SOW upload failure is non-blocking.
         }
-        return;
       }
 
-      await FirebaseFirestore.instance.collection('quotes').add({
+      final quoteData = <String, dynamic>{
         'jobId': widget.jobId,
         'contractorId': user.uid,
         'price': double.parse(_priceController.text),
@@ -552,16 +596,31 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
           'aiAdjustmentExplanation': _aiExplainController.text.trim(),
         'status': 'pending',
         'submittedAt': FieldValue.serverTimestamp(),
-      });
+        if (_expiresAt != null) 'expiresAt': Timestamp.fromDate(_expiresAt!),
+        if (sowUrl != null) 'sowUrl': sowUrl,
+      };
 
-      // Update job with quote count
-      await FirebaseFirestore.instance
-          .collection('job_requests')
-          .doc(widget.jobId)
-          .update({
-            'quoteCount': FieldValue.increment(1),
-            'lastQuoteAt': FieldValue.serverTimestamp(),
-          });
+      if (existing.docs.isNotEmpty) {
+        // Revision: update the existing quote document.
+        final existingDoc = existing.docs.first;
+        final prevRevision =
+            (existingDoc.data()['revisionNumber'] as int?) ?? 0;
+        quoteData['revisionNumber'] = prevRevision + 1;
+        quoteData['revisedAt'] = FieldValue.serverTimestamp();
+        await existingDoc.reference.update(quoteData);
+      } else {
+        quoteData['revisionNumber'] = 0;
+        await FirebaseFirestore.instance.collection('quotes').add(quoteData);
+
+        // Update job with quote count (only for new quotes).
+        await FirebaseFirestore.instance
+            .collection('job_requests')
+            .doc(widget.jobId)
+            .update({
+              'quoteCount': FieldValue.increment(1),
+              'lastQuoteAt': FieldValue.serverTimestamp(),
+            });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -790,6 +849,65 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
               maxLines: 5,
             ),
 
+            const SizedBox(height: 16),
+
+            // Expiration Date
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.timer_outlined),
+              title: Text(
+                _expiresAt == null
+                    ? 'Set quote expiration (optional)'
+                    : 'Expires: ${DateFormat.yMMMd().format(_expiresAt!)}',
+              ),
+              trailing: _expiresAt != null
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _expiresAt = null),
+                    )
+                  : null,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate:
+                      _expiresAt ??
+                      DateTime.now().add(const Duration(days: 14)),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (picked != null) setState(() => _expiresAt = picked);
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            // SOW Attachment
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.attach_file),
+              title: Text(
+                _sowAttachment == null
+                    ? 'Attach scope of work (optional)'
+                    : _sowAttachment!.name,
+              ),
+              trailing: _sowAttachment != null
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _sowAttachment = null),
+                    )
+                  : null,
+              onTap: () async {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
+                  withData: true,
+                );
+                if (result != null && result.files.isNotEmpty) {
+                  setState(() => _sowAttachment = result.files.first);
+                }
+              },
+            ),
+
             const SizedBox(height: 24),
 
             FilledButton(
@@ -800,7 +918,11 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Submit Quote'),
+                  : Text(
+                      _existingQuoteId != null
+                          ? 'Revise Quote'
+                          : 'Submit Quote',
+                    ),
             ),
 
             const SizedBox(height: 16),

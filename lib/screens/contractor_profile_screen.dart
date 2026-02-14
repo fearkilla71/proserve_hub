@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:typed_data';
 
 import '../services/auth_service.dart';
@@ -343,6 +344,14 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.email_outlined),
+                  title: const Text('Contact Support'),
+                  subtitle: const Text('support@proservehub.app'),
+                  onTap: () =>
+                      launchUrl(Uri.parse('mailto:support@proservehub.app')),
+                ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Help'),

@@ -177,9 +177,11 @@ class EscrowBookingsCard extends StatelessWidget {
         return scheme.primary;
       case EscrowStatus.customerConfirmed:
       case EscrowStatus.contractorConfirmed:
+      case EscrowStatus.payoutPending:
         return ProServeColors.accent2;
       case EscrowStatus.released:
         return ProServeColors.success;
+      case EscrowStatus.payoutFailed:
       case EscrowStatus.declined:
       case EscrowStatus.cancelled:
         return scheme.error;
@@ -196,8 +198,12 @@ class EscrowBookingsCard extends StatelessWidget {
         return Icons.person_outline;
       case EscrowStatus.contractorConfirmed:
         return Icons.handyman;
+      case EscrowStatus.payoutPending:
+        return Icons.hourglass_top;
       case EscrowStatus.released:
         return Icons.check_circle;
+      case EscrowStatus.payoutFailed:
+        return Icons.error_outline;
       case EscrowStatus.declined:
       case EscrowStatus.cancelled:
         return Icons.cancel_outlined;

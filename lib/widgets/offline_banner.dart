@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import '../services/offline_sync_service.dart';
 import '../theme/proserve_theme.dart';
 
 class OfflineBanner extends StatefulWidget {
@@ -14,6 +15,7 @@ class OfflineBanner extends StatefulWidget {
 
 class _OfflineBannerState extends State<OfflineBanner> {
   bool _isOffline = false;
+  int _pendingSync = 0;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
 
   @override
@@ -28,6 +30,18 @@ class _OfflineBannerState extends State<OfflineBanner> {
         _isOffline = !hasConnection;
       });
     });
+    OfflineSyncService.instance.pendingSyncCount.addListener(
+      _onSyncCountChanged,
+    );
+    _pendingSync = OfflineSyncService.instance.pendingSyncCount.value;
+  }
+
+  void _onSyncCountChanged() {
+    if (mounted) {
+      setState(() {
+        _pendingSync = OfflineSyncService.instance.pendingSyncCount.value;
+      });
+    }
   }
 
   Future<void> _checkConnectivity() async {
@@ -45,31 +59,48 @@ class _OfflineBannerState extends State<OfflineBanner> {
   @override
   void dispose() {
     _subscription?.cancel();
+    OfflineSyncService.instance.pendingSyncCount.removeListener(
+      _onSyncCountChanged,
+    );
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final showBanner = _isOffline || _pendingSync > 0;
     return Stack(
       children: [
         widget.child,
-        if (_isOffline)
+        if (showBanner)
           Positioned(
             top: MediaQuery.of(context).padding.top,
             left: 0,
             right: 0,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              color: ProServeColors.error.withValues(alpha: 0.18),
+              color: _isOffline
+                  ? ProServeColors.error.withValues(alpha: 0.18)
+                  : ProServeColors.accent.withValues(alpha: 0.15),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wifi_off, color: ProServeColors.error, size: 18),
-                  SizedBox(width: 8),
+                  Icon(
+                    _isOffline ? Icons.wifi_off : Icons.sync,
+                    color: _isOffline
+                        ? ProServeColors.error
+                        : ProServeColors.accent,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    'No internet connection',
-                    style: TextStyle(color: ProServeColors.ink, fontSize: 14),
+                    _isOffline
+                        ? 'Offline${_pendingSync > 0 ? ' · $_pendingSync changes pending' : ''}'
+                        : 'Syncing $_pendingSync changes…',
+                    style: const TextStyle(
+                      color: ProServeColors.ink,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),

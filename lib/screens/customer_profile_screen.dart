@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
@@ -282,6 +283,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   title: const Text('Language'),
                   subtitle: Text(_languageLabel(AppState.of(context).locale)),
                   onTap: () => _showLanguagePicker(context),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.email_outlined),
+                  title: const Text('Contact Support'),
+                  subtitle: const Text('support@proservehub.app'),
+                  onTap: () =>
+                      launchUrl(Uri.parse('mailto:support@proservehub.app')),
                 ),
                 const Divider(height: 1),
                 ListTile(

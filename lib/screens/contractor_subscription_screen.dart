@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'dart:async';
-import 'dart:convert';
 
 import '../services/stripe_service.dart';
 import '../services/subscription_service.dart';
@@ -54,10 +51,12 @@ class _ContractorSubscriptionScreenState
       price: r'$29.99/mo',
       features: [
         'Everything in Pro',
-        'Priority support',
+        'Profit & Loss Dashboard',
+        'Priority job feed (30 min early)',
+        'Unlimited AI estimates & renders',
+        'Invoice payment collection',
         'Subcontractor board',
-        'Advanced analytics',
-        'Boosted listing included',
+        'Crew roster & scheduling',
       ],
     ),
   ];
@@ -114,36 +113,6 @@ class _ContractorSubscriptionScreenState
     }
 
     _isAutoRefreshing = false;
-  }
-
-  Future<void> _debugStripeStatus() async {
-    final messenger = ScaffoldMessenger.of(context);
-
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'debugContractorProStatus',
-      );
-      final response = await callable.call(<String, dynamic>{});
-      final data = response.data;
-      if (!mounted) return;
-
-      final pretty = const JsonEncoder.withIndent('  ').convert(data);
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Stripe diagnostics'),
-          content: SingleChildScrollView(child: SelectableText(pretty)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Diagnostics failed: $e')));
-    }
   }
 
   final _subs = SubscriptionService();
@@ -239,14 +208,14 @@ class _ContractorSubscriptionScreenState
     if (mounted) setState(() => _isLoadingIap = false);
   }
 
-  Future<void> _startStripeCheckout() async {
+  Future<void> _startStripeCheckout(String tierId) async {
     if (_isLoadingStripe) return;
 
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isLoadingStripe = true);
 
     try {
-      await StripeService().payForContractorSubscription();
+      await StripeService().payForContractorSubscription(tier: tierId);
       _pendingAutoRefreshAfterStripe = true;
       _autoRefreshEntitlement();
       messenger.showSnackBar(
@@ -296,17 +265,7 @@ class _ContractorSubscriptionScreenState
         : 'Google Play subscription unavailable';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Subscription Plans'),
-        actions: [
-          if (!kReleaseMode)
-            IconButton(
-              tooltip: 'Stripe diagnostics',
-              icon: const Icon(Icons.bug_report),
-              onPressed: _debugStripeStatus,
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Subscription Plans')),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseAuth.instance.currentUser == null
             ? null
@@ -465,11 +424,9 @@ class _ContractorSubscriptionScreenState
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton.icon(
-                              onPressed:
-                                  (_isLoadingIap || !_iapAvailable) ||
-                                      _isLoadingStripe
+                              onPressed: _isLoadingStripe
                                   ? null
-                                  : _startStripeCheckout,
+                                  : () => _startStripeCheckout(tier.id),
                               icon: _isLoadingStripe
                                   ? const SizedBox(
                                       width: 18,

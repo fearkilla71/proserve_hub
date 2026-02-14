@@ -1,11 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
-import '../utils/zip_locations.dart';
+import '../services/zip_lookup_service.dart';
+import '../utils/platform_file_bytes.dart';
 
 class PaintingRequestFlowPage extends StatefulWidget {
   const PaintingRequestFlowPage({super.key, this.initialPaintingScope});
@@ -39,6 +44,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
   int _step = 0;
   bool _submitting = false;
+  bool _uploadingPhotos = false;
   bool _locating = false;
 
   // Step answers.
@@ -62,8 +68,11 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
   bool _paintCeilings = false;
   String _colorChangeType = 'same_color';
+  String? _timeline; // 'standard' | 'asap' | 'flexible'
 
-  static const int _totalSteps = 11;
+  List<PlatformFile> _selectedPhotos = [];
+
+  static const int _totalSteps = 13;
 
   bool get _showsScopeStep {
     final initial = widget.initialPaintingScope?.trim().toLowerCase();
@@ -181,9 +190,32 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
             _paintWindowFrames;
       case 10:
         return _colorFinish != null;
+      case 11: // Timeline
+        return _timeline != null;
+      case 12: // Photos (optional)
+        return true;
       default:
         return false;
     }
+  }
+
+  Future<void> _pickPhotos() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+      withData: true,
+    );
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _selectedPhotos = result.files.take(10).toList();
+      });
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _selectedPhotos.removeAt(index);
+    });
   }
 
   void _next() {
@@ -246,12 +278,12 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
     final sqft = _parseSqft(_sqftController.text);
     if (zip.isEmpty) return;
 
-    final loc = zipLocations[zip];
+    final loc = await ZipLookupService.instance.lookup(zip);
     if (loc == null) {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-            'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
+            'Could not verify that ZIP code. Please check and try again.',
           ),
         ),
       );
@@ -351,6 +383,68 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
       final jobRef = db.collection('job_requests').doc();
       final contactRef = jobRef.collection('private').doc('contact');
 
+      // Upload photos (optional)
+      final List<String> uploadedPaths = [];
+      if (_selectedPhotos.isNotEmpty) {
+        setState(() => _uploadingPhotos = true);
+        try {
+          final storage = FirebaseStorage.instance;
+          final now = DateTime.now().millisecondsSinceEpoch;
+
+          for (var i = 0; i < _selectedPhotos.length; i++) {
+            final f = _selectedPhotos[i];
+            final bytes = await readPlatformFileBytes(f);
+            if (bytes == null || bytes.isEmpty) continue;
+
+            Uint8List uploadBytes = Uint8List.fromList(bytes);
+
+            if (uploadBytes.length > 1024 * 1024) {
+              try {
+                final compressed = await FlutterImageCompress.compressWithList(
+                  uploadBytes,
+                  minWidth: 1920,
+                  minHeight: 1920,
+                  quality: 85,
+                  format: CompressFormat.jpeg,
+                );
+                if (compressed.isNotEmpty &&
+                    compressed.length < uploadBytes.length) {
+                  uploadBytes = Uint8List.fromList(compressed);
+                }
+              } catch (_) {}
+            }
+
+            String contentTypeForName(String name) {
+              final lower = name.toLowerCase();
+              if (lower.endsWith('.png')) return 'image/png';
+              if (lower.endsWith('.webp')) return 'image/webp';
+              if (lower.endsWith('.gif')) return 'image/gif';
+              return 'image/jpeg';
+            }
+
+            final safeName = (f.name.isNotEmpty ? f.name : 'photo_$i')
+                .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+            final path = 'job_images/${jobRef.id}/$uid/${now}_${i}_$safeName';
+
+            final ref = storage.ref(path);
+            await ref.putData(
+              uploadBytes,
+              SettableMetadata(contentType: contentTypeForName(safeName)),
+            );
+            uploadedPaths.add(path);
+          }
+        } catch (e) {
+          if (mounted) {
+            messenger.showSnackBar(
+              SnackBar(content: Text('Photo upload failed: $e')),
+            );
+          }
+          return;
+        } finally {
+          if (mounted) setState(() => _uploadingPhotos = false);
+        }
+      }
+
       final batch = db.batch();
 
       batch.set(jobRef, {
@@ -361,7 +455,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
         'quantity': sqft,
         'lat': loc['lat'],
         'lng': loc['lng'],
-        'urgency': 'standard',
+        'urgency': _timeline == 'asap' ? 'asap' : 'standard',
         'budget': budget,
         'propertyType': propertyTypeLabel,
         'description': description,
@@ -374,6 +468,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
         'paidBy': <String>[],
         'claimCost': 15,
         'createdAt': FieldValue.serverTimestamp(),
+        if (uploadedPaths.isNotEmpty) 'imagePaths': uploadedPaths,
         'paintingQuestions': {
           'scope': _paintingScope,
           'sqft': sqft,
@@ -398,6 +493,7 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
           'trim_linear_feet': trimLinearFeet,
           'paint_ceilings': _paintCeilings,
           'color_change_type': _colorChangeType,
+          'timeline': _timeline,
         },
       });
 
@@ -1147,6 +1243,119 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
           ],
         );
 
+      // 11 -- Timeline
+      case 11:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+          children: [
+            Text(
+              'How soon do you want to start?',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            RadioGroup<String>(
+              groupValue: _timeline,
+              onChanged: (v) => setState(() => _timeline = v),
+              child: Column(
+                children: const [
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Standard'),
+                    value: 'standard',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('ASAP'),
+                    value: 'asap',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text("I'm flexible"),
+                    value: 'flexible',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+
+      // 12 -- Photos (optional)
+      case 12:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+          children: [
+            Text(
+              'Add Photos (Optional)',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Upload photos of the rooms to help painters provide accurate quotes.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _uploadingPhotos ? null : _pickPhotos,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: Text(
+                _selectedPhotos.isEmpty
+                    ? 'Select Photos'
+                    : 'Add More Photos (${_selectedPhotos.length}/10)',
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_selectedPhotos.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _selectedPhotos.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final file = entry.value;
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: file.bytes != null
+                              ? Image.memory(file.bytes!, fit: BoxFit.cover)
+                              : const Icon(Icons.image, size: 40),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.red,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => _removePhoto(index),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+          ],
+        );
+
       default:
         return const SizedBox.shrink();
     }
@@ -1183,15 +1392,17 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
             width: double.infinity,
             height: 52,
             child: FilledButton(
-              onPressed: _submitting
+              onPressed: (_submitting || _uploadingPhotos)
                   ? null
                   : isLast
                   ? (_canGoNext ? _submit : null)
                   : (_canGoNext ? _next : null),
               child: Text(
-                _submitting
-                    ? 'Submitting…'
-                    : (isLast ? 'See your price' : 'Next'),
+                _uploadingPhotos
+                    ? 'Uploading...'
+                    : (_submitting
+                          ? 'Submitting...'
+                          : (isLast ? 'See your price' : 'Next')),
               ),
             ),
           ),

@@ -22,10 +22,16 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
     'totalJobs': 0,
     'completedJobs': 0,
     'totalEarnings': 0.0,
+    'totalExpenses': 0.0,
+    'profitMargin': 0.0,
+    'conversionRate': 0.0,
     'averageRating': 0.0,
     'totalReviews': 0,
     'completionRate': 0.0,
   };
+
+  // Previous-period stats for comparison.
+  Map<String, dynamic> _prevStats = {};
 
   List<Map<String, dynamic>> _earningsData = [];
   List<Map<String, dynamic>> _jobsData = [];
@@ -44,14 +50,59 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
 
     try {
       final days = int.parse(_selectedPeriod);
-      final cutoffDate = DateTime.now().subtract(Duration(days: days));
+      final now = DateTime.now();
+      final cutoffDate = now.subtract(Duration(days: days));
+      final prevCutoffDate = cutoffDate.subtract(Duration(days: days));
 
-      // Server-side date filter (equality + inequality is supported).
+      // Current period jobs.
       final jobsSnapshot = await FirebaseFirestore.instance
           .collection('job_requests')
           .where('claimedBy', isEqualTo: user.uid)
           .where('createdAt', isGreaterThan: Timestamp.fromDate(cutoffDate))
           .get();
+
+      // Previous period jobs (for comparison).
+      final prevJobsSnapshot = await FirebaseFirestore.instance
+          .collection('job_requests')
+          .where('claimedBy', isEqualTo: user.uid)
+          .where('createdAt', isGreaterThan: Timestamp.fromDate(prevCutoffDate))
+          .where(
+            'createdAt',
+            isLessThanOrEqualTo: Timestamp.fromDate(cutoffDate),
+          )
+          .get();
+
+      // Expenses for the current period.
+      double totalExpenses = 0.0;
+      try {
+        final expensesSnap = await FirebaseFirestore.instance
+            .collection('contractors')
+            .doc(user.uid)
+            .collection('expenses')
+            .where('date', isGreaterThan: Timestamp.fromDate(cutoffDate))
+            .get();
+        for (final doc in expensesSnap.docs) {
+          totalExpenses += (doc.data()['amount'] as num?)?.toDouble() ?? 0.0;
+        }
+      } catch (_) {
+        // Expenses collection may not exist yet — that's fine.
+      }
+
+      // Quotes sent (for conversion rate).
+      int quotesSent = 0;
+      int quotesAccepted = 0;
+      try {
+        final quotesSnap = await FirebaseFirestore.instance
+            .collection('contractors')
+            .doc(user.uid)
+            .collection('quotes')
+            .where('createdAt', isGreaterThan: Timestamp.fromDate(cutoffDate))
+            .get();
+        quotesSent = quotesSnap.docs.length;
+        quotesAccepted = quotesSnap.docs
+            .where((d) => d.data()['status'] == 'accepted')
+            .length;
+      } catch (_) {}
 
       final filteredDocs = jobsSnapshot.docs;
 
@@ -59,7 +110,6 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
       int completedJobs = 0;
       double totalEarnings = 0.0;
 
-      // Calculate earnings by day
       Map<String, double> earningsByDay = {};
       Map<String, int> jobsByDay = {};
 
@@ -80,6 +130,20 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
             totalEarnings += total;
             earningsByDay[dateKey] = (earningsByDay[dateKey] ?? 0.0) + total;
           }
+        }
+      }
+
+      // Previous period stats.
+      int prevTotalJobs = prevJobsSnapshot.docs.length;
+      int prevCompletedJobs = 0;
+      double prevTotalEarnings = 0.0;
+      for (var doc in prevJobsSnapshot.docs) {
+        final data = doc.data();
+        if (data['status'] == 'completed') {
+          prevCompletedJobs++;
+          final amount = (data['price'] as num?)?.toDouble() ?? 0.0;
+          final tip = (data['tipAmount'] as num?)?.toDouble() ?? 0.0;
+          prevTotalEarnings += amount + tip;
         }
       }
 
@@ -109,15 +173,33 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
           .map((date) => {'date': date, 'count': jobsByDay[date]!})
           .toList();
 
+      final profitMargin = totalEarnings > 0
+          ? ((totalEarnings - totalExpenses) / totalEarnings * 100)
+          : 0.0;
+      final conversionRate = quotesSent > 0
+          ? (quotesAccepted / quotesSent * 100)
+          : 0.0;
+
       setState(() {
         _stats = {
           'totalJobs': totalJobs,
           'completedJobs': completedJobs,
           'totalEarnings': totalEarnings,
+          'totalExpenses': totalExpenses,
+          'profitMargin': profitMargin,
+          'conversionRate': conversionRate,
           'averageRating': averageRating,
           'totalReviews': totalReviews,
           'completionRate': totalJobs > 0
               ? (completedJobs / totalJobs * 100)
+              : 0.0,
+        };
+        _prevStats = {
+          'totalJobs': prevTotalJobs,
+          'completedJobs': prevCompletedJobs,
+          'totalEarnings': prevTotalEarnings,
+          'completionRate': prevTotalJobs > 0
+              ? (prevCompletedJobs / prevTotalJobs * 100)
               : 0.0,
         };
         _earningsData = earningsData;
@@ -250,6 +332,11 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
 
                   // Performance Card
                   _buildPerformanceCard(),
+
+                  const SizedBox(height: 24),
+
+                  // Profit Breakdown
+                  _buildProfitBreakdownCard(),
                 ],
               ),
             ),
@@ -263,31 +350,60 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.3,
       children: [
         _buildStatCard(
           'Total Jobs',
           _stats['totalJobs'].toString(),
           Icons.work,
           Colors.blue,
+          prevValue: _prevStats['totalJobs'],
         ),
         _buildStatCard(
           'Completed',
           _stats['completedJobs'].toString(),
           Icons.check_circle,
           Colors.green,
+          prevValue: _prevStats['completedJobs'],
         ),
         _buildStatCard(
-          'Total Earnings',
-          '\$${_stats['totalEarnings'].toStringAsFixed(2)}',
+          'Revenue',
+          '\$${_stats['totalEarnings'].toStringAsFixed(0)}',
           Icons.attach_money,
           Colors.orange,
+          prevValue: _prevStats['totalEarnings'],
+          isCurrency: true,
+        ),
+        _buildStatCard(
+          'Expenses',
+          '\$${_stats['totalExpenses'].toStringAsFixed(0)}',
+          Icons.receipt_long,
+          Colors.red,
+        ),
+        _buildStatCard(
+          'Profit Margin',
+          '${_stats['profitMargin'].toStringAsFixed(1)}%',
+          Icons.trending_up,
+          _stats['profitMargin'] >= 30 ? Colors.green : Colors.orange,
+        ),
+        _buildStatCard(
+          'Conversion Rate',
+          '${_stats['conversionRate'].toStringAsFixed(1)}%',
+          Icons.swap_horiz,
+          _stats['conversionRate'] >= 50 ? Colors.green : Colors.orange,
         ),
         _buildStatCard(
           'Completion Rate',
           '${_stats['completionRate'].toStringAsFixed(1)}%',
-          Icons.trending_up,
+          Icons.task_alt,
           Colors.purple,
+          prevValue: _prevStats['completionRate'],
+        ),
+        _buildStatCard(
+          'Avg Rating',
+          '${_stats['averageRating'].toStringAsFixed(1)} ⭐',
+          Icons.star,
+          _stats['averageRating'] >= 4.5 ? Colors.green : Colors.orange,
         ),
       ],
     );
@@ -297,8 +413,36 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    dynamic prevValue,
+    bool isCurrency = false,
+  }) {
+    // Calculate period-over-period change.
+    String? changeText;
+    Color? changeColor;
+    if (prevValue != null) {
+      final current =
+          _stats[title == 'Revenue'
+              ? 'totalEarnings'
+              : title == 'Total Jobs'
+              ? 'totalJobs'
+              : title == 'Completed'
+              ? 'completedJobs'
+              : 'completionRate'] ??
+          0;
+      final prev = (prevValue is num) ? prevValue.toDouble() : 0.0;
+      final curr = (current is num) ? current.toDouble() : 0.0;
+      if (prev > 0) {
+        final pctChange = ((curr - prev) / prev * 100);
+        changeText =
+            '${pctChange >= 0 ? '+' : ''}${pctChange.toStringAsFixed(0)}%';
+        changeColor = pctChange >= 0 ? Colors.green : Colors.red;
+      } else if (curr > 0) {
+        changeText = 'New';
+        changeColor = Colors.green;
+      }
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -310,13 +454,27 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Icon(icon, color: color, size: 24),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
+                if (changeText != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: changeColor!.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      changeText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: changeColor,
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
               ],
             ),
             Column(
@@ -598,6 +756,59 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
               '${_stats['completionRate'].toStringAsFixed(1)}%',
               _stats['completionRate'] >= 80 ? Colors.green : Colors.orange,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfitBreakdownCard() {
+    final revenue = (_stats['totalEarnings'] as num).toDouble();
+    final expenses = (_stats['totalExpenses'] as num).toDouble();
+    final profit = revenue - expenses;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Profit Breakdown',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            _buildPerformanceRow(
+              'Revenue',
+              '\$${revenue.toStringAsFixed(2)}',
+              Colors.green,
+            ),
+            const Divider(height: 24),
+            _buildPerformanceRow(
+              'Expenses',
+              '- \$${expenses.toStringAsFixed(2)}',
+              Colors.red,
+            ),
+            const Divider(height: 24),
+            _buildPerformanceRow(
+              'Net Profit',
+              '\$${profit.toStringAsFixed(2)}',
+              profit >= 0 ? Colors.green : Colors.red,
+            ),
+            const Divider(height: 24),
+            _buildPerformanceRow(
+              'Margin',
+              '${_stats['profitMargin'].toStringAsFixed(1)}%',
+              _stats['profitMargin'] >= 30 ? Colors.green : Colors.orange,
+            ),
+            if (_stats['conversionRate'] > 0) ...[
+              const Divider(height: 24),
+              _buildPerformanceRow(
+                'Quote → Job',
+                '${_stats['conversionRate'].toStringAsFixed(1)}%',
+                _stats['conversionRate'] >= 50 ? Colors.green : Colors.orange,
+              ),
+            ],
           ],
         ),
       ),

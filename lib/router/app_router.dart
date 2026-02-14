@@ -19,6 +19,7 @@ import '../screens/conversations_list_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/payment_history_screen.dart';
 import '../screens/render_tool_screen.dart';
+import '../screens/render_gallery_screen.dart';
 import '../screens/customer_profile_screen.dart';
 import '../screens/customer_analytics_screen.dart';
 import '../screens/contractor_subscription_screen.dart';
@@ -65,6 +66,7 @@ import '../screens/invoice_preview_screen.dart';
 import '../screens/community_feed_screen.dart';
 import '../screens/notification_center_screen.dart';
 import '../screens/saved_estimates_screen.dart';
+import '../screens/invoice_drafts_screen.dart';
 import '../screens/painting_request_flow_page.dart';
 import '../screens/exterior_painting_request_flow_page.dart';
 import '../screens/drywall_repair_request_flow_page.dart';
@@ -76,6 +78,25 @@ import '../screens/ai_price_offer_screen.dart';
 import '../screens/escrow_status_screen.dart';
 import '../screens/escrow_rating_screen.dart';
 import '../screens/ai_estimate_chat_screen.dart';
+import '../screens/live_job_timeline_screen.dart';
+import '../screens/crew_roster_screen.dart';
+import '../screens/rate_homeowner_screen.dart';
+import '../screens/loyalty_rewards_screen.dart';
+import '../screens/leaderboard_screen.dart';
+import '../screens/customer_crm_screen.dart';
+import '../screens/recurring_jobs_screen.dart';
+import '../screens/standalone_expenses_screen.dart';
+import '../screens/quote_templates_screen.dart';
+import '../screens/contract_generator_screen.dart';
+import '../screens/crew_schedule_calendar_screen.dart';
+import '../screens/paint_color_database_screen.dart';
+import '../screens/contractor_qr_screen.dart';
+import '../screens/pnl_dashboard_screen.dart';
+import '../screens/smart_scheduling_screen.dart';
+import '../screens/quality_inspector_screen.dart';
+import '../screens/multi_location_dashboard_screen.dart';
+import '../screens/sub_marketplace_screen.dart';
+import '../screens/bid_analyzer_screen.dart';
 import '../widgets/offline_banner.dart';
 
 /// Centralised route path constants.
@@ -100,11 +121,13 @@ abstract final class AppRoutes {
   // ── Payments & Invoicing ──
   static const paymentHistory = '/payment-history';
   static const invoiceMaker = '/invoice-maker';
+  static const invoiceDrafts = '/invoice-drafts';
   static const invoice = '/invoice/:jobId';
   static const addTip = '/add-tip/:jobId';
 
   // ── Tools ──
   static const renderTool = '/render-tool';
+  static const renderGallery = '/render-gallery';
   static const pricingCalculator = '/pricing-calculator';
   static const costEstimator = '/cost-estimator/:serviceType';
   static const aiEstimator = '/ai-estimator';
@@ -175,6 +198,31 @@ abstract final class AppRoutes {
   static const flowDrywallRepair = '/flow/drywall-repair';
   static const flowPressureWashing = '/flow/pressure-washing';
   static const flowCabinets = '/flow/cabinets';
+
+  // ── New Features ──
+  static const liveTimeline = '/live-timeline/:jobId';
+  static const crewRoster = '/crew-roster';
+  static const rateHomeowner = '/rate-homeowner/:homeownerId/:jobId';
+  static const loyaltyRewards = '/loyalty-rewards';
+  static const leaderboard = '/leaderboard';
+
+  // ── Phase 2 Features ──
+  static const customerCrm = '/customer-crm';
+  static const recurringJobs = '/recurring-jobs';
+  static const standaloneExpenses = '/standalone-expenses';
+  static const quoteTemplates = '/quote-templates';
+  static const contracts = '/contracts';
+  static const crewSchedule = '/crew-schedule';
+  static const paintColors = '/paint-colors';
+  static const contractorQr = '/contractor-qr';
+
+  // ── Enterprise Features ──
+  static const pnlDashboard = '/pnl-dashboard';
+  static const smartScheduling = '/smart-scheduling';
+  static const qualityInspector = '/quality-inspector';
+  static const multiLocationDashboard = '/multi-location-dashboard';
+  static const subMarketplace = '/sub-marketplace';
+  static const bidAnalyzer = '/bid-analyzer';
 }
 
 /// Creates and returns the application's [GoRouter].
@@ -320,6 +368,10 @@ GoRouter createRouter() {
         },
       ),
       GoRoute(
+        path: '/invoice-drafts',
+        builder: (context, state) => const InvoiceDraftsScreen(),
+      ),
+      GoRoute(
         path: '/invoice/:jobId',
         builder: (context, state) {
           final jobId = state.pathParameters['jobId']!;
@@ -363,11 +415,26 @@ GoRouter createRouter() {
       // ── Tools ──
       GoRoute(
         path: '/render-tool',
-        builder: (context, state) => const RenderToolScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return RenderToolScreen(
+            initialPhotoPath: extra?['initialPhotoPath'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/render-gallery',
+        builder: (context, state) => const RenderGalleryScreen(),
       ),
       GoRoute(
         path: '/pricing-calculator',
-        builder: (context, state) => const PricingCalculatorScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PricingCalculatorScreen(
+            initialEstimate: extra?['initialEstimate'] as Map<String, dynamic>?,
+            estimateDocId: extra?['estimateDocId'] as String?,
+          );
+        },
       ),
       GoRoute(
         path: '/cost-estimator/:serviceType',
@@ -753,6 +820,104 @@ GoRouter createRouter() {
       GoRoute(
         path: '/flow/cabinets',
         builder: (context, state) => const CabinetRequestFlowPage(),
+      ),
+
+      // ── New Features ──
+      GoRoute(
+        path: '/live-timeline/:jobId',
+        builder: (context, state) {
+          final jobId = state.pathParameters['jobId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          return LiveJobTimelineScreen(
+            jobId: jobId,
+            isContractor: extra?['isContractor'] as bool? ?? false,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/crew-roster',
+        builder: (context, state) => const CrewRosterScreen(),
+      ),
+      GoRoute(
+        path: '/rate-homeowner/:homeownerId/:jobId',
+        builder: (context, state) {
+          final homeownerId = state.pathParameters['homeownerId']!;
+          final jobId = state.pathParameters['jobId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          return RateHomeownerScreen(
+            homeownerId: homeownerId,
+            jobId: jobId,
+            homeownerName: extra?['homeownerName'] as String? ?? 'Homeowner',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/loyalty-rewards',
+        builder: (context, state) => const LoyaltyRewardsScreen(),
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
+
+      // ── Phase 2 Features ──
+      GoRoute(
+        path: '/customer-crm',
+        builder: (context, state) => const CustomerCrmScreen(),
+      ),
+      GoRoute(
+        path: '/recurring-jobs',
+        builder: (context, state) => const RecurringJobsScreen(),
+      ),
+      GoRoute(
+        path: '/standalone-expenses',
+        builder: (context, state) => const StandaloneExpensesScreen(),
+      ),
+      GoRoute(
+        path: '/quote-templates',
+        builder: (context, state) => const QuoteTemplatesScreen(),
+      ),
+      GoRoute(
+        path: '/contracts',
+        builder: (context, state) => const ContractGeneratorScreen(),
+      ),
+      GoRoute(
+        path: '/crew-schedule',
+        builder: (context, state) => const CrewScheduleCalendarScreen(),
+      ),
+      GoRoute(
+        path: '/paint-colors',
+        builder: (context, state) => const PaintColorDatabaseScreen(),
+      ),
+      GoRoute(
+        path: '/contractor-qr',
+        builder: (context, state) => const ContractorQrScreen(),
+      ),
+
+      // ── Enterprise Features ──
+      GoRoute(
+        path: '/pnl-dashboard',
+        builder: (context, state) => const PnlDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/smart-scheduling',
+        builder: (context, state) => const SmartSchedulingScreen(),
+      ),
+      GoRoute(
+        path: '/quality-inspector',
+        builder: (context, state) => const QualityInspectorScreen(),
+      ),
+      GoRoute(
+        path: '/multi-location-dashboard',
+        builder: (context, state) => const MultiLocationDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/sub-marketplace',
+        builder: (context, state) => const SubMarketplaceScreen(),
+      ),
+      GoRoute(
+        path: '/bid-analyzer',
+        builder: (context, state) => const BidAnalyzerScreen(),
       ),
     ],
   );

@@ -9,6 +9,8 @@ import 'package:proserve_hub/widgets/animated_states.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
 import '../utils/geo_utils.dart';
+import '../theme/proserve_theme.dart';
+import '../widgets/contractor_portal_helpers.dart';
 
 class JobFeedPage extends StatelessWidget {
   const JobFeedPage({super.key});
@@ -39,6 +41,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   String? _currentZip;
   bool _loadingLocation = false;
 
+  // ─── Enterprise early access ──
+  String _userTier = 'basic';
+  bool get _isEnterprise => _userTier == 'enterprise';
+
   // ─── Advanced filters ──
   String? _serviceFilter;
   double? _minPrice;
@@ -46,17 +52,11 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   int _datePostedDays = 0; // 0 = any, 1/3/7/30 = within N days
 
   static const List<String> _serviceTypes = [
-    'Painting',
-    'Plumbing',
-    'Electrical',
-    'Roofing',
-    'Flooring',
-    'HVAC',
-    'Landscaping',
-    'Carpentry',
-    'Cleaning',
-    'Moving',
-    'General',
+    'Interior',
+    'Exterior',
+    'PW',
+    'Cabinets',
+    'Drywall Repairs',
   ];
 
   Future<QuerySnapshot<Map<String, dynamic>>>? _diagnoseFetch;
@@ -79,7 +79,11 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           .get();
       final data = doc.data() ?? <String, dynamic>{};
       final zip = (data['zip'] as String?)?.trim();
+      final tier = effectiveSubscriptionTier(data);
       if (!mounted) return;
+      setState(() {
+        _userTier = tier;
+      });
       if (zip != null && zip.isNotEmpty) {
         setState(() {
           _currentZip = zip;
@@ -477,6 +481,21 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   }
 
   bool _passesAdvancedFilters(Map<String, dynamic> data) {
+    // ── Enterprise early-access gate ──
+    // Non-Enterprise users only see jobs older than 30 minutes.
+    if (!_isEnterprise) {
+      final createdAt = data['createdAt'];
+      if (createdAt is Timestamp) {
+        final postedDate = createdAt.toDate();
+        final earlyAccessCutoff = DateTime.now().subtract(
+          const Duration(minutes: 30),
+        );
+        if (postedDate.isAfter(earlyAccessCutoff)) {
+          return false; // Job is too fresh for non-Enterprise users.
+        }
+      }
+    }
+
     // Service filter
     if (_serviceFilter != null) {
       final svc = (data['service'] ?? '').toString().toLowerCase();
@@ -538,6 +557,20 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     final priceBg = scheme.primaryContainer.withValues(alpha: 0.22);
     final priceBorder = scheme.primary.withValues(alpha: 0.25);
 
+    final isEscrow =
+        data['instantBook'] == true ||
+        (data['escrowId'] ?? '').toString().isNotEmpty;
+
+    // Early access badge for Enterprise users — show on jobs < 30 min old.
+    final bool isEarlyAccess;
+    if (_isEnterprise && createdAt is Timestamp) {
+      isEarlyAccess = created.isAfter(
+        DateTime.now().subtract(const Duration(minutes: 30)),
+      );
+    } else {
+      isEarlyAccess = false;
+    }
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -552,6 +585,73 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (isEscrow) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          ProServeColors.accent,
+                          ProServeColors.accent.withValues(alpha: 0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          size: 12,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Escrow',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (isEarlyAccess) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade600, Colors.orange.shade600],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bolt, size: 12, color: Colors.white),
+                        SizedBox(width: 3),
+                        Text(
+                          'Early Access',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Text(
                     service,
@@ -1302,6 +1402,15 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   .snapshots(),
               builder: (context, userSnap) {
                 final userData = userSnap.data?.data() ?? <String, dynamic>{};
+
+                // Keep tier in sync reactively.
+                final latestTier = effectiveSubscriptionTier(userData);
+                if (latestTier != _userTier) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _userTier = latestTier);
+                  });
+                }
+
                 final role =
                     (userData['role'] as String?)?.trim().toLowerCase() ?? '';
                 final neRaw = userData['leadCredits'] ?? userData['credits'];

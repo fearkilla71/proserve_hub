@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../utils/zip_locations.dart';
+import 'zip_lookup_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -96,7 +97,9 @@ class AuthService {
       await _sendEmailVerificationBestEffort(user);
 
       final zipKey = zip.trim();
-      final loc = zipLocations[zipKey];
+      final loc =
+          await ZipLookupService.instance.lookup(zipKey) ??
+          zipLocations[zipKey];
       final lat = loc?['lat'];
       final lng = loc?['lng'];
 
@@ -209,7 +212,8 @@ class AuthService {
     }, SetOptions(merge: true));
 
     final zipKey = zip.trim();
-    final loc = zipLocations[zipKey];
+    final loc =
+        await ZipLookupService.instance.lookup(zipKey) ?? zipLocations[zipKey];
     final lat = loc?['lat'];
     final lng = loc?['lng'];
 

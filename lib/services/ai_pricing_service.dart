@@ -29,13 +29,48 @@ class AiPricingService {
     Map<String, dynamic>? jobDetails,
     double loyaltyDiscount = 0.0, // 0.0–0.08 from EscrowStatsService
   }) async {
-    // 1. Get base pricing from the existing engine
-    final basePrices = await PricingEngine.calculate(
-      service: service,
-      quantity: quantity,
-      zip: zip,
-      urgent: urgent,
-    );
+    // 1. Get base pricing — use the dedicated painting calculators when
+    //    paintingQuestions are available so we get accurate per-item rates
+    //    instead of the generic $450-per-room fallback.
+    final paintingQuestions =
+        jobDetails?['paintingQuestions'] as Map<String, dynamic>?;
+    final paintingScope = (paintingQuestions?['scope'] ?? '')
+        .toString()
+        .toLowerCase();
+
+    final cabinetQuestions =
+        jobDetails?['cabinetQuestions'] as Map<String, dynamic>?;
+
+    Map<String, double> basePrices;
+    if (service.toLowerCase().contains('paint') && paintingQuestions != null) {
+      if (paintingScope == 'exterior') {
+        basePrices = await PricingEngine.calculateExteriorPaintingFromQuestions(
+          paintingQuestions: paintingQuestions,
+          zip: zip,
+          urgent: urgent,
+        );
+      } else {
+        basePrices = await PricingEngine.calculatePaintingFromRooms(
+          paintingQuestions: paintingQuestions,
+          zip: zip,
+          urgent: urgent,
+        );
+      }
+    } else if (service.toLowerCase().contains('cabinet') &&
+        cabinetQuestions != null) {
+      basePrices = await PricingEngine.calculateCabinetFromQuestions(
+        cabinetQuestions: cabinetQuestions,
+        zip: zip,
+        urgent: urgent,
+      );
+    } else {
+      basePrices = await PricingEngine.calculate(
+        service: service,
+        quantity: quantity,
+        zip: zip,
+        urgent: urgent,
+      );
+    }
 
     final low = basePrices['low']!;
     final recommended = basePrices['recommended']!;
@@ -131,6 +166,9 @@ class AiPricingService {
     if (svc.contains('paint')) {
       return _paintingComplexity(details, factors);
     }
+    if (svc.contains('cabinet')) {
+      return _cabinetComplexity(details, factors);
+    }
 
     // Generic complexity factors
     final desc = (details['description'] ?? '').toString().toLowerCase();
@@ -224,6 +262,31 @@ class AiPricingService {
     return multiplier;
   }
 
+  double _cabinetComplexity(
+    Map<String, dynamic> details,
+    List<String> factors,
+  ) {
+    double multiplier = 1.0;
+    final questions =
+        details['cabinetQuestions'] as Map<String, dynamic>? ?? {};
+
+    // Commercial property
+    final propType = (questions['property_type'] ?? '').toString();
+    if (propType == 'business') {
+      multiplier *= 1.10;
+      factors.add('Commercial property (+10%)');
+    }
+
+    // Large door count (above typical kitchen ~25 doors)
+    final doors = (questions['cabinet_doors'] ?? 0) as int;
+    if (doors > 40) {
+      multiplier *= 1.08;
+      factors.add('Large cabinet set ($doors doors) (+8%)');
+    }
+
+    return multiplier;
+  }
+
   double _calculateConfidence({
     required String service,
     required double quantity,
@@ -237,6 +300,7 @@ class AiPricingService {
     // Service-specific details boost confidence
     if (jobDetails != null) {
       if (jobDetails.containsKey('paintingQuestions')) confidence += 0.15;
+      if (jobDetails.containsKey('cabinetQuestions')) confidence += 0.15;
       if (jobDetails.containsKey('description') &&
           (jobDetails['description'] as String).length > 50) {
         confidence += 0.10;

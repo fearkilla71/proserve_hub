@@ -15,7 +15,7 @@ import 'package:firebase_core/firebase_core.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../utils/platform_file_bytes.dart';
-import '../utils/zip_locations.dart';
+import '../services/zip_lookup_service.dart';
 import '../widgets/price_suggestion_card.dart';
 
 class JobRequestPage extends StatefulWidget {
@@ -860,12 +860,14 @@ class _JobRequestPageState extends State<JobRequestPage> {
                         }
 
                         final zipKey = zip.trim();
-                        final loc = zipLocations[zipKey];
+                        final loc = await ZipLookupService.instance.lookup(
+                          zipKey,
+                        );
                         if (loc == null) {
                           messenger.showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
+                                'Could not verify that ZIP code. Please check and try again.',
                               ),
                             ),
                           );

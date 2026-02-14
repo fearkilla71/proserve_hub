@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/location_service.dart';
-import '../utils/zip_locations.dart';
 import '../widgets/address_autocomplete_field.dart';
+import '../widgets/card_aura_painter.dart';
 import '../widgets/contractor_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../models/contractor_badge.dart';
@@ -45,6 +45,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   String _bannerIcon = 'spark';
   bool _avatarGlow = false;
   List<String> _selectedBadges = [];
+  String _cardAura = 'none';
   int _totalJobsCompleted = 0;
   int _reviewCount = 0;
   double _avgRating = 0.0;
@@ -142,6 +143,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _showBanner = data['showBanner'] as bool? ?? _showBanner;
         _bannerIcon = (data['bannerIcon'] as String?)?.trim() ?? _bannerIcon;
         _avatarGlow = data['avatarGlow'] as bool? ?? _avatarGlow;
+        _cardAura = (data['cardAura'] as String?)?.trim() ?? _cardAura;
         _selectedBadges =
             (data['badges'] as List?)?.whereType<String>().toList() ?? [];
         _totalJobsCompleted =
@@ -200,6 +202,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
               'showBanner': _showBanner,
               'bannerIcon': _bannerIcon,
               'avatarGlow': _avatarGlow,
+              'cardAura': _cardAura,
               'badges': _selectedBadges,
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -244,9 +247,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     if (zip.isEmpty) return 'ZIP code is required.';
     if (zip.length != 5 || int.tryParse(zip) == null) {
       return 'Enter a valid 5-digit ZIP.';
-    }
-    if (!zipLocations.containsKey(zip)) {
-      return 'ZIP not supported yet.';
     }
     return null;
   }
@@ -464,6 +464,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       showBanner: _showBanner,
       bannerIcon: _bannerIcon,
       avatarGlow: _avatarGlow,
+      aura: auraFromString(_cardAura),
       latestReview: 'Quick response and flawless finish.',
       totalJobsCompleted: _totalJobsCompleted,
     );
@@ -480,8 +481,16 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     }
 
     const avatarStyles = ['monogram', 'logo'];
-    const avatarShapes = ['circle', 'hex', 'shield'];
-    const textures = ['none', 'dots', 'grid', 'waves'];
+    const avatarShapes = ['circle', 'hex', 'shield', 'diamond'];
+    const textures = [
+      'none',
+      'dots',
+      'grid',
+      'waves',
+      'diamonds',
+      'crosshatch',
+    ];
+    const auras = ['none', 'lightning', 'fire', 'rainbow', 'ice', 'gold'];
     const bannerIcons = ['spark', 'bolt', 'shield', 'star', 'check'];
 
     final badgePool = profileBadges.map((b) => b.id).toList()..shuffle(rand);
@@ -507,6 +516,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       _showBanner = rand.nextBool();
       _bannerIcon = bannerIcons[rand.nextInt(bannerIcons.length)];
       _avatarGlow = rand.nextBool();
+      _cardAura = auras[rand.nextInt(auras.length)];
       _selectedBadges = badgePool.take(badgeCount).toList();
     });
   }
@@ -951,6 +961,16 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                         setState(() => _avatarShape = 'shield');
                                       },
                                     ),
+                                    ChoiceChip(
+                                      label: const Text('Diamond'),
+                                      selected: _avatarShape == 'diamond',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(
+                                          () => _avatarShape = 'diamond',
+                                        );
+                                      },
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
@@ -1003,6 +1023,22 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                         setState(() => _texture = 'waves');
                                       },
                                     ),
+                                    ChoiceChip(
+                                      label: const Text('Diamonds'),
+                                      selected: _texture == 'diamonds',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'diamonds');
+                                      },
+                                    ),
+                                    ChoiceChip(
+                                      label: const Text('Crosshatch'),
+                                      selected: _texture == 'crosshatch',
+                                      onSelected: (selected) {
+                                        if (!selected) return;
+                                        setState(() => _texture = 'crosshatch');
+                                      },
+                                    ),
                                   ],
                                 ),
                                 if (_texture != 'none') ...[
@@ -1028,6 +1064,44 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                     ],
                                   ),
                                 ],
+                              ],
+                            ),
+                            _optionGroup(
+                              title: 'Card Aura',
+                              children: [
+                                Text(
+                                  'Add an animated aura effect around your card. Stand out with lightning, fire, rainbow, ice, or gold effects!',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: AuraType.values.map((aura) {
+                                    final key = auraToString(aura);
+                                    final selected = _cardAura == key;
+                                    return ChoiceChip(
+                                      selected: selected,
+                                      label: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(auraIcon(aura), size: 16),
+                                          const SizedBox(width: 4),
+                                          Text(auraLabel(aura)),
+                                        ],
+                                      ),
+                                      onSelected: (isSelected) {
+                                        if (!isSelected) return;
+                                        setState(() => _cardAura = key);
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
                               ],
                             ),
                             _optionGroup(

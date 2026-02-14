@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
+import '../services/zip_lookup_service.dart';
 import '../theme/proserve_theme.dart';
-import '../utils/zip_locations.dart';
 
 class ContractorSignupPage extends StatefulWidget {
   const ContractorSignupPage({super.key});
@@ -27,7 +29,15 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   final phone = TextEditingController();
   final phoneCode = TextEditingController();
 
-  final String _selectedService = 'Interior Painting';
+  final List<String> _selectedServices = ['Interior Painting'];
+
+  static const List<String> _availableServices = [
+    'Interior Painting',
+    'Exterior Painting',
+    'Pressure Washing',
+    'Cabinets',
+    'Drywall Repairs',
+  ];
 
   bool loading = false;
   bool _obscurePassword = true;
@@ -42,6 +52,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   static const int _totalSteps = 5;
   bool _showZipPreview = false;
   String _zipAreaLabel = 'your area';
+  bool _agreedToTerms = false;
 
   String _normalizePhone(String input) {
     final digits = input.replaceAll(RegExp(r'\D'), '');
@@ -58,32 +69,18 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     return '';
   }
 
-  /// Resolve city / area label from the [zipLocations] map comments,
-  /// falling back to a generic label so every supported ZIP is covered.
-  static const _zipAreaNames = <String, String>{
-    '770': 'Houston, TX',
-    '771': 'Houston, TX',
-    '772': 'Houston, TX',
-    '773': 'Spring / Tomball, TX',
-    '774': 'Katy / Cypress, TX',
-    '775': 'Galveston / Sugar Land, TX',
-    '776': 'Beaumont, TX',
-  };
-
-  String _areaForZip(String zipValue) {
-    if (zipValue.length < 3) return 'your area';
-    final prefix = zipValue.substring(0, 3);
-    return _zipAreaNames[prefix] ?? 'your area';
-  }
-
-  void _updateZipPreview(String value) {
+  void _updateZipPreview(String value) async {
     final zipValue = value.trim();
-    final isKnown = zipValue.length == 5 && zipLocations.containsKey(zipValue);
+    if (zipValue.length != 5) {
+      setState(() => _showZipPreview = false);
+      return;
+    }
+    // Try async geocoding for any US ZIP
+    final loc = await ZipLookupService.instance.lookup(zipValue);
+    if (!mounted) return;
     setState(() {
-      _showZipPreview = isKnown;
-      if (isKnown) {
-        _zipAreaLabel = _areaForZip(zipValue);
-      }
+      _showZipPreview = loc != null;
+      _zipAreaLabel = 'your area';
     });
   }
 
@@ -344,11 +341,30 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       }
     }
 
+    if (_step == 2) {
+      if (_selectedServices.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Select at least one service you offer.'),
+          ),
+        );
+        return false;
+      }
+    }
+
     if (_step == 3) {
       final phoneValue = phone.text.trim();
       if (phoneValue.isEmpty) {
         messenger.showSnackBar(
           const SnackBar(content: Text('Phone number is required.')),
+        );
+        return false;
+      }
+      if (!_agreedToTerms) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Please agree to the Terms and Privacy Policy.'),
+          ),
         );
         return false;
       }
@@ -362,13 +378,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
         );
         return false;
       }
-      if (!zipLocations.containsKey(zipValue)) {
+      if (zipValue.length != 5 || int.tryParse(zipValue) == null) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
-            ),
-          ),
+          const SnackBar(content: Text('Enter a valid 5-digit US ZIP code.')),
         );
         return false;
       }
@@ -538,6 +550,37 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 icon: Icons.business_outlined,
               ),
             ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Services you offer',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: _availableServices.map((svc) {
+                final selected = _selectedServices.contains(svc);
+                return FilterChip(
+                  label: Text(svc),
+                  selected: selected,
+                  onSelected: (val) {
+                    setState(() {
+                      if (val) {
+                        _selectedServices.add(svc);
+                      } else {
+                        _selectedServices.remove(svc);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
           ],
         );
       case 3:
@@ -584,11 +627,47 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
               ),
             ],
             const SizedBox(height: 16),
-            Text(
-              'By creating an account, you agree to the ProServe Hub Privacy Policy and Terms of Service.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            CheckboxListTile(
+              value: _agreedToTerms,
+              onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  children: [
+                    const TextSpan(text: 'I agree to the '),
+                    TextSpan(
+                      text: 'Privacy Policy',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(
+                          Uri.parse('https://proservehub.app/privacy'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                    ),
+                    const TextSpan(text: ' and '),
+                    TextSpan(
+                      text: 'Terms of Service',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(
+                          Uri.parse('https://proservehub.app/terms'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                    ),
+                    const TextSpan(text: '.'),
+                  ],
+                ),
               ),
             ),
           ],
@@ -772,13 +851,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       ).showSnackBar(const SnackBar(content: Text('ZIP code is required.')));
       return;
     }
-    if (!zipLocations.containsKey(zipValue)) {
+    if (zipValue.length != 5 || int.tryParse(zipValue) == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
-          ),
-        ),
+        const SnackBar(content: Text('Enter a valid 5-digit US ZIP code.')),
       );
       return;
     }
@@ -802,7 +877,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
         user: user,
         name: name.text.trim(),
         company: company.text.trim(),
-        services: [_selectedService],
+        services: _selectedServices,
         zip: zipValue,
         radius: radius,
         phone: phone.text.trim(),

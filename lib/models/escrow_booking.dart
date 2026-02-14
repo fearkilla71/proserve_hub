@@ -14,8 +14,14 @@ enum EscrowStatus {
   /// Contractor marked job complete.
   contractorConfirmed,
 
+  /// Both confirmed — Stripe payout in progress.
+  payoutPending,
+
   /// Both parties confirmed → funds released to contractor.
   released,
+
+  /// Stripe payout failed — admin can retry manually.
+  payoutFailed,
 
   /// Customer declined the AI price — wants contractor estimates instead.
   declined,
@@ -209,8 +215,12 @@ class EscrowBooking {
         return 'Customer Confirmed';
       case EscrowStatus.contractorConfirmed:
         return 'Contractor Confirmed';
+      case EscrowStatus.payoutPending:
+        return 'Payout Processing';
       case EscrowStatus.released:
         return 'Funds Released';
+      case EscrowStatus.payoutFailed:
+        return 'Payout Failed';
       case EscrowStatus.declined:
         return 'Declined';
       case EscrowStatus.cancelled:

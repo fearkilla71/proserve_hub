@@ -3,16 +3,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
-class SavedEstimatesScreen extends StatelessWidget {
+/// Contractor-side saved estimates list — reads from
+/// `contractors/{uid}/saved_estimates` written by the Pricing Calculator.
+class SavedEstimatesScreen extends StatefulWidget {
   const SavedEstimatesScreen({super.key});
 
-  static const _serviceLabels = <String, String>{
-    'painting': 'Interior Painting',
-    'cabinet_painting': 'Cabinet Painting',
-    'drywall': 'Drywall Repair',
-    'pressure_washing': 'Pressure Washing',
-  };
+  @override
+  State<SavedEstimatesScreen> createState() => _SavedEstimatesScreenState();
+}
+
+class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
+  String _search = '';
 
   @override
   Widget build(BuildContext context) {
@@ -26,23 +29,63 @@ class SavedEstimatesScreen extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Estimates')),
+      appBar: AppBar(
+        title: const Text('Saved Estimates'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search by service or client…',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                filled: true,
+                fillColor: scheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              onChanged: (v) =>
+                  setState(() => _search = v.trim().toLowerCase()),
+            ),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/ai-estimator'),
+        heroTag: 'newEstimate',
+        onPressed: () => context.push('/pricing-calculator'),
+        tooltip: 'New Estimate',
         child: const Icon(Icons.add),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
-            .collection('customer_estimates')
-            .where('requesterUid', isEqualTo: uid)
-            .orderBy('updatedAt', descending: true)
+            .collection('contractors')
+            .doc(uid)
+            .collection('saved_estimates')
+            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          final allDocs = snapshot.data?.docs ?? [];
+
+          // Client-side search filter.
+          final docs = _search.isEmpty
+              ? allDocs
+              : allDocs.where((d) {
+                  final data = d.data();
+                  final service = (data['service'] as String? ?? '')
+                      .toLowerCase();
+                  final client = (data['clientName'] as String? ?? '')
+                      .toLowerCase();
+                  return service.contains(_search) || client.contains(_search);
+                }).toList();
+
           if (docs.isEmpty) {
             return Center(
               child: Column(
@@ -55,17 +98,21 @@ class SavedEstimatesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'No estimates yet',
+                    _search.isEmpty
+                        ? 'No estimates yet'
+                        : 'No matching estimates',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  FilledButton.icon(
-                    onPressed: () => context.push('/ai-estimator'),
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Get AI Estimate'),
-                  ),
+                  if (_search.isEmpty) ...[
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/pricing-calculator'),
+                      icon: const Icon(Icons.calculate),
+                      label: const Text('Create Estimate'),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -77,99 +124,106 @@ class SavedEstimatesScreen extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
               final data = docs[i].data();
-              final service = data['service'] as String? ?? '';
-              final status = data['status'] as String? ?? 'draft';
-              final zip = data['zip'] as String? ?? '';
-              final qty = data['quantity']?.toString() ?? '';
-              final aiEstimate = data['aiEstimate'] as Map<String, dynamic>?;
+              final docId = docs[i].id;
+              final service = data['service'] as String? ?? 'Unknown';
+              final totalCost = (data['totalCost'] as num?)?.toDouble() ?? 0.0;
+              final clientName = data['clientName'] as String? ?? '';
+              final complexity = data['complexity'] as String? ?? '';
+              final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
               final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
-
-              // Price range
-              String priceRange = '';
-              if (aiEstimate != null) {
-                final prices = aiEstimate['prices'] as Map<String, dynamic>?;
-                if (prices != null) {
-                  final low = prices['low']?.toString() ?? '?';
-                  final high = prices['premium']?.toString() ?? '?';
-                  priceRange = '\$$low – \$$high';
-                }
-              }
-
-              final serviceLabel = _serviceLabels[service] ?? service;
-              final dateStr = updatedAt != null
-                  ? DateFormat.MMMd().format(updatedAt)
+              final displayDate = updatedAt ?? createdAt;
+              final dateStr = displayDate != null
+                  ? DateFormat.MMMd().add_jm().format(displayDate)
                   : '';
 
-              return Card(
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () {
-                    // If estimate has result, show details or convert to job
-                    if (aiEstimate != null) {
-                      _showEstimateDetail(
-                        context,
-                        data: data,
-                        docId: docs[i].id,
-                      );
-                    } else {
-                      // Resume draft
-                      context.push('/ai-estimator');
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: scheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
+              return Dismissible(
+                key: ValueKey(docId),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: scheme.error,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.delete, color: scheme.onError),
+                ),
+                confirmDismiss: (_) => _confirmDelete(context),
+                onDismissed: (_) => _deleteEstimate(uid, docId),
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => _showEstimateDetail(
+                      context,
+                      data: data,
+                      docId: docId,
+                      uid: uid,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: scheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _iconForService(service),
+                              color: scheme.onPrimaryContainer,
+                            ),
                           ),
-                          child: Icon(
-                            _iconForService(service),
-                            color: scheme.onPrimaryContainer,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  service,
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  [
+                                    if (clientName.isNotEmpty) clientName,
+                                    if (complexity.isNotEmpty) complexity,
+                                  ].join(' • '),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                serviceLabel,
+                                '\$${totalCost.toStringAsFixed(2)}',
                                 style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: scheme.primary,
+                                    ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                [
-                                  if (qty.isNotEmpty) qty,
-                                  if (zip.isNotEmpty) 'ZIP $zip',
-                                  if (priceRange.isNotEmpty) priceRange,
-                                ].join(' • '),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
+                              if (dateStr.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  dateStr,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
                             ],
                           ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _statusChip(context, status),
-                            if (dateStr.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                dateStr,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -181,69 +235,72 @@ class SavedEstimatesScreen extends StatelessWidget {
     );
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
   IconData _iconForService(String service) {
-    switch (service) {
-      case 'painting':
-        return Icons.format_paint;
-      case 'cabinet_painting':
-        return Icons.kitchen;
-      case 'drywall':
-        return Icons.handyman;
-      case 'pressure_washing':
-        return Icons.water;
-      default:
-        return Icons.calculate;
-    }
+    final s = service.toLowerCase();
+    if (s.contains('paint') && s.contains('exterior')) return Icons.house;
+    if (s.contains('paint')) return Icons.format_paint;
+    if (s.contains('cabinet')) return Icons.kitchen;
+    if (s.contains('drywall')) return Icons.handyman;
+    if (s.contains('pressure') || s.contains('wash')) return Icons.water;
+    return Icons.calculate;
   }
 
-  Widget _statusChip(BuildContext context, String status) {
-    final scheme = Theme.of(context).colorScheme;
-    Color bg;
-    Color fg;
-    String label;
-
-    switch (status) {
-      case 'completed':
-        bg = Colors.green.withValues(alpha: 0.15);
-        fg = Colors.green;
-        label = 'Complete';
-        break;
-      case 'draft':
-        bg = scheme.surfaceContainerHighest;
-        fg = scheme.onSurfaceVariant;
-        label = 'Draft';
-        break;
-      default:
-        bg = scheme.primaryContainer;
-        fg = scheme.onPrimaryContainer;
-        label = status;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+  Future<bool?> _confirmDelete(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Estimate?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
 
+  void _deleteEstimate(String uid, String docId) {
+    FirebaseFirestore.instance
+        .collection('contractors')
+        .doc(uid)
+        .collection('saved_estimates')
+        .doc(docId)
+        .delete();
+  }
+
+  /// Bottom sheet with estimate details, re-open, share, and delete actions.
   void _showEstimateDetail(
     BuildContext context, {
     required Map<String, dynamic> data,
     required String docId,
+    required String uid,
   }) {
-    final service = data['service'] as String? ?? '';
-    final aiEstimate = data['aiEstimate'] as Map<String, dynamic>?;
-    final prices = aiEstimate?['prices'] as Map<String, dynamic>?;
-    final serviceLabel = _serviceLabels[service] ?? service;
+    final service = data['service'] as String? ?? 'Unknown';
+    final complexity = data['complexity'] as String? ?? '';
+    final hours = (data['hours'] as num?)?.toDouble() ?? 0;
+    final hourlyRate = (data['hourlyRate'] as num?)?.toDouble() ?? 0;
+    final materialCost = (data['materialCost'] as num?)?.toDouble() ?? 0;
+    final laborCost = (data['laborCost'] as num?)?.toDouble() ?? 0;
+    final totalCost = (data['totalCost'] as num?)?.toDouble() ?? 0;
+    final clientName = data['clientName'] as String? ?? '';
+    final clientEmail = data['clientEmail'] as String? ?? '';
+    final markupLow = (data['markupLow'] as num?)?.toDouble() ?? 10;
+    final markupMid = (data['markupMid'] as num?)?.toDouble() ?? 20;
+    final markupHigh = (data['markupHigh'] as num?)?.toDouble() ?? 30;
+
+    final scheme = Theme.of(context).colorScheme;
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) {
         return SafeArea(
           child: Padding(
@@ -252,70 +309,160 @@ class SavedEstimatesScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  serviceLabel,
-                  style: Theme.of(
-                    ctx,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                // Header
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        service,
+                        style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        complexity,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (prices != null) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _priceCol(ctx, 'Low', prices['low']),
-                      _priceCol(ctx, 'Recommended', prices['recommended']),
-                      _priceCol(ctx, 'Premium', prices['premium']),
-                    ],
-                  ),
-                ],
-                if (aiEstimate?['notes'] != null) ...[
-                  const SizedBox(height: 12),
+                if (clientName.isNotEmpty) ...[
+                  const SizedBox(height: 6),
                   Text(
-                    aiEstimate!['notes'].toString(),
-                    style: Theme.of(ctx).textTheme.bodyMedium,
+                    [
+                      clientName,
+                      if (clientEmail.isNotEmpty) clientEmail,
+                    ].join(' • '),
+                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
+
+                const Divider(height: 24),
+
+                // Cost details
+                _detailRow(ctx, 'Hours', '${hours.toStringAsFixed(1)} hrs'),
+                _detailRow(
+                  ctx,
+                  'Hourly Rate',
+                  '\$${hourlyRate.toStringAsFixed(2)}',
+                ),
+                _detailRow(
+                  ctx,
+                  'Labor Cost',
+                  '\$${laborCost.toStringAsFixed(2)}',
+                ),
+                _detailRow(
+                  ctx,
+                  'Materials',
+                  '\$${materialCost.toStringAsFixed(2)}',
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '\$${totalCost.toStringAsFixed(2)}',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+                // Markup prices
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _priceCol(
+                      ctx,
+                      '+${markupLow.toStringAsFixed(0)}%',
+                      totalCost * (1 + markupLow / 100),
+                    ),
+                    _priceCol(
+                      ctx,
+                      '+${markupMid.toStringAsFixed(0)}%',
+                      totalCost * (1 + markupMid / 100),
+                    ),
+                    _priceCol(
+                      ctx,
+                      '+${markupHigh.toStringAsFixed(0)}%',
+                      totalCost * (1 + markupHigh / 100),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 20),
+
+                // Actions
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    icon: const Icon(Icons.send),
+                    icon: const Icon(Icons.edit),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      final recommended =
-                          prices?['recommended']?.toString() ?? '';
-                      final qty = data['quantity']?.toString() ?? '';
-                      final zip = data['zip'] as String? ?? '';
                       context.push(
-                        '/job-request/$serviceLabel',
-                        extra: <String, dynamic>{
-                          'initialZip': zip,
-                          'initialQuantity': qty,
-                          'initialPrice': recommended,
-                          'initialDescription':
-                              'AI-estimated $serviceLabel job',
-                          'initialUrgent': data['urgency'] == 'rush',
+                        '/pricing-calculator',
+                        extra: {
+                          'initialEstimate': data,
+                          'estimateDocId': docId,
                         },
                       );
                     },
-                    label: const Text('Post as Job Request'),
+                    label: const Text('Reopen & Edit'),
                   ),
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      FirebaseFirestore.instance
-                          .collection('customer_estimates')
-                          .doc(docId)
-                          .delete();
-                    },
-                    label: const Text('Delete Estimate'),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.share),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _shareEstimate(data);
+                        },
+                        label: const Text('Share'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: Icon(Icons.delete_outline, color: scheme.error),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _deleteEstimate(uid, docId);
+                        },
+                        label: Text(
+                          'Delete',
+                          style: TextStyle(color: scheme.error),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -325,12 +472,25 @@ class SavedEstimatesScreen extends StatelessWidget {
     );
   }
 
-  Widget _priceCol(BuildContext context, String label, dynamic value) {
+  Widget _detailRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceCol(BuildContext context, String label, double value) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '\$${value ?? '—'}',
+          '\$${value.toStringAsFixed(2)}',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -343,5 +503,54 @@ class SavedEstimatesScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _shareEstimate(Map<String, dynamic> data) {
+    final service = data['service'] as String? ?? 'Unknown';
+    final complexity = data['complexity'] as String? ?? '';
+    final hours = (data['hours'] as num?)?.toDouble() ?? 0;
+    final hourlyRate = (data['hourlyRate'] as num?)?.toDouble() ?? 0;
+    final materialCost = (data['materialCost'] as num?)?.toDouble() ?? 0;
+    final laborCost = (data['laborCost'] as num?)?.toDouble() ?? 0;
+    final totalCost = (data['totalCost'] as num?)?.toDouble() ?? 0;
+    final clientName = data['clientName'] as String? ?? '';
+    final markupLow = (data['markupLow'] as num?)?.toDouble() ?? 10;
+    final markupMid = (data['markupMid'] as num?)?.toDouble() ?? 20;
+    final markupHigh = (data['markupHigh'] as num?)?.toDouble() ?? 30;
+
+    final buf = StringBuffer()
+      ..writeln('── Estimate ──')
+      ..writeln('Service: $service')
+      ..writeln('Complexity: $complexity')
+      ..writeln()
+      ..writeln(
+        'Labor: ${hours.toStringAsFixed(1)} hrs × '
+        '\$${hourlyRate.toStringAsFixed(2)} = '
+        '\$${laborCost.toStringAsFixed(2)}',
+      )
+      ..writeln('Materials: \$${materialCost.toStringAsFixed(2)}')
+      ..writeln('Base Total: \$${totalCost.toStringAsFixed(2)}')
+      ..writeln()
+      ..writeln('── Pricing Options ──')
+      ..writeln(
+        'Budget (+${markupLow.toStringAsFixed(0)}%): '
+        '\$${(totalCost * (1 + markupLow / 100)).toStringAsFixed(2)}',
+      )
+      ..writeln(
+        'Standard (+${markupMid.toStringAsFixed(0)}%): '
+        '\$${(totalCost * (1 + markupMid / 100)).toStringAsFixed(2)}',
+      )
+      ..writeln(
+        'Premium (+${markupHigh.toStringAsFixed(0)}%): '
+        '\$${(totalCost * (1 + markupHigh / 100)).toStringAsFixed(2)}',
+      );
+
+    if (clientName.isNotEmpty) {
+      buf
+        ..writeln()
+        ..writeln('Client: $clientName');
+    }
+
+    Share.share(buf.toString(), subject: '$service Estimate');
   }
 }

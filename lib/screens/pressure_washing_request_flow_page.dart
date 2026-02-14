@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
-import '../utils/zip_locations.dart';
+import '../services/zip_lookup_service.dart';
 import '../utils/platform_file_bytes.dart';
 
 class PressureWashingRequestFlowPage extends StatefulWidget {
@@ -32,20 +32,38 @@ class _PressureWashingRequestFlowPageState
 
   String? _unit;
 
+  // Step answers
   String? _propertyType; // 'home' | 'business'
+  // Areas to wash (checkboxes)
   bool _driveway = false;
   bool _siding = false;
   bool _deckPatio = false;
   bool _fence = false;
   bool _walkways = false;
-
+  bool _poolArea = false;
+  bool _garageFloor = false;
+  // Surface material (checkboxes)
+  bool _surfConcrete = false;
+  bool _surfPavers = false;
+  bool _surfWood = false;
+  bool _surfComposite = false;
+  bool _surfVinyl = false;
+  bool _surfBrick = false;
   String? _stories; // '1' | '2' | '3_plus' | 'not_sure'
-  String? _stains; // 'light' | 'mildew' | 'oil' | 'mixed'
+  String? _stains; // 'light' | 'mildew' | 'oil' | 'rust' | 'mixed'
+  String?
+  _lastCleaned; // 'never' | '1_year' | '2_3_years' | '5_plus' | 'not_sure'
+  String? _waterAccess; // 'yes_close' | 'yes_far' | 'not_sure'
+  String? _sealAfter; // 'yes' | 'no' | 'not_sure'
+  // Additional services (checkboxes)
+  bool _gutterCleaning = false;
+  bool _windowWashing = false;
+  bool _roofCleaning = false;
   String? _timeline; // 'standard' | 'asap' | 'flexible'
 
   List<PlatformFile> _selectedPhotos = [];
 
-  static const int _totalSteps = 7;
+  static const int _totalSteps = 13;
 
   @override
   void initState() {
@@ -104,21 +122,44 @@ class _PressureWashingRequestFlowPageState
 
   bool get _canGoNext {
     switch (_step) {
-      case 0:
+      case 0: // ZIP + size
         return _zipController.text.trim().isNotEmpty &&
             (_parseNumber(_sizeController.text) ?? 0) > 0;
-      case 1:
+      case 1: // Property type
         return _propertyType != null;
-      case 2:
-        return _driveway || _siding || _deckPatio || _fence || _walkways;
-      case 3:
+      case 2: // Areas to wash
+        return _driveway ||
+            _siding ||
+            _deckPatio ||
+            _fence ||
+            _walkways ||
+            _poolArea ||
+            _garageFloor;
+      case 3: // Surface material
+        return _surfConcrete ||
+            _surfPavers ||
+            _surfWood ||
+            _surfComposite ||
+            _surfVinyl ||
+            _surfBrick;
+      case 4: // Stories
         return _stories != null;
-      case 4:
+      case 5: // Stains
         return _stains != null;
-      case 5:
+      case 6: // Last cleaned
+        return _lastCleaned != null;
+      case 7: // Water access
+        return _waterAccess != null;
+      case 8: // Seal after
+        return _sealAfter != null;
+      case 9: // Additional services
+        return true; // optional
+      case 10: // Timeline
         return _timeline != null;
-      case 6:
-        return true; // Photos are optional
+      case 11: // Additional notes - skip, use photos
+        return true;
+      case 12: // Photos (optional)
+        return true;
       default:
         return false;
     }
@@ -188,6 +229,8 @@ class _PressureWashingRequestFlowPageState
     return user.uid;
   }
 
+  // -- Label helpers --
+
   String _storiesLabel(String v) {
     switch (v) {
       case '1':
@@ -211,8 +254,53 @@ class _PressureWashingRequestFlowPageState
         return 'Mildew / algae';
       case 'oil':
         return 'Oil / heavy stains';
+      case 'rust':
+        return 'Rust stains';
       case 'mixed':
         return 'Mixed / not sure';
+      default:
+        return v;
+    }
+  }
+
+  String _lastCleanedLabel(String v) {
+    switch (v) {
+      case 'never':
+        return 'Never';
+      case '1_year':
+        return 'Within the last year';
+      case '2_3_years':
+        return '2-3 years ago';
+      case '5_plus':
+        return '5+ years ago';
+      case 'not_sure':
+        return "I'm not sure";
+      default:
+        return v;
+    }
+  }
+
+  String _waterAccessLabel(String v) {
+    switch (v) {
+      case 'yes_close':
+        return 'Yes, within 100 ft';
+      case 'yes_far':
+        return 'Yes, but farther away';
+      case 'not_sure':
+        return "I'm not sure";
+      default:
+        return v;
+    }
+  }
+
+  String _sealAfterLabel(String v) {
+    switch (v) {
+      case 'yes':
+        return 'Yes';
+      case 'no':
+        return 'No';
+      case 'not_sure':
+        return "I'm not sure";
       default:
         return v;
     }
@@ -230,6 +318,8 @@ class _PressureWashingRequestFlowPageState
     }
   }
 
+  // -- Description builder --
+
   String _buildDescription({
     required String zip,
     required double size,
@@ -242,18 +332,38 @@ class _PressureWashingRequestFlowPageState
     if (_siding) surfaces.add('House siding');
     if (_deckPatio) surfaces.add('Deck/Patio');
     if (_fence) surfaces.add('Fence');
+    if (_poolArea) surfaces.add('Pool area');
+    if (_garageFloor) surfaces.add('Garage floor');
 
-    final what = surfaces.isEmpty ? 'Not specified' : surfaces.join(', ');
+    final materials = <String>[];
+    if (_surfConcrete) materials.add('Concrete');
+    if (_surfPavers) materials.add('Pavers');
+    if (_surfWood) materials.add('Wood');
+    if (_surfComposite) materials.add('Composite');
+    if (_surfVinyl) materials.add('Vinyl');
+    if (_surfBrick) materials.add('Brick');
+
+    final extras = <String>[];
+    if (_gutterCleaning) extras.add('Gutter cleaning');
+    if (_windowWashing) extras.add('Window washing');
+    if (_roofCleaning) extras.add('Roof cleaning');
 
     return 'Pressure washing\n'
         'Property: $propertyTypeLabel\n'
         'ZIP: $zip\n'
         'Approx size: ${size.toStringAsFixed(0)} $unit\n'
-        'Surfaces: $what\n'
+        'Surfaces: ${surfaces.isEmpty ? 'Not specified' : surfaces.join(', ')}\n'
+        'Materials: ${materials.isEmpty ? 'Not specified' : materials.join(', ')}\n'
         'Stories: ${_storiesLabel(_stories ?? 'not_sure')}\n'
         'Condition: ${_stainsLabel(_stains ?? '')}\n'
+        'Last cleaned: ${_lastCleanedLabel(_lastCleaned ?? '')}\n'
+        'Water access: ${_waterAccessLabel(_waterAccess ?? '')}\n'
+        'Seal after: ${_sealAfterLabel(_sealAfter ?? '')}\n'
+        '${extras.isNotEmpty ? 'Add-ons: ${extras.join(', ')}\n' : ''}'
         'Timeline: ${_labelTimeline(_timeline ?? 'standard')}';
   }
+
+  // -- Submit --
 
   Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -269,19 +379,18 @@ class _PressureWashingRequestFlowPageState
 
     final List<String> uploadedPaths = [];
 
-    final loc = zipLocations[zip];
+    final loc = await ZipLookupService.instance.lookup(zip);
     if (loc == null) {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-            'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
+            'Could not verify that ZIP code. Please check and try again.',
           ),
         ),
       );
       return;
     }
 
-    // Prefer at least an email, otherwise allow phone.
     final user = FirebaseAuth.instance.currentUser;
     final email = (user?.email ?? '').trim();
 
@@ -294,9 +403,7 @@ class _PressureWashingRequestFlowPageState
       final data = snap.data();
       final p = data?['phone'];
       if (p is String) phone = p.trim();
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
 
     if (email.isEmpty && phone.isEmpty) {
       messenger.showSnackBar(
@@ -351,14 +458,12 @@ class _PressureWashingRequestFlowPageState
             .trim();
         customerName = profileName.isNotEmpty ? profileName : authName;
         customerAddress = (userData['address'] ?? '').toString().trim();
-      } catch (_) {
-        // Best-effort.
-      }
+      } catch (_) {}
 
       final jobRef = db.collection('job_requests').doc();
       final contactRef = jobRef.collection('private').doc('contact');
 
-      // Upload photos (optional) under the real job id.
+      // Upload photos (optional)
       if (_selectedPhotos.isNotEmpty) {
         setState(() => _uploadingPhotos = true);
         try {
@@ -385,9 +490,7 @@ class _PressureWashingRequestFlowPageState
                     compressed.length < uploadBytes.length) {
                   uploadBytes = Uint8List.fromList(compressed);
                 }
-              } catch (_) {
-                // ignore compression failures
-              }
+              } catch (_) {}
             }
 
             String contentTypeForName(String name) {
@@ -417,9 +520,7 @@ class _PressureWashingRequestFlowPageState
           }
           return;
         } finally {
-          if (mounted) {
-            setState(() => _uploadingPhotos = false);
-          }
+          if (mounted) setState(() => _uploadingPhotos = false);
         }
       }
 
@@ -456,9 +557,27 @@ class _PressureWashingRequestFlowPageState
             'siding': _siding,
             'deck_patio': _deckPatio,
             'fence': _fence,
+            'pool_area': _poolArea,
+            'garage_floor': _garageFloor,
+          },
+          'surface_materials': {
+            'concrete': _surfConcrete,
+            'pavers': _surfPavers,
+            'wood': _surfWood,
+            'composite': _surfComposite,
+            'vinyl': _surfVinyl,
+            'brick': _surfBrick,
           },
           'stories': _stories,
           'stains': _stains,
+          'last_cleaned': _lastCleaned,
+          'water_access': _waterAccess,
+          'seal_after': _sealAfter,
+          'additional_services': {
+            'gutter_cleaning': _gutterCleaning,
+            'window_washing': _windowWashing,
+            'roof_cleaning': _roofCleaning,
+          },
           'timeline': _timeline,
         },
       });
@@ -494,11 +613,14 @@ class _PressureWashingRequestFlowPageState
     }
   }
 
+  // -- Step bodies --
+
   Widget _buildStepBody(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final unit = (_unit ?? 'sqft').trim();
 
     switch (_step) {
+      // 0 -- ZIP + size
       case 0:
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
@@ -535,7 +657,7 @@ class _PressureWashingRequestFlowPageState
                       )
                     : const Icon(Icons.my_location),
                 label: Text(
-                  _locating ? 'Finding your location…' : 'Use my location',
+                  _locating ? 'Finding your location...' : 'Use my location',
                 ),
               ),
             ),
@@ -562,6 +684,8 @@ class _PressureWashingRequestFlowPageState
             ),
           ],
         );
+
+      // 1 -- Property type
       case 1:
         return _radioList(
           title: 'Is this for a home or a business?',
@@ -572,6 +696,8 @@ class _PressureWashingRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _propertyType = v),
         );
+
+      // 2 -- Areas to wash
       case 2:
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
@@ -579,6 +705,11 @@ class _PressureWashingRequestFlowPageState
             const Text(
               'What do you want washed?',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Select all that apply.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             CheckboxListTile(
@@ -616,9 +747,85 @@ class _PressureWashingRequestFlowPageState
                   ? null
                   : (v) => setState(() => _fence = v ?? false),
             ),
+            CheckboxListTile(
+              value: _poolArea,
+              title: const Text('Pool area'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _poolArea = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _garageFloor,
+              title: const Text('Garage floor'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _garageFloor = v ?? false),
+            ),
           ],
         );
+
+      // 3 -- Surface material
       case 3:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          children: [
+            const Text(
+              'What type of surface material?',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Select all that apply.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _surfConcrete,
+              title: const Text('Concrete'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfConcrete = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _surfPavers,
+              title: const Text('Pavers / stone'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfPavers = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _surfWood,
+              title: const Text('Wood'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfWood = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _surfComposite,
+              title: const Text('Composite / Trex'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfComposite = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _surfVinyl,
+              title: const Text('Vinyl siding'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfVinyl = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _surfBrick,
+              title: const Text('Brick'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _surfBrick = v ?? false),
+            ),
+          ],
+        );
+
+      // 4 -- Stories
+      case 4:
         return _radioList(
           title: 'How many stories is the building?',
           groupValue: _stories,
@@ -630,19 +837,104 @@ class _PressureWashingRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _stories = v),
         );
-      case 4:
+
+      // 5 -- Stains
+      case 5:
         return _radioList(
-          title: 'What kind of staining/condition?',
+          title: 'What kind of staining / condition?',
           groupValue: _stains,
           items: const [
             _RadioItem(value: 'light', label: 'Light dirt'),
             _RadioItem(value: 'mildew', label: 'Mildew / algae'),
             _RadioItem(value: 'oil', label: 'Oil / heavy stains'),
+            _RadioItem(value: 'rust', label: 'Rust stains'),
             _RadioItem(value: 'mixed', label: 'Mixed / not sure'),
           ],
           onChanged: (v) => setState(() => _stains = v),
         );
-      case 5:
+
+      // 6 -- Last cleaned
+      case 6:
+        return _radioList(
+          title: 'When was this last pressure washed?',
+          groupValue: _lastCleaned,
+          items: const [
+            _RadioItem(value: 'never', label: 'Never'),
+            _RadioItem(value: '1_year', label: 'Within the last year'),
+            _RadioItem(value: '2_3_years', label: '2-3 years ago'),
+            _RadioItem(value: '5_plus', label: '5+ years ago'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _lastCleaned = v),
+        );
+
+      // 7 -- Water access
+      case 7:
+        return _radioList(
+          title: 'Is there a water spigot / hose nearby?',
+          groupValue: _waterAccess,
+          items: const [
+            _RadioItem(value: 'yes_close', label: 'Yes, within 100 ft'),
+            _RadioItem(value: 'yes_far', label: 'Yes, but farther away'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _waterAccess = v),
+        );
+
+      // 8 -- Seal / stain after
+      case 8:
+        return _radioList(
+          title: 'Would you like sealing or staining after washing?',
+          groupValue: _sealAfter,
+          items: const [
+            _RadioItem(value: 'yes', label: 'Yes'),
+            _RadioItem(value: 'no', label: 'No'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _sealAfter = v),
+        );
+
+      // 9 -- Additional services
+      case 9:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          children: [
+            const Text(
+              'Any additional services?',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Optional - select any extras you want.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _gutterCleaning,
+              title: const Text('Gutter cleaning'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _gutterCleaning = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _windowWashing,
+              title: const Text('Window washing'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _windowWashing = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roofCleaning,
+              title: const Text('Roof cleaning'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roofCleaning = v ?? false),
+            ),
+          ],
+        );
+
+      // 10 -- Timeline
+      case 10:
         return _radioList(
           title: 'How soon do you want to start?',
           groupValue: _timeline,
@@ -653,8 +945,53 @@ class _PressureWashingRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _timeline = v),
         );
-      case 6:
+
+      // 11 -- Obstacles / access
+      case 11:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          children: [
+            const Text(
+              'Anything we should know about access?',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This helps pros come prepared. Tap Next if none apply.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            ...[
+              'Tight spaces or narrow paths',
+              'Landscaping near surfaces',
+              'Vehicles or equipment in the way',
+              'Steep slope or grading',
+              'Gated or restricted access',
+            ].map(
+              (hint) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(hint, style: const TextStyle(fontSize: 15)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+      // 12 -- Photos (optional)
+      case 12:
         return _buildPhotosStep();
+
       default:
         return const SizedBox.shrink();
     }
@@ -733,6 +1070,8 @@ class _PressureWashingRequestFlowPageState
     );
   }
 
+  // -- Build --
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -773,9 +1112,9 @@ class _PressureWashingRequestFlowPageState
                               : (_canGoNext ? _next : null)),
                     child: Text(
                       _uploadingPhotos
-                          ? 'Uploading…'
+                          ? 'Uploading...'
                           : (_submitting
-                                ? 'Submitting…'
+                                ? 'Submitting...'
                                 : (_step == _totalSteps - 1
                                       ? 'Submit'
                                       : 'Next')),
@@ -790,6 +1129,8 @@ class _PressureWashingRequestFlowPageState
     );
   }
 }
+
+// -- Shared helpers --
 
 class _RadioItem {
   final String value;

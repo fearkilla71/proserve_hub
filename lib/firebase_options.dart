@@ -56,7 +56,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '841248185002',
     projectId: 'proserve-hub-ada0e',
     storageBucket: 'proserve-hub-ada0e.firebasestorage.app',
-    iosBundleId: 'com.example.proserveHub',
+    iosBundleId: 'com.proservehub.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -65,7 +65,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '841248185002',
     projectId: 'proserve-hub-ada0e',
     storageBucket: 'proserve-hub-ada0e.firebasestorage.app',
-    iosBundleId: 'com.example.proserveHub',
+    iosBundleId: 'com.proservehub.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -78,10 +78,7 @@ class DefaultFirebaseOptions {
     measurementId: 'G-F1BMM68VWZ',
   );
 
-  static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'YOUR_LINUX_API_KEY',
-    appId: 'YOUR_LINUX_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
+  static FirebaseOptions get linux => throw UnsupportedError(
+    'Linux is not supported. Please run flutterfire configure to add Linux support.',
   );
 }

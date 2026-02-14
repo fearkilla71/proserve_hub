@@ -27,6 +27,23 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   bool _isLoading = true;
   bool _isUploading = false;
   List<Map<String, dynamic>> _portfolioItems = [];
+  String _selectedCategory = 'All';
+
+  static const List<String> _serviceCategories = [
+    'All',
+    'Painting',
+    'Exterior Painting',
+    'Cabinet Refinishing',
+    'Drywall Repair',
+    'Pressure Washing',
+  ];
+
+  List<Map<String, dynamic>> get _filteredItems {
+    if (_selectedCategory == 'All') return _portfolioItems;
+    return _portfolioItems
+        .where((item) => item['serviceCategory'] == _selectedCategory)
+        .toList();
+  }
 
   /// Subcollection reference for the contractor's portfolio.
   CollectionReference<Map<String, dynamic>> get _portfolioRef =>
@@ -100,20 +117,43 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
       if (!mounted) return;
 
-      // Show dialog for title and description
+      // Show dialog for title, description, category, and photo type
       final result = await showDialog<Map<String, String>>(
         context: context,
         builder: (context) => _AddPhotoDialog(),
       );
 
       if (result != null) {
-        final newItem = {
+        final newItem = <String, dynamic>{
           'url': url,
           'title': result['title'] ?? '',
           'description': result['description'] ?? '',
+          'serviceCategory': result['category'] ?? 'General',
+          'photoType': result['photoType'] ?? 'single',
           'type': 'image',
           'uploadedAt': FieldValue.serverTimestamp(),
         };
+
+        // If this is an 'after' photo, link it to the most recent 'before'
+        // photo in the same category.
+        if (result['photoType'] == 'after') {
+          final cat = result['category'] ?? 'General';
+          final beforeItem = _portfolioItems.firstWhere(
+            (it) =>
+                it['photoType'] == 'before' &&
+                it['serviceCategory'] == cat &&
+                (it['beforeAfterId'] == null || it['beforeAfterId'] == ''),
+            orElse: () => <String, dynamic>{},
+          );
+          if (beforeItem.isNotEmpty && beforeItem['id'] != null) {
+            final pairId = DateTime.now().millisecondsSinceEpoch.toString();
+            newItem['beforeAfterId'] = pairId;
+            // Update the 'before' photo with the same pairId.
+            await _portfolioRef.doc(beforeItem['id']).update({
+              'beforeAfterId': pairId,
+            });
+          }
+        }
 
         await _portfolioRef.add(newItem);
 
@@ -303,19 +343,57 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _portfolioItems.isEmpty
           ? _buildEmptyState()
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.75,
-              ),
-              itemCount: _portfolioItems.length,
-              itemBuilder: (context, index) {
-                final item = _portfolioItems[index];
-                return _buildPortfolioCard(item);
-              },
+          : Column(
+              children: [
+                // Category filter chips
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: _serviceCategories.map((cat) {
+                      final selected = _selectedCategory == cat;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(cat),
+                          selected: selected,
+                          onSelected: (_) =>
+                              setState(() => _selectedCategory = cat),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Expanded(
+                  child: _filteredItems.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No items in "$_selectedCategory"',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.75,
+                              ),
+                          itemCount: _filteredItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _filteredItems[index];
+                            return _buildPortfolioCard(item);
+                          },
+                        ),
+                ),
+              ],
             ),
     );
   }
@@ -441,6 +519,58 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                         ),
                       ),
                     ),
+                  // Before/After badge
+                  if (item['photoType'] == 'before' ||
+                      item['photoType'] == 'after')
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item['photoType'] == 'before'
+                              ? Colors.orange.shade700
+                              : Colors.green.shade700,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          item['photoType'] == 'before' ? 'BEFORE' : 'AFTER',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Service category badge
+                  if (item['serviceCategory'] != null &&
+                      item['serviceCategory'] != 'General')
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          item['serviceCategory'],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -523,6 +653,16 @@ class _AddPhotoDialog extends StatefulWidget {
 class _AddPhotoDialogState extends State<_AddPhotoDialog> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  String _category = 'Painting';
+  String _photoType = 'single'; // single | before | after
+
+  static const _categories = [
+    'Painting',
+    'Exterior Painting',
+    'Cabinet Refinishing',
+    'Drywall Repair',
+    'Pressure Washing',
+  ];
 
   @override
   void dispose() {
@@ -536,29 +676,57 @@ class _AddPhotoDialogState extends State<_AddPhotoDialog> {
     final label = widget.isVideo ? 'Video' : 'Photo';
     return AlertDialog(
       title: Text('Add $label Details'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              hintText: 'Kitchen Remodel - Before',
-              border: OutlineInputBorder(),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                hintText: 'Kitchen Remodel - Before',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
             ),
-            autofocus: true,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              hintText: 'Complete kitchen renovation...',
-              border: OutlineInputBorder(),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description (optional)',
+                hintText: 'Complete kitchen renovation...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
             ),
-            maxLines: 3,
-          ),
-        ],
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _category,
+              decoration: const InputDecoration(
+                labelText: 'Service Category',
+                border: OutlineInputBorder(),
+              ),
+              items: _categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _category = v);
+              },
+            ),
+            if (!widget.isVideo) ...[
+              const SizedBox(height: 16),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'single', label: Text('Single')),
+                  ButtonSegment(value: 'before', label: Text('Before')),
+                  ButtonSegment(value: 'after', label: Text('After')),
+                ],
+                selected: {_photoType},
+                onSelectionChanged: (s) => setState(() => _photoType = s.first),
+              ),
+            ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -570,6 +738,8 @@ class _AddPhotoDialogState extends State<_AddPhotoDialog> {
             Navigator.pop(context, {
               'title': _titleController.text.trim(),
               'description': _descriptionController.text.trim(),
+              'category': _category,
+              'photoType': _photoType,
             });
           },
           child: const Text('Add'),

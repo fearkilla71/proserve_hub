@@ -2,15 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/zip_locations.dart';
 import '../utils/distance.dart';
+import 'zip_lookup_service.dart';
 
 Future<List<QueryDocumentSnapshot>> findMatchingContractors(
   String jobZip,
 ) async {
   final zip = jobZip.trim();
   if (zip.isEmpty) return [];
-  if (!zipLocations.containsKey(zip)) return [];
 
-  final jobLoc = zipLocations[zip]!;
+  // Resolve job ZIP via cache, hardcoded map, or geocoding
+  final jobLoc =
+      ZipLookupService.instance.lookupCached(zip) ??
+      zipLocations[zip] ??
+      await ZipLookupService.instance.lookup(zip);
+  if (jobLoc == null) return [];
 
   final snapshot = await FirebaseFirestore.instance
       .collection('contractors')
@@ -21,9 +26,12 @@ Future<List<QueryDocumentSnapshot>> findMatchingContractors(
     final contractorZip = (data['zip'] ?? '').toString().trim();
 
     if (contractorZip.isEmpty) return false;
-    if (!zipLocations.containsKey(contractorZip)) return false;
 
-    final contractorLoc = zipLocations[contractorZip]!;
+    final contractorLoc =
+        ZipLookupService.instance.lookupCached(contractorZip) ??
+        zipLocations[contractorZip];
+    if (contractorLoc == null) return false;
+
     final radius = (data['radius'] ?? 0).toDouble();
 
     final dist = distanceInMiles(

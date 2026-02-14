@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
 
@@ -30,6 +32,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   int? _forceResendingToken;
   int _step = 0;
   static const int _totalSteps = 4;
+  bool _agreedToTerms = false;
 
   @override
   void dispose() {
@@ -268,6 +271,14 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
         );
         return false;
       }
+      if (!_agreedToTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please agree to the Terms and Privacy Policy.'),
+          ),
+        );
+        return false;
+      }
     }
     if (_step == 2) {
       if (phone.text.trim().isEmpty) {
@@ -372,6 +383,50 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   onPressed: () {
                     setState(() => _obscurePassword = !_obscurePassword);
                   },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            CheckboxListTile(
+              value: _agreedToTerms,
+              onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  children: [
+                    const TextSpan(text: 'I agree to the '),
+                    TextSpan(
+                      text: 'Privacy Policy',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(
+                          Uri.parse('https://proservehub.app/privacy'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                    ),
+                    const TextSpan(text: ' and '),
+                    TextSpan(
+                      text: 'Terms of Service',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(
+                          Uri.parse('https://proservehub.app/terms'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                    ),
+                    const TextSpan(text: '.'),
+                  ],
                 ),
               ),
             ),

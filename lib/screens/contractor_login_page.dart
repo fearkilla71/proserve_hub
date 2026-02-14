@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 
@@ -112,6 +113,51 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Text('Sign In'),
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: loading
+                    ? null
+                    : () async {
+                        final emailValue = email.text.trim();
+                        if (emailValue.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Enter your email above, then tap Forgot password.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await FirebaseAuth.instance.sendPasswordResetEmail(
+                            email: emailValue,
+                          );
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Password reset email sent. Check your inbox.',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceFirst('Exception: ', ''),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: const Text('Forgot password?'),
+              ),
             ),
             const SizedBox(height: 12),
             TextButton(

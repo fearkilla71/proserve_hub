@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
-import '../utils/zip_locations.dart';
+import '../services/zip_lookup_service.dart';
 import '../utils/platform_file_bytes.dart';
 
 class DrywallRepairRequestFlowPage extends StatefulWidget {
@@ -32,15 +32,29 @@ class _DrywallRepairRequestFlowPageState
 
   String? _unit;
 
+  // Step answers
   String? _propertyType; // 'home' | 'business'
+  String? _repairAreas; // '1' | '2_3' | '4_5' | '6_plus'
   String? _damageType; // 'holes' | 'cracks' | 'water' | 'replace' | 'texture'
+  String? _damageSize; // 'small' | 'medium' | 'large' | 'not_sure'
   String? _location; // 'wall' | 'ceiling' | 'both'
+  // Which rooms (checkboxes)
+  bool _roomKitchen = false;
+  bool _roomBathroom = false;
+  bool _roomBedroom = false;
+  bool _roomLiving = false;
+  bool _roomHallway = false;
+  bool _roomGarage = false;
+  bool _roomOther = false;
+  String? _wallHeight; // 'standard' | 'high' | 'stairwell' | 'hard_reach'
   String? _paintAfter; // 'yes' | 'no' | 'not_sure'
+  String? _homeAge; // 'new' | '5_20' | '20_plus' | 'not_sure'
+  String? _previousRepair; // 'yes' | 'no' | 'not_sure'
   String? _timeline; // 'standard' | 'asap' | 'flexible'
 
   List<PlatformFile> _selectedPhotos = [];
 
-  static const int _totalSteps = 7;
+  static const int _totalSteps = 13;
 
   @override
   void initState() {
@@ -99,21 +113,39 @@ class _DrywallRepairRequestFlowPageState
 
   bool get _canGoNext {
     switch (_step) {
-      case 0:
+      case 0: // ZIP + size
         return _zipController.text.trim().isNotEmpty &&
             (_parseNumber(_sizeController.text) ?? 0) > 0;
-      case 1:
+      case 1: // Property type
         return _propertyType != null;
-      case 2:
+      case 2: // Number of repair areas
+        return _repairAreas != null;
+      case 3: // Damage type
         return _damageType != null;
-      case 3:
+      case 4: // Damage size
+        return _damageSize != null;
+      case 5: // Location
         return _location != null;
-      case 4:
+      case 6: // Which rooms
+        return _roomKitchen ||
+            _roomBathroom ||
+            _roomBedroom ||
+            _roomLiving ||
+            _roomHallway ||
+            _roomGarage ||
+            _roomOther;
+      case 7: // Wall height
+        return _wallHeight != null;
+      case 8: // Paint after
         return _paintAfter != null;
-      case 5:
+      case 9: // Home age
+        return _homeAge != null;
+      case 10: // Previous repair
+        return _previousRepair != null;
+      case 11: // Timeline
         return _timeline != null;
-      case 6:
-        return true; // Photos are optional
+      case 12: // Photos (optional)
+        return true;
       default:
         return false;
     }
@@ -183,6 +215,23 @@ class _DrywallRepairRequestFlowPageState
     return user.uid;
   }
 
+  // -- Label helpers --
+
+  String _repairAreasLabel(String v) {
+    switch (v) {
+      case '1':
+        return '1 area';
+      case '2_3':
+        return '2-3 areas';
+      case '4_5':
+        return '4-5 areas';
+      case '6_plus':
+        return '6+ areas';
+      default:
+        return v;
+    }
+  }
+
   String _damageLabel(String v) {
     switch (v) {
       case 'holes':
@@ -195,6 +244,21 @@ class _DrywallRepairRequestFlowPageState
         return 'Replace drywall sections';
       case 'texture':
         return 'Texture match / skim coat';
+      default:
+        return v;
+    }
+  }
+
+  String _damageSizeLabel(String v) {
+    switch (v) {
+      case 'small':
+        return 'Small (under 6 inches)';
+      case 'medium':
+        return 'Medium (6 inches - 2 feet)';
+      case 'large':
+        return 'Large (over 2 feet)';
+      case 'not_sure':
+        return "I'm not sure";
       default:
         return v;
     }
@@ -213,12 +277,55 @@ class _DrywallRepairRequestFlowPageState
     }
   }
 
+  String _wallHeightLabel(String v) {
+    switch (v) {
+      case 'standard':
+        return 'Standard (8-10 ft)';
+      case 'high':
+        return 'High ceilings (10-14 ft)';
+      case 'stairwell':
+        return 'Stairwell / vaulted';
+      case 'hard_reach':
+        return 'Hard to reach';
+      default:
+        return v;
+    }
+  }
+
   String _paintAfterLabel(String v) {
     switch (v) {
       case 'yes':
         return 'Yes (include paint)';
       case 'no':
         return 'No (repair only)';
+      case 'not_sure':
+        return "I'm not sure";
+      default:
+        return v;
+    }
+  }
+
+  String _homeAgeLabel(String v) {
+    switch (v) {
+      case 'new':
+        return 'Less than 5 years';
+      case '5_20':
+        return '5-20 years';
+      case '20_plus':
+        return '20+ years';
+      case 'not_sure':
+        return "I'm not sure";
+      default:
+        return v;
+    }
+  }
+
+  String _previousRepairLabel(String v) {
+    switch (v) {
+      case 'yes':
+        return 'Yes';
+      case 'no':
+        return 'No';
       case 'not_sure':
         return "I'm not sure";
       default:
@@ -238,21 +345,40 @@ class _DrywallRepairRequestFlowPageState
     }
   }
 
+  // -- Description builder --
+
   String _buildDescription({
     required String zip,
     required double size,
     required String unit,
     required String propertyTypeLabel,
   }) {
+    final rooms = <String>[];
+    if (_roomKitchen) rooms.add('Kitchen');
+    if (_roomBathroom) rooms.add('Bathroom');
+    if (_roomBedroom) rooms.add('Bedroom');
+    if (_roomLiving) rooms.add('Living room');
+    if (_roomHallway) rooms.add('Hallway');
+    if (_roomGarage) rooms.add('Garage');
+    if (_roomOther) rooms.add('Other');
+
     return 'Drywall repair\n'
         'Property: $propertyTypeLabel\n'
         'ZIP: $zip\n'
         'Approx repair size: ${size.toStringAsFixed(0)} $unit\n'
+        'Repair areas: ${_repairAreasLabel(_repairAreas ?? '1')}\n'
         'Issue: ${_damageLabel(_damageType ?? '')}\n'
+        'Damage size: ${_damageSizeLabel(_damageSize ?? '')}\n'
         'Location: ${_locationLabel(_location ?? '')}\n'
+        'Rooms: ${rooms.isEmpty ? 'Not specified' : rooms.join(', ')}\n'
+        'Wall height: ${_wallHeightLabel(_wallHeight ?? 'standard')}\n'
         'Paint after: ${_paintAfterLabel(_paintAfter ?? '')}\n'
+        'Home age: ${_homeAgeLabel(_homeAge ?? '')}\n'
+        'Previous repairs: ${_previousRepairLabel(_previousRepair ?? '')}\n'
         'Timeline: ${_labelTimeline(_timeline ?? 'standard')}';
   }
+
+  // -- Submit --
 
   Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -268,19 +394,18 @@ class _DrywallRepairRequestFlowPageState
 
     final List<String> uploadedPaths = [];
 
-    final loc = zipLocations[zip];
+    final loc = await ZipLookupService.instance.lookup(zip);
     if (loc == null) {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-            'ZIP not supported yet for smart matching. Add it to zip_locations.dart.',
+            'Could not verify that ZIP code. Please check and try again.',
           ),
         ),
       );
       return;
     }
 
-    // Prefer at least an email, otherwise allow phone.
     final user = FirebaseAuth.instance.currentUser;
     final email = (user?.email ?? '').trim();
 
@@ -293,9 +418,7 @@ class _DrywallRepairRequestFlowPageState
       final data = snap.data();
       final p = data?['phone'];
       if (p is String) phone = p.trim();
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
 
     if (email.isEmpty && phone.isEmpty) {
       messenger.showSnackBar(
@@ -350,14 +473,12 @@ class _DrywallRepairRequestFlowPageState
             .trim();
         customerName = profileName.isNotEmpty ? profileName : authName;
         customerAddress = (userData['address'] ?? '').toString().trim();
-      } catch (_) {
-        // Best-effort.
-      }
+      } catch (_) {}
 
       final jobRef = db.collection('job_requests').doc();
       final contactRef = jobRef.collection('private').doc('contact');
 
-      // Upload photos (optional) under the real job id.
+      // Upload photos (optional)
       if (_selectedPhotos.isNotEmpty) {
         setState(() => _uploadingPhotos = true);
         try {
@@ -384,9 +505,7 @@ class _DrywallRepairRequestFlowPageState
                     compressed.length < uploadBytes.length) {
                   uploadBytes = Uint8List.fromList(compressed);
                 }
-              } catch (_) {
-                // ignore compression failures
-              }
+              } catch (_) {}
             }
 
             String contentTypeForName(String name) {
@@ -416,11 +535,19 @@ class _DrywallRepairRequestFlowPageState
           }
           return;
         } finally {
-          if (mounted) {
-            setState(() => _uploadingPhotos = false);
-          }
+          if (mounted) setState(() => _uploadingPhotos = false);
         }
       }
+
+      final rooms = <String, bool>{
+        'kitchen': _roomKitchen,
+        'bathroom': _roomBathroom,
+        'bedroom': _roomBedroom,
+        'living': _roomLiving,
+        'hallway': _roomHallway,
+        'garage': _roomGarage,
+        'other': _roomOther,
+      };
 
       final batch = db.batch();
 
@@ -449,9 +576,15 @@ class _DrywallRepairRequestFlowPageState
           'unit': unit,
           'size': size,
           'property_type': _propertyType,
+          'repair_areas': _repairAreas,
           'damage_type': _damageType,
+          'damage_size': _damageSize,
           'location': _location,
+          'rooms': rooms,
+          'wall_height': _wallHeight,
           'paint_after': _paintAfter,
+          'home_age': _homeAge,
+          'previous_repair': _previousRepair,
           'timeline': _timeline,
         },
       });
@@ -479,7 +612,12 @@ class _DrywallRepairRequestFlowPageState
             'description': description,
             'drywallQuestions': {
               'damage_type': _damageType,
+              'damage_size': _damageSize,
+              'repair_areas': _repairAreas,
               'location': _location,
+              'wall_height': _wallHeight,
+              'paint_after': _paintAfter,
+              'home_age': _homeAge,
               'timeline': _timeline,
             },
           },
@@ -492,11 +630,14 @@ class _DrywallRepairRequestFlowPageState
     }
   }
 
+  // -- Step bodies --
+
   Widget _buildStepBody(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final unit = (_unit ?? 'sqft').trim();
 
     switch (_step) {
+      // 0 -- ZIP + size
       case 0:
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
@@ -533,7 +674,7 @@ class _DrywallRepairRequestFlowPageState
                       )
                     : const Icon(Icons.my_location),
                 label: Text(
-                  _locating ? 'Finding your location…' : 'Use my location',
+                  _locating ? 'Finding your location...' : 'Use my location',
                 ),
               ),
             ),
@@ -560,6 +701,8 @@ class _DrywallRepairRequestFlowPageState
             ),
           ],
         );
+
+      // 1 -- Property type
       case 1:
         return _radioList(
           title: 'Is this for a home or a business?',
@@ -570,7 +713,23 @@ class _DrywallRepairRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _propertyType = v),
         );
+
+      // 2 -- Number of repair areas
       case 2:
+        return _radioList(
+          title: 'How many areas need repair?',
+          groupValue: _repairAreas,
+          items: const [
+            _RadioItem(value: '1', label: '1 area'),
+            _RadioItem(value: '2_3', label: '2-3 areas'),
+            _RadioItem(value: '4_5', label: '4-5 areas'),
+            _RadioItem(value: '6_plus', label: '6+ areas'),
+          ],
+          onChanged: (v) => setState(() => _repairAreas = v),
+        );
+
+      // 3 -- Damage type
+      case 3:
         return _radioList(
           title: 'What type of drywall issue?',
           groupValue: _damageType,
@@ -583,7 +742,23 @@ class _DrywallRepairRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _damageType = v),
         );
-      case 3:
+
+      // 4 -- Damage size
+      case 4:
+        return _radioList(
+          title: 'How big is the damaged area?',
+          groupValue: _damageSize,
+          items: const [
+            _RadioItem(value: 'small', label: 'Small (under 6 inches)'),
+            _RadioItem(value: 'medium', label: 'Medium (6 inches - 2 feet)'),
+            _RadioItem(value: 'large', label: 'Large (over 2 feet)'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _damageSize = v),
+        );
+
+      // 5 -- Location
+      case 5:
         return _radioList(
           title: 'Where is the repair?',
           groupValue: _location,
@@ -594,7 +769,90 @@ class _DrywallRepairRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _location = v),
         );
-      case 4:
+
+      // 6 -- Which rooms
+      case 6:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          children: [
+            const Text(
+              'Which rooms need repair?',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Select all that apply.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _roomKitchen,
+              title: const Text('Kitchen'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomKitchen = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomBathroom,
+              title: const Text('Bathroom'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomBathroom = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomBedroom,
+              title: const Text('Bedroom'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomBedroom = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomLiving,
+              title: const Text('Living room'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomLiving = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomHallway,
+              title: const Text('Hallway / stairway'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomHallway = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomGarage,
+              title: const Text('Garage'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomGarage = v ?? false),
+            ),
+            CheckboxListTile(
+              value: _roomOther,
+              title: const Text('Other'),
+              onChanged: _submitting
+                  ? null
+                  : (v) => setState(() => _roomOther = v ?? false),
+            ),
+          ],
+        );
+
+      // 7 -- Wall height / accessibility
+      case 7:
+        return _radioList(
+          title: 'What is the wall / ceiling height?',
+          groupValue: _wallHeight,
+          items: const [
+            _RadioItem(value: 'standard', label: 'Standard (8-10 ft)'),
+            _RadioItem(value: 'high', label: 'High ceilings (10-14 ft)'),
+            _RadioItem(value: 'stairwell', label: 'Stairwell / vaulted'),
+            _RadioItem(value: 'hard_reach', label: 'Hard to reach'),
+          ],
+          onChanged: (v) => setState(() => _wallHeight = v),
+        );
+
+      // 8 -- Paint after repair
+      case 8:
         return _radioList(
           title: 'Do you want it painted after repair?',
           groupValue: _paintAfter,
@@ -605,7 +863,36 @@ class _DrywallRepairRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _paintAfter = v),
         );
-      case 5:
+
+      // 9 -- Home age
+      case 9:
+        return _radioList(
+          title: 'How old is the home / building?',
+          groupValue: _homeAge,
+          items: const [
+            _RadioItem(value: 'new', label: 'Less than 5 years'),
+            _RadioItem(value: '5_20', label: '5-20 years'),
+            _RadioItem(value: '20_plus', label: '20+ years'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _homeAge = v),
+        );
+
+      // 10 -- Previous repair attempts
+      case 10:
+        return _radioList(
+          title: 'Have there been previous repair attempts?',
+          groupValue: _previousRepair,
+          items: const [
+            _RadioItem(value: 'yes', label: 'Yes'),
+            _RadioItem(value: 'no', label: 'No'),
+            _RadioItem(value: 'not_sure', label: "I'm not sure"),
+          ],
+          onChanged: (v) => setState(() => _previousRepair = v),
+        );
+
+      // 11 -- Timeline
+      case 11:
         return _radioList(
           title: 'How soon do you want to start?',
           groupValue: _timeline,
@@ -616,8 +903,11 @@ class _DrywallRepairRequestFlowPageState
           ],
           onChanged: (v) => setState(() => _timeline = v),
         );
-      case 6:
+
+      // 12 -- Photos (optional)
+      case 12:
         return _buildPhotosStep();
+
       default:
         return const SizedBox.shrink();
     }
@@ -696,6 +986,8 @@ class _DrywallRepairRequestFlowPageState
     );
   }
 
+  // -- Build --
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -736,9 +1028,9 @@ class _DrywallRepairRequestFlowPageState
                               : (_canGoNext ? _next : null)),
                     child: Text(
                       _uploadingPhotos
-                          ? 'Uploading…'
+                          ? 'Uploading...'
                           : (_submitting
-                                ? 'Submitting…'
+                                ? 'Submitting...'
                                 : (_step == _totalSteps - 1
                                       ? 'Submit'
                                       : 'Next')),
@@ -753,6 +1045,8 @@ class _DrywallRepairRequestFlowPageState
     );
   }
 }
+
+// -- Shared helpers --
 
 class _RadioItem {
   final String value;

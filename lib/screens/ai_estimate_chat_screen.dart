@@ -68,6 +68,54 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
   // Collected data from conversation
   String _zip = '';
 
+  // ── Room counter state (interior painting) ──
+  final Map<String, int> _roomCounts = {
+    'Bedrooms': 0,
+    'Bathrooms': 0,
+    'Kitchens': 0,
+    'Living Rooms': 0,
+    'Dining Rooms': 0,
+    'Closets': 0,
+    'Laundry Rooms': 0,
+    'Garage': 0,
+  };
+  bool _roomCountersSent = false;
+
+  int get _totalRooms => _roomCounts.values.fold(0, (a, b) => a + b);
+
+  bool _isRoomQuickReplies(List<String> replies) {
+    if (_roomCountersSent) return false;
+    const paintTypes = ['interior_painting', 'painting'];
+    if (!paintTypes.contains(widget.serviceType)) return false;
+    const roomKeywords = [
+      'bedroom',
+      'bathroom',
+      'kitchen',
+      'living',
+      'dining',
+      'closet',
+      'laundry',
+      'garage',
+    ];
+    int matches = 0;
+    for (final r in replies) {
+      final lower = r.toLowerCase();
+      if (roomKeywords.any((k) => lower.contains(k))) matches++;
+    }
+    return matches >= 2;
+  }
+
+  void _submitRoomCounters() {
+    final parts = <String>[];
+    _roomCounts.forEach((label, roomCount) {
+      if (roomCount > 0) parts.add('$roomCount $label');
+    });
+    if (parts.isEmpty) return;
+    _roomCountersSent = true;
+    setState(() {});
+    _sendMessage(parts.join(', '));
+  }
+
   // Pending photo attachments
   final List<_PendingImage> _pendingImages = [];
 
@@ -664,8 +712,11 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
               ),
             ],
           ),
-          // Quick reply chips
-          if (msg.quickReplies.isNotEmpty)
+          // Quick reply chips or room counters
+          if (msg.quickReplies.isNotEmpty &&
+              _isRoomQuickReplies(msg.quickReplies))
+            _buildRoomCounters(scheme)
+          else if (msg.quickReplies.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 40, top: 8),
               child: Wrap(
@@ -695,6 +746,117 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
                 }).toList(),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────── Room Counter Widget ────────────────────
+
+  Widget _buildRoomCounters(ColorScheme scheme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 40, top: 12, right: 8),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: ProServeColors.accent.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select your rooms',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._roomCounts.entries.map((e) => _roomCounterRow(e.key, scheme)),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _totalRooms > 0 ? _submitRoomCounters : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: ProServeColors.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                child: Text(
+                  _totalRooms == 0
+                      ? 'Select at least 1 room'
+                      : 'Continue  ·  $_totalRooms room${_totalRooms == 1 ? '' : 's'}',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _roomCounterRow(String label, ColorScheme scheme) {
+    final count = _roomCounts[label] ?? 0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                color: count > 0 ? scheme.onSurface : scheme.onSurfaceVariant,
+                fontWeight: count > 0 ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: count > 0
+                ? () => setState(() => _roomCounts[label] = count - 1)
+                : null,
+            icon: Icon(
+              Icons.remove_circle_outline,
+              color: count > 0
+                  ? ProServeColors.accent
+                  : scheme.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
+            iconSize: 28,
+            visualDensity: VisualDensity.compact,
+          ),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$count',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: count > 0 ? scheme.onSurface : scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: count < 20
+                ? () => setState(() => _roomCounts[label] = count + 1)
+                : null,
+            icon: Icon(
+              Icons.add_circle_outline,
+              color: count < 20
+                  ? ProServeColors.accent
+                  : scheme.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
+            iconSize: 28,
+            visualDensity: VisualDensity.compact,
+          ),
         ],
       ),
     );

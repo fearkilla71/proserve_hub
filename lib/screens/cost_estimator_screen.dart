@@ -1,13 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_models.dart';
 import '../services/labor_ai_service.dart';
 import '../services/material_ai_service.dart';
+import '../services/material_database_service.dart';
+import '../services/ai_usage_service.dart';
 
 double _computeDescriptionScore(String text) {
   final trimmed = text.trim();
@@ -119,37 +126,31 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
   String? _aiLaborError;
   bool _aiSuggesting = false;
 
-  final Map<String, List<MaterialItem>> _materialDatabase = {
-    'Painting': [
-      MaterialItem('Interior Paint (Gallon)', 35.00, 'gallon'),
-      MaterialItem('Exterior Paint (Gallon)', 45.00, 'gallon'),
-      MaterialItem('Primer (Gallon)', 25.00, 'gallon'),
-      MaterialItem('Paint Roller Set', 15.00, 'set'),
-      MaterialItem('Paint Brushes', 12.00, 'set'),
-      MaterialItem('Drop Cloth', 10.00, 'unit'),
-      MaterialItem('Painter\'s Tape', 8.00, 'roll'),
-      MaterialItem('Sandpaper Pack', 12.00, 'pack'),
-    ],
-    'Drywall Repair': [
-      MaterialItem('Drywall (4x8)', 15.00, 'sheet'),
-      MaterialItem('Joint Compound', 18.00, 'bucket'),
-      MaterialItem('Drywall Tape', 6.00, 'roll'),
-      MaterialItem('Drywall Screws', 9.00, 'box'),
-      MaterialItem('Corner Bead', 7.00, 'unit'),
-      MaterialItem('Sanding Sponge', 5.00, 'unit'),
-      MaterialItem('Primer (Gallon)', 25.00, 'gallon'),
-    ],
-    'Pressure Washing': [
-      MaterialItem('Pressure Washer Rental (Day)', 85.00, 'day'),
-      MaterialItem('Surface Cleaner Attachment', 35.00, 'unit'),
-      MaterialItem('Degreaser/Cleaner', 18.00, 'bottle'),
-      MaterialItem('Mildew Remover', 16.00, 'bottle'),
-      MaterialItem('Hose (50ft)', 25.00, 'unit'),
-      MaterialItem('Nozzle Set', 20.00, 'set'),
-      MaterialItem('Safety Goggles', 12.00, 'unit'),
-      MaterialItem('Gloves', 10.00, 'pair'),
-    ],
-  };
+  /// Materials loaded from Firestore (or hardcoded fallback).
+  final Map<String, List<MaterialItem>> _materialDatabase = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMaterialsFromFirestore();
+  }
+
+  Future<void> _loadMaterialsFromFirestore() async {
+    final base = _baseServiceType(widget.flow.serviceType);
+    final raw = await MaterialDatabaseService.getMaterials(base);
+    if (!mounted) return;
+    setState(() {
+      _materialDatabase[base] = raw
+          .map(
+            (m) => MaterialItem(
+              (m['name'] as String?) ?? 'Material',
+              (m['pricePerUnit'] as num?)?.toDouble() ?? 0.0,
+              (m['unit'] as String?) ?? 'unit',
+            ),
+          )
+          .toList();
+    });
+  }
 
   String _baseServiceType(String selected) {
     switch (selected) {
@@ -378,6 +379,68 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
     return _totalMaterialCost + _laborTotal;
   }
 
+  bool _estimateSaved = false;
+
+  Future<void> _saveEstimateToFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final materials = <Map<String, dynamic>>[];
+    for (final m in _allMaterialsForFlow) {
+      final qty = _quantities[m.id] ?? 0.0;
+      if (qty > 0) {
+        materials.add({
+          'name': m.name,
+          'unit': m.unit,
+          'pricePerUnit': m.pricePerUnit,
+          'quantity': qty,
+          'subtotal': m.pricePerUnit * qty,
+        });
+      }
+    }
+
+    final data = <String, dynamic>{
+      'serviceType': widget.flow.serviceType,
+      'description': widget.flow.descriptionController.text.trim(),
+      'zip': widget.flow.zipController.text.trim(),
+      'answers': widget.flow.answers,
+      'materials': materials,
+      'materialTotal': _totalMaterialCost,
+      'laborTotal': _laborTotal,
+      'estimateTotal': _estimateTotal,
+      'includeMode': _includeMode(),
+      'createdAt': FieldValue.serverTimestamp(),
+      if (_aiLabor != null) ...{
+        'aiLabor': {
+          'summary': _aiLabor!.summary,
+          'hours': _aiLabor!.hours,
+          'hourlyRate': _aiLabor!.hourlyRate,
+          'total': _aiLabor!.total,
+          'confidence': _aiLabor!.confidence,
+          'assumptions': _aiLabor!.assumptions,
+        },
+      },
+    };
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(uid)
+          .collection('cost_estimates')
+          .add(data);
+      _estimateSaved = true;
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Estimate saved.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not save estimate: $e')));
+    }
+  }
+
   void _setLaborOverride(double? value, {bool manual = true}) {
     setState(() {
       _laborOverride = value;
@@ -391,6 +454,16 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
 
     final include = _includeMode().toLowerCase();
     if (!force && include.contains('only material')) return;
+
+    // ── AI rate-limit check ──
+    final limitMsg = await AiUsageService.instance.checkLimit('estimates');
+    if (limitMsg != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(limitMsg)));
+      return;
+    }
 
     setState(() {
       _aiLaborBusy = true;
@@ -432,6 +505,9 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
         _laborOverride = null;
         _laborOverrideIsManual = false;
       });
+
+      // Record successful AI estimate usage.
+      AiUsageService.instance.recordUsage('estimates');
 
       final summary = estimate.summary.trim().isNotEmpty
           ? estimate.summary.trim()
@@ -522,6 +598,13 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
     if (_aiSuggesting) return;
     final messenger = ScaffoldMessenger.of(context);
 
+    // ── AI rate-limit check ──
+    final limitMsg = await AiUsageService.instance.checkLimit('estimates');
+    if (limitMsg != null) {
+      messenger.showSnackBar(SnackBar(content: Text(limitMsg)));
+      return;
+    }
+
     final notes = await _promptForJobDetails();
     if (!mounted || notes == null) return;
 
@@ -554,6 +637,9 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
         if (q < 0) continue;
         _setQuantity(entry.key, q.toDouble());
       }
+
+      // Record successful AI estimate usage.
+      AiUsageService.instance.recordUsage('estimates');
 
       final assumptions = suggestion.assumptions.trim();
       final canCreateInvoice = _totalMaterialCost > 0;
@@ -684,8 +770,11 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
       description: widget.flow.descriptionController.text,
     );
 
-    // Optional: if the user attached an image/blueprint, we could run OCR later.
-    // For now we just proceed.
+    // If the user attached a photo, run AI analysis in the background.
+    if (widget.flow.photo != null) {
+      _processPhotoWithAi(widget.flow.photo!);
+    }
+
     if (!mounted) return;
     setState(() {
       widget.flow.busy = false;
@@ -693,6 +782,65 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
       _step = _EstimatorStep.questions;
       _questionIndex = _initialQuestionIndexForService();
     });
+  }
+
+  String? _photoAnalysis;
+  bool _photoAnalysisBusy = false;
+
+  Future<void> _processPhotoWithAi(XFile photo) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _photoAnalysisBusy = true);
+
+    try {
+      // Upload the photo to Firebase Storage.
+      final bytes = await photo.readAsBytes();
+      final ext = photo.name.split('.').last;
+      final storagePath =
+          'cost_estimator/$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/$ext'));
+
+      // Call the analyzeExteriorPhotos Cloud Function.
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'analyzeExteriorPhotos',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+      );
+      final resp = await callable.call<dynamic>({
+        'imagePaths': [storagePath],
+      });
+
+      final data = resp.data as Map<dynamic, dynamic>? ?? {};
+      final notes = (data['notes'] ?? '').toString().trim();
+      final sqft = data['estimatedExteriorSqft'];
+      final stories = data['stories']?.toString() ?? '';
+
+      if (!mounted) return;
+
+      final buffer = StringBuffer();
+      if (notes.isNotEmpty) buffer.writeln('AI Photo Analysis: $notes');
+      if (sqft != null) buffer.writeln('Estimated area: $sqft sq ft');
+      if (stories.isNotEmpty) buffer.writeln('Stories: $stories');
+
+      setState(() {
+        _photoAnalysis = buffer.toString().trim();
+        _photoAnalysisBusy = false;
+      });
+
+      // Append to description if it's helpful.
+      if (_photoAnalysis != null && _photoAnalysis!.isNotEmpty) {
+        final desc = widget.flow.descriptionController.text.trim();
+        if (!desc.contains('AI Photo Analysis')) {
+          widget.flow.descriptionController.text = '$desc\n\n$_photoAnalysis'
+              .trim();
+        }
+      }
+    } catch (e) {
+      debugPrint('Photo AI analysis failed: $e');
+      if (!mounted) return;
+      setState(() => _photoAnalysisBusy = false);
+    }
   }
 
   void _applyTemplateQuantities({
@@ -1257,7 +1405,25 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
 
       return questions;
     }
+    // Generic fallback for any other service type.
     return const [
+      _Question(
+        id: 'include_in_estimate',
+        title: 'What to include?',
+        emoji: '🧾',
+        options: [
+          'Only Material cost',
+          'Only Labor cost',
+          'Both Material and labor cost',
+          'Other',
+        ],
+      ),
+      _Question(
+        id: 'project_size',
+        title: 'Project size?',
+        emoji: '📐',
+        options: ['Small', 'Medium', 'Large', 'Unsure', 'Other'],
+      ),
       _Question(
         id: 'urgency',
         title: 'When do you need this done?',
@@ -1371,6 +1537,9 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
     }
 
     if (_step == _EstimatorStep.estimate) {
+      if (!_estimateSaved) {
+        _saveEstimateToFirestore();
+      }
       _goTo(_EstimatorStep.renderPrompt);
       return;
     }
@@ -1476,6 +1645,7 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
               onAnswer: _answerQuestion,
               questionIndex: _questionIndex,
               onNext: _onNext,
+              photoAnalysisBusy: _photoAnalysisBusy,
             ),
             _EstimatorStep.estimate => _EstimateBuilderStep(
               key: const ValueKey('estimate'),
@@ -1511,10 +1681,11 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
             _EstimatorStep.renderPrompt => _RenderPromptStep(
               key: const ValueKey('renderPrompt'),
               onGenerate: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Project Render is coming soon.'),
-                  ),
+                context.push(
+                  '/render-tool',
+                  extra: <String, dynamic>{
+                    'initialPhotoPath': widget.flow.photo?.path,
+                  },
                 );
               },
               onNo: _onNext,
@@ -1703,21 +1874,6 @@ class _DescribeProjectStepState extends State<_DescribeProjectStep> {
                           ? 'Media added'
                           : 'Add photo/blueprint',
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 64,
-                  height: 56,
-                  child: FilledButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Voice input coming soon.'),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.mic_none),
                   ),
                 ),
               ],
@@ -1965,6 +2121,7 @@ class _QuestionsStep extends StatelessWidget {
   final void Function(String id, String answer) onAnswer;
   final int questionIndex;
   final Future<void> Function() onNext;
+  final bool photoAnalysisBusy;
 
   const _QuestionsStep({
     super.key,
@@ -1974,6 +2131,7 @@ class _QuestionsStep extends StatelessWidget {
     required this.onAnswer,
     required this.questionIndex,
     required this.onNext,
+    this.photoAnalysisBusy = false,
   });
 
   @override
@@ -1991,6 +2149,26 @@ class _QuestionsStep extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
+          if (photoAnalysisBusy)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Analyzing your photo with AI…',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
             child: ClipRRect(
@@ -2408,6 +2586,122 @@ class _EstimateBuilderStepState extends State<_EstimateBuilderStep> {
         _laborExpanded = false;
       }
     });
+  }
+
+  void _shareShoppingList() {
+    final items = <MapEntry<MaterialItem, double>>[];
+    for (final m in widget.materials) {
+      final qty = widget.quantities[m.id] ?? 0;
+      if (qty > 0) items.add(MapEntry(m, qty));
+    }
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add quantities to materials first.')),
+      );
+      return;
+    }
+
+    final buf = StringBuffer();
+    buf.writeln('🛒 ${widget.serviceType} — Shopping List');
+    buf.writeln('─' * 36);
+    double grandTotal = 0;
+    for (final entry in items) {
+      final m = entry.key;
+      final qty = entry.value.round();
+      final subtotal = m.pricePerUnit * qty;
+      grandTotal += subtotal;
+      buf.writeln(
+        '• ${m.name}  ×$qty ${m.unit}  '
+        '@ ${_fmtMoney(m.pricePerUnit)}/${m.unit}  '
+        '= ${_fmtMoney(subtotal)}',
+      );
+    }
+    buf.writeln('─' * 36);
+    if (widget.laborTotal > 0) {
+      buf.writeln('Materials subtotal: ${_fmtMoney(grandTotal)}');
+      buf.writeln('Labor: ${_fmtMoney(widget.laborTotal)}');
+      buf.writeln('TOTAL: ${_fmtMoney(grandTotal + widget.laborTotal)}');
+    } else {
+      buf.writeln('TOTAL: ${_fmtMoney(grandTotal)}');
+    }
+    buf.writeln();
+    buf.writeln('Generated by ProServe Hub');
+
+    final text = buf.toString();
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Shopping List',
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: SingleChildScrollView(
+                  child: Text(
+                    text,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: text));
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Shopping list copied!'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy),
+                      label: const Text('Copy'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Share.share(text);
+                      },
+                      icon: const Icon(Icons.share),
+                      label: const Text('Share'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -2880,6 +3174,33 @@ class _EstimateBuilderStepState extends State<_EstimateBuilderStep> {
                         widget.aiSuggesting ? 'Working…' : 'Edit with AI',
                         style: const TextStyle(
                           fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: _shareShoppingList,
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        side: BorderSide(color: dividerColor),
+                        backgroundColor: scheme.surface,
+                        foregroundColor: scheme.onSurface,
+                      ),
+                      icon: const Icon(
+                        Icons.shopping_cart_outlined,
+                        color: _accent,
+                      ),
+                      label: const Text(
+                        'Share Shopping List',
+                        style: TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),

@@ -11,6 +11,7 @@ import 'landing_page.dart';
 import 'community_feed_screen.dart';
 
 import '../services/customer_portal_nav.dart';
+import '../services/escrow_service.dart';
 import '../services/fcm_service.dart';
 import '../services/conversation_service.dart';
 import '../services/trusted_pros_service.dart';
@@ -78,6 +79,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         );
     _homeIntroController.forward();
     CustomerPortalNav.tabRequest.addListener(_handleTabRequest);
+    // Patch any existing escrow bookings that are missing fields on job_requests
+    EscrowService.instance.syncEscrowFieldsToJobRequests();
     // Show role-specific onboarding the first time a customer opens the portal.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) OnboardingScreen.showIfNeeded(context, 'customer');
@@ -143,14 +146,22 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         .timeout(const Duration(seconds: 10));
 
     if (primary.docs.isNotEmpty) {
-      return _RequestsFetchResult(docs: primary.docs, usedFallback: false);
+      final filtered = primary.docs.where((d) {
+        final s = (d.data()['status'] ?? '').toString().toLowerCase();
+        return s != 'cancelled' && s != 'deleted';
+      }).toList();
+      return _RequestsFetchResult(docs: filtered, usedFallback: false);
     }
 
     final fallback = await _myRequestsFallbackQuery(uid)
         .get(const GetOptions(source: Source.serverAndCache))
         .timeout(const Duration(seconds: 10));
 
-    return _RequestsFetchResult(docs: fallback.docs, usedFallback: true);
+    final filteredFb = fallback.docs.where((d) {
+      final s = (d.data()['status'] ?? '').toString().toLowerCase();
+      return s != 'cancelled' && s != 'deleted';
+    }).toList();
+    return _RequestsFetchResult(docs: filteredFb, usedFallback: true);
   }
 
   void _retryMyRequests() {
@@ -409,73 +420,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     );
   }
 
-  Widget _buildNextActionCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: ProServeColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ProServeColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                gradient: ProServeColors.ctaGradient,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: ProServeColors.accent.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.flash_on, color: Color(0xFF041016)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Next action',
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: ProServeColors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Kick off a new request or check your messages.',
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      color: ProServeColors.muted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            FilledButton.tonal(
-              onPressed: () {
-                context.push('/select-service');
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: ProServeColors.accent.withValues(alpha: 0.15),
-                foregroundColor: ProServeColors.accent,
-              ),
-              child: const Text('Start'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _quickActionTile({
     required BuildContext context,
     required String title,
@@ -592,7 +536,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 12),
             _fadeSlide(
-              child: _buildNextActionCard(context),
+              child: const EscrowBookingsCard(isCustomer: true),
               fade: _nextFade,
               slide: _nextSlide,
             ),
@@ -688,6 +632,34 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               ],
             ),
             const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'Loyalty',
+                    subtitle: 'Points & rewards',
+                    icon: Icons.loyalty_outlined,
+                    onTap: () {
+                      context.push('/loyalty-rewards');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'Leaderboard',
+                    subtitle: 'Top-rated pros',
+                    icon: Icons.emoji_events_outlined,
+                    onTap: () {
+                      context.push('/leaderboard');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: _quickActionTile(
@@ -700,8 +672,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 },
               ),
             ),
-            const SizedBox(height: 16),
-            const EscrowBookingsCard(isCustomer: true),
           ],
         );
       },
@@ -948,7 +918,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     controller: tradeController,
                     decoration: InputDecoration(
                       labelText: 'Trade / speciality',
-                      hintText: 'e.g. Plumber, Electrician',
+                      hintText: 'e.g. Painter, PW Tech',
                       prefixIcon: const Icon(Icons.construction),
                       filled: true,
                       fillColor: Theme.of(
@@ -1246,6 +1216,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         child: const Text('Analytics'),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const EscrowBookingsCard(isCustomer: true),
                     const SizedBox(height: 24),
                     Text(
                       'My Requests',
@@ -1421,7 +1393,12 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                           );
                         }
 
-                        final docs = jobsSnap.data!.docs.toList();
+                        final docs = jobsSnap.data!.docs.where((d) {
+                          final s = (d.data()['status'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          return s != 'cancelled' && s != 'deleted';
+                        }).toList();
                         docs.sort((a, b) {
                           final ad = a.data();
                           final bd = b.data();
@@ -1495,7 +1472,12 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     final escrowId = (data['escrowId'] ?? '').toString();
 
     // Status pipeline
-    final statusInfo = _getStatusInfo(status, claimed, claimedByName);
+    final statusInfo = _getStatusInfo(
+      status,
+      claimed,
+      claimedByName,
+      isEscrow: isEscrow,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -1507,7 +1489,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
             child: Row(
               children: [
-                // AI / Escrow badge
+                // Escrow vs Regular badge
                 if (isEscrow) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -1527,13 +1509,13 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.auto_awesome,
+                          Icons.shield_outlined,
                           size: 12,
                           color: Colors.black87,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'AI Price',
+                          'Escrow',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -1541,6 +1523,26 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ProServeColors.muted.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Regular',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: ProServeColors.muted,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1729,8 +1731,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   _StatusInfo _getStatusInfo(
     String status,
     bool claimed,
-    String claimedByName,
-  ) {
+    String claimedByName, {
+    bool isEscrow = false,
+  }) {
     switch (status) {
       case 'escrow_funded':
         return _StatusInfo('Paid — Matching Contractor', Colors.amber);
@@ -1744,12 +1747,23 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         return _StatusInfo('Completed', ProServeColors.accent);
       case 'cancelled':
         return _StatusInfo('Cancelled', Colors.red);
+      case 'deleted':
+        return _StatusInfo('Deleted', Colors.red);
       default:
+        if (isEscrow && claimed) {
+          final name = claimedByName.isNotEmpty
+              ? 'Contractor: $claimedByName'
+              : 'Contractor Assigned';
+          return _StatusInfo(name, Colors.blue);
+        }
         if (claimed) {
           final name = claimedByName.isNotEmpty
               ? 'Assigned: $claimedByName'
               : 'Assigned';
           return _StatusInfo(name, Colors.blue);
+        }
+        if (isEscrow) {
+          return _StatusInfo('Price Offered', ProServeColors.accent);
         }
         return _StatusInfo('Pending', Colors.grey);
     }

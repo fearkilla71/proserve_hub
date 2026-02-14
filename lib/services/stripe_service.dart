@@ -67,7 +67,7 @@ class StripeService {
     );
   }
 
-  Future<void> payForContractorSubscription() async {
+  Future<void> payForContractorSubscription({String tier = 'pro'}) async {
     final overrideUrl = _contractorProStripePaymentLinkOverride.trim();
     if (overrideUrl.isNotEmpty) {
       await _launchCheckoutUrl(overrideUrl, label: 'Subscription');
@@ -78,7 +78,7 @@ class StripeService {
       final result = await _callFunction(
         callableName: 'createContractorSubscriptionCheckoutSession',
         httpName: 'createContractorSubscriptionCheckoutSessionHttp',
-        params: <String, dynamic>{},
+        params: <String, dynamic>{'tier': tier},
       );
       await _launchCheckoutUrl(result['url'], label: 'Subscription');
     } catch (e) {
@@ -231,5 +231,31 @@ class StripeService {
 
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok) throw Exception('Could not open $label page');
+  }
+
+  /// Create a Stripe payment link for a client invoice.
+  ///
+  /// Returns the payment URL which can be shared with the client.
+  Future<String> createInvoicePaymentLink({
+    required String invoiceId,
+    required double amount,
+    required String clientEmail,
+    required String description,
+  }) async {
+    final result = await _callFunction(
+      callableName: 'createInvoicePaymentLink',
+      httpName: 'createInvoicePaymentLinkHttp',
+      params: {
+        'invoiceId': invoiceId.trim(),
+        'amount': amount,
+        'clientEmail': clientEmail.trim(),
+        'description': description.trim(),
+      },
+    );
+    final url = result['url'];
+    if (url == null || url.trim().isEmpty) {
+      throw Exception('Payment link unavailable');
+    }
+    return url;
   }
 }

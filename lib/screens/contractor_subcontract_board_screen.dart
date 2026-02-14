@@ -31,17 +31,11 @@ class _ContractorSubcontractBoardScreenState
   bool _showSearch = false;
 
   static const _tradeTypes = [
-    'General',
-    'Plumbing',
-    'Electrical',
-    'Roofing',
-    'HVAC',
-    'Painting',
-    'Carpentry',
-    'Landscaping',
-    'Flooring',
-    'Drywall',
-    'Concrete',
+    'Interior Painting',
+    'Exterior Painting',
+    'Pressure Washing',
+    'Cabinets',
+    'Drywall Repairs',
   ];
 
   @override
@@ -683,7 +677,7 @@ class _ContractorPostJobScreenState extends State<ContractorPostJobScreen> {
                   controller: _trade,
                   decoration: const InputDecoration(
                     labelText: 'Trade',
-                    hintText: 'e.g. Painting, HVAC, Roofing',
+                    hintText: 'e.g. Interior Painting, PW, Cabinets',
                   ),
                 ),
                 const SizedBox(height: 12),

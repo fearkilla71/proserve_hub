@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -13,8 +15,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../services/ai_usage_service.dart';
+
 class RenderToolScreen extends StatefulWidget {
-  const RenderToolScreen({super.key});
+  /// Optional file path to auto-load a photo when opened from another screen.
+  final String? initialPhotoPath;
+
+  const RenderToolScreen({super.key, this.initialPhotoPath});
 
   @override
   State<RenderToolScreen> createState() => _RenderToolScreenState();
@@ -74,6 +81,122 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
 
   bool _exporting = false;
   bool _saving = false;
+  bool _persistingRender = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPersistedHistory();
+    final path = widget.initialPhotoPath;
+    if (path != null && path.isNotEmpty) {
+      _loadInitialPhoto(path);
+    }
+  }
+
+  // ── Firestore / Storage persistence ──
+
+  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
+  CollectionReference<Map<String, dynamic>>? get _historyCol {
+    final uid = _uid;
+    if (uid == null) return null;
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('render_history');
+  }
+
+  Future<void> _loadPersistedHistory() async {
+    final col = _historyCol;
+    if (col == null) return;
+    try {
+      final snap = await col
+          .orderBy('createdAt', descending: true)
+          .limit(8)
+          .get();
+      if (!mounted || snap.docs.isEmpty) return;
+      // Don't overwrite items already in memory from this session.
+      if (_aiHistory.isNotEmpty) return;
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final url = data['imageUrl'] as String?;
+        if (url == null || url.isEmpty) continue;
+        // We'll lazy-load bytes on tap from the gallery screen;
+        // for the in-screen strip we just store the doc metadata.
+      }
+    } catch (_) {
+      // Silently ignore — user can still create new renders.
+    }
+  }
+
+  Future<void> _persistRender(_AiHistoryItem item) async {
+    final col = _historyCol;
+    final uid = _uid;
+    if (col == null || uid == null) return;
+    try {
+      setState(() => _persistingRender = true);
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final storagePath = 'users/$uid/renders/render_$ts.jpg';
+      final ref = FirebaseStorage.instance.ref(storagePath);
+
+      // Compress for storage
+      final compressed = await FlutterImageCompress.compressWithList(
+        item.imageBytes,
+        minWidth: 1024,
+        minHeight: 1024,
+        quality: 80,
+        format: CompressFormat.jpeg,
+        keepExif: false,
+      );
+      await ref.putData(
+        Uint8List.fromList(compressed),
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      final downloadUrl = await ref.getDownloadURL();
+
+      await col.add({
+        'imageUrl': downloadUrl,
+        'storagePath': storagePath,
+        'wallColor': _toHexRgb(item.wallColor),
+        'cabinetColor': _toHexRgb(item.cabinetColor),
+        'wallsEnabled': item.wallsEnabled,
+        'cabinetsEnabled': item.cabinetsEnabled,
+        'prompt': item.prompt,
+        'roomLabel': item.prompt ?? 'Render',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Failed to persist render: $e');
+    } finally {
+      if (mounted) setState(() => _persistingRender = false);
+    }
+  }
+
+  Future<void> _loadInitialPhoto(String path) async {
+    try {
+      final file = File(path);
+      if (!await file.exists()) return;
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      if (!mounted) return;
+      setState(() {
+        _originalBytes = bytes;
+        _originalImage?.dispose();
+        _originalImage = frame.image;
+        _aiImage?.dispose();
+        _aiImage = null;
+        _mode = _RenderMode.ai;
+        _showOriginal = false;
+        _strokes.clear();
+        _activeStroke = null;
+        _aiHistory.clear();
+      });
+    } catch (_) {
+      // Silently ignore — user can still pick a photo manually.
+    }
+  }
 
   @override
   void dispose() {
@@ -363,6 +486,17 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
 
     setState(() => _aiBusy = true);
     try {
+      // ── AI rate-limit check ──
+      final limitMsg = await AiUsageService.instance.checkLimit('renders');
+      if (limitMsg != null) {
+        if (!mounted) return;
+        setState(() => _aiBusy = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(limitMsg)));
+        return;
+      }
+
       // Prompt mode: prioritize speed (smaller upload + faster encode).
       // Recolor mode: keep higher resolution for better wall/cabinet boundaries.
       final compressed = await FlutterImageCompress.compressWithList(
@@ -440,6 +574,14 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
           _aiHistory.removeRange(8, _aiHistory.length);
         }
       });
+
+      // Record successful AI render usage.
+      AiUsageService.instance.recordUsage('renders');
+
+      // Persist to Firestore/Storage in background.
+      if (_aiHistory.isNotEmpty) {
+        _persistRender(_aiHistory.first);
+      }
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       final details = e.details;
@@ -630,74 +772,9 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
     return showModalBottomSheet<Color>(
       context: context,
       showDragHandle: true,
-      builder: (context) {
-        final colors = <Color>[
-          const Color(0xFF2E7DFF),
-          const Color(0xFF00BFA5),
-          const Color(0xFFFFC107),
-          const Color(0xFFFF7043),
-          const Color(0xFFE53935),
-          const Color(0xFF8E24AA),
-          const Color(0xFF3949AB),
-          const Color(0xFF00897B),
-          const Color(0xFF6D4C41),
-          const Color(0xFF546E7A),
-          const Color(0xFF212121),
-          const Color(0xFFF5F5F5),
-        ];
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final c in colors)
-                      InkWell(
-                        onTap: () => Navigator.pop(context, c),
-                        borderRadius: BorderRadius.circular(999),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                              width: 2,
-                            ),
-                          ),
-                          child: c == current
-                              ? Icon(
-                                  Icons.check,
-                                  color: c.computeLuminance() > 0.6
-                                      ? Colors.black
-                                      : Colors.white,
-                                )
-                              : null,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        );
+      isScrollControlled: true,
+      builder: (ctx) {
+        return _ColorPickerSheet(title: title, current: current);
       },
     );
   }
@@ -776,16 +853,6 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
           ),
           const SizedBox(width: 6),
         ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF00A7B5),
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Voice input coming soon.')),
-          );
-        },
-        child: const Icon(Icons.mic, color: Colors.white),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
@@ -889,75 +956,93 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
                 height: 72,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _aiHistory.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, i) {
-                      final item = _aiHistory[i];
-                      return GestureDetector(
-                        onTap: () async {
-                          final codec = await ui.instantiateImageCodec(
-                            item.imageBytes,
-                          );
-                          final frame = await codec.getNextFrame();
-                          if (!mounted) return;
-                          setState(() {
-                            _aiImage?.dispose();
-                            _aiImage = frame.image;
-                            _showOriginal = false;
-                            _compareMode = false;
-                            _wallColor = item.wallColor;
-                            _cabinetColor = item.cabinetColor;
-                            _wallsEnabled = item.wallsEnabled;
-                            _cabinetsEnabled = item.cabinetsEnabled;
-                            if (item.prompt != null) {
-                              _promptController.text = item.prompt!;
-                            }
-                          });
-                        },
-                        child: Container(
-                          width: 64,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.outlineVariant,
-                              width: 1.5,
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.memory(item.imageBytes, fit: BoxFit.cover),
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  color: const Color(0x99000000),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 2,
-                                  ),
-                                  child: Text(
-                                    '#${i + 1}',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                  child: Row(
+                    children: [
+                      if (_persistingRender)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 12),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                      );
-                    },
+                      Expanded(
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _aiHistory.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, i) {
+                            final item = _aiHistory[i];
+                            return GestureDetector(
+                              onTap: () async {
+                                final codec = await ui.instantiateImageCodec(
+                                  item.imageBytes,
+                                );
+                                final frame = await codec.getNextFrame();
+                                if (!mounted) return;
+                                setState(() {
+                                  _aiImage?.dispose();
+                                  _aiImage = frame.image;
+                                  _showOriginal = false;
+                                  _compareMode = false;
+                                  _wallColor = item.wallColor;
+                                  _cabinetColor = item.cabinetColor;
+                                  _wallsEnabled = item.wallsEnabled;
+                                  _cabinetsEnabled = item.cabinetsEnabled;
+                                  if (item.prompt != null) {
+                                    _promptController.text = item.prompt!;
+                                  }
+                                });
+                              },
+                              child: Container(
+                                width: 64,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.memory(
+                                      item.imageBytes,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        color: const Color(0x99000000),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 2,
+                                        ),
+                                        child: Text(
+                                          '#${i + 1}',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1392,6 +1477,372 @@ class _ColorPill extends StatelessWidget {
       ),
     );
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Full color picker: presets + hex + RGB + paint brand swatches
+// ────────────────────────────────────────────────────────────────────────────
+
+class _ColorPickerSheet extends StatefulWidget {
+  final String title;
+  final Color current;
+
+  const _ColorPickerSheet({required this.title, required this.current});
+
+  @override
+  State<_ColorPickerSheet> createState() => _ColorPickerSheetState();
+}
+
+class _ColorPickerSheetState extends State<_ColorPickerSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
+  late Color _selected;
+  late TextEditingController _hexCtrl;
+  late double _r, _g, _b;
+
+  // ── Preset colors ──
+  static const _presets = <Color>[
+    Color(0xFF2E7DFF),
+    Color(0xFF00BFA5),
+    Color(0xFFFFC107),
+    Color(0xFFFF7043),
+    Color(0xFFE53935),
+    Color(0xFF8E24AA),
+    Color(0xFF3949AB),
+    Color(0xFF00897B),
+    Color(0xFF6D4C41),
+    Color(0xFF546E7A),
+    Color(0xFF212121),
+    Color(0xFFF5F5F5),
+  ];
+
+  // ── Paint brand swatches (curated top ~20 per brand) ──
+  static const _brandTabs = <String>[
+    'Sherwin-Williams',
+    'Benjamin Moore',
+    'Behr',
+  ];
+
+  static const _brandColors = <String, List<_BrandColor>>{
+    'Sherwin-Williams': [
+      _BrandColor('Alabaster', Color(0xFFF2EDE4)),
+      _BrandColor('Agreeable Gray', Color(0xFFCFC5B4)),
+      _BrandColor('Repose Gray', Color(0xFFBFB9AD)),
+      _BrandColor('Accessible Beige', Color(0xFFCFC3AD)),
+      _BrandColor('Worldly Gray', Color(0xFFB5AFA1)),
+      _BrandColor('Mindful Gray', Color(0xFFA39E93)),
+      _BrandColor('Sea Salt', Color(0xFFCDD5C9)),
+      _BrandColor('Comfort Gray', Color(0xFFB8C4B6)),
+      _BrandColor('Silvermist', Color(0xFFB1BFC4)),
+      _BrandColor('Rainwashed', Color(0xFFBBCEC9)),
+      _BrandColor('Naval', Color(0xFF2E3441)),
+      _BrandColor('Iron Ore', Color(0xFF44423F)),
+      _BrandColor('Tricorn Black', Color(0xFF2F2E2D)),
+      _BrandColor('Pure White', Color(0xFFF1EDE3)),
+      _BrandColor('Snowbound', Color(0xFFF0EBE0)),
+      _BrandColor('Eider White', Color(0xFFE1DBD1)),
+      _BrandColor('Balanced Beige', Color(0xFFC1AB8E)),
+      _BrandColor('Urbane Bronze', Color(0xFF54504B)),
+      _BrandColor('Emerald Isle', Color(0xFF3B6F59)),
+      _BrandColor('Evergreen Fog', Color(0xFF8E9686)),
+    ],
+    'Benjamin Moore': [
+      _BrandColor('White Dove', Color(0xFFF0EBDB)),
+      _BrandColor('Chantilly Lace', Color(0xFFF5F1EA)),
+      _BrandColor('Simply White', Color(0xFFF5EFE0)),
+      _BrandColor('Revere Pewter', Color(0xFFBFB5A1)),
+      _BrandColor('Edgecomb Gray', Color(0xFFCBC2AE)),
+      _BrandColor('Collingwood', Color(0xFFC3BDB0)),
+      _BrandColor('Balboa Mist', Color(0xFFCFC9BC)),
+      _BrandColor('Classic Gray', Color(0xFFD5CDC2)),
+      _BrandColor('Hale Navy', Color(0xFF3D4857)),
+      _BrandColor('Newburyport Blue', Color(0xFF3A4C5C)),
+      _BrandColor('Kendall Charcoal', Color(0xFF545553)),
+      _BrandColor('Wrought Iron', Color(0xFF474746)),
+      _BrandColor('Black', Color(0xFF323232)),
+      _BrandColor('Palladian Blue', Color(0xFFBCCFC9)),
+      _BrandColor('Wythe Blue', Color(0xFF9ABCC0)),
+      _BrandColor('Manchester Tan', Color(0xFFC9BC9E)),
+      _BrandColor('Quiet Moments', Color(0xFFBFCDCA)),
+      _BrandColor('Swiss Coffee', Color(0xFFE8DFD0)),
+      _BrandColor('Thunder', Color(0xFF6C6966)),
+      _BrandColor('Gray Owl', Color(0xFFC0BFB5)),
+    ],
+    'Behr': [
+      _BrandColor('Ultra Pure White', Color(0xFFF5F0E7)),
+      _BrandColor('Blank Canvas', Color(0xFFF1E8D6)),
+      _BrandColor('Smoky White', Color(0xFFE0D5C1)),
+      _BrandColor('Silver Drop', Color(0xFFC4C3BB)),
+      _BrandColor('Dolphin Fin', Color(0xFFACA99D)),
+      _BrandColor('Classic Silver', Color(0xFFB8B6AD)),
+      _BrandColor('Intellectual', Color(0xFF6B6965)),
+      _BrandColor('Limousine Leather', Color(0xFF3D3936)),
+      _BrandColor('Broadway', Color(0xFF2D3453)),
+      _BrandColor('Blueprint', Color(0xFF2C4E6E)),
+      _BrandColor('In The Moment', Color(0xFF5B8D86)),
+      _BrandColor('Breezeway', Color(0xFFB6CFC6)),
+      _BrandColor('Sustainable Green', Color(0xFF8DA580)),
+      _BrandColor('Sage Green', Color(0xFFA3A68E)),
+      _BrandColor('Wheat Bread', Color(0xFFC3A77A)),
+      _BrandColor('Creamy Mushroom', Color(0xFFCCBFA7)),
+      _BrandColor('Café au Lait', Color(0xFFA98D71)),
+      _BrandColor('Red Pepper', Color(0xFF8B3626)),
+      _BrandColor('Polar Bear', Color(0xFFE8E3D7)),
+      _BrandColor('Dark Everglade', Color(0xFF344D3E)),
+    ],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 3, vsync: this);
+    _selected = widget.current;
+    _hexCtrl = TextEditingController(text: _colorToHex(_selected));
+    _r = _selected.r;
+    _g = _selected.g;
+    _b = _selected.b;
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    _hexCtrl.dispose();
+    super.dispose();
+  }
+
+  String _colorToHex(Color c) {
+    final v = c.toARGB32() & 0x00FFFFFF;
+    return v.toRadixString(16).padLeft(6, '0').toUpperCase();
+  }
+
+  void _updateFromColor(Color c) {
+    setState(() {
+      _selected = c;
+      _r = c.r;
+      _g = c.g;
+      _b = c.b;
+      _hexCtrl.text = _colorToHex(c);
+    });
+  }
+
+  void _updateFromRgb() {
+    final c = Color.fromARGB(
+      255,
+      (_r * 255).round(),
+      (_g * 255).round(),
+      (_b * 255).round(),
+    );
+    setState(() {
+      _selected = c;
+      _hexCtrl.text = _colorToHex(c);
+    });
+  }
+
+  void _applyHex(String hex) {
+    final clean = hex.replaceAll('#', '').trim();
+    if (clean.length != 6) return;
+    final v = int.tryParse(clean, radix: 16);
+    if (v == null) return;
+    _updateFromColor(Color(0xFF000000 | v));
+  }
+
+  Widget _colorDot(Color c, {double size = 42}) {
+    return InkWell(
+      onTap: () => _updateFromColor(c),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: c,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            width: 2,
+          ),
+        ),
+        child: c == _selected
+            ? Icon(
+                Icons.check,
+                size: size * 0.5,
+                color: c.computeLuminance() > 0.6 ? Colors.black : Colors.white,
+              )
+            : null,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title + preview
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: _selected,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, _selected),
+                  child: const Text('Apply'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Hex input
+            Row(
+              children: [
+                const Text(
+                  '#',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 120,
+                  child: TextField(
+                    controller: _hexCtrl,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      hintText: 'FF5733',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    onSubmitted: _applyHex,
+                    onChanged: (v) {
+                      if (v.replaceAll('#', '').trim().length == 6)
+                        _applyHex(v);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // RGB sliders
+            _rgbRow('R', _r, Colors.red, (v) {
+              _r = v;
+              _updateFromRgb();
+            }),
+            _rgbRow('G', _g, Colors.green, (v) {
+              _g = v;
+              _updateFromRgb();
+            }),
+            _rgbRow('B', _b, Colors.blue, (v) {
+              _b = v;
+              _updateFromRgb();
+            }),
+            const Divider(height: 16),
+            // Preset colors
+            Text('Presets', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [for (final c in _presets) _colorDot(c, size: 38)],
+            ),
+            const Divider(height: 16),
+            // Paint brand tabs
+            Text('Paint Brands', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 6),
+            TabBar(
+              controller: _tabCtrl,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [for (final b in _brandTabs) Tab(text: b)],
+            ),
+            SizedBox(
+              height: 130,
+              child: TabBarView(
+                controller: _tabCtrl,
+                children: [
+                  for (final brand in _brandTabs) _buildBrandGrid(brand),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _rgbRow(
+    String label,
+    double value,
+    Color track,
+    ValueChanged<double> onChanged,
+  ) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 18,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: Slider(
+            value: value,
+            activeColor: track,
+            onChanged: (v) => setState(() => onChanged(v)),
+          ),
+        ),
+        SizedBox(
+          width: 36,
+          child: Text('${(value * 255).round()}', textAlign: TextAlign.right),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrandGrid(String brand) {
+    final colors = _brandColors[brand] ?? [];
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final bc in colors)
+              Tooltip(message: bc.name, child: _colorDot(bc.color, size: 34)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandColor {
+  final String name;
+  final Color color;
+  const _BrandColor(this.name, this.color);
 }
 
 class _ManualControlsBar extends StatelessWidget {

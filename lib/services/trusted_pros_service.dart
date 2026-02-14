@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 ///   `users/{uid}/trusted_pros/{contractorId}`
 ///
 /// Each doc stores:
-///   - `trade`   (String)  — e.g. 'Plumber', 'Electrician'
+///   - `trade`   (String)  — e.g. 'Painter', 'PW Tech'
 ///   - `note`    (String)  — private customer note
 ///   - `addedAt` (Timestamp)
 class TrustedProsService {

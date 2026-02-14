@@ -1,13 +1,15 @@
 import 'dart:math';
 
 import 'zip_locations.dart';
+import '../services/zip_lookup_service.dart';
 
 const double _earthRadiusMiles = 3958.8;
 
 Map<String, double>? _latLngForZip(String zip) {
   final key = zip.trim();
   if (key.isEmpty) return null;
-  final loc = zipLocations[key];
+  // Try runtime cache first (includes geocoded results), then hardcoded map
+  final loc = ZipLookupService.instance.lookupCached(key) ?? zipLocations[key];
   if (loc == null) return null;
   final lat = loc['lat'];
   final lng = loc['lng'];
@@ -54,8 +56,7 @@ double? distanceMilesBetweenZips(String zipA, String zipB) {
   final sinDLat = sin(dLat / 2);
   final sinDLon = sin(dLon / 2);
 
-  final aVal = sinDLat * sinDLat +
-      cos(lat1) * cos(lat2) * sinDLon * sinDLon;
+  final aVal = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLon * sinDLon;
   final cVal = 2 * atan2(sqrt(aVal), sqrt(1 - aVal));
 
   return _earthRadiusMiles * cVal;

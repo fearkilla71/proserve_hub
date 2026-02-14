@@ -1911,6 +1911,127 @@ function estimateInteriorPaintingRange({ q }) {
   return { total, totalRooms, notes };
 }
 
+/**
+ * Sqft-based exterior painting estimate.
+ *
+ * Per sqft of exterior wall area:
+ *   Siding:  $1.75 labor-only,  $2.25 with paint
+ *   Fascia:  $2.50 labor-only,  $3.50 with paint
+ *   Soffit:  $2.50 labor-only,  $3.50 with paint
+ *
+ * Add-ons (flat rate):
+ *   Doors:           $200 labor-only, $300 with paint (each)
+ *   Trim/windows:    $35  labor-only, $50  with paint (per opening)
+ *   Garage door:     $200 labor-only, $300 with paint (each)
+ *   Deck/Fence sqft: $2.00 labor-only,$3.00 with paint (per sqft)
+ *
+ * Story multiplier: 1 story = 1.0, 2 stories = 1.25, 3+ = 1.50
+ * Color change: +15%
+ */
+function estimateExteriorPaintingRange({ q }) {
+  const questions = q || {};
+
+  // Exterior wall sqft (estimated by AI from photos or entered by user)
+  const exteriorSqft = clampNumber(questions.exterior_sqft, 0, 50000);
+
+  // Stories
+  const storiesRaw = (questions.stories || '1').toString();
+  let storyMultiplier = 1.0;
+  if (storiesRaw === '2') storyMultiplier = 1.25;
+  else if (storiesRaw === '3_plus' || storiesRaw === '3') storyMultiplier = 1.50;
+
+  // Paint supply
+  const includesPaint = questions.includes_paint !== false; // default: with paint
+
+  // What to paint (sqft-based items)
+  const whatToPaint = questions.what_to_paint || {};
+  const paintSiding     = whatToPaint.siding !== false; // default true
+  const paintFascia     = whatToPaint.fascia === true;
+  const paintSoffit     = whatToPaint.soffit === true;
+
+  // ---- Per-sqft pricing ----
+  const SIDING_LABOR   = 1.75;
+  const SIDING_PAINT   = 2.25;
+  const FASCIA_LABOR   = 2.50;
+  const FASCIA_PAINT   = 3.50;
+  const SOFFIT_LABOR   = 2.50;
+  const SOFFIT_PAINT   = 3.50;
+
+  // ---- Add-on pricing ----
+  const DOOR_LABOR         = 200;
+  const DOOR_PAINT         = 300;
+  const TRIM_LABOR         = 35;   // per window/opening
+  const TRIM_PAINT         = 50;
+  const GARAGE_DOOR_LABOR  = 200;
+  const GARAGE_DOOR_PAINT  = 300;
+  const DECK_FENCE_LABOR   = 2.00; // per sqft
+  const DECK_FENCE_PAINT   = 3.00;
+
+  // Sqft-based items
+  const sidingRate = includesPaint ? SIDING_PAINT : SIDING_LABOR;
+  const sidingTotal = paintSiding ? exteriorSqft * sidingRate : 0;
+
+  // Fascia is typically ~8% of wall area
+  const fasciaRate = includesPaint ? FASCIA_PAINT : FASCIA_LABOR;
+  const fasciaSqft = paintFascia ? Math.round(exteriorSqft * 0.08) : 0;
+  const fasciaTotal = fasciaSqft * fasciaRate;
+
+  // Soffit is typically ~10% of wall area
+  const soffitRate = includesPaint ? SOFFIT_PAINT : SOFFIT_LABOR;
+  const soffitSqft = paintSoffit ? Math.round(exteriorSqft * 0.10) : 0;
+  const soffitTotal = soffitSqft * soffitRate;
+
+  // Add-ons
+  const doors       = clampNumber(questions.doors, 0, 50);
+  const trimPieces  = clampNumber(questions.trim_openings, 0, 100);
+  const garageDoors = clampNumber(questions.garage_doors, 0, 10);
+  const deckFenceSqft = clampNumber(questions.deck_fence_sqft, 0, 10000);
+
+  const doorRate       = includesPaint ? DOOR_PAINT : DOOR_LABOR;
+  const trimRate       = includesPaint ? TRIM_PAINT : TRIM_LABOR;
+  const garageDoorRate = includesPaint ? GARAGE_DOOR_PAINT : GARAGE_DOOR_LABOR;
+  const deckFenceRate  = includesPaint ? DECK_FENCE_PAINT : DECK_FENCE_LABOR;
+
+  const doorTotal       = doors * doorRate;
+  const trimTotal       = trimPieces * trimRate;
+  const garageDoorTotal = garageDoors * garageDoorRate;
+  const deckFenceTotal  = deckFenceSqft * deckFenceRate;
+
+  // Subtotal before multipliers
+  let subtotal = sidingTotal + fasciaTotal + soffitTotal
+               + doorTotal + trimTotal + garageDoorTotal + deckFenceTotal;
+
+  // Apply story multiplier
+  subtotal *= storyMultiplier;
+
+  // Color change adds 15%
+  const colorChange = questions.color_finish === 'color_change';
+  if (colorChange) {
+    subtotal *= 1.15;
+  }
+
+  const total = Math.round(subtotal);
+
+  // Build breakdown
+  const breakdown = [];
+  if (paintSiding)  breakdown.push(`Siding: ${exteriorSqft} sqft × $${sidingRate.toFixed(2)}`);
+  if (paintFascia)  breakdown.push(`Fascia: ~${fasciaSqft} sqft × $${fasciaRate.toFixed(2)}`);
+  if (paintSoffit)  breakdown.push(`Soffit: ~${soffitSqft} sqft × $${soffitRate.toFixed(2)}`);
+  if (doors > 0)         breakdown.push(`${doors} door(s) × $${doorRate}`);
+  if (trimPieces > 0)    breakdown.push(`${trimPieces} trim/window(s) × $${trimRate}`);
+  if (garageDoors > 0)   breakdown.push(`${garageDoors} garage door(s) × $${garageDoorRate}`);
+  if (deckFenceSqft > 0) breakdown.push(`Deck/fence: ${deckFenceSqft} sqft × $${deckFenceRate.toFixed(2)}`);
+  if (storyMultiplier > 1) breakdown.push(`Stories: ×${storyMultiplier.toFixed(2)}`);
+  if (colorChange) breakdown.push('Color change: +15%');
+
+  const notes = [
+    `Exterior Painting Estimate — ${exteriorSqft} sqft exterior, ${includesPaint ? 'with paint' : 'labor only'}.`,
+    breakdown.join(', ') + '.',
+  ].filter(s => s.length > 0).join(' ');
+
+  return { total, exteriorSqft, notes };
+}
+
 async function estimateJobCore({ uid, jobId }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
@@ -1993,9 +2114,71 @@ async function estimateRulesForJob({ uid, job, jobRef }) {
     }
   }
 
-  // Special-case painting: room-based pricing.
+  // Special-case painting: room-based (interior) or sqft-based (exterior).
   if (serviceKey === 'painting') {
     const pq = job?.paintingQuestions || {};
+    const paintingScope = (pq.scope || 'interior').toString().toLowerCase();
+
+    // Ensure pricing_rules/painting exists for client-side unit labels/suggestions.
+    const paintingPricingRef = db.collection('pricing_rules').doc('painting');
+    await seedOrUpdatePricingRule({
+      pricingRef: paintingPricingRef,
+      serviceKey: 'painting',
+      seededBy: 'estimateJob',
+    });
+
+    if (paintingScope === 'exterior') {
+      // ---- Exterior painting (sqft-based) ----
+      const extSqft = clampNumber(pq.exterior_sqft || pq.sqft, 0, 50000);
+      if (extSqft <= 0) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Exterior square footage is missing. Please specify the exterior wall area.'
+        );
+      }
+
+      const range = estimateExteriorPaintingRange({ q: pq });
+
+      let price = range.total * zipMultiplier;
+      if (urgent) price *= ESTIMATE_URGENCY_MULTIPLIER;
+      price = Math.round(price);
+      price = Math.max(price, 1200); // $1,200 minimum for exterior
+
+      const low = Math.round(price * ESTIMATE_RANGE_LOW_MULTIPLIER);
+      const recommended = price;
+      const premium = Math.round(price * ESTIMATE_RANGE_PREMIUM_MULTIPLIER);
+
+      const result = {
+        service: serviceKey,
+        unit: 'sqft',
+        quantity: range.exteriorSqft,
+        zip,
+        zipMultiplier,
+        urgent,
+        confidence: 0.80,
+        notes: range.notes,
+        prices: { low, recommended, premium },
+        imagePaths: [],
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'rules',
+      };
+
+      if (jobRef) {
+        await jobRef.set({ aiEstimate: result }, { merge: true });
+      }
+
+      return {
+        service: result.service,
+        unit: result.unit,
+        quantity: result.quantity,
+        urgent: result.urgent,
+        confidence: result.confidence,
+        notes: result.notes,
+        prices: result.prices,
+      };
+    }
+
+    // ---- Interior painting (room-based) ----
     const totalRoomsInput =
       clampNumber(pq.bedrooms, 0, 50) +
       clampNumber(pq.bathrooms, 0, 50) +
@@ -2010,14 +2193,6 @@ async function estimateRulesForJob({ uid, job, jobRef }) {
         'Room information is missing. Please specify how many rooms need painting.'
       );
     }
-
-    // Ensure pricing_rules/painting exists for client-side unit labels/suggestions.
-    const paintingPricingRef = db.collection('pricing_rules').doc('painting');
-    await seedOrUpdatePricingRule({
-      pricingRef: paintingPricingRef,
-      serviceKey: 'painting',
-      seededBy: 'estimateJob',
-    });
 
     const range = estimateInteriorPaintingRange({ q: pq });
 
@@ -3953,6 +4128,170 @@ exports.estimateFromImagesInputsHttp = functions
   }
   });
 
+// ---- Analyze exterior photos to estimate sqft & stories ----
+// Takes 4 photos (front, back, left, right) and uses GPT-4o to estimate
+// total exterior wall sqft and number of stories.
+async function analyzeExteriorPhotosCore({ uid, imagePaths }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const safePaths = Array.isArray(imagePaths) ? imagePaths : [];
+  if (safePaths.length < 1 || safePaths.length > 6) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Provide 1–6 exterior photos (ideally front, back, left, right).'
+    );
+  }
+
+  // Validate storage paths belong to the caller.
+  for (const p of safePaths) {
+    if (typeof p !== 'string' || !p.includes(uid)) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'One or more image paths do not belong to you.'
+      );
+    }
+  }
+
+  // Download images from Storage.
+  const bucket = admin.storage().bucket();
+  const imagesForModel = [];
+
+  for (const path of safePaths) {
+    const file = bucket.file(path);
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new functions.https.HttpsError('not-found', `Image not found: ${path}`);
+    }
+    const [meta] = await file.getMetadata();
+    const size = Number(meta?.size);
+    if (Number.isFinite(size) && size > 5 * 1024 * 1024) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'One or more images exceed 5 MB. Please upload smaller photos.'
+      );
+    }
+    const [buf] = await file.download();
+    const mime = extToMime(path);
+    imagesForModel.push({ mime, b64: buf.toString('base64') });
+  }
+
+  const client = getOpenAiClient();
+
+  const system =
+    'You are an expert exterior painting estimator. '
+    + 'The user has uploaded photos of each side of a building exterior. '
+    + 'Analyze the photos and estimate: '
+    + '1. The TOTAL exterior wall surface area in square feet (all 4 sides combined). '
+    + '2. The number of stories (1, 2, or 3_plus). '
+    + 'Consider window/door openings — subtract roughly 15-20% from gross wall area for openings. '
+    + 'A typical single-story home wall is 8-9 ft tall; two-story is 16-18 ft. '
+    + 'Estimate the width of each visible side from the photo and multiply by wall height. '
+    + 'Return ONLY valid JSON with these fields: '
+    + '{ "estimatedExteriorSqft": <number>, "stories": "<1|2|3_plus>", '
+    + '"confidence": <0-1>, "notes": "<brief explanation of how you estimated>" }';
+
+  const content = [{ type: 'text', text: 'Analyze these exterior photos and estimate the total exterior wall sqft and number of stories.' }];
+  for (const img of imagesForModel) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:${img.mime};base64,${img.b64}` },
+    });
+  }
+
+  let ai;
+  try {
+    const resp = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 500,
+    });
+    const raw = resp.choices?.[0]?.message?.content || '{}';
+    ai = JSON.parse(raw);
+  } catch (e) {
+    console.error('[analyzeExteriorPhotos] OpenAI error', e);
+    throw new functions.https.HttpsError('internal', 'AI analysis failed. Please try again.');
+  }
+
+  const estimatedSqft = clampNumber(ai?.estimatedExteriorSqft, 200, 50000);
+  const stories = ['1', '2', '3_plus'].includes(ai?.stories) ? ai.stories : '1';
+  const confidence = clampNumber(ai?.confidence, 0, 1);
+  const notes = (ai?.notes || '').toString().trim();
+
+  return { estimatedExteriorSqft: estimatedSqft, stories, confidence, notes };
+}
+
+exports.analyzeExteriorPhotos = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
+  async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+
+    const rateLimit = await checkRateLimit(uid, 'analyzeExteriorPhotos', 15, 24 * 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      const resetTime = new Date(rateLimit.resetTime).toISOString();
+      throw new functions.https.HttpsError('resource-exhausted', `Rate limit exceeded. Try again after ${resetTime}.`);
+    }
+
+    return await analyzeExteriorPhotosCore({ uid, imagePaths: data?.imagePaths });
+  }
+);
+
+exports.analyzeExteriorPhotosHttp = functions
+  .runWith({ secrets: [OPENAI_API_KEY] })
+  .https.onRequest(async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.status(204).send('');
+    return;
+  }
+  res.set('Access-Control-Allow-Origin', '*');
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method Not Allowed' });
+    return;
+  }
+  try {
+    const authHeader = (req.headers.authorization || '').toString();
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    const idToken = match ? match[1] : '';
+    if (!idToken) {
+      res.status(401).json({ error: 'Missing Authorization Bearer token' });
+      return;
+    }
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const rateLimit = await checkRateLimit(uid, 'analyzeExteriorPhotos', 15, 24 * 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      res.status(429).json({ error: 'Rate limit exceeded.', code: 'resource-exhausted' });
+      return;
+    }
+
+    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+    const result = await analyzeExteriorPhotosCore({ uid, imagePaths: body.imagePaths });
+    res.json(result);
+  } catch (err) {
+    console.error('[analyzeExteriorPhotosHttp] ERROR:', err);
+    if (err && err.code && err.message) {
+      const code = err.code;
+      const status = code === 'unauthenticated' ? 401 : code === 'permission-denied' ? 403 : code === 'not-found' ? 404 : 400;
+      res.status(status).json({ error: err.message, code });
+      return;
+    }
+    const errMessage = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: errMessage || 'Internal error' });
+  }
+});
+
 exports.estimateJobFromImages = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
@@ -4269,10 +4608,15 @@ async function createCheckoutSessionCore({ jobId, uid }) {
   };
 }
 
-async function createContractorSubscriptionCheckoutSessionCore({ uid }) {
+async function createContractorSubscriptionCheckoutSessionCore({ uid, tier }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+
+  // Normalise tier — default to 'pro' for backwards compatibility.
+  const resolvedTier = (tier || '').toString().trim().toLowerCase() === 'enterprise'
+    ? 'enterprise'
+    : 'pro';
 
   const { db, userRef, userData } = await assertContractor(uid);
 
@@ -4286,20 +4630,34 @@ async function createContractorSubscriptionCheckoutSessionCore({ uid }) {
   const stripe = getStripeClient();
   const priceId = getContractorProPriceId();
 
+  // Pricing & description per tier
+  const tierConfig = resolvedTier === 'enterprise'
+    ? {
+        name: 'Contractor Enterprise Subscription',
+        description: 'Everything in Pro + Priority support, Subcontractor board, Advanced analytics, Boosted listing.',
+        unitAmount: 2999,
+      }
+    : {
+        name: 'Contractor Pro Subscription',
+        description: 'Unlocks Pricing Calculator + Cost Estimator tools.',
+        unitAmount: 1199,
+      };
+
   const inlineLineItem = {
     price_data: {
       currency: 'usd',
       product_data: {
-        name: 'Contractor Pro Subscription',
-        description: 'Unlocks Pricing Calculator + Cost Estimator tools.',
+        name: tierConfig.name,
+        description: tierConfig.description,
       },
       recurring: { interval: 'month' },
-      unit_amount: 1199,
+      unit_amount: tierConfig.unitAmount,
     },
     quantity: 1,
   };
 
-  const priceLineItem = priceId ? { price: priceId, quantity: 1 } : null;
+  // Only use the pre-configured Stripe Price ID for Pro; Enterprise always uses inline pricing.
+  const priceLineItem = (priceId && resolvedTier === 'pro') ? { price: priceId, quantity: 1 } : null;
 
   let customerEmail = '';
   try {
@@ -4324,12 +4682,14 @@ async function createContractorSubscriptionCheckoutSessionCore({ uid }) {
         metadata: {
           type: 'contractor_subscription',
           contractorId: uid,
+          tier: resolvedTier,
           alreadyPro: alreadyPro ? 'true' : 'false',
         },
         subscription_data: {
           metadata: {
             type: 'contractor_subscription',
             contractorId: uid,
+            tier: resolvedTier,
           },
         },
         success_url: getSuccessUrl(),
@@ -4387,6 +4747,7 @@ async function syncContractorProEntitlementCore({ uid }) {
   let sessionPaymentStatus = '';
   let sessionStatus = '';
   let sessionMode = '';
+  let detectedTier = '';
 
   // Best-effort: if we have a recently-started checkout session, prefer that
   // because it definitively ties the Stripe subscription to this UID.
@@ -4404,6 +4765,8 @@ async function syncContractorProEntitlementCore({ uid }) {
           .toLowerCase();
         sessionStatus = (session.status || '').toString().trim().toLowerCase();
         sessionMode = (session.mode || '').toString().trim().toLowerCase();
+        // Read the tier from session metadata
+        detectedTier = (session.metadata?.tier || '').toString().trim().toLowerCase();
       }
     } catch (_) {
       // ignore
@@ -4418,6 +4781,10 @@ async function syncContractorProEntitlementCore({ uid }) {
       const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
       status = (sub?.status || status || '').toString().trim().toLowerCase();
       isActive = status === 'active' || status === 'trialing';
+      // Also pick up tier from subscription metadata if not already set
+      if (!detectedTier) {
+        detectedTier = (sub?.metadata?.tier || '').toString().trim().toLowerCase();
+      }
     } catch (_) {
       // ignore
     }
@@ -4497,6 +4864,12 @@ async function syncContractorProEntitlementCore({ uid }) {
     }
   }
 
+  // Resolve the subscription tier. Default to 'pro' for active subscriptions
+  // when no explicit tier metadata is found (backwards compatibility).
+  const resolvedTier = isActive
+    ? (detectedTier === 'enterprise' ? 'enterprise' : 'pro')
+    : 'basic';
+
   // Persist the latest computed entitlement.
   try {
     await userRef.set(
@@ -4504,6 +4877,7 @@ async function syncContractorProEntitlementCore({ uid }) {
         pricingToolsPro: !!isActive,
         contractorPro: !!isActive,
         isPro: !!isActive,
+        subscriptionTier: resolvedTier,
         proSubscriptionStatus: status || (isActive ? 'active' : 'inactive'),
         stripeSubscriptionId: stripeSubscriptionId || null,
         stripeCustomerId: stripeCustomerId || null,
@@ -5114,7 +5488,8 @@ exports.createContractorSubscriptionCheckoutSession = functions
     }
 
     try {
-      return await createContractorSubscriptionCheckoutSessionCore({ uid });
+      const tier = (data && data.tier) ? data.tier : 'pro';
+      return await createContractorSubscriptionCheckoutSessionCore({ uid, tier });
     } catch (err) {
       console.error('createContractorSubscriptionCheckoutSession failed', err);
       if (err && err.code && err.message) {
@@ -5174,7 +5549,7 @@ exports.createContractorSubscriptionCheckoutSessionHttp = functions
         return;
       }
 
-      const result = await createContractorSubscriptionCheckoutSessionCore({ uid });
+      const result = await createContractorSubscriptionCheckoutSessionCore({ uid, tier: (req.body && req.body.tier) || 'pro' });
       res.json(result);
     } catch (err) {
       if (err && err.code && err.message) {
@@ -7606,26 +7981,42 @@ SERVICE: Exterior Painting
 KEY QUESTIONS TO ASK:
 1. What type of home? (single story, two story, ranch, colonial, etc.)
 2. What's the exterior material? (wood siding, stucco, brick, vinyl, hardie board, mixed)
-3. Roughly how large is the home? (small/medium/large — or approximate sqft if known)
+3. Roughly how large is the home? (small/medium/large — or approximate exterior wall sqft if known)
 4. Labor only or labor + materials? (Do they have paint already?)
 5. Are you changing the color or keeping it similar?
 6. Does any surface need scraping, sanding, or repair before painting?
-7. Any special areas? (shutters, trim, fascia, soffits, front door, garage door)
+7. Any special areas? (shutters, trim, fascia, soffits, front door, garage door, deck/fence)
 8. What's the ZIP code?
 9. Any HOA color requirements or timeline needs?
 
-PHOTO ANALYSIS: If photos provided, assess home size, stories, siding condition, trim complexity, and prep work needed.
+PHOTO ANALYSIS: If photos provided, assess home size, stories, siding condition, trim complexity, and prep work needed. Estimate total exterior wall sqft.
 
-PRICING GUIDANCE:
-- Small home (under 1,200 sqft, 1 story): $2,500-$5,000
-- Medium home (1,200-2,500 sqft): $4,000-$9,000
-- Large home (2,500+ sqft): $7,000-$15,000+
-- Labor only: reduce by 25-30%
-- Wood repair adds $200-$800+
-- Two-story homes cost 20-40% more than single story
-- Full prep (scraping/sanding): adds $500-$2,000
-- Shutters: $40-$80 each
-- Garage door: $150-$400`,
+PRICING RATES (per sqft of exterior wall area):
+- Siding: $1.75/sqft labor only, $2.25/sqft labor + paint
+- Fascia (~8% of wall area): $2.50/sqft labor only, $3.50/sqft labor + paint
+- Soffit (~10% of wall area): $2.50/sqft labor only, $3.50/sqft labor + paint
+
+FLAT-RATE ADD-ONS:
+- Doors: $200 each (labor only), $300 each (labor + paint)
+- Trim / window openings: $35 each (labor only), $50 each (labor + paint)
+- Garage door: $200 each (labor only), $300 each (labor + paint)
+- Deck/Fence: $2.00/sqft (labor only), $3.00/sqft (labor + paint)
+
+MULTIPLIERS:
+- Story height: 1 story = 1.0x, 2 stories = 1.25x, 3+ stories = 1.50x
+- Color change (dark over light or opposite): +15%
+- Low estimate = base × 0.88, Premium = base × 1.15
+- Minimum job: $1,200
+
+EXAMPLE: 2,000 sqft exterior wall area, 2-story, siding + fascia + soffit, labor + paint, 3 doors, 8 trim openings, 1 garage door:
+  Siding: 2,000 × $2.25 = $4,500
+  Fascia: 160 sqft (8%) × $3.50 = $560
+  Soffit: 200 sqft (10%) × $3.50 = $700
+  Story multiplier: ($4,500 + $560 + $700) × 1.25 = $7,200
+  Doors: 3 × $300 = $900
+  Trim: 8 × $50 = $400
+  Garage door: 1 × $300 = $300
+  Total: $8,800 → Low: $7,744, Premium: $10,120`,
 
     drywall_repair: `
 SERVICE: Drywall Repair
@@ -8133,4 +8524,90 @@ exports.adminForceCancelEscrowHttp = functions
     const escrowId = (req.body?.escrowId || '').toString().trim();
     const reason = (req.body?.reason || '').toString().trim();
     return await adminForceCancelEscrowCore({ escrowId, uid, reason });
+  }));
+
+// -------------------- INVOICE PAYMENT LINK --------------------
+// Creates a Stripe Checkout session so a client can pay a contractor's invoice.
+
+async function createInvoicePaymentLinkCore({ uid, invoiceId, amount, clientEmail, description }) {
+  if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  if (!invoiceId) throw new functions.https.HttpsError('invalid-argument', 'invoiceId is required');
+  if (!amount || amount <= 0) throw new functions.https.HttpsError('invalid-argument', 'amount must be > 0');
+
+  // Verify this is an Enterprise user.
+  const userDoc = await admin.firestore().collection('users').doc(uid).get();
+  const userData = userDoc.data() || {};
+  const tier = (userData.subscriptionTier || '').toLowerCase();
+  if (tier !== 'enterprise') {
+    throw new functions.https.HttpsError('permission-denied', 'Enterprise plan required for invoice payments');
+  }
+
+  const stripe = require('stripe')(STRIPE_SECRET_KEY.value());
+
+  const amountCents = Math.round(amount * 100);
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: clientEmail || undefined,
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: description || `Invoice ${invoiceId}`,
+          metadata: { invoiceId, contractorUid: uid },
+        },
+        unit_amount: amountCents,
+      },
+      quantity: 1,
+    }],
+    metadata: {
+      type: 'invoice_payment',
+      invoiceId,
+      contractorUid: uid,
+    },
+    success_url: `https://proserve-hub-ada0e.web.app/invoice-paid?invoice=${invoiceId}`,
+    cancel_url: `https://proserve-hub-ada0e.web.app/invoice-cancelled?invoice=${invoiceId}`,
+  });
+
+  // Save payment link info to Firestore.
+  await admin.firestore()
+    .collection('users').doc(uid)
+    .collection('invoices').doc(invoiceId)
+    .set({
+      paymentSessionId: session.id,
+      paymentUrl: session.url,
+      paymentStatus: 'pending',
+      amountCents,
+      clientEmail: clientEmail || null,
+      description: description || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+  return { url: session.url, sessionId: session.id };
+}
+
+exports.createInvoicePaymentLink = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    return await createInvoicePaymentLinkCore({
+      uid,
+      invoiceId: (data?.invoiceId || '').toString().trim(),
+      amount: parseFloat(data?.amount) || 0,
+      clientEmail: (data?.clientEmail || '').toString().trim(),
+      description: (data?.description || '').toString().trim(),
+    });
+  });
+
+exports.createInvoicePaymentLinkHttp = functions
+  .runWith({ secrets: [STRIPE_SECRET_KEY] })
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    return await createInvoicePaymentLinkCore({
+      uid,
+      invoiceId: (req.body?.invoiceId || '').toString().trim(),
+      amount: parseFloat(req.body?.amount) || 0,
+      clientEmail: (req.body?.clientEmail || '').toString().trim(),
+      description: (req.body?.description || '').toString().trim(),
+    });
   }));

@@ -51,7 +51,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_storage: ^13.0.5
   file_picker: ^8.0.7
-  change_app_package_name: ^1.5.0
   shared_preferences: ^2.5.4
   image_picker: ^1.2.1
   flutter_image_compress: ^2.3.0
@@ -77,12 +76,14 @@ dependencies:
   firebase_remote_config: 6.1.4
   package_info_plus: ^8.3.0
   video_player: ^2.9.2
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_launcher_icons: ^0.13.1
+  change_app_package_name: ^1.5.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -117,14 +118,25 @@ flutter:
     - assets/icon/
     - assets/pitch/
 
+flutter_native_splash:
+  color: "#0A0F1E"
+  image: assets/icon/app_icon.png
+  android: true
+  ios: true
+  web: true
+  android_12:
+    color: "#0A0F1E"
+    image: assets/icon/app_icon.png
+
 flutter_launcher_icons:
   android: true
   ios: true
+  remove_alpha_ios: true
   web:
     generate: true
   image_path: assets/icon/app_icon.png
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/icon/app_icon.png
+  adaptive_icon_background: "#0A0F1E"
+  adaptive_icon_foreground: assets/icon/app_icon_foreground.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -25,10 +25,8 @@ class ConnectService {
         throw Exception('Could not open onboarding link');
       }
     } catch (e, stack) {
-      // ignore: avoid_print
-      print('[ConnectService.startOnboarding] ERROR: $e');
-      // ignore: avoid_print
-      print('[ConnectService.startOnboarding] STACK: $stack');
+      debugPrint('[ConnectService.startOnboarding] ERROR: $e');
+      debugPrint('[ConnectService.startOnboarding] STACK: $stack');
       rethrow;
     }
   }
@@ -79,10 +77,8 @@ class ConnectService {
       body: jsonEncode({}),
     );
 
-    // ignore: avoid_print
-    print('[ConnectService] HTTP response status: ${resp.statusCode}');
-    // ignore: avoid_print
-    print('[ConnectService] HTTP response body: ${resp.body}');
+    debugPrint('[ConnectService] HTTP response status: ${resp.statusCode}');
+    debugPrint('[ConnectService] HTTP response body: ${resp.body}');
 
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
       String message = 'Onboarding request failed';
