@@ -58,13 +58,13 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
         .collection('escrow_bookings')
         .snapshots()
         .listen((snap) {
-      _escrows = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
-      _recalculate();
-    });
+          _escrows = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
+          _recalculate();
+        });
 
     // Users — for subscription counts
     _usersSub = FirebaseFirestore.instance
@@ -72,20 +72,20 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
         .where('role', isEqualTo: 'contractor')
         .snapshots()
         .listen((snap) {
-      int pro = 0, enterprise = 0;
-      for (final d in snap.docs) {
-        final data = d.data();
-        final tier = _effectiveTier(data);
-        if (tier == 'enterprise') {
-          enterprise++;
-        } else if (tier == 'pro') {
-          pro++;
-        }
-      }
-      _proCount = pro;
-      _enterpriseCount = enterprise;
-      _recalculate();
-    });
+          int pro = 0, enterprise = 0;
+          for (final d in snap.docs) {
+            final data = d.data();
+            final tier = _effectiveTier(data);
+            if (tier == 'enterprise') {
+              enterprise++;
+            } else if (tier == 'pro') {
+              pro++;
+            }
+          }
+          _proCount = pro;
+          _enterpriseCount = enterprise;
+          _recalculate();
+        });
   }
 
   String _effectiveTier(Map<String, dynamic> data) {
@@ -101,8 +101,7 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
   }
 
   void _recalculate() {
-    final cutoff =
-        DateTime.now().subtract(Duration(days: _periodDays));
+    final cutoff = DateTime.now().subtract(Duration(days: _periodDays));
 
     final periodEscrows = _escrows.where((e) {
       final created = e['createdAt'];
@@ -144,8 +143,9 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
       _totalRevenue = totalRev;
       _completedBookings = completed;
       _cancelledBookings = cancelled;
-      _avgBookingValue =
-          periodEscrows.isNotEmpty ? volume / periodEscrows.length : 0;
+      _avgBookingValue = periodEscrows.isNotEmpty
+          ? volume / periodEscrows.length
+          : 0;
       _loading = false;
     });
   }
@@ -173,8 +173,10 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
         // ── Period selector ──────────────────────────────────────
         Row(
           children: [
-            Text('Revenue Dashboard',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              'Revenue Dashboard',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const Spacer(),
             SegmentedButton<int>(
               segments: const [
@@ -200,16 +202,23 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const Icon(Icons.account_balance_wallet,
-                    size: 40, color: Colors.greenAccent),
+                const Icon(
+                  Icons.account_balance_wallet,
+                  size: 40,
+                  color: Colors.greenAccent,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   '\$${_totalRevenue.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.greenAccent,
+                  ),
                 ),
-                Text('Total Revenue (${_periodDays}d)',
-                    style: const TextStyle(color: Colors.white70)),
+                Text(
+                  'Total Revenue (${_periodDays}d)',
+                  style: const TextStyle(color: Colors.white70),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Platform Fees: \$${_totalPlatformFees.toStringAsFixed(2)}  ·  '
@@ -227,39 +236,66 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
           spacing: 16,
           runSpacing: 16,
           children: [
-            _kpiCard('Escrow Volume', '\$${_fmt(_totalEscrowVolume)}',
-                Icons.account_balance, Colors.blue),
-            _kpiCard('Platform Fees', '\$${_fmt(_totalPlatformFees)}',
-                Icons.percent, Colors.green),
-            _kpiCard('Contractor Payouts', '\$${_fmt(_totalContractorPayouts)}',
-                Icons.payments, Colors.orange),
-            _kpiCard('Customer Savings', '\$${_fmt(_totalCustomerSavings)}',
-                Icons.savings, Colors.teal),
-            _kpiCard('Completed', '$_completedBookings',
-                Icons.check_circle, Colors.green),
-            _kpiCard('Cancelled', '$_cancelledBookings',
-                Icons.cancel, Colors.red),
-            _kpiCard('Avg Booking', '\$${_fmt(_avgBookingValue)}',
-                Icons.receipt_long, Colors.purple),
-            _kpiCard('Sub MRR', '\$${_fmt(_subscriptionMrr)}',
-                Icons.autorenew, Colors.amber),
+            _kpiCard(
+              'Escrow Volume',
+              '\$${_fmt(_totalEscrowVolume)}',
+              Icons.account_balance,
+              Colors.blue,
+            ),
+            _kpiCard(
+              'Platform Fees',
+              '\$${_fmt(_totalPlatformFees)}',
+              Icons.percent,
+              Colors.green,
+            ),
+            _kpiCard(
+              'Contractor Payouts',
+              '\$${_fmt(_totalContractorPayouts)}',
+              Icons.payments,
+              Colors.orange,
+            ),
+            _kpiCard(
+              'Customer Savings',
+              '\$${_fmt(_totalCustomerSavings)}',
+              Icons.savings,
+              Colors.teal,
+            ),
+            _kpiCard(
+              'Completed',
+              '$_completedBookings',
+              Icons.check_circle,
+              Colors.green,
+            ),
+            _kpiCard(
+              'Cancelled',
+              '$_cancelledBookings',
+              Icons.cancel,
+              Colors.red,
+            ),
+            _kpiCard(
+              'Avg Booking',
+              '\$${_fmt(_avgBookingValue)}',
+              Icons.receipt_long,
+              Colors.purple,
+            ),
+            _kpiCard(
+              'Sub MRR',
+              '\$${_fmt(_subscriptionMrr)}',
+              Icons.autorenew,
+              Colors.amber,
+            ),
           ],
         ),
         const SizedBox(height: 24),
 
         // ── Revenue Trend Chart ──────────────────────────────────
-        Text('Revenue Trend',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text('Revenue Trend', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 250,
-          child: _buildRevenueTrendChart(),
-        ),
+        SizedBox(height: 250, child: _buildRevenueTrendChart()),
         const SizedBox(height: 24),
 
         // ── Revenue Sources Breakdown ────────────────────────────
-        Text('Revenue Sources',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text('Revenue Sources', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
         SizedBox(
           height: 200,
@@ -277,20 +313,21 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                         title:
                             'Fees\n\$${_totalPlatformFees.toStringAsFixed(0)}',
                         titleStyle: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                         radius: 55,
                       ),
                       PieChartSectionData(
                         value: _subscriptionMrr > 0 ? _subscriptionMrr : 0.01,
                         color: Colors.amber,
-                        title:
-                            'Subs\n\$${_subscriptionMrr.toStringAsFixed(0)}',
+                        title: 'Subs\n\$${_subscriptionMrr.toStringAsFixed(0)}',
                         titleStyle: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                         radius: 55,
                       ),
                     ],
@@ -306,24 +343,41 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Money Flow',
-                            style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          'Money Flow',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 12),
-                        _flowRow('In: Escrow Volume',
-                            '\$${_fmt(_totalEscrowVolume)}', Colors.blue),
+                        _flowRow(
+                          'In: Escrow Volume',
+                          '\$${_fmt(_totalEscrowVolume)}',
+                          Colors.blue,
+                        ),
                         const SizedBox(height: 4),
-                        _flowRow('Out: Contractor Payouts',
-                            '-\$${_fmt(_totalContractorPayouts)}', Colors.red),
+                        _flowRow(
+                          'Out: Contractor Payouts',
+                          '-\$${_fmt(_totalContractorPayouts)}',
+                          Colors.red,
+                        ),
                         const SizedBox(height: 4),
-                        _flowRow('Kept: Platform Fees',
-                            '\$${_fmt(_totalPlatformFees)}', Colors.green),
+                        _flowRow(
+                          'Kept: Platform Fees',
+                          '\$${_fmt(_totalPlatformFees)}',
+                          Colors.green,
+                        ),
                         const SizedBox(height: 4),
-                        _flowRow('+ Subscriptions',
-                            '\$${_fmt(_subscriptionMrr)}', Colors.amber),
+                        _flowRow(
+                          '+ Subscriptions',
+                          '\$${_fmt(_subscriptionMrr)}',
+                          Colors.amber,
+                        ),
                         const Divider(height: 16),
-                        _flowRow('Net Revenue',
-                            '\$${_fmt(_totalRevenue)}', Colors.greenAccent,
-                            bold: true),
+                        _flowRow(
+                          'Net Revenue',
+                          '\$${_fmt(_totalRevenue)}',
+                          Colors.greenAccent,
+                          bold: true,
+                        ),
                       ],
                     ),
                   ),
@@ -335,8 +389,10 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
         const SizedBox(height: 24),
 
         // ── Recent Transactions ──────────────────────────────────
-        Text('Recent Transactions',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Recent Transactions',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 12),
         ..._buildRecentTransactions(),
       ],
@@ -394,8 +450,10 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                 if (idx % step != 0) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(sortedKeys[idx],
-                      style: const TextStyle(fontSize: 10)),
+                  child: Text(
+                    sortedKeys[idx],
+                    style: const TextStyle(fontSize: 10),
+                  ),
                 );
               },
             ),
@@ -404,14 +462,16 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 50,
-              getTitlesWidget: (v, _) => Text('\$${v.toInt()}',
-                  style: const TextStyle(fontSize: 10)),
+              getTitlesWidget: (v, _) =>
+                  Text('\$${v.toInt()}', style: const TextStyle(fontSize: 10)),
             ),
           ),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         barGroups: List.generate(sortedKeys.length, (i) {
           final key = sortedKeys[i];
@@ -422,7 +482,9 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                 toY: dailyFees[key] ?? 0,
                 color: Colors.greenAccent,
                 width: 12,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
               ),
             ],
           );
@@ -480,9 +542,10 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
           title: Text('$service — \$${price.toStringAsFixed(2)}'),
           subtitle: Text('Fee: \$${fee.toStringAsFixed(2)} · $dateStr'),
           trailing: Chip(
-            label: Text(status.toUpperCase(),
-                style:
-                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            label: Text(
+              status.toUpperCase(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+            ),
             backgroundColor: statusColor.withValues(alpha: 0.2),
             side: BorderSide(color: statusColor),
           ),
@@ -502,12 +565,18 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(height: 8),
-              Text(value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),
@@ -515,21 +584,31 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
     );
   }
 
-  Widget _flowRow(String label, String value, Color color,
-      {bool bold = false}) {
+  Widget _flowRow(
+    String label,
+    String value,
+    Color color, {
+    bool bold = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        bold ? FontWeight.bold : FontWeight.normal))),
-        Text(value,
+          child: Text(
+            label,
             style: TextStyle(
-                color: color,
-                fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+              fontSize: 12,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ],
     );
   }

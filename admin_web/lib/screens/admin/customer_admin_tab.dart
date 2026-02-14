@@ -43,15 +43,15 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
         .where('role', isEqualTo: 'customer')
         .snapshots()
         .listen((snap) {
-      setState(() {
-        _customers = snap.docs.map((d) {
-          final data = d.data();
-          data['uid'] = d.id;
-          return data;
-        }).toList();
-        _loading = false;
-      });
-    });
+          setState(() {
+            _customers = snap.docs.map((d) {
+              final data = d.data();
+              data['uid'] = d.id;
+              return data;
+            }).toList();
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -87,14 +87,18 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
         });
         break;
       case 'name_az':
-        list.sort((a, b) => (a['displayName'] ?? '')
-            .toString()
-            .compareTo((b['displayName'] ?? '').toString()));
+        list.sort(
+          (a, b) => (a['displayName'] ?? '').toString().compareTo(
+            (b['displayName'] ?? '').toString(),
+          ),
+        );
         break;
       case 'name_za':
-        list.sort((a, b) => (b['displayName'] ?? '')
-            .toString()
-            .compareTo((a['displayName'] ?? '').toString()));
+        list.sort(
+          (a, b) => (b['displayName'] ?? '').toString().compareTo(
+            (a['displayName'] ?? '').toString(),
+          ),
+        );
         break;
     }
 
@@ -121,21 +125,27 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
     final filtered = _filtered;
     final total = _customers.where((u) => u['isDeleted'] != true).length;
     final withFcm = _customers
-        .where((u) =>
-            u['isDeleted'] != true &&
-            (u['fcmToken'] ?? '').toString().isNotEmpty)
+        .where(
+          (u) =>
+              u['isDeleted'] != true &&
+              (u['fcmToken'] ?? '').toString().isNotEmpty,
+        )
         .length;
     final recentWeek = _customers.where((u) {
       final t = u['createdAt'] as Timestamp?;
       if (t == null) return false;
-      return t.toDate().isAfter(DateTime.now().subtract(const Duration(days: 7)));
+      return t.toDate().isAfter(
+        DateTime.now().subtract(const Duration(days: 7)),
+      );
     }).length;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text('Customer Management',
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          'Customer Management',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const SizedBox(height: 16),
 
         // ── KPI Cards ───────────────────────────────────────────
@@ -144,15 +154,19 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
           runSpacing: 16,
           children: [
             _kpiCard('Total Customers', '$total', Icons.people, Colors.blue),
+            _kpiCard('New (7d)', '$recentWeek', Icons.person_add, Colors.green),
             _kpiCard(
-                'New (7d)', '$recentWeek', Icons.person_add, Colors.green),
-            _kpiCard('Push Enabled', '$withFcm', Icons.notifications_active,
-                Colors.orange),
+              'Push Enabled',
+              '$withFcm',
+              Icons.notifications_active,
+              Colors.orange,
+            ),
             _kpiCard(
-                'Inactive',
-                '${_customers.where((u) => u['isDeleted'] == true).length}',
-                Icons.person_off,
-                Colors.red),
+              'Inactive',
+              '${_customers.where((u) => u['isDeleted'] == true).length}',
+              Icons.person_off,
+              Colors.red,
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -189,8 +203,10 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
           ],
         ),
         const SizedBox(height: 8),
-        Text('${filtered.length} results',
-            style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          '${filtered.length} results',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 12),
 
         // ── Customer List ────────────────────────────────────────
@@ -230,15 +246,20 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
             if (hasFcm)
               const Padding(
                 padding: EdgeInsets.only(left: 6),
-                child:
-                    Icon(Icons.notifications_active, size: 14, color: Colors.orange),
+                child: Icon(
+                  Icons.notifications_active,
+                  size: 14,
+                  color: Colors.orange,
+                ),
               ),
             if (isDeleted)
               Padding(
                 padding: const EdgeInsets.only(left: 6),
                 child: Chip(
-                  label: const Text('ARCHIVED',
-                      style: TextStyle(fontSize: 9, color: Colors.red)),
+                  label: const Text(
+                    'ARCHIVED',
+                    style: TextStyle(fontSize: 9, color: Colors.red),
+                  ),
                   backgroundColor: Colors.red.withValues(alpha: 0.1),
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
@@ -259,12 +280,18 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
                 itemBuilder: (_) => [
                   if (!isDeleted)
                     const PopupMenuItem(
-                        value: 'archive', child: Text('Archive')),
+                      value: 'archive',
+                      child: Text('Archive'),
+                    ),
                   if (isDeleted)
                     const PopupMenuItem(
-                        value: 'restore', child: Text('Restore')),
+                      value: 'restore',
+                      child: Text('Restore'),
+                    ),
                   const PopupMenuItem(
-                      value: 'view', child: Text('View details')),
+                    value: 'view',
+                    child: Text('View details'),
+                  ),
                 ],
               )
             : null,
@@ -277,23 +304,23 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
     final uid = user['uid'] as String;
     switch (action) {
       case 'archive':
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .update({'isDeleted': true});
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'isDeleted': true,
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${user['displayName']} archived')));
+            SnackBar(content: Text('${user['displayName']} archived')),
+          );
         }
         break;
       case 'restore':
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .update({'isDeleted': false});
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'isDeleted': false,
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${user['displayName']} restored')));
+            SnackBar(content: Text('${user['displayName']} restored')),
+          );
         }
         break;
       case 'view':
@@ -325,8 +352,10 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
                 ),
               ),
             ),
-            Text(u['displayName'] ?? 'Unknown',
-                style: Theme.of(ctx).textTheme.headlineSmall),
+            Text(
+              u['displayName'] ?? 'Unknown',
+              style: Theme.of(ctx).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 16),
             _detailRow('UID', u['uid'] ?? ''),
             _detailRow('Email', u['email'] ?? ''),
@@ -335,30 +364,34 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
             _detailRow('ZIP', u['zip'] ?? '—'),
             _detailRow('State', u['state'] ?? '—'),
             _detailRow(
-                'Created',
-                u['createdAt'] is Timestamp
-                    ? DateFormat.yMMMd()
-                        .add_jm()
-                        .format((u['createdAt'] as Timestamp).toDate())
-                    : '—'),
+              'Created',
+              u['createdAt'] is Timestamp
+                  ? DateFormat.yMMMd().add_jm().format(
+                      (u['createdAt'] as Timestamp).toDate(),
+                    )
+                  : '—',
+            ),
             _detailRow(
-                'Last Sign-in',
-                u['lastSignIn'] is Timestamp
-                    ? DateFormat.yMMMd()
-                        .add_jm()
-                        .format((u['lastSignIn'] as Timestamp).toDate())
-                    : '—'),
+              'Last Sign-in',
+              u['lastSignIn'] is Timestamp
+                  ? DateFormat.yMMMd().add_jm().format(
+                      (u['lastSignIn'] as Timestamp).toDate(),
+                    )
+                  : '—',
+            ),
             _detailRow(
-                'Push Notifications',
-                (u['fcmToken'] ?? '').toString().isNotEmpty
-                    ? 'Enabled'
-                    : 'Disabled'),
+              'Push Notifications',
+              (u['fcmToken'] ?? '').toString().isNotEmpty
+                  ? 'Enabled'
+                  : 'Disabled',
+            ),
             _detailRow(
-                'Status', u['isDeleted'] == true ? 'ARCHIVED' : 'Active'),
+              'Status',
+              u['isDeleted'] == true ? 'ARCHIVED' : 'Active',
+            ),
 
             const SizedBox(height: 24),
-            Text('Job Requests',
-                style: Theme.of(ctx).textTheme.titleMedium),
+            Text('Job Requests', style: Theme.of(ctx).textTheme.titleMedium),
             const SizedBox(height: 8),
             // Load job requests for this customer
             _CustomerJobsList(customerId: u['uid'] ?? ''),
@@ -376,13 +409,20 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white70)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+            ),
           ),
           Expanded(
-              child: SelectableText(value,
-                  style: const TextStyle(color: Colors.white))),
+            child: SelectableText(
+              value,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );
@@ -399,12 +439,18 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(height: 8),
-              Text(value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),
@@ -433,8 +479,10 @@ class _CustomerJobsList extends StatelessWidget {
         }
         final docs = snap.data?.docs ?? [];
         if (docs.isEmpty) {
-          return const Text('No job requests yet.',
-              style: TextStyle(color: Colors.white54));
+          return const Text(
+            'No job requests yet.',
+            style: TextStyle(color: Colors.white54),
+          );
         }
         return Column(
           children: docs.map((d) {

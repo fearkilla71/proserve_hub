@@ -52,42 +52,42 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
         .where('role', isEqualTo: 'contractor')
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['uid'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['uid'] = d.id;
+            return data;
+          }).toList();
 
-      // Calculate KPIs
-      int basic = 0, pro = 0, enterprise = 0;
-      for (final u in docs) {
-        final tier = _effectiveTier(u);
-        if (tier == 'enterprise') {
-          enterprise++;
-        } else if (tier == 'pro') {
-          pro++;
-        } else {
-          basic++;
-        }
-      }
+          // Calculate KPIs
+          int basic = 0, pro = 0, enterprise = 0;
+          for (final u in docs) {
+            final tier = _effectiveTier(u);
+            if (tier == 'enterprise') {
+              enterprise++;
+            } else if (tier == 'pro') {
+              pro++;
+            } else {
+              basic++;
+            }
+          }
 
-      final total = docs.length;
-      final paid = pro + enterprise;
-      // PRO = $11.99/mo, Enterprise = $49.99/mo
-      final mrr = (pro * 11.99) + (enterprise * 49.99);
+          final total = docs.length;
+          final paid = pro + enterprise;
+          // PRO = $11.99/mo, Enterprise = $49.99/mo
+          final mrr = (pro * 11.99) + (enterprise * 49.99);
 
-      setState(() {
-        _users = docs;
-        _totalContractors = total;
-        _basicCount = basic;
-        _proCount = pro;
-        _enterpriseCount = enterprise;
-        _mrr = mrr;
-        _arr = mrr * 12;
-        _conversionRate = total > 0 ? (paid / total) * 100 : 0;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _users = docs;
+            _totalContractors = total;
+            _basicCount = basic;
+            _proCount = pro;
+            _enterpriseCount = enterprise;
+            _mrr = mrr;
+            _arr = mrr * 12;
+            _conversionRate = total > 0 ? (paid / total) * 100 : 0;
+            _loading = false;
+          });
+        });
   }
 
   String _effectiveTier(Map<String, dynamic> data) {
@@ -173,27 +173,47 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
           spacing: 16,
           runSpacing: 16,
           children: [
-            _kpiCard('Total Contractors', '$_totalContractors',
-                Icons.people, Colors.blue),
-            _kpiCard('Basic (Free)', '$_basicCount',
-                Icons.person, Colors.grey),
-            _kpiCard('PRO', '$_proCount',
-                Icons.star, Colors.amber),
-            _kpiCard('Enterprise', '$_enterpriseCount',
-                Icons.diamond, Colors.purpleAccent),
-            _kpiCard('MRR', '\$${_mrr.toStringAsFixed(2)}',
-                Icons.attach_money, Colors.green),
-            _kpiCard('ARR', '\$${_arr.toStringAsFixed(2)}',
-                Icons.trending_up, Colors.teal),
-            _kpiCard('Conversion', '${_conversionRate.toStringAsFixed(1)}%',
-                Icons.pie_chart, Colors.orange),
+            _kpiCard(
+              'Total Contractors',
+              '$_totalContractors',
+              Icons.people,
+              Colors.blue,
+            ),
+            _kpiCard('Basic (Free)', '$_basicCount', Icons.person, Colors.grey),
+            _kpiCard('PRO', '$_proCount', Icons.star, Colors.amber),
+            _kpiCard(
+              'Enterprise',
+              '$_enterpriseCount',
+              Icons.diamond,
+              Colors.purpleAccent,
+            ),
+            _kpiCard(
+              'MRR',
+              '\$${_mrr.toStringAsFixed(2)}',
+              Icons.attach_money,
+              Colors.green,
+            ),
+            _kpiCard(
+              'ARR',
+              '\$${_arr.toStringAsFixed(2)}',
+              Icons.trending_up,
+              Colors.teal,
+            ),
+            _kpiCard(
+              'Conversion',
+              '${_conversionRate.toStringAsFixed(1)}%',
+              Icons.pie_chart,
+              Colors.orange,
+            ),
           ],
         ),
         const SizedBox(height: 24),
 
         // ── Tier Distribution Chart ─────────────────────────────
-        Text('Tier Distribution',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Tier Distribution',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 200,
@@ -210,9 +230,10 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                         color: Colors.grey,
                         title: 'Basic\n$_basicCount',
                         titleStyle: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                         radius: 60,
                       ),
                       PieChartSectionData(
@@ -220,9 +241,10 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                         color: Colors.amber,
                         title: 'PRO\n$_proCount',
                         titleStyle: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                         radius: 60,
                       ),
                       PieChartSectionData(
@@ -230,9 +252,10 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                         color: Colors.purpleAccent,
                         title: 'Ent.\n$_enterpriseCount',
                         titleStyle: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                         radius: 60,
                       ),
                     ],
@@ -249,19 +272,26 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Revenue Breakdown',
-                            style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          'Revenue Breakdown',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 12),
-                        _revenueRow('PRO ($_proCount × \$11.99)',
-                            '\$${(_proCount * 11.99).toStringAsFixed(2)}/mo'),
+                        _revenueRow(
+                          'PRO ($_proCount × \$11.99)',
+                          '\$${(_proCount * 11.99).toStringAsFixed(2)}/mo',
+                        ),
                         const SizedBox(height: 8),
                         _revenueRow(
-                            'Enterprise ($_enterpriseCount × \$49.99)',
-                            '\$${(_enterpriseCount * 49.99).toStringAsFixed(2)}/mo'),
+                          'Enterprise ($_enterpriseCount × \$49.99)',
+                          '\$${(_enterpriseCount * 49.99).toStringAsFixed(2)}/mo',
+                        ),
                         const Divider(height: 20),
-                        _revenueRow('Total MRR',
-                            '\$${_mrr.toStringAsFixed(2)}/mo',
-                            bold: true),
+                        _revenueRow(
+                          'Total MRR',
+                          '\$${_mrr.toStringAsFixed(2)}/mo',
+                          bold: true,
+                        ),
                       ],
                     ),
                   ),
@@ -275,8 +305,7 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
         // ── Filter & Search ─────────────────────────────────────
         Row(
           children: [
-            Text('Subscribers',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('Subscribers', style: Theme.of(context).textTheme.titleMedium),
             const Spacer(),
             SegmentedButton<String>(
               segments: const [
@@ -286,8 +315,7 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                 ButtonSegment(value: 'enterprise', label: Text('Ent.')),
               ],
               selected: {_tierFilter},
-              onSelectionChanged: (v) =>
-                  setState(() => _tierFilter = v.first),
+              onSelectionChanged: (v) => setState(() => _tierFilter = v.first),
             ),
           ],
         ),
@@ -331,16 +359,17 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
               ),
               isThreeLine: true,
               trailing: Chip(
-                label: Text(tier.toUpperCase(),
-                    style: TextStyle(
-                        color: tier == 'basic' ? Colors.white70 : Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11)),
+                label: Text(
+                  tier.toUpperCase(),
+                  style: TextStyle(
+                    color: tier == 'basic' ? Colors.white70 : Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
                 backgroundColor: _tierColor(tier),
               ),
-              onTap: widget.canWrite
-                  ? () => _showTierDialog(u)
-                  : null,
+              onTap: widget.canWrite ? () => _showTierDialog(u) : null,
             ),
           );
         }),
@@ -359,12 +388,18 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(height: 8),
-              Text(value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),
@@ -376,11 +411,21 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(child: Text(label, style: TextStyle(
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal))),
-        Text(value, style: TextStyle(
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-            color: Colors.greenAccent)),
+            color: Colors.greenAccent,
+          ),
+        ),
       ],
     );
   }
@@ -410,8 +455,9 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () async {
                 Navigator.pop(ctx);
@@ -419,17 +465,20 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                     .collection('users')
                     .doc(user['uid'])
                     .update({
-                  'subscriptionTier': selected,
-                  'subscriptionTierChangedAt': FieldValue.serverTimestamp(),
-                  if (selected == 'pro' || selected == 'enterprise')
-                    'pricingToolsPro': true,
-                  if (selected == 'enterprise') 'contractorPro': true,
-                });
+                      'subscriptionTier': selected,
+                      'subscriptionTierChangedAt': FieldValue.serverTimestamp(),
+                      if (selected == 'pro' || selected == 'enterprise')
+                        'pricingToolsPro': true,
+                      if (selected == 'enterprise') 'contractorPro': true,
+                    });
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                        'Updated ${user['displayName']} to ${selected.toUpperCase()}'),
-                  ));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Updated ${user['displayName']} to ${selected.toUpperCase()}',
+                      ),
+                    ),
+                  );
                 }
               },
               child: const Text('Save'),

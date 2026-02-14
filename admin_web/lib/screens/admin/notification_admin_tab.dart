@@ -77,19 +77,22 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
         .orderBy('sentAt', descending: true)
         .limit(50)
         .snapshots()
-        .listen((snap) {
-      setState(() {
-        _history = snap.docs.map((d) {
-          final data = d.data();
-          data['id'] = d.id;
-          return data;
-        }).toList();
-        _loading = false;
-      });
-    }, onError: (_) {
-      // Collection may not exist yet
-      setState(() => _loading = false);
-    });
+        .listen(
+          (snap) {
+            setState(() {
+              _history = snap.docs.map((d) {
+                final data = d.data();
+                data['id'] = d.id;
+                return data;
+              }).toList();
+              _loading = false;
+            });
+          },
+          onError: (_) {
+            // Collection may not exist yet
+            setState(() => _loading = false);
+          },
+        );
   }
 
   Future<void> _sendNotification() async {
@@ -113,7 +116,10 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
           children: [
             Text('Audience: ${_audienceLabel(_audience)}'),
             const SizedBox(height: 8),
-            Text('Title: $title', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Title: $title',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             Text('Body: $body'),
             const SizedBox(height: 12),
             const Text(
@@ -124,11 +130,13 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Send')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Send'),
+          ),
         ],
       ),
     );
@@ -181,7 +189,9 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
       if (tokens.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No users with push enabled in this audience')),
+            const SnackBar(
+              content: Text('No users with push enabled in this audience'),
+            ),
           );
         }
         setState(() => _sending = false);
@@ -190,13 +200,10 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
 
       // Call cloud function to send
       try {
-        final callable = FirebaseFunctions.instance
-            .httpsCallable('sendAdminNotification');
-        await callable.call({
-          'title': title,
-          'body': body,
-          'tokens': tokens,
-        });
+        final callable = FirebaseFunctions.instance.httpsCallable(
+          'sendAdminNotification',
+        );
+        await callable.call({'title': title, 'body': body, 'tokens': tokens});
       } catch (_) {
         // If cloud function doesn't exist yet, just log it
       }
@@ -218,14 +225,15 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Notification sent to ${tokens.length} users')),
+            content: Text('Notification sent to ${tokens.length} users'),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -254,8 +262,10 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text('Push Notifications',
-            style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          'Push Notifications',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const SizedBox(height: 16),
 
         // ── Stats ────────────────────────────────────────────────
@@ -264,11 +274,19 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
           runSpacing: 16,
           children: [
             _kpiCard('Total Users', '$_totalUsers', Icons.people, Colors.blue),
-            _kpiCard('Push Enabled', '$_pushEnabled',
-                Icons.notifications_active, Colors.green),
+            _kpiCard(
+              'Push Enabled',
+              '$_pushEnabled',
+              Icons.notifications_active,
+              Colors.green,
+            ),
             _kpiCard('Customers', '$_customers', Icons.person, Colors.teal),
             _kpiCard(
-                'Contractors', '$_contractors', Icons.build, Colors.orange),
+              'Contractors',
+              '$_contractors',
+              Icons.build,
+              Colors.orange,
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -281,26 +299,34 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Send Notification',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Send Notification',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _audience,
-                    decoration:
-                        const InputDecoration(labelText: 'Target Audience'),
+                    decoration: const InputDecoration(
+                      labelText: 'Target Audience',
+                    ),
                     items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All Users')),
                       DropdownMenuItem(
-                          value: 'all', child: Text('All Users')),
+                        value: 'customers',
+                        child: Text('Customers Only'),
+                      ),
                       DropdownMenuItem(
-                          value: 'customers', child: Text('Customers Only')),
+                        value: 'contractors',
+                        child: Text('All Contractors'),
+                      ),
                       DropdownMenuItem(
-                          value: 'contractors',
-                          child: Text('All Contractors')),
+                        value: 'pro',
+                        child: Text('PRO Contractors'),
+                      ),
                       DropdownMenuItem(
-                          value: 'pro', child: Text('PRO Contractors')),
-                      DropdownMenuItem(
-                          value: 'enterprise',
-                          child: Text('Enterprise Contractors')),
+                        value: 'enterprise',
+                        child: Text('Enterprise Contractors'),
+                      ),
                     ],
                     onChanged: (v) => setState(() => _audience = v!),
                   ),
@@ -333,7 +359,8 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : const Icon(Icons.send),
                       label: Text(_sending ? 'Sending...' : 'Send'),
                     ),
@@ -346,8 +373,10 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
         ],
 
         // ── Notification History ─────────────────────────────────
-        Text('Notification History',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Notification History',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 12),
         if (_loading)
           const Column(
@@ -362,8 +391,10 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
             child: Padding(
               padding: EdgeInsets.all(24),
               child: Center(
-                child: Text('No notifications sent yet',
-                    style: TextStyle(color: Colors.white54)),
+                child: Text(
+                  'No notifications sent yet',
+                  style: TextStyle(color: Colors.white54),
+                ),
               ),
             ),
           )
@@ -408,12 +439,18 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(height: 8),
-              Text(value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),

@@ -63,127 +63,138 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
     final todayCutoff = DateTime(now.year, now.month, now.day);
 
     // Users (all)
-    _subs.add(FirebaseFirestore.instance
-        .collection('users')
-        .snapshots()
-        .listen((snap) {
-      int total = 0, cust = 0, cont = 0, push = 0, pro = 0, ent = 0;
-      int newToday = 0, newContToday = 0;
-      final zipMap = <String, int>{};
+    _subs.add(
+      FirebaseFirestore.instance.collection('users').snapshots().listen((snap) {
+        int total = 0, cust = 0, cont = 0, push = 0, pro = 0, ent = 0;
+        int newToday = 0, newContToday = 0;
+        final zipMap = <String, int>{};
 
-      for (final d in snap.docs) {
-        final data = d.data();
-        if (data['isDeleted'] == true) continue;
-        total++;
-        final role = data['role'] ?? '';
-        if (role == 'customer') cust++;
-        if (role == 'contractor') {
-          cont++;
-          final tier = _effectiveTier(data);
-          if (tier == 'pro') pro++;
-          if (tier == 'enterprise') ent++;
+        for (final d in snap.docs) {
+          final data = d.data();
+          if (data['isDeleted'] == true) continue;
+          total++;
+          final role = data['role'] ?? '';
+          if (role == 'customer') cust++;
+          if (role == 'contractor') {
+            cont++;
+            final tier = _effectiveTier(data);
+            if (tier == 'pro') pro++;
+            if (tier == 'enterprise') ent++;
+          }
+          if ((data['fcmToken'] ?? '').toString().isNotEmpty) push++;
+
+          final createdAt = data['createdAt'];
+          if (createdAt is Timestamp &&
+              createdAt.toDate().isAfter(todayCutoff)) {
+            newToday++;
+            if (role == 'contractor') newContToday++;
+          }
+
+          final zip = (data['zip'] ?? '').toString().trim();
+          if (zip.isNotEmpty) {
+            zipMap[zip] = (zipMap[zip] ?? 0) + 1;
+          }
         }
-        if ((data['fcmToken'] ?? '').toString().isNotEmpty) push++;
 
-        final createdAt = data['createdAt'];
-        if (createdAt is Timestamp &&
-            createdAt.toDate().isAfter(todayCutoff)) {
-          newToday++;
-          if (role == 'contractor') newContToday++;
-        }
+        // Sort zips by count, take top 10
+        final sortedZips = zipMap.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        final topZips = Map.fromEntries(sortedZips.take(10));
 
-        final zip = (data['zip'] ?? '').toString().trim();
-        if (zip.isNotEmpty) {
-          zipMap[zip] = (zipMap[zip] ?? 0) + 1;
-        }
-      }
-
-      // Sort zips by count, take top 10
-      final sortedZips = zipMap.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final topZips = Map.fromEntries(sortedZips.take(10));
-
-      setState(() {
-        _totalUsers = total;
-        _totalCustomers = cust;
-        _totalContractors = cont;
-        _pushEnabledUsers = push;
-        _proSubscribers = pro;
-        _enterpriseSubscribers = ent;
-        _newUsersToday = newToday;
-        _newContractorsToday = newContToday;
-        _topZips = topZips;
-        _loading = false;
-      });
-    }));
+        setState(() {
+          _totalUsers = total;
+          _totalCustomers = cust;
+          _totalContractors = cont;
+          _pushEnabledUsers = push;
+          _proSubscribers = pro;
+          _enterpriseSubscribers = ent;
+          _newUsersToday = newToday;
+          _newContractorsToday = newContToday;
+          _topZips = topZips;
+          _loading = false;
+        });
+      }),
+    );
 
     // Jobs
-    _subs.add(FirebaseFirestore.instance
-        .collection('job_requests')
-        .snapshots()
-        .listen((snap) {
-      int active = 0, completed = 0, newToday = 0;
-      final serviceMap = <String, int>{};
+    _subs.add(
+      FirebaseFirestore.instance.collection('job_requests').snapshots().listen((
+        snap,
+      ) {
+        int active = 0, completed = 0, newToday = 0;
+        final serviceMap = <String, int>{};
 
-      for (final d in snap.docs) {
-        final data = d.data();
-        final status = (data['status'] ?? '').toString().toLowerCase();
-        if (status == 'open' || status == 'in_progress' || status == 'claimed') {
-          active++;
+        for (final d in snap.docs) {
+          final data = d.data();
+          final status = (data['status'] ?? '').toString().toLowerCase();
+          if (status == 'open' ||
+              status == 'in_progress' ||
+              status == 'claimed') {
+            active++;
+          }
+          if (status == 'completed') completed++;
+
+          final service = (data['serviceType'] ?? 'Other').toString();
+          serviceMap[service] = (serviceMap[service] ?? 0) + 1;
+
+          final createdAt = data['createdAt'];
+          if (createdAt is Timestamp &&
+              createdAt.toDate().isAfter(todayCutoff)) {
+            newToday++;
+          }
         }
-        if (status == 'completed') completed++;
 
-        final service = (data['serviceType'] ?? 'Other').toString();
-        serviceMap[service] = (serviceMap[service] ?? 0) + 1;
-
-        final createdAt = data['createdAt'];
-        if (createdAt is Timestamp &&
-            createdAt.toDate().isAfter(todayCutoff)) {
-          newToday++;
-        }
-      }
-
-      setState(() {
-        _activeJobs = active;
-        _completedJobs = completed;
-        _newJobsToday = newToday;
-        _serviceTypes = serviceMap;
-      });
-    }));
+        setState(() {
+          _activeJobs = active;
+          _completedJobs = completed;
+          _newJobsToday = newToday;
+          _serviceTypes = serviceMap;
+        });
+      }),
+    );
 
     // Disputes
-    _subs.add(FirebaseFirestore.instance
-        .collection('disputes')
-        .where('status', whereIn: ['open', 'under_review'])
-        .snapshots()
-        .listen((snap) {
-      setState(() => _openDisputes = snap.docs.length);
-    }));
+    _subs.add(
+      FirebaseFirestore.instance
+          .collection('disputes')
+          .where('status', whereIn: ['open', 'under_review'])
+          .snapshots()
+          .listen((snap) {
+            setState(() => _openDisputes = snap.docs.length);
+          }),
+    );
 
     // Verifications
-    _subs.add(FirebaseFirestore.instance
-        .collection('contractors')
-        .snapshots()
-        .listen((snap) {
-      int pending = 0;
-      for (final d in snap.docs) {
-        final data = d.data();
-        for (final type in ['idVerification', 'licenseVerification', 'insuranceVerification']) {
-          final v = data[type];
-          if (v is Map && v['status'] == 'pending') pending++;
+    _subs.add(
+      FirebaseFirestore.instance.collection('contractors').snapshots().listen((
+        snap,
+      ) {
+        int pending = 0;
+        for (final d in snap.docs) {
+          final data = d.data();
+          for (final type in [
+            'idVerification',
+            'licenseVerification',
+            'insuranceVerification',
+          ]) {
+            final v = data[type];
+            if (v is Map && v['status'] == 'pending') pending++;
+          }
         }
-      }
-      setState(() => _pendingVerifications = pending);
-    }));
+        setState(() => _pendingVerifications = pending);
+      }),
+    );
 
     // Active Escrows
-    _subs.add(FirebaseFirestore.instance
-        .collection('escrow_bookings')
-        .where('status', whereIn: ['funded', 'confirmed', 'offered'])
-        .snapshots()
-        .listen((snap) {
-      setState(() => _activeEscrows = snap.docs.length);
-    }));
+    _subs.add(
+      FirebaseFirestore.instance
+          .collection('escrow_bookings')
+          .where('status', whereIn: ['funded', 'confirmed', 'offered'])
+          .snapshots()
+          .listen((snap) {
+            setState(() => _activeEscrows = snap.docs.length);
+          }),
+    );
   }
 
   String _effectiveTier(Map<String, dynamic> data) {
@@ -223,8 +234,10 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
         // ── Header ───────────────────────────────────────────────
         Row(
           children: [
-            Text('System Health',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              'System Health',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -239,14 +252,19 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                        color: Colors.green, shape: BoxShape.circle),
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
-                  const Text('LIVE',
-                      style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
+                  const Text(
+                    'LIVE',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -255,10 +273,9 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
         const SizedBox(height: 4),
         Text(
           'Last updated: ${DateFormat.jm().format(DateTime.now())}',
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Colors.white38),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.white38),
         ),
         const SizedBox(height: 20),
 
@@ -270,21 +287,24 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Today's Activity",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: Colors.blue)),
+                Text(
+                  "Today's Activity",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: Colors.blue),
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 24,
                   runSpacing: 8,
                   children: [
                     _todayStat('New Users', _newUsersToday, Icons.person_add),
-                    _todayStat('New Contractors', _newContractorsToday,
-                        Icons.engineering),
                     _todayStat(
-                        'New Jobs', _newJobsToday, Icons.work),
+                      'New Contractors',
+                      _newContractorsToday,
+                      Icons.engineering,
+                    ),
+                    _todayStat('New Jobs', _newJobsToday, Icons.work),
                   ],
                 ),
               ],
@@ -294,63 +314,110 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
         const SizedBox(height: 20),
 
         // ── Platform Stats Grid ──────────────────────────────────
-        Text('Platform Stats',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text('Platform Stats', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
         Wrap(
           spacing: 16,
           runSpacing: 16,
           children: [
             _kpiCard('Total Users', '$_totalUsers', Icons.people, Colors.blue),
-            _kpiCard('Customers', '$_totalCustomers', Icons.person,
-                Colors.teal),
-            _kpiCard('Contractors', '$_totalContractors', Icons.build,
-                Colors.orange),
+            _kpiCard(
+              'Customers',
+              '$_totalCustomers',
+              Icons.person,
+              Colors.teal,
+            ),
+            _kpiCard(
+              'Contractors',
+              '$_totalContractors',
+              Icons.build,
+              Colors.orange,
+            ),
             _kpiCard('PRO Subs', '$_proSubscribers', Icons.star, Colors.amber),
             _kpiCard(
-                'Enterprise', '$_enterpriseSubscribers', Icons.diamond, Colors.purpleAccent),
-            _kpiCard('Sub MRR', '\$${mrr.toStringAsFixed(2)}',
-                Icons.attach_money, Colors.green),
+              'Enterprise',
+              '$_enterpriseSubscribers',
+              Icons.diamond,
+              Colors.purpleAccent,
+            ),
             _kpiCard(
-                'Push Enabled', '$_pushEnabledUsers', Icons.notifications_active, Colors.cyan),
+              'Sub MRR',
+              '\$${mrr.toStringAsFixed(2)}',
+              Icons.attach_money,
+              Colors.green,
+            ),
+            _kpiCard(
+              'Push Enabled',
+              '$_pushEnabledUsers',
+              Icons.notifications_active,
+              Colors.cyan,
+            ),
           ],
         ),
         const SizedBox(height: 24),
 
         // ── Alerts ───────────────────────────────────────────────
-        Text('Action Required',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text('Action Required', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
         Wrap(
           spacing: 16,
           runSpacing: 16,
           children: [
-            _alertCard('Active Jobs', '$_activeJobs', Icons.work,
-                Colors.blue, _activeJobs > 0),
-            _alertCard('Completed Jobs', '$_completedJobs',
-                Icons.check_circle, Colors.green, false),
-            _alertCard('Open Disputes', '$_openDisputes',
-                Icons.gavel, Colors.red, _openDisputes > 0),
-            _alertCard('Pending Verifications', '$_pendingVerifications',
-                Icons.verified_user, Colors.orange, _pendingVerifications > 0),
-            _alertCard('Active Escrows', '$_activeEscrows',
-                Icons.account_balance, Colors.purple, _activeEscrows > 0),
+            _alertCard(
+              'Active Jobs',
+              '$_activeJobs',
+              Icons.work,
+              Colors.blue,
+              _activeJobs > 0,
+            ),
+            _alertCard(
+              'Completed Jobs',
+              '$_completedJobs',
+              Icons.check_circle,
+              Colors.green,
+              false,
+            ),
+            _alertCard(
+              'Open Disputes',
+              '$_openDisputes',
+              Icons.gavel,
+              Colors.red,
+              _openDisputes > 0,
+            ),
+            _alertCard(
+              'Pending Verifications',
+              '$_pendingVerifications',
+              Icons.verified_user,
+              Colors.orange,
+              _pendingVerifications > 0,
+            ),
+            _alertCard(
+              'Active Escrows',
+              '$_activeEscrows',
+              Icons.account_balance,
+              Colors.purple,
+              _activeEscrows > 0,
+            ),
           ],
         ),
         const SizedBox(height: 24),
 
         // ── Service Type Distribution ────────────────────────────
         if (_serviceTypes.isNotEmpty) ...[
-          Text('Service Type Distribution',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Service Type Distribution',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: _serviceTypes.entries.map((e) {
-                  final total = _serviceTypes.values
-                      .fold<int>(0, (acc, v) => acc + v);
+                  final total = _serviceTypes.values.fold<int>(
+                    0,
+                    (acc, v) => acc + v,
+                  );
                   final pct = total > 0 ? (e.value / total) : 0.0;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -358,8 +425,10 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                       children: [
                         SizedBox(
                           width: 140,
-                          child: Text(e.key,
-                              style: const TextStyle(fontSize: 13)),
+                          child: Text(
+                            e.key,
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
                         Expanded(
                           child: LinearProgressIndicator(
@@ -369,13 +438,20 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text('${e.value}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 13)),
                         Text(
-                            ' (${(pct * 100).toStringAsFixed(0)}%)',
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 12)),
+                          '${e.value}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          ' (${(pct * 100).toStringAsFixed(0)}%)',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -388,8 +464,7 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
 
         // ── Top ZIP Codes ────────────────────────────────────────
         if (_topZips.isNotEmpty) ...[
-          Text('Top ZIP Codes',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Top ZIP Codes', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -404,9 +479,13 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                       children: [
                         SizedBox(
                           width: 80,
-                          child: Text(e.key,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 13)),
+                          child: Text(
+                            e.key,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                         Expanded(
                           child: LinearProgressIndicator(
@@ -416,9 +495,13 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text('${e.value} users',
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 12)),
+                        Text(
+                          '${e.value} users',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -438,11 +521,19 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
       children: [
         Icon(icon, size: 18, color: Colors.blue),
         const SizedBox(width: 6),
-        Text('$value',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+        Text(
+          '$value',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.white,
+          ),
+        ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
       ],
     );
   }
@@ -458,12 +549,18 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
             children: [
               Icon(icon, color: color, size: 24),
               const SizedBox(height: 6),
-              Text(value,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),
@@ -472,7 +569,12 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
   }
 
   Widget _alertCard(
-      String label, String value, IconData icon, Color color, bool urgent) {
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    bool urgent,
+  ) {
     return SizedBox(
       width: 180,
       child: Card(
@@ -490,19 +592,27 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration:
-                          BoxDecoration(color: color, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ],
                 ],
               ),
               const SizedBox(height: 6),
-              Text(value,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),

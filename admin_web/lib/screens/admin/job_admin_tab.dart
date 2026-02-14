@@ -102,7 +102,10 @@ class _JobAdminTabState extends State<JobAdminTab> {
         final totalJobs = docs.length;
 
         // Count each status for KPI
-        int openCount = 0, inProgressCount = 0, completedCount = 0, cancelledCount = 0;
+        int openCount = 0,
+            inProgressCount = 0,
+            completedCount = 0,
+            cancelledCount = 0;
         for (final doc in docs) {
           final data = (doc.data() as Map<String, dynamic>?) ?? {};
           switch (_status(data)) {
@@ -127,11 +130,18 @@ class _JobAdminTabState extends State<JobAdminTab> {
           final q = _searchQuery.toLowerCase();
           docs = docs.where((doc) {
             final data = (doc.data() as Map<String, dynamic>?) ?? {};
-            final service = (data['service'] ?? data['serviceType'] ?? '').toString().toLowerCase();
+            final service = (data['service'] ?? data['serviceType'] ?? '')
+                .toString()
+                .toLowerCase();
             final desc = (data['description'] ?? '').toString().toLowerCase();
             final zip = (data['zip'] ?? '').toString().toLowerCase();
-            final custName = (data['customerName'] ?? '').toString().toLowerCase();
-            return service.contains(q) || desc.contains(q) || zip.contains(q) || custName.contains(q);
+            final custName = (data['customerName'] ?? '')
+                .toString()
+                .toLowerCase();
+            return service.contains(q) ||
+                desc.contains(q) ||
+                zip.contains(q) ||
+                custName.contains(q);
           }).toList();
         }
 
@@ -158,18 +168,24 @@ class _JobAdminTabState extends State<JobAdminTab> {
           final dataB = (b.data() as Map<String, dynamic>?) ?? {};
           switch (_sortBy) {
             case 'oldest':
-              return (_createdAt(dataA)?.millisecondsSinceEpoch ?? 0)
-                  .compareTo(_createdAt(dataB)?.millisecondsSinceEpoch ?? 0);
+              return (_createdAt(dataA)?.millisecondsSinceEpoch ?? 0).compareTo(
+                _createdAt(dataB)?.millisecondsSinceEpoch ?? 0,
+              );
             case 'service_az':
-              return (dataA['service'] ?? '').toString().toLowerCase()
+              return (dataA['service'] ?? '')
+                  .toString()
+                  .toLowerCase()
                   .compareTo((dataB['service'] ?? '').toString().toLowerCase());
             case 'service_za':
-              return (dataB['service'] ?? '').toString().toLowerCase()
+              return (dataB['service'] ?? '')
+                  .toString()
+                  .toLowerCase()
                   .compareTo((dataA['service'] ?? '').toString().toLowerCase());
             case 'newest':
             default:
-              return (_createdAt(dataB)?.millisecondsSinceEpoch ?? 0)
-                  .compareTo(_createdAt(dataA)?.millisecondsSinceEpoch ?? 0);
+              return (_createdAt(dataB)?.millisecondsSinceEpoch ?? 0).compareTo(
+                _createdAt(dataA)?.millisecondsSinceEpoch ?? 0,
+              );
           }
         });
 
@@ -183,9 +199,24 @@ class _JobAdminTabState extends State<JobAdminTab> {
               children: [
                 _kpiCard('Total Jobs', '$totalJobs', Icons.work, Colors.blue),
                 _kpiCard('Open', '$openCount', Icons.fiber_new, Colors.cyan),
-                _kpiCard('In Progress', '$inProgressCount', Icons.sync, Colors.orange),
-                _kpiCard('Completed', '$completedCount', Icons.check_circle, Colors.green),
-                _kpiCard('Cancelled', '$cancelledCount', Icons.cancel, Colors.red),
+                _kpiCard(
+                  'In Progress',
+                  '$inProgressCount',
+                  Icons.sync,
+                  Colors.orange,
+                ),
+                _kpiCard(
+                  'Completed',
+                  '$completedCount',
+                  Icons.check_circle,
+                  Colors.green,
+                ),
+                _kpiCard(
+                  'Cancelled',
+                  '$cancelledCount',
+                  Icons.cancel,
+                  Colors.red,
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -219,23 +250,35 @@ class _JobAdminTabState extends State<JobAdminTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Filters & sorting',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800)),
+                    Text(
+                      'Filters & sorting',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final s in ['all', 'open', 'in_progress', 'completed', 'cancelled'])
+                        for (final s in [
+                          'all',
+                          'open',
+                          'in_progress',
+                          'completed',
+                          'cancelled',
+                        ])
                           ChoiceChip(
-                            label: Text(s == 'all'
-                                ? 'All'
-                                : s == 'in_progress'
-                                    ? 'In progress'
-                                    : s[0].toUpperCase() + s.substring(1)),
+                            label: Text(
+                              s == 'all'
+                                  ? 'All'
+                                  : s == 'in_progress'
+                                  ? 'In progress'
+                                  : s[0].toUpperCase() + s.substring(1),
+                            ),
                             selected: _statusFilter == s,
-                            onSelected: (_) => setState(() => _statusFilter = s),
+                            onSelected: (_) =>
+                                setState(() => _statusFilter = s),
                           ),
                       ],
                     ),
@@ -246,7 +289,11 @@ class _JobAdminTabState extends State<JobAdminTab> {
                       children: [
                         for (final c in ['all', 'unclaimed', 'claimed'])
                           ChoiceChip(
-                            label: Text(c == 'all' ? 'All claims' : c[0].toUpperCase() + c.substring(1)),
+                            label: Text(
+                              c == 'all'
+                                  ? 'All claims'
+                                  : c[0].toUpperCase() + c.substring(1),
+                            ),
                             selected: _claimFilter == c,
                             onSelected: (_) => setState(() => _claimFilter = c),
                           ),
@@ -261,10 +308,22 @@ class _JobAdminTabState extends State<JobAdminTab> {
                         isDense: true,
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'newest', child: Text('Newest → Oldest')),
-                        DropdownMenuItem(value: 'oldest', child: Text('Oldest → Newest')),
-                        DropdownMenuItem(value: 'service_az', child: Text('Service A → Z')),
-                        DropdownMenuItem(value: 'service_za', child: Text('Service Z → A')),
+                        DropdownMenuItem(
+                          value: 'newest',
+                          child: Text('Newest → Oldest'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'oldest',
+                          child: Text('Oldest → Newest'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'service_az',
+                          child: Text('Service A → Z'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'service_za',
+                          child: Text('Service Z → A'),
+                        ),
                       ],
                       onChanged: (v) {
                         if (v != null) setState(() => _sortBy = v);
@@ -281,7 +340,9 @@ class _JobAdminTabState extends State<JobAdminTab> {
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
               child: Text(
                 '${docs.length} job${docs.length == 1 ? '' : 's'} found',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white54),
               ),
             ),
 
@@ -301,7 +362,8 @@ class _JobAdminTabState extends State<JobAdminTab> {
 
   Widget _buildJobCard(QueryDocumentSnapshot doc) {
     final data = (doc.data() as Map<String, dynamic>?) ?? {};
-    final service = (data['service'] ?? data['serviceType'] ?? 'Service').toString();
+    final service = (data['service'] ?? data['serviceType'] ?? 'Service')
+        .toString();
     final description = (data['description'] ?? '').toString();
     final status = _status(data);
     final claimed = _isClaimed(data);
@@ -333,21 +395,40 @@ class _JobAdminTabState extends State<JobAdminTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(service, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      service,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     if (description.isNotEmpty)
-                      Text(description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                      Text(
+                        description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 13,
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
                       children: [
                         if (zip.isNotEmpty)
-                          Text('📍 $zip', style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                          Text(
+                            '📍 $zip',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white54,
+                            ),
+                          ),
                         if (created != null)
-                          Text(_dateFmt.format(created),
-                              style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                          Text(
+                            _dateFmt.format(created),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white54,
+                            ),
+                          ),
                       ],
                     ),
                   ],
@@ -359,27 +440,50 @@ class _JobAdminTabState extends State<JobAdminTab> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       status.toUpperCase().replaceAll('_', ' '),
-                      style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   if (claimed)
-                    Text('Claimed', style: TextStyle(color: Colors.green.shade300, fontSize: 11)),
+                    Text(
+                      'Claimed',
+                      style: TextStyle(
+                        color: Colors.green.shade300,
+                        fontSize: 11,
+                      ),
+                    ),
                   if (!claimed)
-                    Text('Unclaimed', style: TextStyle(color: Colors.orange.shade300, fontSize: 11)),
+                    Text(
+                      'Unclaimed',
+                      style: TextStyle(
+                        color: Colors.orange.shade300,
+                        fontSize: 11,
+                      ),
+                    ),
                 ],
               ),
               if (widget.canWrite) ...[
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AdminColors.error, size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AdminColors.error,
+                    size: 20,
+                  ),
                   tooltip: 'Delete job',
                   onPressed: () => _confirmDelete(doc),
                 ),
@@ -392,7 +496,8 @@ class _JobAdminTabState extends State<JobAdminTab> {
   }
 
   void _showJobDetail(String docId, Map<String, dynamic> data) {
-    final service = (data['service'] ?? data['serviceType'] ?? 'Service').toString();
+    final service = (data['service'] ?? data['serviceType'] ?? 'Service')
+        .toString();
     final description = (data['description'] ?? '').toString();
     final status = _status(data);
     final zip = (data['zip'] ?? '').toString();
@@ -436,18 +541,25 @@ class _JobAdminTabState extends State<JobAdminTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (description.isNotEmpty) ...[
-                  Text('Description', style: Theme.of(ctx).textTheme.labelMedium),
+                  Text(
+                    'Description',
+                    style: Theme.of(ctx).textTheme.labelMedium,
+                  ),
                   Text(description),
                   const SizedBox(height: 12),
                 ],
                 _detailRow('Job ID', docId),
                 _detailRow('ZIP Code', zip),
                 if (address.isNotEmpty) _detailRow('Address', address),
-                if (created != null) _detailRow('Created', _dateFmt.format(created)),
-                if (customerId.isNotEmpty) _detailRow('Customer ID', customerId),
+                if (created != null)
+                  _detailRow('Created', _dateFmt.format(created)),
+                if (customerId.isNotEmpty)
+                  _detailRow('Customer ID', customerId),
                 if (claimedBy.isNotEmpty) _detailRow('Claimed By', claimedBy),
-                if (price != null) _detailRow('Price', '\$${price.toStringAsFixed(2)}'),
-                if (aiPrice != null) _detailRow('AI Price', '\$${aiPrice.toStringAsFixed(2)}'),
+                if (price != null)
+                  _detailRow('Price', '\$${price.toStringAsFixed(2)}'),
+                if (aiPrice != null)
+                  _detailRow('AI Price', '\$${aiPrice.toStringAsFixed(2)}'),
                 if (notes.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text('Notes', style: Theme.of(ctx).textTheme.labelMedium),
@@ -455,7 +567,10 @@ class _JobAdminTabState extends State<JobAdminTab> {
                 ],
                 if (photos.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text('Photos (${photos.length})', style: Theme.of(ctx).textTheme.labelMedium),
+                  Text(
+                    'Photos (${photos.length})',
+                    style: Theme.of(ctx).textTheme.labelMedium,
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -490,7 +605,10 @@ class _JobAdminTabState extends State<JobAdminTab> {
                 _updateJobStatus(docId, 'cancelled');
                 Navigator.pop(ctx);
               },
-              child: const Text('Cancel Job', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Cancel Job',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -510,7 +628,10 @@ class _JobAdminTabState extends State<JobAdminTab> {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
           ),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
@@ -520,7 +641,8 @@ class _JobAdminTabState extends State<JobAdminTab> {
 
   void _confirmDelete(QueryDocumentSnapshot doc) {
     final data = (doc.data() as Map<String, dynamic>?) ?? {};
-    final service = (data['service'] ?? data['serviceType'] ?? 'Unknown').toString();
+    final service = (data['service'] ?? data['serviceType'] ?? 'Unknown')
+        .toString();
 
     showDialog(
       context: context,
@@ -548,9 +670,9 @@ class _JobAdminTabState extends State<JobAdminTab> {
               });
               doc.reference.delete();
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Job "$service" deleted')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Job "$service" deleted')));
             },
             child: const Text('Delete'),
           ),
@@ -585,16 +707,18 @@ class _JobAdminTabState extends State<JobAdminTab> {
             children: [
               Icon(icon, color: color, size: 22),
               const SizedBox(height: 4),
-              Text(value,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.white60)),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+              ),
             ],
           ),
         ),
