@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:web/web.dart' as web;
 
 import '../../theme/admin_theme.dart';
 import '../../widgets/skeleton_loader.dart';
@@ -8,7 +11,8 @@ import '../../widgets/skeleton_loader.dart';
 /// Escrow management tab — real-time tracking of all escrow bookings,
 /// status filters, financial overview, and admin actions.
 class EscrowAdminTab extends StatefulWidget {
-  const EscrowAdminTab({super.key});
+  const EscrowAdminTab({super.key, this.canWrite = true});
+  final bool canWrite;
 
   @override
   State<EscrowAdminTab> createState() => _EscrowAdminTabState();
@@ -681,12 +685,20 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
 
   void _downloadTextFile(String filename, String content) {
     try {
-      // Use dart:html-like approach via web package
-      // ignore: avoid_print
-      print('CSV Export ($filename): ${content.length} chars');
+      final bytes = utf8.encode(content);
+      final base64Data = base64Encode(bytes);
+      final dataUrl = 'data:text/csv;base64,$base64Data';
+      final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+      anchor.href = dataUrl;
+      anchor.download = filename;
+      anchor.style.display = 'none';
+      web.document.body?.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('CSV data logged to console ($filename)'),
+          content: Text('Downloaded $filename'),
           action: SnackBarAction(label: 'OK', onPressed: () {}),
         ),
       );

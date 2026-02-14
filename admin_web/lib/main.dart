@@ -12,9 +12,14 @@ import 'screens/admin/activity_log_admin_tab.dart';
 import 'screens/admin/ai_insights_admin_tab.dart';
 import 'screens/admin/analytics_admin_tab.dart';
 import 'screens/admin/contractor_admin_tab.dart';
+import 'screens/admin/customer_admin_tab.dart';
 import 'screens/admin/dispute_admin_tab.dart';
 import 'screens/admin/escrow_admin_tab.dart';
 import 'screens/admin/job_admin_tab.dart';
+import 'screens/admin/notification_admin_tab.dart';
+import 'screens/admin/revenue_admin_tab.dart';
+import 'screens/admin/subscription_admin_tab.dart';
+import 'screens/admin/system_health_tab.dart';
 import 'screens/admin/verification_admin_tab.dart';
 import 'theme/admin_theme.dart';
 
@@ -499,9 +504,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   static const _navItems = <_NavDestination>[
     _NavDestination(
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard,
+      label: 'Health',
+    ),
+    _NavDestination(
+      icon: Icons.attach_money_outlined,
+      selectedIcon: Icons.attach_money,
+      label: 'Revenue',
+    ),
+    _NavDestination(
+      icon: Icons.card_membership_outlined,
+      selectedIcon: Icons.card_membership,
+      label: 'Subs',
+    ),
+    _NavDestination(
+      icon: Icons.person_outline,
+      selectedIcon: Icons.person,
+      label: 'Customers',
+    ),
+    _NavDestination(
       icon: Icons.people_outline,
       selectedIcon: Icons.people,
-      label: 'Users',
+      label: 'Contractors',
     ),
     _NavDestination(
       icon: Icons.work_outline,
@@ -524,6 +549,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       label: 'Escrow',
     ),
     _NavDestination(
+      icon: Icons.notifications_outlined,
+      selectedIcon: Icons.notifications,
+      label: 'Notify',
+    ),
+    _NavDestination(
       icon: Icons.history_outlined,
       selectedIcon: Icons.history,
       label: 'Activity',
@@ -541,22 +571,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
   ];
 
   Widget _buildBody() {
+    final cw = widget.role.canWrite;
     switch (_selectedIndex) {
       case 0:
-        return const ContractorAdminTab();
+        return const SystemHealthTab();
       case 1:
-        return const JobAdminTab();
+        return const RevenueAdminTab();
       case 2:
-        return const VerificationAdminTab();
+        return SubscriptionAdminTab(canWrite: cw);
       case 3:
-        return const DisputeAdminTab();
+        return CustomerAdminTab(canWrite: cw);
       case 4:
-        return const EscrowAdminTab();
+        return const ContractorAdminTab();
       case 5:
-        return const ActivityLogAdminTab();
+        return JobAdminTab(canWrite: cw);
       case 6:
-        return const AiInsightsAdminTab();
+        return const VerificationAdminTab();
       case 7:
+        return const DisputeAdminTab();
+      case 8:
+        return EscrowAdminTab(canWrite: cw);
+      case 9:
+        return NotificationAdminTab(canWrite: cw);
+      case 10:
+        return const ActivityLogAdminTab();
+      case 11:
+        return const AiInsightsAdminTab();
+      case 12:
         return const AnalyticsAdminTab();
       default:
         return const SizedBox.shrink();
@@ -641,13 +682,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 final i = e.key;
                 final item = e.value;
                 int? badge;
-                if (i == 2 && _pendingVerifications > 0) {
+                if (i == 6 && _pendingVerifications > 0) {
                   badge = _pendingVerifications;
                 }
-                if (i == 3 && _activeDisputes > 0) {
+                if (i == 7 && _activeDisputes > 0) {
                   badge = _activeDisputes;
                 }
-                if (i == 4 && _activeEscrow > 0) {
+                if (i == 8 && _activeEscrow > 0) {
                   badge = _activeEscrow;
                 }
                 return NavigationRailDestination(
@@ -686,13 +727,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 final i = e.key;
                 final item = e.value;
                 int? badge;
-                if (i == 2 && _pendingVerifications > 0) {
+                if (i == 6 && _pendingVerifications > 0) {
                   badge = _pendingVerifications;
                 }
-                if (i == 3 && _activeDisputes > 0) {
+                if (i == 7 && _activeDisputes > 0) {
                   badge = _activeDisputes;
                 }
-                if (i == 4 && _activeEscrow > 0) {
+                if (i == 8 && _activeEscrow > 0) {
                   badge = _activeEscrow;
                 }
                 return NavigationDestination(
@@ -741,13 +782,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
             final item = e.value;
             final selected = _selectedIndex == i;
             int? badge;
-            if (i == 2 && _pendingVerifications > 0) {
+            if (i == 6 && _pendingVerifications > 0) {
               badge = _pendingVerifications;
             }
-            if (i == 3 && _activeDisputes > 0) {
+            if (i == 7 && _activeDisputes > 0) {
               badge = _activeDisputes;
             }
-            if (i == 4 && _activeEscrow > 0) {
+            if (i == 8 && _activeEscrow > 0) {
               badge = _activeEscrow;
             }
 
