@@ -131,7 +131,7 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
       if (status == 'cancelled' || status == 'refunded') cancelled++;
     }
 
-    final mrr = (_proCount * 11.99) + (_enterpriseCount * 49.99);
+    final mrr = (_proCount * 11.99) + (_enterpriseCount * 29.99);
     final totalRev = fees + mrr;
 
     setState(() {

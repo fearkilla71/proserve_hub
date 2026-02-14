@@ -226,7 +226,7 @@ class _SystemHealthTabState extends State<SystemHealthTab> {
       );
     }
 
-    final mrr = (_proSubscribers * 11.99) + (_enterpriseSubscribers * 49.99);
+    final mrr = (_proSubscribers * 11.99) + (_enterpriseSubscribers * 29.99);
 
     return ListView(
       padding: const EdgeInsets.all(20),

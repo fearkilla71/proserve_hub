@@ -73,8 +73,8 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
 
           final total = docs.length;
           final paid = pro + enterprise;
-          // PRO = $11.99/mo, Enterprise = $49.99/mo
-          final mrr = (pro * 11.99) + (enterprise * 49.99);
+          // PRO = $11.99/mo, Enterprise = $29.99/mo
+          final mrr = (pro * 11.99) + (enterprise * 29.99);
 
           setState(() {
             _users = docs;
@@ -283,8 +283,8 @@ class _SubscriptionAdminTabState extends State<SubscriptionAdminTab> {
                         ),
                         const SizedBox(height: 8),
                         _revenueRow(
-                          'Enterprise ($_enterpriseCount × \$49.99)',
-                          '\$${(_enterpriseCount * 49.99).toStringAsFixed(2)}/mo',
+                          'Enterprise ($_enterpriseCount × \$29.99)',
+                          '\$${(_enterpriseCount * 29.99).toStringAsFixed(2)}/mo',
                         ),
                         const Divider(height: 20),
                         _revenueRow(
