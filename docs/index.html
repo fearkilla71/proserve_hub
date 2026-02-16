@@ -146,6 +146,155 @@
         background: rgba(12, 23, 44, 0.6);
         color: var(--ink);
         font-weight: 600;
+        cursor: pointer;
+        transition: border-color 0.25s, background 0.25s;
+      }
+
+      .ghost:hover {
+        border-color: var(--accent);
+        background: rgba(34, 227, 155, 0.08);
+      }
+
+      /* ── Modal ─────────────────────────────── */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(5, 11, 24, 0.8);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 40px 36px;
+        max-width: 440px;
+        width: 90%;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+        position: relative;
+        animation: modalIn 0.3s ease;
+      }
+
+      @keyframes modalIn {
+        from { opacity: 0; transform: translateY(20px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+      }
+
+      .modal h2 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        margin: 0 0 6px;
+        letter-spacing: 0.5px;
+      }
+
+      .modal p {
+        color: var(--muted);
+        margin: 0 0 24px;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 0.84rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--muted);
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--ink);
+        font-size: 0.95rem;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        border-color: var(--accent);
+      }
+
+      .form-group select option {
+        background: #0a1731;
+        color: var(--ink);
+      }
+
+      .modal .cta {
+        width: 100%;
+        justify-content: center;
+        padding: 14px;
+        font-size: 1rem;
+        margin-top: 8px;
+      }
+
+      .modal .cta:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--accent);
+        color: #041016;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        box-shadow: 0 12px 40px rgba(34, 227, 155, 0.3);
+        z-index: 1100;
+        opacity: 0;
+        transition: all 0.4s ease;
+        pointer-events: none;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
       }
 
       .hero {
@@ -1344,6 +1493,39 @@
       </section>
     </main>
 
+    <!-- Waitlist Modal -->
+    <div class="modal-overlay" id="waitlistModal">
+      <div class="modal">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <h2>Get Early Access</h2>
+        <p>Join the waitlist and be the first to try ProServe Hub when we launch.</p>
+        <form id="waitlistForm">
+          <div class="form-group">
+            <label for="wlName">Full Name</label>
+            <input type="text" id="wlName" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label for="wlEmail">Email</label>
+            <input type="email" id="wlEmail" placeholder="john@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="wlRole">I am a...</label>
+            <select id="wlRole" required>
+              <option value="" disabled selected>Select one</option>
+              <option value="contractor">Contractor</option>
+              <option value="homeowner">Homeowner</option>
+              <option value="business">Business / Property Manager</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <button type="submit" class="cta" id="wlSubmit">Join the Waitlist</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
     <footer>
       <div class="footer-inner">
         <div class="footer-top">
@@ -1396,6 +1578,99 @@
       document.querySelectorAll(".reveal").forEach((el, index) => {
         el.style.transitionDelay = `${index * 120}ms`;
         observer.observe(el);
+      });
+
+      // ── Modal & Button Logic ─────────────────────────
+      const modal = document.getElementById('waitlistModal');
+      const modalClose = document.getElementById('modalClose');
+      const form = document.getElementById('waitlistForm');
+      const submitBtn = document.getElementById('wlSubmit');
+      const toastEl = document.getElementById('toast');
+
+      function openModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function showToast(msg, duration = 3500) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), duration);
+      }
+
+      // Wire CTA buttons → open waitlist modal
+      document.querySelectorAll('.cta').forEach(btn => {
+        // Skip the form submit button and nav links that already have href sections
+        if (btn.id === 'wlSubmit') return;
+        if (btn.tagName === 'A' && btn.getAttribute('href') === '#start') return;
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openModal();
+        });
+      });
+
+      // Wire "Watch AI demo" ghost button
+      document.querySelector('.ghost')?.addEventListener('click', () => {
+        showToast('\uD83C\uDFAC Demo video coming soon — stay tuned!');
+      });
+
+      // Close modal
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+
+      // Form submit → save to Firestore
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('wlName').value.trim();
+        const email = document.getElementById('wlEmail').value.trim();
+        const role = document.getElementById('wlRole').value;
+        if (!name || !email || !role) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        try {
+          // Use Firestore REST API (no SDK needed)
+          const projectId = 'proserve-hub-ada0e';
+          const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/waitlist`;
+          const body = {
+            fields: {
+              name: { stringValue: name },
+              email: { stringValue: email },
+              role: { stringValue: role },
+              source: { stringValue: 'website' },
+              createdAt: { timestampValue: new Date().toISOString() }
+            }
+          };
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!res.ok) throw new Error('Request failed');
+
+          closeModal();
+          form.reset();
+          showToast('\u2705 You\'re on the list! We\'ll be in touch soon.');
+        } catch (err) {
+          console.error('Waitlist error:', err);
+          showToast('\u26A0\uFE0F Something went wrong. Try again or email support@proservehub.app');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Join the Waitlist';
+        }
       });
     </script>
   </body>

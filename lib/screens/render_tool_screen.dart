@@ -1736,8 +1736,9 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet>
                     textCapitalization: TextCapitalization.characters,
                     onSubmitted: _applyHex,
                     onChanged: (v) {
-                      if (v.replaceAll('#', '').trim().length == 6)
+                      if (v.replaceAll('#', '').trim().length == 6) {
                         _applyHex(v);
+                      }
                     },
                   ),
                 ),

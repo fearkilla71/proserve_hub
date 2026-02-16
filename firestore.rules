@@ -243,6 +243,18 @@ service cloud.firestore {
       }
     }
 
+    // --- WAITLIST (public website sign-ups, no auth required) ---
+    match /waitlist/{docId} {
+      // Anyone can create (website form), only admins can read/delete
+      allow create: if true
+        && request.resource.data.keys().hasAll(['name', 'email', 'role', 'source', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.role is string;
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+
     // --- ADMINS ---
     match /admins/{uid} {
       // Allow a user to read only their own admin marker doc.
