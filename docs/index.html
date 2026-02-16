@@ -1148,6 +1148,542 @@
         .cta-band {
           align-items: flex-start;
         }
+
+        .demo-layout {
+          grid-template-columns: 1fr !important;
+          text-align: center;
+        }
+
+        .demo-phone { transform: scale(0.85); }
+
+        .showcase-layout {
+          grid-template-columns: 1fr !important;
+          text-align: center;
+        }
+
+        .showcase-phone-wrapper { justify-self: center; }
+      }
+
+      /* ── Interactive AI Demo ──────────────── */
+      .demo-layout {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 48px;
+        align-items: center;
+      }
+
+      .demo-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .demo-step {
+        padding: 18px 20px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(8, 16, 34, 0.6);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .demo-step::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: var(--line);
+        transition: background 0.3s;
+      }
+
+      .demo-step.active {
+        border-color: var(--accent);
+        background: rgba(34, 227, 155, 0.06);
+      }
+
+      .demo-step.active::before {
+        background: var(--accent);
+      }
+
+      .demo-step h4 {
+        margin: 0 0 4px;
+        font-size: 0.95rem;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .demo-step h4 .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+        font-size: 0.75rem;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+
+      .demo-step.active h4 .step-num {
+        background: var(--accent);
+        color: #041016;
+      }
+
+      .demo-step p {
+        margin: 0;
+        font-size: 0.84rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      /* Phone mockup */
+      .demo-phone {
+        width: 280px;
+        height: 560px;
+        border-radius: 36px;
+        border: 3px solid rgba(255,255,255,0.12);
+        background: #0a0a0a;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
+      }
+
+      .demo-phone .notch {
+        position: absolute;
+        top: 0; left: 50%; transform: translateX(-50%);
+        width: 100px; height: 28px;
+        background: #0a0a0a;
+        border-radius: 0 0 18px 18px;
+        z-index: 10;
+      }
+
+      .demo-phone .notch::after {
+        content: '';
+        position: absolute;
+        top: 10px; left: 50%; transform: translateX(-50%);
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+      }
+
+      .phone-screens {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .phone-screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 38px 18px 18px;
+        opacity: 0;
+        transform: translateX(40px);
+        transition: all 0.5s ease;
+        pointer-events: none;
+      }
+
+      .phone-screen.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+
+      .screen-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+
+      .screen-header .sh-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .screen-header h5 {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .screen-header small {
+        margin-left: auto;
+        font-size: 0.68rem;
+        color: var(--muted);
+      }
+
+      .screen-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+      }
+
+      .s-card {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.78rem;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .s-card strong {
+        color: var(--ink);
+      }
+
+      .s-card .ai-tag {
+        display: inline-block;
+        font-size: 0.62rem;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(34,227,155,0.15);
+        color: var(--accent);
+        font-weight: 700;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
+
+      .s-bar {
+        height: 6px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.06);
+        overflow: hidden;
+      }
+
+      .s-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        animation: barGrow 1.5s ease forwards;
+      }
+
+      @keyframes barGrow {
+        from { width: 0; }
+        to { width: var(--w); }
+      }
+
+      .s-typing {
+        display: flex;
+        gap: 4px;
+        padding: 8px 0;
+      }
+
+      .s-typing span {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: typeDot 1.2s ease-in-out infinite;
+      }
+
+      .s-typing span:nth-child(2) { animation-delay: 0.2s; }
+      .s-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes typeDot {
+        0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+        40% { opacity: 1; transform: scale(1.2); }
+      }
+
+      .demo-progress {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .demo-progress span {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.12);
+        transition: all 0.3s;
+      }
+
+      .demo-progress span.active {
+        background: var(--accent);
+        width: 20px;
+        border-radius: 4px;
+      }
+
+      /* ── Phone Showcase ──────────────── */
+      .showcase-section {
+        padding: 80px 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .showcase-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(143,91,255,0.08) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .showcase-layout {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: center;
+      }
+
+      .showcase-text h2 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.8rem;
+        letter-spacing: 1px;
+        margin: 0 0 16px;
+        background: linear-gradient(135deg, var(--ink), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .showcase-text p {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.7;
+        margin: 0 0 24px;
+      }
+
+      .showcase-features {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .showcase-feat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.92rem;
+        color: var(--ink);
+      }
+
+      .showcase-feat .feat-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .showcase-phone-wrapper {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 600px;
+      }
+
+      /* Blurred person silhouette */
+      .person-silhouette {
+        position: absolute;
+        width: 320px;
+        height: 520px;
+        border-radius: 50% 50% 0 0;
+        background: linear-gradient(180deg,
+          rgba(143,91,255,0.12) 0%,
+          rgba(54,179,255,0.08) 40%,
+          rgba(34,227,155,0.06) 70%,
+          transparent 100%);
+        filter: blur(40px);
+        bottom: 20px;
+        z-index: 0;
+      }
+
+      .person-silhouette::before {
+        content: '';
+        position: absolute;
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        background: rgba(143,91,255,0.15);
+        top: -40px;
+        left: 50%; transform: translateX(-50%);
+        filter: blur(25px);
+      }
+
+      /* Showcase phone */
+      .showcase-phone {
+        width: 280px;
+        height: 560px;
+        border-radius: 36px;
+        border: 3px solid rgba(255,255,255,0.14);
+        background: #0a0a0a;
+        position: relative;
+        overflow: hidden;
+        z-index: 2;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.6),
+                    0 0 0 1px rgba(255,255,255,0.04),
+                    0 0 80px rgba(143,91,255,0.15);
+      }
+
+      .showcase-phone .notch {
+        position: absolute;
+        top: 0; left: 50%; transform: translateX(-50%);
+        width: 100px; height: 28px;
+        background: #0a0a0a;
+        border-radius: 0 0 18px 18px;
+        z-index: 10;
+      }
+
+      .showcase-scroll {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .showcase-scroll-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        animation: scrollShowcase 20s linear infinite;
+      }
+
+      .showcase-screen {
+        width: 100%;
+        min-height: 560px;
+        padding: 40px 18px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      @keyframes scrollShowcase {
+        0% { transform: translateY(0); }
+        20% { transform: translateY(0); }
+        25% { transform: translateY(-560px); }
+        45% { transform: translateY(-560px); }
+        50% { transform: translateY(-1120px); }
+        70% { transform: translateY(-1120px); }
+        75% { transform: translateY(-1680px); }
+        95% { transform: translateY(-1680px); }
+        100% { transform: translateY(0); }
+      }
+
+      .sc-header {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--ink);
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .sc-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .sc-row .sc-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .sc-avatar {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: #041016;
+        flex-shrink: 0;
+      }
+
+      .sc-chip {
+        font-size: 0.62rem;
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-weight: 700;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      .sc-bar {
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255,255,255,0.06);
+        margin-top: 4px;
+        overflow: hidden;
+      }
+
+      .sc-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      .sc-stat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .sc-stat {
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        text-align: center;
+      }
+
+      .sc-stat .num {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--ink);
+        display: block;
+      }
+
+      .sc-stat .lbl {
+        font-size: 0.62rem;
+        color: var(--muted);
+      }
+
+      .glow-ring {
+        position: absolute;
+        width: 340px; height: 340px;
+        border-radius: 50%;
+        border: 1px solid rgba(34,227,155,0.08);
+        z-index: 1;
+        animation: glowPulse 4s ease-in-out infinite;
+      }
+
+      .glow-ring:nth-child(2) {
+        width: 420px; height: 420px;
+        border-color: rgba(54,179,255,0.06);
+        animation-delay: 1s;
+      }
+
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.06); }
       }
     </style>
   </head>
@@ -1162,6 +1698,7 @@
         </div>
         <nav class="nav-links">
           <a href="#features">AI features</a>
+          <a href="#demo">Demo</a>
           <a href="#proof">Proof</a>
           <a href="#workflow">AI workflow</a>
         </nav>
@@ -1241,29 +1778,137 @@
         </div>
       </section>
 
-      <section class="section">
-        <div class="ai-demo">
+      <section class="section" id="demo">
+        <div class="demo-layout">
           <div>
-            <h2>Interactive AI demo</h2>
-            <p>
-              Watch how ProServe Hub turns job notes into client-ready updates.
-              Each prompt below is auto-generated from a real job timeline.
-            </p>
+            <span class="eyebrow">See the AI in action</span>
+            <h2>Your AI assistant, step by step.</h2>
+            <p style="color:var(--muted);margin:0 0 28px;line-height:1.6;">Click each step to see exactly what ProServe Hub does on a real job — from intake to 5-star review.</p>
+            <div class="demo-steps">
+              <div class="demo-step active" data-step="0">
+                <h4><span class="step-num">1</span> Smart Intake</h4>
+                <p>Customer describes the job. AI extracts scope, area, materials, and generates an instant estimate.</p>
+              </div>
+              <div class="demo-step" data-step="1">
+                <h4><span class="step-num">2</span> AI Progress Update</h4>
+                <p>Contractor snaps a photo. AI writes a professional client update and sends it instantly.</p>
+              </div>
+              <div class="demo-step" data-step="2">
+                <h4><span class="step-num">3</span> Auto Invoice</h4>
+                <p>Job marked complete. AI generates the invoice with line items from the original scope.</p>
+              </div>
+              <div class="demo-step" data-step="3">
+                <h4><span class="step-num">4</span> Review & Repeat</h4>
+                <p>AI sends a review prompt to the client. 5-star feedback goes straight to the proof feed.</p>
+              </div>
+            </div>
           </div>
-          <div class="ai-demo-panel">
-            <div class="prompt-stack">
-              <div class="prompt">
-                <strong>AI draft:</strong> Estimate created from scope notes and
-                uploaded photos.
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="demo-phone">
+              <div class="notch"></div>
+              <div class="phone-screens">
+                <!-- Screen 1: Intake -->
+                <div class="phone-screen active" data-screen="0">
+                  <div class="screen-header">
+                    <div class="sh-dot" style="background:#22e39b;"></div>
+                    <h5>New Job Request</h5>
+                    <small>Just now</small>
+                  </div>
+                  <div class="screen-body">
+                    <div class="s-card">
+                      <strong>Kitchen remodel</strong> — full backsplash replacement, 120 sq ft, ceramic tile.
+                    </div>
+                    <div class="s-card">
+                      📍 Houston, TX 77024<br/>
+                      📅 Requested: Feb 18, 2026
+                    </div>
+                    <div class="s-card" style="border-color:rgba(34,227,155,0.2);">
+                      <strong>AI Estimate</strong> <span class="ai-tag">AI</span><br/>
+                      Materials: $840 &bull; Labor: $1,200<br/>
+                      <strong style="color:var(--accent);">Total: $2,040</strong>
+                    </div>
+                    <div class="s-typing"><span></span><span></span><span></span></div>
+                    <div class="s-card" style="font-size:0.72rem;">AI is analyzing photos for scope details...</div>
+                  </div>
+                </div>
+                <!-- Screen 2: Progress -->
+                <div class="phone-screen" data-screen="1">
+                  <div class="screen-header">
+                    <div class="sh-dot" style="background:#36b3ff;"></div>
+                    <h5>Client Update</h5>
+                    <small>Day 2</small>
+                  </div>
+                  <div class="screen-body">
+                    <div class="s-card" style="border-color:rgba(54,179,255,0.2);">
+                      <span class="ai-tag">AI Draft</span><br/>
+                      "Backsplash demo complete. Old tile removed, wall prepped and leveled. Thinset going down tomorrow. On schedule."
+                    </div>
+                    <div class="s-card">
+                      📸 <strong>3 photos attached</strong><br/>
+                      Before &bull; During &bull; Detail shot
+                    </div>
+                    <div class="s-bar"><div class="s-bar-fill" style="--w:55%;background:linear-gradient(90deg,#36b3ff,#22e39b);"></div></div>
+                    <div style="font-size:0.72rem;color:var(--muted);text-align:center;">55% complete</div>
+                    <div class="s-card">Client viewed update ✔️</div>
+                  </div>
+                </div>
+                <!-- Screen 3: Invoice -->
+                <div class="phone-screen" data-screen="2">
+                  <div class="screen-header">
+                    <div class="sh-dot" style="background:#8f5bff;"></div>
+                    <h5>Invoice #1042</h5>
+                    <small>Day 5</small>
+                  </div>
+                  <div class="screen-body">
+                    <div class="s-card">
+                      <strong>Kitchen Backsplash</strong><br/>
+                      Ceramic tile &bull; 120 sq ft
+                    </div>
+                    <div class="s-card">
+                      Materials ................ $840.00<br/>
+                      Labor ...................... $1,200.00<br/>
+                      <hr style="border-color:rgba(255,255,255,0.06);margin:6px 0;"/>
+                      <strong style="color:var(--accent);">Total: $2,040.00</strong>
+                    </div>
+                    <div class="s-card" style="border-color:rgba(143,91,255,0.2);">
+                      <span class="ai-tag" style="background:rgba(143,91,255,0.15);color:#8f5bff;">Auto</span>
+                      Payment link sent to client
+                    </div>
+                    <div class="s-card">✅ Paid via Stripe &bull; Funds in escrow</div>
+                  </div>
+                </div>
+                <!-- Screen 4: Review -->
+                <div class="phone-screen" data-screen="3">
+                  <div class="screen-header">
+                    <div class="sh-dot" style="background:#22e39b;"></div>
+                    <h5>Proof Feed</h5>
+                    <small>Day 6</small>
+                  </div>
+                  <div class="screen-body">
+                    <div class="s-card" style="border-color:rgba(34,227,155,0.2);">
+                      ⭐⭐⭐⭐⭐<br/>
+                      <strong>"Amazing work! Looks better than we imagined."</strong><br/>
+                      <span style="font-size:0.68rem;">— Sarah M. &bull; Verified Homeowner</span>
+                    </div>
+                    <div class="s-card">
+                      <span class="ai-tag">AI</span> Review prompt sent automatically at job close
+                    </div>
+                    <div class="s-card">
+                      📈 <strong>Reputation: 4.9</strong> &bull; 24 reviews<br/>
+                      Profile boosted in search results
+                    </div>
+                    <div class="s-card">
+                      🔥 <strong>3 new leads</strong> from this proof post
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="prompt">
-                <strong>AI update:</strong> "Drywall repaired, sanded, ready for
-                paint. Next: primer." sent to client.
-              </div>
-              <div class="prompt">
-                <strong>AI follow-up:</strong> Review request scheduled for
-                project close.
-              </div>
+            </div>
+            <div class="demo-progress">
+              <span class="active"></span>
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </div>
         </div>
@@ -1526,6 +2171,123 @@
         </div>
       </section>
 
+      <!-- Phone Showcase Section -->
+      <section class="showcase-section" id="showcase">
+        <div class="showcase-layout">
+          <div class="showcase-phone-wrapper">
+            <div class="person-silhouette"></div>
+            <div class="glow-ring"></div>
+            <div class="glow-ring"></div>
+            <div class="showcase-phone">
+              <div class="notch"></div>
+              <div class="showcase-scroll">
+                <div class="showcase-scroll-inner">
+                  <!-- Screen A: Dashboard -->
+                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(34,227,155,0.06),transparent);">
+                    <div class="sc-header">⚡ Dashboard</div>
+                    <div class="sc-stat-row">
+                      <div class="sc-stat"><span class="num" style="color:var(--accent);">12</span><span class="lbl">Active Jobs</span></div>
+                      <div class="sc-stat"><span class="num" style="color:var(--accent-2);">$8.4k</span><span class="lbl">This Month</span></div>
+                    </div>
+                    <div class="sc-stat-row">
+                      <div class="sc-stat"><span class="num" style="color:var(--accent-3);">4.9</span><span class="lbl">Rating</span></div>
+                      <div class="sc-stat"><span class="num" style="color:var(--ink);">97%</span><span class="lbl">On Time</span></div>
+                    </div>
+                    <div class="sc-row"><div class="sc-dot" style="background:#22e39b;"></div>Kitchen Remodel <span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">Active</span></div>
+                    <div class="sc-row"><div class="sc-dot" style="background:#36b3ff;"></div>Bathroom Tile <span class="sc-chip" style="background:rgba(54,179,255,0.15);color:#36b3ff;">Quoted</span></div>
+                    <div class="sc-row"><div class="sc-dot" style="background:#8f5bff;"></div>Fence Repair <span class="sc-chip" style="background:rgba(143,91,255,0.15);color:#8f5bff;">New Lead</span></div>
+                    <div class="sc-bar"><div class="sc-bar-fill" style="width:78%;background:linear-gradient(90deg,#22e39b,#36b3ff);"></div></div>
+                    <div style="font-size:0.65rem;color:var(--muted);text-align:center;">Monthly goal: 78%</div>
+                  </div>
+                  <!-- Screen B: Proof Feed -->
+                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(54,179,255,0.06),transparent);">
+                    <div class="sc-header">📸 Proof Feed</div>
+                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="sc-avatar" style="background:var(--accent);">JP</div>
+                        <div><strong style="color:var(--ink);font-size:0.78rem;">Jake's Plumbing</strong><br/><span style="font-size:0.65rem;">Bathroom remodel &bull; 2h ago</span></div>
+                      </div>
+                      <div style="height:80px;border-radius:8px;background:linear-gradient(135deg,rgba(54,179,255,0.1),rgba(34,227,155,0.1));display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);">Before & After Photos</div>
+                      <div style="font-size:0.72rem;color:var(--muted);">"Complete fixture replacement. Modern chrome finish."</div>
+                      <div style="display:flex;gap:12px;font-size:0.65rem;color:var(--muted);">❤️ 18 &bull; 💬 4 &bull; 🔁 Share</div>
+                    </div>
+                    <div class="sc-row">
+                      <div class="sc-avatar" style="background:var(--accent-3);">EP</div>
+                      <div><strong style="color:var(--ink);font-size:0.75rem;">Elite Painters</strong><br/><span style="font-size:0.65rem;">Exterior paint &bull; 5h ago</span></div>
+                    </div>
+                    <div class="sc-row">
+                      <div class="sc-avatar" style="background:var(--accent-2);">RC</div>
+                      <div><strong style="color:var(--ink);font-size:0.75rem;">Rosales Construction</strong><br/><span style="font-size:0.65rem;">Deck build &bull; 1d ago</span></div>
+                    </div>
+                  </div>
+                  <!-- Screen C: AI Chat -->
+                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(143,91,255,0.06),transparent);">
+                    <div class="sc-header">🤖 AI Assistant</div>
+                    <div class="sc-row" style="background:rgba(143,91,255,0.06);border-color:rgba(143,91,255,0.15);">
+                      <div style="font-size:0.75rem;"><strong style="color:var(--ink);">Draft an estimate for a 200 sq ft patio pour</strong></div>
+                    </div>
+                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:6px;border-color:rgba(34,227,155,0.15);">
+                      <span style="font-size:0.65rem;color:var(--accent);font-weight:700;">AI Response</span>
+                      <span style="font-size:0.72rem;color:var(--muted);">Concrete (200 sf) .... $1,400<br/>Rebar + mesh ............ $320<br/>Labor (2 days) .......... $1,800<br/>Finish & seal .............. $280</span>
+                      <span style="font-size:0.82rem;font-weight:700;color:var(--accent);">Total: $3,800</span>
+                    </div>
+                    <div class="sc-row"><span style="font-size:0.72rem;">✅ Send to client as PDF?</span><span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">Send</span></div>
+                    <div class="sc-row"><span style="font-size:0.72rem;">📋 Add to job timeline?</span><span class="sc-chip" style="background:rgba(54,179,255,0.15);color:#36b3ff;">Add</span></div>
+                  </div>
+                  <!-- Screen D: Reviews -->
+                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(34,227,155,0.06),transparent);">
+                    <div class="sc-header">⭐ Reviews</div>
+                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:4px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.78rem;color:var(--ink);">Sarah M.</strong><span style="font-size:0.72rem;">⭐⭐⭐⭐⭐</span></div>
+                      <span style="font-size:0.72rem;color:var(--muted);">"Best contractor experience ever. The app kept me updated every step."</span>
+                      <span style="font-size:0.62rem;color:var(--muted);">Kitchen remodel &bull; Verified</span>
+                    </div>
+                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:4px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.78rem;color:var(--ink);">Mike R.</strong><span style="font-size:0.72rem;">⭐⭐⭐⭐⭐</span></div>
+                      <span style="font-size:0.72rem;color:var(--muted);">"On time, on budget, and the proof feed was amazing."</span>
+                      <span style="font-size:0.62rem;color:var(--muted);">Fence install &bull; Verified</span>
+                    </div>
+                    <div class="sc-stat-row">
+                      <div class="sc-stat"><span class="num" style="color:var(--accent);">4.9</span><span class="lbl">Average</span></div>
+                      <div class="sc-stat"><span class="num" style="color:var(--accent-2);">127</span><span class="lbl">Total</span></div>
+                    </div>
+                    <div class="sc-row"><span style="font-size:0.72rem;">AI auto-requests reviews at job close</span><span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">AI</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="showcase-text">
+            <span class="eyebrow">Your business. One screen.</span>
+            <h2>Everything a contractor needs, in your pocket.</h2>
+            <p>ProServe Hub puts jobs, clients, AI tools, payments, and your proof feed into one app. No more juggling 5 different platforms.</p>
+            <div class="showcase-features">
+              <div class="showcase-feat">
+                <div class="feat-icon" style="background:rgba(34,227,155,0.12);">⚡</div>
+                AI-powered estimates in seconds
+              </div>
+              <div class="showcase-feat">
+                <div class="feat-icon" style="background:rgba(54,179,255,0.12);">📸</div>
+                Photo proof feed that wins new clients
+              </div>
+              <div class="showcase-feat">
+                <div class="feat-icon" style="background:rgba(143,91,255,0.12);">💳</div>
+                Built-in payments with escrow protection
+              </div>
+              <div class="showcase-feat">
+                <div class="feat-icon" style="background:rgba(255,184,54,0.12);">⭐</div>
+                Automated review collection & reputation
+              </div>
+              <div class="showcase-feat">
+                <div class="feat-icon" style="background:rgba(255,100,100,0.12);">📅</div>
+                Smart scheduling & client notifications
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section" id="workflow">
         <h2>AI workflow that keeps crews moving.</h2>
         <p>
@@ -1683,9 +2445,9 @@
         });
       });
 
-      // Wire "Watch AI demo" ghost button
+      // Wire "Watch AI demo" ghost button → scroll to demo
       document.querySelector('.ghost')?.addEventListener('click', () => {
-        showToast('\uD83C\uDFAC Demo video coming soon — stay tuned!');
+        document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
       });
 
       // Wire store badges (coming soon)
@@ -1697,6 +2459,39 @@
         e.preventDefault();
         showToast('\uD83D\uDEA7 App Store listing coming soon!');
       });
+
+      // ── Interactive AI Demo ────────────────────
+      const demoSteps = document.querySelectorAll('.demo-step');
+      const phoneScreens = document.querySelectorAll('.phone-screen');
+      const progressDots = document.querySelectorAll('.demo-progress span');
+      let demoInterval;
+
+      function setDemoStep(idx) {
+        demoSteps.forEach((s, i) => s.classList.toggle('active', i === idx));
+        phoneScreens.forEach((s, i) => s.classList.toggle('active', i === idx));
+        progressDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      }
+
+      function startDemoAuto() {
+        let current = 0;
+        clearInterval(demoInterval);
+        demoInterval = setInterval(() => {
+          current = (current + 1) % 4;
+          setDemoStep(current);
+        }, 4000);
+      }
+
+      demoSteps.forEach((step) => {
+        step.addEventListener('click', () => {
+          const idx = parseInt(step.dataset.step);
+          setDemoStep(idx);
+          clearInterval(demoInterval);
+          // Restart auto-play after 10s of inactivity
+          setTimeout(startDemoAuto, 10000);
+        });
+      });
+
+      startDemoAuto();
 
       // Close modal
       modalClose.addEventListener('click', closeModal);
