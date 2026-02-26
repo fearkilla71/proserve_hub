@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- cache bust -->
-    <title>ProServe Hub - AI powered contractor OS</title>
+    <title>ProServe Hub — Instant AI Estimates · Trusted Local Pros</title>
     <meta
       name="description"
-      content="ProServe Hub uses AI to automate contractor workflows, proof feeds, and client updates so crews stay focused on the job."
+      content="Get instant AI-powered estimates for any home project. Compare prices, book verified contractors, and track every step with real-time updates and escrow protection."
     />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -30,29 +30,15 @@
         --shadow: 0 18px 60px rgba(5, 12, 26, 0.65);
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
 
       body {
         margin: 0;
         font-family: "Manrope", system-ui, -apple-system, sans-serif;
         color: var(--ink);
-        background: radial-gradient(
-            circle at top left,
-            rgba(54, 179, 255, 0.2),
-            transparent 45%
-          ),
-          radial-gradient(
-            circle at 20% 30%,
-            rgba(34, 227, 155, 0.18),
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 80% 10%,
-            rgba(143, 91, 255, 0.16),
-            transparent 40%
-          ),
+        background: radial-gradient(circle at top left, rgba(54,179,255,0.2), transparent 45%),
+          radial-gradient(circle at 20% 30%, rgba(34,227,155,0.18), transparent 50%),
+          radial-gradient(circle at 80% 10%, rgba(143,91,255,0.16), transparent 40%),
           linear-gradient(180deg, #0a1731 0%, #071022 55%, #050b18 100%);
         min-height: 100vh;
       }
@@ -62,26 +48,20 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        background-image: linear-gradient(
-            rgba(255, 255, 255, 0.05) 1px,
-            transparent 1px
-          ),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
         background-size: 48px 48px;
         opacity: 0.2;
         z-index: 0;
       }
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+      a { color: inherit; text-decoration: none; }
 
       header {
         position: sticky;
         top: 0;
         z-index: 10;
-        background: rgba(5, 10, 24, 0.78);
+        background: rgba(5,10,24,0.78);
         border-bottom: 1px solid var(--line);
         backdrop-filter: blur(16px);
       }
@@ -109,7 +89,7 @@
         height: 42px;
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 0 20px rgba(54, 179, 255, 0.2);
+        box-shadow: 0 0 20px rgba(54,179,255,0.2);
       }
 
       .brand-badge img {
@@ -126,6 +106,33 @@
         font-weight: 500;
       }
 
+      .nav-links a:hover { color: var(--accent); }
+
+      /* Segment toggle in nav */
+      .nav-segment {
+        display: flex;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background: rgba(12,23,44,0.6);
+      }
+
+      .nav-segment a {
+        padding: 8px 18px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: var(--muted);
+        transition: all 0.25s;
+        white-space: nowrap;
+      }
+
+      .nav-segment a:hover { color: var(--ink); }
+
+      .nav-segment a.seg-active {
+        background: linear-gradient(120deg, #22e39b, #36b3ff);
+        color: #041016;
+      }
+
       .cta {
         display: inline-flex;
         align-items: center;
@@ -138,22 +145,46 @@
         border: none;
         cursor: pointer;
         box-shadow: var(--shadow);
+        font-family: inherit;
+        font-size: inherit;
+      }
+
+      .cta-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        border: 2px solid var(--accent);
+        background: transparent;
+        color: var(--accent);
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: inherit;
+        transition: all 0.25s;
+      }
+
+      .cta-outline:hover {
+        background: rgba(34,227,155,0.1);
       }
 
       .ghost {
         padding: 12px 18px;
         border-radius: 999px;
         border: 1px solid var(--line);
-        background: rgba(12, 23, 44, 0.6);
+        background: rgba(12,23,44,0.6);
         color: var(--ink);
         font-weight: 600;
         cursor: pointer;
         transition: border-color 0.25s, background 0.25s;
+        font-family: inherit;
+        font-size: inherit;
       }
 
       .ghost:hover {
         border-color: var(--accent);
-        background: rgba(34, 227, 155, 0.08);
+        background: rgba(34,227,155,0.08);
       }
 
       /* ── Store Badges ─────────────────────── */
@@ -170,25 +201,21 @@
         gap: 10px;
         padding: 10px 20px 10px 14px;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.06);
         border: 1px solid var(--line);
         color: var(--ink);
         text-decoration: none;
-        transition: border-color 0.25s, background 0.25s, transform 0.25s;
+        transition: all 0.25s;
         cursor: pointer;
       }
 
       .store-badge:hover {
         border-color: var(--accent);
-        background: rgba(34, 227, 155, 0.06);
+        background: rgba(34,227,155,0.06);
         transform: translateY(-2px);
       }
 
-      .store-badge svg {
-        width: 28px;
-        height: 28px;
-        flex-shrink: 0;
-      }
+      .store-badge svg { width: 28px; height: 28px; flex-shrink: 0; }
 
       .store-badge .badge-text {
         display: flex;
@@ -204,10 +231,7 @@
         letter-spacing: 0.5px;
       }
 
-      .store-badge .badge-text span {
-        font-size: 1.05rem;
-        font-weight: 700;
-      }
+      .store-badge .badge-text span { font-size: 1.05rem; font-weight: 700; }
 
       /* ── Modal ─────────────────────────────── */
       .modal-overlay {
@@ -215,15 +239,13 @@
         position: fixed;
         inset: 0;
         z-index: 1000;
-        background: rgba(5, 11, 24, 0.8);
+        background: rgba(5,11,24,0.8);
         backdrop-filter: blur(8px);
         align-items: center;
         justify-content: center;
       }
 
-      .modal-overlay.active {
-        display: flex;
-      }
+      .modal-overlay.active { display: flex; }
 
       .modal {
         background: var(--card);
@@ -232,7 +254,7 @@
         padding: 40px 36px;
         max-width: 440px;
         width: 90%;
-        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 32px 80px rgba(0,0,0,0.5);
         position: relative;
         animation: modalIn 0.3s ease;
       }
@@ -261,7 +283,7 @@
       }
 
       .modal-close:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255,255,255,0.08);
         color: var(--ink);
       }
 
@@ -279,9 +301,7 @@
         line-height: 1.5;
       }
 
-      .form-group {
-        margin-bottom: 16px;
-      }
+      .form-group { margin-bottom: 16px; }
 
       .form-group label {
         display: block;
@@ -297,7 +317,7 @@
         padding: 12px 14px;
         border-radius: 10px;
         border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.04);
+        background: rgba(255,255,255,0.04);
         color: var(--ink);
         font-size: 0.95rem;
         font-family: inherit;
@@ -306,9 +326,7 @@
       }
 
       .form-group input:focus,
-      .form-group select:focus {
-        border-color: var(--accent);
-      }
+      .form-group select:focus { border-color: var(--accent); }
 
       .form-group select option {
         background: #0a1731;
@@ -339,22 +357,20 @@
         border-radius: 12px;
         font-weight: 700;
         font-size: 0.95rem;
-        box-shadow: 0 12px 40px rgba(34, 227, 155, 0.3);
+        box-shadow: 0 12px 40px rgba(34,227,155,0.3);
         z-index: 1100;
         opacity: 0;
         transition: all 0.4s ease;
         pointer-events: none;
       }
 
-      .toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+      /* ── Hero ──────────────────────────────── */
       .hero {
         position: relative;
         overflow: hidden;
-        padding: 90px 0 40px;
+        padding: 80px 0 40px;
       }
 
       .orb {
@@ -365,31 +381,9 @@
         animation: float 12s ease-in-out infinite;
       }
 
-      .orb.one {
-        width: 260px;
-        height: 260px;
-        background: rgba(54, 179, 255, 0.25);
-        top: -120px;
-        right: 10%;
-      }
-
-      .orb.two {
-        width: 180px;
-        height: 180px;
-        background: rgba(34, 227, 155, 0.22);
-        bottom: 10%;
-        left: -40px;
-        animation-delay: -4s;
-      }
-
-      .orb.three {
-        width: 220px;
-        height: 220px;
-        background: rgba(143, 91, 255, 0.2);
-        top: 40%;
-        right: -60px;
-        animation-delay: -7s;
-      }
+      .orb.one { width: 260px; height: 260px; background: rgba(54,179,255,0.25); top: -120px; right: 10%; }
+      .orb.two { width: 180px; height: 180px; background: rgba(34,227,155,0.22); bottom: 10%; left: -40px; animation-delay: -4s; }
+      .orb.three { width: 220px; height: 220px; background: rgba(143,91,255,0.2); top: 40%; right: -60px; animation-delay: -7s; }
 
       .hero-grid {
         max-width: 1180px;
@@ -409,7 +403,7 @@
         gap: 8px;
         padding: 6px 12px;
         border-radius: 999px;
-        background: rgba(34, 227, 155, 0.15);
+        background: rgba(34,227,155,0.15);
         color: var(--accent);
         font-weight: 600;
         font-size: 0.85rem;
@@ -424,10 +418,7 @@
         letter-spacing: 1px;
       }
 
-      p {
-        color: var(--muted);
-        line-height: 1.7;
-      }
+      p { color: var(--muted); line-height: 1.7; }
 
       .hero-actions {
         display: flex;
@@ -441,7 +432,7 @@
         border-radius: 26px;
         padding: 26px;
         box-shadow: var(--shadow);
-        border: 1px solid rgba(54, 179, 255, 0.2);
+        border: 1px solid rgba(54,179,255,0.2);
         position: relative;
         overflow: hidden;
       }
@@ -450,12 +441,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          130deg,
-          transparent,
-          rgba(54, 179, 255, 0.12),
-          transparent
-        );
+        background: linear-gradient(130deg, transparent, rgba(54,179,255,0.12), transparent);
         transform: translateX(-120%);
         animation: sweep 6s ease-in-out infinite;
       }
@@ -466,11 +452,7 @@
         letter-spacing: 1px;
       }
 
-      .ai-stack {
-        display: grid;
-        gap: 12px;
-        margin-top: 16px;
-      }
+      .ai-stack { display: grid; gap: 12px; margin-top: 16px; }
 
       .ai-card {
         display: flex;
@@ -478,8 +460,8 @@
         justify-content: space-between;
         padding: 12px 14px;
         border-radius: 16px;
-        background: rgba(6, 14, 30, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(6,14,30,0.8);
+        border: 1px solid rgba(255,255,255,0.06);
         font-weight: 600;
       }
 
@@ -487,7 +469,7 @@
         padding: 4px 10px;
         border-radius: 999px;
         font-size: 0.75rem;
-        background: rgba(34, 227, 155, 0.2);
+        background: rgba(34,227,155,0.2);
         color: var(--accent);
       }
 
@@ -499,9 +481,9 @@
 
       .ticker {
         overflow: hidden;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(6, 12, 26, 0.6);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        background: rgba(6,12,26,0.6);
       }
 
       .ticker-track {
@@ -512,313 +494,9 @@
         white-space: nowrap;
       }
 
-      .ticker span {
-        color: var(--muted);
-        font-size: 0.92rem;
-      }
+      .ticker span { color: var(--muted); font-size: 0.92rem; }
 
-      .ai-demo {
-        display: grid;
-        gap: 20px;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        align-items: center;
-      }
-
-      .ai-demo-panel {
-        background: rgba(8, 16, 34, 0.9);
-        border-radius: 22px;
-        padding: 22px;
-        border: 1px solid rgba(54, 179, 255, 0.2);
-        box-shadow: var(--shadow);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .ai-demo-panel::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(
-          circle at top right,
-          rgba(54, 179, 255, 0.2),
-          transparent 60%
-        );
-        opacity: 0.7;
-      }
-
-      .prompt-stack {
-        position: relative;
-        display: grid;
-        gap: 12px;
-      }
-
-      .prompt {
-        padding: 12px 14px;
-        border-radius: 14px;
-        background: rgba(5, 11, 24, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.9rem;
-        color: var(--muted);
-        animation: promptFloat 6s ease-in-out infinite;
-      }
-
-      .prompt strong {
-        color: var(--ink);
-      }
-
-      .prompt:nth-child(2) {
-        animation-delay: -2s;
-      }
-
-      .prompt:nth-child(3) {
-        animation-delay: -4s;
-      }
-
-      .timeline {
-        margin-top: 32px;
-        display: grid;
-        gap: 18px;
-      }
-
-      .timeline-item {
-        display: grid;
-        grid-template-columns: 28px 1fr;
-        gap: 14px;
-        align-items: start;
-      }
-
-      .timeline-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--accent);
-        box-shadow: 0 0 12px rgba(34, 227, 155, 0.6);
-        margin-top: 8px;
-      }
-
-      .timeline-card {
-        background: rgba(8, 16, 34, 0.85);
-        border-radius: 16px;
-        padding: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .signal-map {
-        position: relative;
-        border-radius: 24px;
-        background: rgba(8, 16, 34, 0.75);
-        border: 1px solid rgba(54, 179, 255, 0.2);
-        overflow: hidden;
-        padding: 20px;
-      }
-
-      .signal-map svg {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-
-      .signal-map .edge {
-        stroke-dasharray: 8 6;
-        animation: dashFlow 2.5s linear infinite;
-      }
-
-      .signal-map .node-glow {
-        animation: nodePulse 4s ease-in-out infinite;
-      }
-
-      .signal-map .node-glow:nth-child(2n) { animation-delay: -1.5s; }
-      .signal-map .node-glow:nth-child(3n) { animation-delay: -3s; }
-
-      .signal-map .node-label {
-        font-family: 'Manrope', sans-serif;
-        font-size: 11px;
-        font-weight: 600;
-        fill: var(--ink);
-        text-anchor: middle;
-      }
-
-      .signal-map .node-sub {
-        font-family: 'Manrope', sans-serif;
-        font-size: 8.5px;
-        fill: var(--muted);
-        text-anchor: middle;
-      }
-
-      .signal-map .packet {
-        animation: packetMove 3s ease-in-out infinite;
-      }
-
-      .signal-map .packet:nth-child(2n) { animation-delay: -1.5s; }
-
-      @keyframes dashFlow {
-        to { stroke-dashoffset: -28; }
-      }
-
-      @keyframes packetMove {
-        0%, 100% { opacity: 0.3; offset-distance: 0%; }
-        50% { opacity: 1; offset-distance: 100%; }
-      }
-
-      /* Proof section upgrades */
-      .proof-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 14px;
-        margin-top: 24px;
-      }
-
-      .proof-stat {
-        text-align: center;
-        padding: 18px 10px;
-        border-radius: 18px;
-        background: rgba(6, 14, 30, 0.8);
-        border: 1px solid rgba(34, 227, 155, 0.15);
-      }
-
-      .proof-stat .big {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.4rem;
-        background: linear-gradient(120deg, #22e39b, #36b3ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1;
-      }
-
-      .proof-stat .label {
-        font-size: 0.82rem;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-
-      .testimonial-grid {
-        display: grid;
-        gap: 16px;
-      }
-
-      .testimonial {
-        background: #040914;
-        border-radius: 22px;
-        padding: 22px;
-        border: 1px solid rgba(34, 227, 155, 0.18);
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.35s ease, box-shadow 0.35s ease;
-      }
-
-      .testimonial:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 40px rgba(34, 227, 155, 0.12);
-      }
-
-      .testimonial::before {
-        content: '\201C';
-        position: absolute;
-        top: -8px;
-        left: 14px;
-        font-size: 5rem;
-        font-family: Georgia, serif;
-        color: rgba(34, 227, 155, 0.12);
-        line-height: 1;
-        pointer-events: none;
-      }
-
-      .testimonial .stars {
-        display: flex;
-        gap: 3px;
-        margin-bottom: 10px;
-      }
-
-      .testimonial .stars span {
-        color: #f5b731;
-        font-size: 1.05rem;
-      }
-
-      .testimonial h3 {
-        margin: 0 0 8px;
-        font-size: 1.05rem;
-        font-weight: 700;
-      }
-
-      .testimonial .author {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-      }
-
-      .testimonial .avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #041016;
-      }
-
-      .testimonial .author-info {
-        font-size: 0.85rem;
-      }
-
-      .testimonial .author-info strong {
-        display: block;
-        color: var(--ink);
-      }
-
-      .testimonial .author-info span {
-        color: var(--muted);
-        font-size: 0.78rem;
-      }
-
-      .before-after {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2px;
-        border-radius: 18px;
-        overflow: hidden;
-        margin-top: 20px;
-        border: 1px solid rgba(54, 179, 255, 0.15);
-      }
-
-      .before-after-half {
-        padding: 28px 20px;
-        text-align: center;
-      }
-
-      .before-after-half.before {
-        background: rgba(255, 80, 80, 0.06);
-      }
-
-      .before-after-half.after {
-        background: rgba(34, 227, 155, 0.08);
-      }
-
-      .before-after-half .ba-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 8px;
-      }
-
-      .before-after-half.before .ba-label { color: #ff6b6b; }
-      .before-after-half.after .ba-label { color: #22e39b; }
-
-      .before-after-half .ba-icon {
-        font-size: 2.2rem;
-        margin-bottom: 8px;
-      }
-
-      .before-after-half p {
-        font-size: 0.88rem;
-        margin: 0;
-      }
-
+      /* ── Sections ────────────────────────── */
       .section {
         max-width: 1180px;
         margin: 0 auto;
@@ -842,16 +520,16 @@
       .card {
         background: var(--card);
         border-radius: 20px;
-        padding: 20px;
+        padding: 24px;
         border: 1px solid var(--line);
-        box-shadow: 0 18px 40px rgba(4, 10, 26, 0.5);
+        box-shadow: 0 18px 40px rgba(4,10,26,0.5);
         min-height: 180px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
 
       .card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 26px 50px rgba(4, 12, 30, 0.65);
+        box-shadow: 0 26px 50px rgba(4,12,30,0.65);
       }
 
       .card h3 {
@@ -864,308 +542,276 @@
         width: 46px;
         height: 46px;
         border-radius: 14px;
-        background: rgba(54, 179, 255, 0.12);
-        border: 1px solid rgba(54, 179, 255, 0.5);
         display: grid;
         place-items: center;
-        font-weight: 700;
-        color: var(--accent-2);
+        font-size: 1.5rem;
         margin-bottom: 12px;
-        box-shadow: 0 0 20px rgba(54, 179, 255, 0.25);
+        box-shadow: 0 0 20px rgba(54,179,255,0.15);
       }
 
-      .strip {
-        margin-top: 40px;
-        padding: 28px;
-        border-radius: 26px;
-        background: linear-gradient(130deg, rgba(9, 22, 48, 0.85), #061126);
-        border: 1px solid rgba(54, 179, 255, 0.18);
+      /* ── How It Works ───────────────────── */
+      .steps-grid {
         display: grid;
-        gap: 20px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+        margin-top: 32px;
       }
 
-      .pill-row {
+      .step-card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 28px 24px;
+        border: 1px solid var(--line);
+        text-align: center;
+        transition: transform 0.3s, border-color 0.3s;
+        position: relative;
+      }
+
+      .step-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent);
+      }
+
+      .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #041016;
+        font-weight: 800;
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+      }
+
+      .step-card h3 {
+        margin: 0 0 8px;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+      }
+
+      .step-card p { margin: 0; font-size: 0.9rem; }
+
+      /* ── AI Estimate Showcase ────────────── */
+      .estimate-showcase {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: center;
+        margin-top: 32px;
+      }
+
+      .estimate-live {
+        background: var(--card);
+        border-radius: 22px;
+        padding: 28px;
+        border: 1px solid rgba(34,227,155,0.2);
+        box-shadow: var(--shadow);
+      }
+
+      .estimate-line {
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.9rem;
       }
 
-      .pill {
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: rgba(6, 14, 30, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.85rem;
+      .estimate-line:last-child { border-bottom: none; }
+
+      .estimate-total {
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 0 0;
+        margin-top: 8px;
+        border-top: 2px solid var(--accent);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .lock-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        background: rgba(34,227,155,0.12);
+        border: 1px solid rgba(34,227,155,0.25);
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 0.88rem;
+        margin-top: 16px;
+      }
+
+      /* ── Comparison ─────────────────────── */
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 32px;
+      }
+
+      .compare-card {
+        background: var(--card);
+        border-radius: 18px;
+        padding: 24px;
+        border: 1px solid var(--line);
+      }
+
+      .compare-card.highlight {
+        border-color: var(--accent);
+        box-shadow: 0 0 30px rgba(34,227,155,0.08);
+      }
+
+      .compare-card h3 { margin: 0 0 14px; font-size: 1.1rem; }
+      .compare-card.highlight h3 { color: var(--accent); }
+
+      .compare-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.88rem;
         color: var(--muted);
+        line-height: 1.5;
+        padding: 6px 0;
+      }
+
+      .compare-item .ci-icon { flex-shrink: 0; font-size: 1.1rem; }
+
+      /* ── Trust Bar ───────────────────────── */
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 32px;
+      }
+
+      .trust-item {
+        text-align: center;
+        padding: 24px 16px;
+        border-radius: 18px;
+        background: rgba(6,14,30,0.6);
+        border: 1px solid var(--line);
+      }
+
+      .trust-item .trust-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .trust-item h4 {
+        margin: 0 0 6px;
+        font-size: 0.95rem;
+        color: var(--ink);
+      }
+
+      .trust-item p {
+        margin: 0;
+        font-size: 0.82rem;
+      }
+
+      /* ── Testimonials ───────────────────── */
+      .testimonial-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        margin-top: 24px;
       }
 
       .testimonial {
         background: #040914;
-        border-radius: 26px;
-        padding: 24px;
-        border: 1px solid rgba(34, 227, 155, 0.2);
+        border-radius: 22px;
+        padding: 22px;
+        border: 1px solid rgba(34,227,155,0.18);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
       }
 
-      .ai-core {
-        display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        margin-top: 24px;
+      .testimonial:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(34,227,155,0.12);
       }
 
-      .core-card {
-        padding: 18px;
-        border-radius: 18px;
-        background: rgba(8, 16, 34, 0.85);
-        border: 1px solid rgba(143, 91, 255, 0.24);
-        box-shadow: inset 0 0 30px rgba(143, 91, 255, 0.12);
+      .testimonial::before {
+        content: '\201C';
+        position: absolute;
+        top: -8px;
+        left: 14px;
+        font-size: 5rem;
+        font-family: Georgia, serif;
+        color: rgba(34,227,155,0.12);
+        line-height: 1;
+        pointer-events: none;
       }
 
-      .stats {
-        display: grid;
-        gap: 16px;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        margin-top: 20px;
-      }
+      .testimonial .stars { display: flex; gap: 3px; margin-bottom: 10px; }
+      .testimonial .stars span { color: #f5b731; font-size: 1.05rem; }
 
-      .stat {
-        padding: 16px;
-        border-radius: 16px;
-        background: rgba(6, 14, 30, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        font-weight: 600;
-      }
+      .testimonial h3 { margin: 0 0 8px; font-size: 1.05rem; font-weight: 700; }
 
-      .cta-band {
-        margin-top: 40px;
-        padding: 28px;
-        border-radius: 28px;
-        background: linear-gradient(140deg, #0e1c3a, #0a1428);
-        border: 1px solid rgba(54, 179, 255, 0.18);
+      .testimonial .author {
         display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
         align-items: center;
-        justify-content: space-between;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.06);
       }
 
-      footer {
-        border-top: 1px solid var(--line);
-        padding: 52px 24px 40px;
-        color: var(--muted);
-        background: var(--bg-deep);
+      .testimonial .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #041016;
       }
 
-      .footer-inner {
+      .testimonial .author-info { font-size: 0.85rem; }
+      .testimonial .author-info strong { display: block; color: var(--ink); }
+      .testimonial .author-info span { color: var(--muted); font-size: 0.78rem; }
+
+      /* ── Contractor Divider ──────────────── */
+      .section-divider {
         max-width: 1180px;
         margin: 0 auto;
+        padding: 60px 24px;
+        text-align: center;
+        position: relative;
       }
 
-      .footer-top {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 32px;
-        margin-bottom: 36px;
+      .section-divider::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
       }
 
-      .footer-brand {
-        max-width: 340px;
-      }
-
-      .footer-brand strong {
-        font-size: 1.25rem;
-        color: var(--ink);
-        display: block;
-        margin-bottom: 8px;
-      }
-
-      .footer-brand p {
-        margin: 0;
-        font-size: 0.92rem;
-        line-height: 1.6;
-      }
-
-      .footer-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px 32px;
-        align-items: center;
-      }
-
-      .footer-links a {
-        font-size: 0.92rem;
-        color: var(--muted);
-        transition: color 0.2s;
-      }
-
-      .footer-links a:hover {
+      .divider-label {
+        display: inline-block;
+        padding: 10px 28px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, rgba(34,227,155,0.15), rgba(54,179,255,0.15));
+        border: 1px solid rgba(34,227,155,0.2);
+        font-weight: 700;
+        font-size: 1rem;
         color: var(--accent);
+        letter-spacing: 0.5px;
       }
 
-      .footer-socials {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
-
-      .footer-socials a {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.25s, transform 0.25s;
-      }
-
-      .footer-socials a:hover {
-        background: var(--accent);
-        transform: translateY(-2px);
-      }
-
-      .footer-socials a:hover svg {
-        fill: var(--bg-deep);
-      }
-
-      .footer-socials svg {
-        width: 18px;
-        height: 18px;
-        fill: var(--ink);
-        transition: fill 0.25s;
-      }
-
-      .footer-divider {
-        border: none;
-        border-top: 1px solid var(--line);
-        margin: 0 0 20px;
-      }
-
-      .footer-bottom {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        font-size: 0.84rem;
-      }
-
-      .footer-bottom span {
-        opacity: 0.7;
-      }
-
-      .reveal {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: all 0.7s ease;
-      }
-
-      .reveal.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(14px);
-        }
-      }
-
-      @keyframes marquee {
-        0% {
-          transform: translateX(0);
-        }
-        100% {
-          transform: translateX(-50%);
-        }
-      }
-
-      @keyframes sweep {
-        0% {
-          transform: translateX(-120%);
-        }
-        60% {
-          transform: translateX(120%);
-        }
-        100% {
-          transform: translateX(120%);
-        }
-      }
-
-      @keyframes promptFloat {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-6px);
-        }
-      }
-
-      @keyframes nodePulse {
-        0%,
-        100% {
-          transform: scale(1);
-          opacity: 0.7;
-        }
-        50% {
-          transform: scale(1.35);
-          opacity: 1;
-        }
-      }
-
-      @keyframes iconPulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.04);
-        }
-      }
-
-      @media (max-width: 720px) {
-        .nav-links {
-          display: none;
-        }
-
-        .hero {
-          padding-top: 60px;
-        }
-
-        .hero-actions {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .cta-band {
-          align-items: flex-start;
-        }
-
-        .demo-layout {
-          grid-template-columns: 1fr !important;
-          text-align: center;
-        }
-
-        .demo-phone { transform: scale(0.85); }
-
-        .showcase-layout {
-          grid-template-columns: 1fr !important;
-          text-align: center;
-        }
-
-        .showcase-phone-wrapper { justify-self: center; }
-      }
-
-      /* ── Interactive AI Demo ──────────────── */
+      /* ── Interactive Demo ──────────────── */
       .demo-layout {
         max-width: 1180px;
         margin: 0 auto;
@@ -1185,7 +831,7 @@
         padding: 18px 20px;
         border-radius: 16px;
         border: 1px solid var(--line);
-        background: rgba(8, 16, 34, 0.6);
+        background: rgba(8,16,34,0.6);
         cursor: pointer;
         transition: all 0.3s ease;
         position: relative;
@@ -1203,12 +849,10 @@
 
       .demo-step.active {
         border-color: var(--accent);
-        background: rgba(34, 227, 155, 0.06);
+        background: rgba(34,227,155,0.06);
       }
 
-      .demo-step.active::before {
-        background: var(--accent);
-      }
+      .demo-step.active::before { background: var(--accent); }
 
       .demo-step h4 {
         margin: 0 0 4px;
@@ -1219,7 +863,7 @@
         gap: 8px;
       }
 
-      .demo-step h4 .step-num {
+      .demo-step h4 .sn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1231,17 +875,12 @@
         flex-shrink: 0;
       }
 
-      .demo-step.active h4 .step-num {
+      .demo-step.active h4 .sn {
         background: var(--accent);
         color: #041016;
       }
 
-      .demo-step p {
-        margin: 0;
-        font-size: 0.84rem;
-        color: var(--muted);
-        line-height: 1.5;
-      }
+      .demo-step p { margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.5; }
 
       /* Phone mockup */
       .demo-phone {
@@ -1262,15 +901,6 @@
         background: #0a0a0a;
         border-radius: 0 0 18px 18px;
         z-index: 10;
-      }
-
-      .demo-phone .notch::after {
-        content: '';
-        position: absolute;
-        top: 10px; left: 50%; transform: translateX(-50%);
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.08);
       }
 
       .phone-screens {
@@ -1306,24 +936,9 @@
         border-bottom: 1px solid rgba(255,255,255,0.06);
       }
 
-      .screen-header .sh-dot {
-        width: 10px; height: 10px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
-
-      .screen-header h5 {
-        margin: 0;
-        font-size: 0.82rem;
-        color: var(--ink);
-        font-weight: 600;
-      }
-
-      .screen-header small {
-        margin-left: auto;
-        font-size: 0.68rem;
-        color: var(--muted);
-      }
+      .screen-header .sh-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+      .screen-header h5 { margin: 0; font-size: 0.82rem; color: var(--ink); font-weight: 600; }
+      .screen-header small { margin-left: auto; font-size: 0.68rem; color: var(--muted); }
 
       .screen-body {
         flex: 1;
@@ -1343,9 +958,7 @@
         line-height: 1.45;
       }
 
-      .s-card strong {
-        color: var(--ink);
-      }
+      .s-card strong { color: var(--ink); }
 
       .s-card .ai-tag {
         display: inline-block;
@@ -1359,29 +972,11 @@
         vertical-align: middle;
       }
 
-      .s-bar {
-        height: 6px;
-        border-radius: 4px;
-        background: rgba(255,255,255,0.06);
-        overflow: hidden;
-      }
+      .s-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
 
-      .s-bar-fill {
-        height: 100%;
-        border-radius: 4px;
-        animation: barGrow 1.5s ease forwards;
-      }
+      .s-bar-fill { height: 100%; border-radius: 4px; }
 
-      @keyframes barGrow {
-        from { width: 0; }
-        to { width: var(--w); }
-      }
-
-      .s-typing {
-        display: flex;
-        gap: 4px;
-        padding: 8px 0;
-      }
+      .s-typing { display: flex; gap: 4px; padding: 8px 0; }
 
       .s-typing span {
         width: 6px; height: 6px;
@@ -1418,349 +1013,7 @@
         border-radius: 4px;
       }
 
-      /* ── Phone Showcase ──────────────── */
-      .showcase-section {
-        padding: 80px 24px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .showcase-section::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(ellipse at center, rgba(143,91,255,0.08) 0%, transparent 70%);
-        pointer-events: none;
-      }
-
-      .showcase-layout {
-        max-width: 1180px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 48px;
-        align-items: center;
-      }
-
-      .showcase-text h2 {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.8rem;
-        letter-spacing: 1px;
-        margin: 0 0 16px;
-        background: linear-gradient(135deg, var(--ink), var(--accent));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .showcase-text p {
-        color: var(--muted);
-        font-size: 1rem;
-        line-height: 1.7;
-        margin: 0 0 24px;
-      }
-
-      .showcase-features {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .showcase-feat {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 0.92rem;
-        color: var(--ink);
-      }
-
-      .showcase-feat .feat-icon {
-        width: 36px; height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        flex-shrink: 0;
-      }
-
-      .showcase-phone-wrapper {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 600px;
-      }
-
-      /* Blurred person silhouette */
-      .person-silhouette {
-        position: absolute;
-        width: 320px;
-        height: 520px;
-        border-radius: 50% 50% 0 0;
-        background: linear-gradient(180deg,
-          rgba(143,91,255,0.12) 0%,
-          rgba(54,179,255,0.08) 40%,
-          rgba(34,227,155,0.06) 70%,
-          transparent 100%);
-        filter: blur(40px);
-        bottom: 20px;
-        z-index: 0;
-      }
-
-      .person-silhouette::before {
-        content: '';
-        position: absolute;
-        width: 120px; height: 120px;
-        border-radius: 50%;
-        background: rgba(143,91,255,0.15);
-        top: -40px;
-        left: 50%; transform: translateX(-50%);
-        filter: blur(25px);
-      }
-
-      /* Showcase phone */
-      .showcase-phone {
-        width: 280px;
-        height: 560px;
-        border-radius: 36px;
-        border: 3px solid rgba(255,255,255,0.14);
-        background: #0a0a0a;
-        position: relative;
-        overflow: hidden;
-        z-index: 2;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.6),
-                    0 0 0 1px rgba(255,255,255,0.04),
-                    0 0 80px rgba(143,91,255,0.15);
-      }
-
-      .showcase-phone .notch {
-        position: absolute;
-        top: 0; left: 50%; transform: translateX(-50%);
-        width: 100px; height: 28px;
-        background: #0a0a0a;
-        border-radius: 0 0 18px 18px;
-        z-index: 10;
-      }
-
-      .showcase-scroll {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-      }
-
-      .showcase-scroll-inner {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        animation: scrollShowcase 20s linear infinite;
-      }
-
-      .showcase-screen {
-        width: 100%;
-        min-height: 560px;
-        padding: 40px 18px 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        flex-shrink: 0;
-      }
-
-      @keyframes scrollShowcase {
-        0% { transform: translateY(0); }
-        20% { transform: translateY(0); }
-        25% { transform: translateY(-560px); }
-        45% { transform: translateY(-560px); }
-        50% { transform: translateY(-1120px); }
-        70% { transform: translateY(-1120px); }
-        75% { transform: translateY(-1680px); }
-        95% { transform: translateY(-1680px); }
-        100% { transform: translateY(0); }
-      }
-
-      .sc-header {
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: var(--ink);
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .sc-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        font-size: 0.75rem;
-        color: var(--muted);
-      }
-
-      .sc-row .sc-dot {
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
-
-      .sc-avatar {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.62rem;
-        font-weight: 700;
-        color: #041016;
-        flex-shrink: 0;
-      }
-
-      .sc-chip {
-        font-size: 0.62rem;
-        padding: 2px 7px;
-        border-radius: 6px;
-        font-weight: 700;
-        margin-left: auto;
-        flex-shrink: 0;
-      }
-
-      .sc-bar {
-        height: 5px;
-        border-radius: 3px;
-        background: rgba(255,255,255,0.06);
-        margin-top: 4px;
-        overflow: hidden;
-      }
-
-      .sc-bar-fill {
-        height: 100%;
-        border-radius: 3px;
-      }
-
-      .sc-stat-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .sc-stat {
-        padding: 10px;
-        border-radius: 10px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        text-align: center;
-      }
-
-      .sc-stat .num {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: var(--ink);
-        display: block;
-      }
-
-      .sc-stat .lbl {
-        font-size: 0.62rem;
-        color: var(--muted);
-      }
-
-      .glow-ring {
-        position: absolute;
-        width: 340px; height: 340px;
-        border-radius: 50%;
-        border: 1px solid rgba(34,227,155,0.08);
-        z-index: 1;
-        animation: glowPulse 4s ease-in-out infinite;
-      }
-
-      .glow-ring:nth-child(2) {
-        width: 420px; height: 420px;
-        border-color: rgba(54,179,255,0.06);
-        animation-delay: 1s;
-      }
-
-      @keyframes glowPulse {
-        0%, 100% { opacity: 0.4; transform: scale(1); }
-        50% { opacity: 0.8; transform: scale(1.06); }
-      }
-
-      /* ── Social Proof Bar ──────────────── */
-      .social-proof-bar {
-        padding: 18px 24px;
-        border-bottom: 1px solid var(--line);
-        background: rgba(34,227,155,0.04);
-        text-align: center;
-        font-size: 0.88rem;
-        color: var(--muted);
-      }
-      .social-proof-bar strong {
-        color: var(--accent);
-        font-size: 1.1rem;
-      }
-
-      /* ── Before vs After ──────────────── */
-      .bva-grid {
-        max-width: 1000px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        gap: 0;
-        align-items: stretch;
-      }
-      .bva-col {
-        padding: 32px 28px;
-        border-radius: 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      .bva-col.before {
-        background: rgba(255,80,80,0.05);
-        border: 1px solid rgba(255,80,80,0.12);
-      }
-      .bva-col.after {
-        background: rgba(34,227,155,0.05);
-        border: 1px solid rgba(34,227,155,0.12);
-      }
-      .bva-col h3 {
-        margin: 0;
-        font-size: 1.1rem;
-      }
-      .bva-col.before h3 { color: #ff6b6b; }
-      .bva-col.after h3 { color: var(--accent); }
-      .bva-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 0.88rem;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-      .bva-item .bva-icon {
-        flex-shrink: 0;
-        font-size: 1.1rem;
-        margin-top: 1px;
-      }
-      .bva-vs {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 20px;
-      }
-      .bva-vs span {
-        background: linear-gradient(135deg, #ff6b6b, var(--accent));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2rem;
-        letter-spacing: 2px;
-      }
-
-      /* ── Pricing ──────────────────────── */
+      /* ── Pricing (Contractor) ─────────────── */
       .pricing-grid {
         max-width: 1100px;
         margin: 0 auto;
@@ -1769,6 +1022,7 @@
         gap: 24px;
         align-items: stretch;
       }
+
       .price-card {
         border-radius: 20px;
         padding: 32px 28px;
@@ -1780,13 +1034,14 @@
         position: relative;
         transition: transform 0.3s, border-color 0.3s;
       }
-      .price-card:hover {
-        transform: translateY(-4px);
-      }
+
+      .price-card:hover { transform: translateY(-4px); }
+
       .price-card.popular {
         border-color: var(--accent);
         box-shadow: 0 0 40px rgba(34,227,155,0.1);
       }
+
       .price-card .pop-badge {
         position: absolute;
         top: -12px;
@@ -1801,29 +1056,25 @@
         text-transform: uppercase;
         letter-spacing: 1px;
       }
-      .price-card h3 {
-        margin: 0;
-        font-size: 1.2rem;
-        color: var(--ink);
-      }
+
+      .price-card h3 { margin: 0; font-size: 1.2rem; color: var(--ink); }
+
       .price-card .price {
         font-family: 'Bebas Neue', sans-serif;
         font-size: 2.6rem;
         color: var(--ink);
         letter-spacing: 1px;
       }
+
       .price-card .price small {
         font-family: 'Manrope', sans-serif;
         font-size: 0.85rem;
         color: var(--muted);
         font-weight: 400;
       }
-      .price-card .price-desc {
-        font-size: 0.84rem;
-        color: var(--muted);
-        line-height: 1.5;
-        margin: 0;
-      }
+
+      .price-card .price-desc { font-size: 0.84rem; color: var(--muted); line-height: 1.5; margin: 0; }
+
       .price-features {
         flex: 1;
         display: flex;
@@ -1832,6 +1083,7 @@
         padding-top: 12px;
         border-top: 1px solid var(--line);
       }
+
       .price-feat {
         display: flex;
         align-items: center;
@@ -1839,86 +1091,13 @@
         font-size: 0.84rem;
         color: var(--muted);
       }
-      .price-feat .pf-check {
-        color: var(--accent);
-        font-weight: 700;
-        flex-shrink: 0;
-      }
+
+      .price-feat .pf-check { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
       .price-card .cta {
         margin-top: auto;
         text-align: center;
         justify-content: center;
-      }
-
-      /* ── ROI Calculator ───────────────── */
-      .roi-layout {
-        max-width: 900px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 36px;
-        align-items: start;
-      }
-      .roi-inputs {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-      }
-      .roi-group label {
-        display: block;
-        font-size: 0.84rem;
-        font-weight: 600;
-        color: var(--muted);
-        margin-bottom: 8px;
-      }
-      .roi-group input[type="range"] {
-        width: 100%;
-        -webkit-appearance: none;
-        height: 6px;
-        border-radius: 3px;
-        background: rgba(255,255,255,0.08);
-        outline: none;
-      }
-      .roi-group input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 22px; height: 22px;
-        border-radius: 50%;
-        background: var(--accent);
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(34,227,155,0.4);
-      }
-      .roi-value {
-        display: inline-block;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--ink);
-        margin-left: 8px;
-      }
-      .roi-results {
-        padding: 28px;
-        border-radius: 18px;
-        border: 1px solid var(--line);
-        background: var(--card);
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-      .roi-result {
-        text-align: center;
-        padding: 18px;
-        border-radius: 14px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-      }
-      .roi-result .roi-num {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.4rem;
-        letter-spacing: 1px;
-        display: block;
-      }
-      .roi-result .roi-label {
-        font-size: 0.82rem;
-        color: var(--muted);
       }
 
       /* ── FAQ ──────────────────────────── */
@@ -1929,15 +1108,16 @@
         flex-direction: column;
         gap: 10px;
       }
+
       .faq-item {
         border: 1px solid var(--line);
         border-radius: 14px;
         overflow: hidden;
         transition: border-color 0.3s;
       }
-      .faq-item.open {
-        border-color: rgba(34,227,155,0.2);
-      }
+
+      .faq-item.open { border-color: rgba(34,227,155,0.2); }
+
       .faq-q {
         padding: 18px 20px;
         display: flex;
@@ -1950,18 +1130,13 @@
         background: rgba(8,16,34,0.4);
         transition: background 0.2s;
       }
-      .faq-q:hover {
-        background: rgba(34,227,155,0.04);
-      }
-      .faq-q .faq-arrow {
-        transition: transform 0.3s;
-        font-size: 0.8rem;
-        color: var(--muted);
-      }
-      .faq-item.open .faq-arrow {
-        transform: rotate(180deg);
-        color: var(--accent);
-      }
+
+      .faq-q:hover { background: rgba(34,227,155,0.04); }
+
+      .faq-q .faq-arrow { transition: transform 0.3s; font-size: 0.8rem; color: var(--muted); }
+
+      .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent); }
+
       .faq-a {
         max-height: 0;
         overflow: hidden;
@@ -1971,12 +1146,25 @@
         color: var(--muted);
         line-height: 1.65;
       }
-      .faq-item.open .faq-a {
-        max-height: 300px;
-        padding: 0 20px 18px;
+
+      .faq-item.open .faq-a { max-height: 300px; padding: 0 20px 18px; }
+
+      /* ── Stats ────────────────────────── */
+      .stats {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        margin-top: 20px;
       }
 
-      /* ── Animated Counters ────────────── */
+      .stat {
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(6,14,30,0.75);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-weight: 600;
+      }
+
       .stats .stat .counter {
         font-family: 'Bebas Neue', sans-serif;
         font-size: 1.8rem;
@@ -1984,12 +1172,39 @@
         display: block;
         letter-spacing: 1px;
       }
-      .stats .stat .counter-label {
-        font-size: 0.82rem;
+
+      .stats .stat .counter-label { font-size: 0.82rem; color: var(--muted); }
+
+      /* ── CTA Band ────────────────────── */
+      .cta-band {
+        margin-top: 40px;
+        padding: 28px;
+        border-radius: 28px;
+        background: linear-gradient(140deg, #0e1c3a, #0a1428);
+        border: 1px solid rgba(54,179,255,0.18);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* ── Social Proof Bar ──────────── */
+      .social-proof-bar {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(34,227,155,0.04);
+        text-align: center;
+        font-size: 0.88rem;
         color: var(--muted);
       }
 
-      /* ── Floating Sticky CTA ──────────── */
+      .social-proof-bar strong {
+        color: var(--accent);
+        font-size: 1.1rem;
+      }
+
+      /* ── Sticky CTA ───────────────── */
       .sticky-cta {
         position: fixed;
         bottom: -80px;
@@ -2005,44 +1220,117 @@
         justify-content: center;
         gap: 16px;
       }
-      .sticky-cta.visible {
-        bottom: 0;
-      }
-      .sticky-cta p {
-        margin: 0;
-        font-size: 0.88rem;
+
+      .sticky-cta.visible { bottom: 0; }
+      .sticky-cta p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+      .sticky-cta p strong { color: var(--ink); }
+      .sticky-cta .cta { padding: 10px 20px; font-size: 0.88rem; }
+
+      /* ── Footer ────────────────────── */
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 52px 24px 40px;
         color: var(--muted);
-      }
-      .sticky-cta p strong {
-        color: var(--ink);
-      }
-      .sticky-cta .cta {
-        padding: 10px 20px;
-        font-size: 0.88rem;
+        background: var(--bg-deep);
       }
 
+      .footer-inner { max-width: 1180px; margin: 0 auto; }
+
+      .footer-top {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 32px;
+        margin-bottom: 36px;
+      }
+
+      .footer-brand { max-width: 340px; }
+      .footer-brand strong { font-size: 1.25rem; color: var(--ink); display: block; margin-bottom: 8px; }
+      .footer-brand p { margin: 0; font-size: 0.92rem; line-height: 1.6; }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px 32px;
+        align-items: center;
+      }
+
+      .footer-links a { font-size: 0.92rem; color: var(--muted); transition: color 0.2s; }
+      .footer-links a:hover { color: var(--accent); }
+
+      .footer-socials { display: flex; gap: 12px; align-items: center; }
+
+      .footer-socials a {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.25s, transform 0.25s;
+      }
+
+      .footer-socials a:hover { background: var(--accent); transform: translateY(-2px); }
+      .footer-socials a:hover svg { fill: var(--bg-deep); }
+      .footer-socials svg { width: 18px; height: 18px; fill: var(--ink); transition: fill 0.25s; }
+
+      .footer-divider { border: none; border-top: 1px solid var(--line); margin: 0 0 20px; }
+
+      .footer-bottom {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.84rem;
+      }
+
+      .footer-bottom span { opacity: 0.7; }
+
+      /* ── Reveal Animation ──────────── */
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.7s ease;
+      }
+
+      .reveal.visible { opacity: 1; transform: translateY(0); }
+
+      /* ── Keyframes ─────────────────── */
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(14px); }
+      }
+
+      @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+
+      @keyframes sweep {
+        0% { transform: translateX(-120%); }
+        60% { transform: translateX(120%); }
+        100% { transform: translateX(120%); }
+      }
+
+      /* ── Responsive ────────────────── */
       @media (max-width: 720px) {
-        .bva-grid {
-          grid-template-columns: 1fr;
-          gap: 16px;
-        }
-        .bva-vs {
-          padding: 8px 0;
-        }
-        .bva-vs span {
-          font-size: 1.4rem;
-        }
-        .pricing-grid {
-          grid-template-columns: 1fr;
-          max-width: 400px;
-        }
-        .roi-layout {
-          grid-template-columns: 1fr;
-        }
+        .nav-links { display: none; }
+        .nav-segment { display: none; }
+        .hero { padding-top: 60px; }
+        .hero-actions { flex-direction: column; align-items: stretch; }
+        .estimate-showcase { grid-template-columns: 1fr; }
+        .demo-layout { grid-template-columns: 1fr !important; text-align: center; }
+        .demo-phone { transform: scale(0.85); }
+        .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
       }
     </style>
   </head>
   <body>
+    <!-- ═══════════════════════════════════════════════
+         HEADER
+         ═══════════════════════════════════════════════ -->
     <header>
       <div class="nav">
         <div class="brand">
@@ -2051,72 +1339,72 @@
           </div>
           ProServe Hub
         </div>
+        <div class="nav-segment">
+          <a href="#homeowners" class="seg-active" id="segHomeowner">Homeowners</a>
+          <a href="#contractors" id="segContractor">Contractors</a>
+        </div>
         <nav class="nav-links">
-          <a href="#features">AI features</a>
-          <a href="#demo">Demo</a>
-          <a href="#proof">Proof</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#ai-estimate">AI Estimates</a>
           <a href="#pricing">Pricing</a>
-          <a href="#workflow">AI workflow</a>
+          <a href="#faq">FAQ</a>
         </nav>
-        <a class="cta" href="#start">Get Early Access</a>
+        <a class="cta" href="#start">Get Started Free</a>
       </div>
     </header>
 
     <!-- Social Proof Bar -->
     <div class="social-proof-bar">
-      &#9889; <strong id="waitlistCount">0</strong> contractors already on the waitlist &#8212; <a href="#start" style="color:var(--accent);text-decoration:underline;">join them</a>
+      &#127968; <strong id="waitlistCount">0</strong> homeowners have already joined &mdash; <a href="#start" style="color:var(--accent);text-decoration:underline;">get your free estimate</a>
     </div>
 
     <main>
+      <!-- ═══════════════════════════════════════════════
+           HOMEOWNER HERO
+           ═══════════════════════════════════════════════ -->
       <section class="hero" id="start">
         <div class="orb one"></div>
         <div class="orb two"></div>
         <div class="orb three"></div>
-        <div class="hero-grid">
+        <div class="hero-grid" id="homeowners">
           <div>
-            <span class="eyebrow">AI powered contractor OS</span>
-            <h1>Let AI run the paperwork. You run the crew.</h1>
+            <span class="eyebrow">&#127968; For Homeowners</span>
+            <h1>Get an instant AI estimate. Book a pro you trust.</h1>
             <p>
-              ProServe Hub uses AI to draft estimates, summarize jobs, and keep
-              clients updated in seconds. Your feed becomes proof, and proof
-              becomes new work.
+              Describe your project, snap a few photos, and get an AI-generated
+              price estimate in seconds &mdash; no waiting for callbacks, no spam calls.
+              Lock the price for 24 hours or invite contractors to bid.
             </p>
             <div class="hero-actions">
-              <button class="cta">Request access</button>
-              <button class="ghost">Watch AI demo</button>
+              <button class="cta" style="font-size:1.05rem;padding:14px 28px;">Get My Free Estimate</button>
+              <button class="ghost" id="watchDemo">See how it works</button>
             </div>
             <div class="store-badges">
               <a class="store-badge" href="#" id="googlePlayBadge" title="Coming soon to Google Play">
                 <svg viewBox="0 0 24 24" fill="none"><path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.61-.92z" fill="#4285F4"/><path d="M17.09 8.697L5.024.618C4.473.3 3.87.254 3.61 1.814l10.183 10.183 3.297-3.3z" fill="#EA4335"/><path d="M3.61 22.186c.26 1.56.863 1.514 1.414 1.196l12.066-8.08-3.297-3.299L3.61 22.186z" fill="#34A853"/><path d="M20.996 10.669l-3.906-1.972-3.297 3.3 3.297 3.299 3.906-1.972c.792-.445.792-2.21 0-2.655z" fill="#FBBC05"/></svg>
-                <div class="badge-text">
-                  <small>Get it on</small>
-                  <span>Google Play</span>
-                </div>
+                <div class="badge-text"><small>Get it on</small><span>Google Play</span></div>
               </a>
               <a class="store-badge" href="#" id="appStoreBadge" title="Coming soon to the App Store">
                 <svg viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.02-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.81-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                <div class="badge-text">
-                  <small>Download on the</small>
-                  <span>App Store</span>
-                </div>
+                <div class="badge-text"><small>Download on the</small><span>App Store</span></div>
               </a>
             </div>
           </div>
           <div class="hero-panel">
-            <h3>AI Command Center</h3>
-            <p>Live job intelligence with zero extra admin.</p>
+            <h3>&#9889; Your Project, Priced Instantly</h3>
+            <p>See what AI thinks your project costs &mdash; before talking to anyone.</p>
             <div class="ai-stack">
               <div class="ai-card">
-                <span>Estimate draft ready</span>
-                <span class="ai-chip">AI</span>
+                <span>Kitchen backsplash &mdash; $2,040</span>
+                <span class="ai-chip">AI Price</span>
               </div>
               <div class="ai-card">
-                <span>Client update sent</span>
-                <span class="ai-chip">Auto</span>
+                <span>&#128274; Price locked for 24 hours</span>
+                <span class="ai-chip">Locked</span>
               </div>
               <div class="ai-card">
-                <span>Review request queued</span>
-                <span class="ai-chip">Smart</span>
+                <span>3 contractors want your job</span>
+                <span class="ai-chip">Bids</span>
               </div>
             </div>
           </div>
@@ -2124,43 +1412,201 @@
         <div class="ribbon">
           <div class="ticker">
             <div class="ticker-track">
-              <span>AI estimates</span>
-              <span>Auto job summaries</span>
-              <span>Client status updates</span>
-              <span>Proof feed</span>
-              <span>Smart follow-ups</span>
-              <span>AI estimates</span>
-              <span>Auto job summaries</span>
-              <span>Client status updates</span>
-              <span>Proof feed</span>
-              <span>Smart follow-ups</span>
+              <span>Instant AI estimates</span>
+              <span>24-hour price lock</span>
+              <span>Verified local pros</span>
+              <span>Escrow payment protection</span>
+              <span>Real-time job updates</span>
+              <span>No spam calls</span>
+              <span>Instant AI estimates</span>
+              <span>24-hour price lock</span>
+              <span>Verified local pros</span>
+              <span>Escrow payment protection</span>
+              <span>Real-time job updates</span>
+              <span>No spam calls</span>
             </div>
           </div>
         </div>
       </section>
 
+      <!-- ═══════════════════════════════════════════════
+           HOW IT WORKS (Homeowners)
+           ═══════════════════════════════════════════════ -->
+      <section class="section" id="how-it-works">
+        <span class="eyebrow">Simple as 1-2-3</span>
+        <h2>How it works for homeowners.</h2>
+        <p>No more calling 10 contractors and waiting days for quotes. Get your price now.</p>
+        <div class="steps-grid">
+          <div class="step-card reveal">
+            <div class="step-num">1</div>
+            <h3>Describe Your Project</h3>
+            <p>Tell us what you need &mdash; kitchen remodel, roof repair, painting, anything. Add photos for an even more accurate estimate.</p>
+          </div>
+          <div class="step-card reveal">
+            <div class="step-num">2</div>
+            <h3>Get an Instant AI Estimate</h3>
+            <p>Our AI analyzes your project, local market rates, and material costs to give you a detailed price breakdown in seconds. <strong style="color:var(--accent);">Lock it for 24 hours.</strong></p>
+          </div>
+          <div class="step-card reveal">
+            <div class="step-num">3</div>
+            <h3>Book a Verified Pro</h3>
+            <p>Accept the AI price and get matched instantly, or let verified contractors compete for your job with custom bids. Your money stays in escrow until you're happy.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           AI ESTIMATE SHOWCASE
+           ═══════════════════════════════════════════════ -->
+      <section class="section" id="ai-estimate">
+        <span class="eyebrow">&#9889; AI-powered pricing</span>
+        <h2>See your price before you talk to anyone.</h2>
+        <p>No account needed. No phone number required. Just describe your project and get a real estimate.</p>
+        <div class="estimate-showcase">
+          <div>
+            <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.5px;margin:0 0 16px;">How the AI estimate works</h3>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <span style="font-size:1.5rem;">&#128247;</span>
+                <div>
+                  <strong>Snap &amp; describe</strong>
+                  <p style="margin:4px 0 0;font-size:0.88rem;">Upload photos of your space or describe the job. AI reads dimensions, materials, and scope automatically.</p>
+                </div>
+              </div>
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <span style="font-size:1.5rem;">&#129302;</span>
+                <div>
+                  <strong>AI generates your quote</strong>
+                  <p style="margin:4px 0 0;font-size:0.88rem;">Get a line-by-line breakdown: materials, labor, timeline. Based on real local market data, not guesses.</p>
+                </div>
+              </div>
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <span style="font-size:1.5rem;">&#128274;</span>
+                <div>
+                  <strong>Lock your price for 24 hours</strong>
+                  <p style="margin:4px 0 0;font-size:0.88rem;">Like what you see? Lock that price. Book a pro at the AI rate, or open it up for contractors to bid lower.</p>
+                </div>
+              </div>
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <span style="font-size:1.5rem;">&#128176;</span>
+                <div>
+                  <strong>Compare contractor bids</strong>
+                  <p style="margin:4px 0 0;font-size:0.88rem;">Verified pros can submit their own estimates. Compare prices, reviews, and portfolios &mdash; all in one place.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="estimate-live reveal">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h4 style="margin:0;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.5px;">&#9889; AI Estimate</h4>
+              <span class="ai-chip">Generated in 4s</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">Kitchen backsplash &bull; Ceramic tile &bull; 120 sq ft</div>
+            <div class="estimate-line"><span>Ceramic tile (120 sq ft)</span><span style="color:var(--ink);">$480</span></div>
+            <div class="estimate-line"><span>Thinset mortar &amp; grout</span><span style="color:var(--ink);">$120</span></div>
+            <div class="estimate-line"><span>Backer board &amp; supplies</span><span style="color:var(--ink);">$95</span></div>
+            <div class="estimate-line"><span>Demo &amp; prep</span><span style="color:var(--ink);">$145</span></div>
+            <div class="estimate-line"><span>Professional labor (2 days)</span><span style="color:var(--ink);">$1,200</span></div>
+            <div class="estimate-total"><span>Total Estimate</span><span>$2,040</span></div>
+            <div class="lock-badge">&#128274; Price locked for 24 hours &mdash; book now or let pros bid</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           WHY PROSERVE HUB vs OTHERS
+           ═══════════════════════════════════════════════ -->
+      <section class="section" id="compare">
+        <span class="eyebrow">Stop wasting time</span>
+        <h2>Why homeowners choose ProServe Hub.</h2>
+        <p>Tired of Thumbtack spam calls and Angi's mystery pricing? Here's how we're different.</p>
+        <div class="compare-grid">
+          <div class="compare-card">
+            <h3>&#128683; Other apps (Thumbtack, Angi, etc.)</h3>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> Submit a request, wait hours or days for quotes</div>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> Flooded with spam calls from random contractors</div>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> No price transparency &mdash; every quote is different</div>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> Pay the contractor directly &mdash; zero protection</div>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> Can't track job progress or see updates</div>
+            <div class="compare-item"><span class="ci-icon">&#10060;</span> Reviews are unreliable or hard to verify</div>
+          </div>
+          <div class="compare-card highlight">
+            <h3>&#9989; ProServe Hub</h3>
+            <div class="compare-item"><span class="ci-icon">&#9889;</span> <strong>Instant AI estimate</strong> &mdash; no waiting, no callbacks</div>
+            <div class="compare-item"><span class="ci-icon">&#128274;</span> <strong>Lock your price for 24 hours</strong> &mdash; book with confidence</div>
+            <div class="compare-item"><span class="ci-icon">&#128176;</span> <strong>Escrow protection</strong> &mdash; you don't pay until the job is done right</div>
+            <div class="compare-item"><span class="ci-icon">&#128247;</span> <strong>Real-time progress</strong> &mdash; see photos, timeline, and milestones</div>
+            <div class="compare-item"><span class="ci-icon">&#127775;</span> <strong>Verified pros only</strong> &mdash; rated by real homeowners like you</div>
+            <div class="compare-item"><span class="ci-icon">&#128684;</span> <strong>Zero spam</strong> &mdash; you control who contacts you, not the other way around</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           TRUST & SAFETY
+           ═══════════════════════════════════════════════ -->
+      <section class="section">
+        <h2>Your money is protected. Every step.</h2>
+        <p>We built ProServe Hub so you never have to worry about getting ripped off again.</p>
+        <div class="trust-grid">
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#128274;</span>
+            <h4>Escrow Payments</h4>
+            <p>Your money is held securely by Stripe until the job is done and you're satisfied. No more chasing refunds.</p>
+          </div>
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#128247;</span>
+            <h4>Photo Proof Required</h4>
+            <p>Contractors upload timestamped, geotagged progress photos. You see exactly what's happening, in real time.</p>
+          </div>
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#9989;</span>
+            <h4>Verified Contractors</h4>
+            <p>Every pro is background-checked and reviewed by real homeowners. Fake reviews don't fly here.</p>
+          </div>
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#128172;</span>
+            <h4>In-App Chat &amp; Updates</h4>
+            <p>No more lost texts or phone tag. All communication is in one place with automatic AI summaries.</p>
+          </div>
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#128202;</span>
+            <h4>AI Price Transparency</h4>
+            <p>Our AI uses real market data so you always know if a bid is fair. No more overpaying.</p>
+          </div>
+          <div class="trust-item reveal">
+            <span class="trust-icon">&#128737;&#65039;</span>
+            <h4>Dispute Resolution</h4>
+            <p>If something goes wrong, our support team mediates. Your escrow funds won't be released until it's resolved.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           HOMEOWNER DEMO (Interactive)
+           ═══════════════════════════════════════════════ -->
       <section class="section" id="demo">
         <div class="demo-layout">
           <div>
-            <span class="eyebrow">See the AI in action</span>
-            <h2>Your AI assistant, step by step.</h2>
-            <p style="color:var(--muted);margin:0 0 28px;line-height:1.6;">Click each step to see exactly what ProServe Hub does on a real job — from intake to 5-star review.</p>
+            <span class="eyebrow">See it in action</span>
+            <h2>Your project. Start to finish.</h2>
+            <p style="color:var(--muted);margin:0 0 28px;line-height:1.6;">Click each step to see what happens when you use ProServe Hub as a homeowner.</p>
             <div class="demo-steps">
               <div class="demo-step active" data-step="0">
-                <h4><span class="step-num">1</span> Smart Intake</h4>
-                <p>Customer describes the job. AI extracts scope, area, materials, and generates an instant estimate.</p>
+                <h4><span class="sn">1</span> Describe &amp; Get AI Estimate</h4>
+                <p>Tell us about your project. AI instantly generates a detailed price estimate with materials, labor, and timeline.</p>
               </div>
               <div class="demo-step" data-step="1">
-                <h4><span class="step-num">2</span> AI Progress Update</h4>
-                <p>Contractor snaps a photo. AI writes a professional client update and sends it instantly.</p>
+                <h4><span class="sn">2</span> Compare &amp; Book a Pro</h4>
+                <p>Accept the AI price, or let contractors bid. Compare reviews, portfolios, and prices. Book with one tap.</p>
               </div>
               <div class="demo-step" data-step="2">
-                <h4><span class="step-num">3</span> Auto Invoice</h4>
-                <p>Job marked complete. AI generates the invoice with line items from the original scope.</p>
+                <h4><span class="sn">3</span> Track Progress Live</h4>
+                <p>See timestamped photos, milestones, and AI-written updates. Know exactly where your project stands, 24/7.</p>
               </div>
               <div class="demo-step" data-step="3">
-                <h4><span class="step-num">4</span> Review & Repeat</h4>
-                <p>AI sends a review prompt to the client. 5-star feedback goes straight to the proof feed.</p>
+                <h4><span class="sn">4</span> Approve &amp; Release Payment</h4>
+                <p>Happy with the work? Release escrow with one tap. Leave a verified review to help other homeowners.</p>
               </div>
             </div>
           </div>
@@ -2168,554 +1614,206 @@
             <div class="demo-phone">
               <div class="notch"></div>
               <div class="phone-screens">
-                <!-- Screen 1: Intake -->
+                <!-- Screen 1: AI Estimate -->
                 <div class="phone-screen active" data-screen="0">
                   <div class="screen-header">
                     <div class="sh-dot" style="background:#22e39b;"></div>
-                    <h5>New Job Request</h5>
+                    <h5>New Project</h5>
                     <small>Just now</small>
                   </div>
                   <div class="screen-body">
-                    <div class="s-card">
-                      <strong>Kitchen remodel</strong> — full backsplash replacement, 120 sq ft, ceramic tile.
-                    </div>
-                    <div class="s-card">
-                      📍 Houston, TX 77024<br/>
-                      📅 Requested: Feb 18, 2026
-                    </div>
+                    <div class="s-card"><strong>Kitchen backsplash</strong> &mdash; ceramic tile, 120 sq ft</div>
+                    <div class="s-card">&#128205; Houston, TX 77024<br/>&#128197; Flexible start date</div>
                     <div class="s-card" style="border-color:rgba(34,227,155,0.2);">
                       <strong>AI Estimate</strong> <span class="ai-tag">AI</span><br/>
-                      Materials: $840 &bull; Labor: $1,200<br/>
+                      Materials: $695 &bull; Labor: $1,200<br/>
                       <strong style="color:var(--accent);">Total: $2,040</strong>
                     </div>
-                    <div class="s-typing"><span></span><span></span><span></span></div>
-                    <div class="s-card" style="font-size:0.72rem;">AI is analyzing photos for scope details...</div>
+                    <div class="s-card" style="border-color:rgba(34,227,155,0.25);background:rgba(34,227,155,0.06);">
+                      &#128274; <strong style="color:var(--accent);">Price locked for 24h</strong>
+                    </div>
+                    <div class="s-card" style="font-size:0.72rem;">3 verified pros available in your area</div>
                   </div>
                 </div>
-                <!-- Screen 2: Progress -->
+                <!-- Screen 2: Compare & Book -->
                 <div class="phone-screen" data-screen="1">
                   <div class="screen-header">
                     <div class="sh-dot" style="background:#36b3ff;"></div>
-                    <h5>Client Update</h5>
+                    <h5>Contractor Bids</h5>
+                    <small>3 bids</small>
+                  </div>
+                  <div class="screen-body">
+                    <div class="s-card" style="border-color:rgba(34,227,155,0.2);">
+                      <strong>Summit Builders</strong> &#11088; 4.9 (87 reviews)<br/>
+                      Bid: <strong style="color:var(--accent);">$1,950</strong><br/>
+                      <span style="font-size:0.68rem;">&#9989; Licensed &bull; Insured &bull; 12 yr exp</span>
+                    </div>
+                    <div class="s-card">
+                      <strong>Metro Remodeling</strong> &#11088; 4.8 (54 reviews)<br/>
+                      Bid: <strong>$2,100</strong><br/>
+                      <span style="font-size:0.68rem;">&#9989; Licensed &bull; Insured &bull; 8 yr exp</span>
+                    </div>
+                    <div class="s-card">
+                      <strong>Elite Tile Co.</strong> &#11088; 4.7 (32 reviews)<br/>
+                      Bid: <strong>$2,200</strong><br/>
+                      <span style="font-size:0.68rem;">&#9989; Licensed &bull; Insured &bull; 5 yr exp</span>
+                    </div>
+                    <div class="s-card" style="text-align:center;border-color:rgba(34,227,155,0.2);">
+                      <strong style="color:var(--accent);">Book Summit Builders &#8594;</strong>
+                    </div>
+                  </div>
+                </div>
+                <!-- Screen 3: Progress -->
+                <div class="phone-screen" data-screen="2">
+                  <div class="screen-header">
+                    <div class="sh-dot" style="background:#36b3ff;"></div>
+                    <h5>Project Updates</h5>
                     <small>Day 2</small>
                   </div>
                   <div class="screen-body">
                     <div class="s-card" style="border-color:rgba(54,179,255,0.2);">
-                      <span class="ai-tag">AI Draft</span><br/>
-                      "Backsplash demo complete. Old tile removed, wall prepped and leveled. Thinset going down tomorrow. On schedule."
+                      <span class="ai-tag">AI Summary</span><br/>
+                      "Demo complete. Old tile removed, wall prepped and leveled. Thinset going down tomorrow. On schedule."
                     </div>
-                    <div class="s-card">
-                      📸 <strong>3 photos attached</strong><br/>
-                      Before &bull; During &bull; Detail shot
-                    </div>
-                    <div class="s-bar"><div class="s-bar-fill" style="--w:55%;background:linear-gradient(90deg,#36b3ff,#22e39b);"></div></div>
+                    <div class="s-card">&#128248; <strong>3 photos attached</strong><br/>Before &bull; During &bull; Detail shot</div>
+                    <div class="s-bar"><div class="s-bar-fill" style="width:55%;background:linear-gradient(90deg,#36b3ff,#22e39b);"></div></div>
                     <div style="font-size:0.72rem;color:var(--muted);text-align:center;">55% complete</div>
-                    <div class="s-card">Client viewed update ✔️</div>
+                    <div class="s-card">&#128176; <strong>$2,040 in escrow</strong> &mdash; protected until you approve</div>
                   </div>
                 </div>
-                <!-- Screen 3: Invoice -->
-                <div class="phone-screen" data-screen="2">
-                  <div class="screen-header">
-                    <div class="sh-dot" style="background:#8f5bff;"></div>
-                    <h5>Invoice #1042</h5>
-                    <small>Day 5</small>
-                  </div>
-                  <div class="screen-body">
-                    <div class="s-card">
-                      <strong>Kitchen Backsplash</strong><br/>
-                      Ceramic tile &bull; 120 sq ft
-                    </div>
-                    <div class="s-card">
-                      Materials ................ $840.00<br/>
-                      Labor ...................... $1,200.00<br/>
-                      <hr style="border-color:rgba(255,255,255,0.06);margin:6px 0;"/>
-                      <strong style="color:var(--accent);">Total: $2,040.00</strong>
-                    </div>
-                    <div class="s-card" style="border-color:rgba(143,91,255,0.2);">
-                      <span class="ai-tag" style="background:rgba(143,91,255,0.15);color:#8f5bff;">Auto</span>
-                      Payment link sent to client
-                    </div>
-                    <div class="s-card">✅ Paid via Stripe &bull; Funds in escrow</div>
-                  </div>
-                </div>
-                <!-- Screen 4: Review -->
+                <!-- Screen 4: Approve & Review -->
                 <div class="phone-screen" data-screen="3">
                   <div class="screen-header">
                     <div class="sh-dot" style="background:#22e39b;"></div>
-                    <h5>Proof Feed</h5>
-                    <small>Day 6</small>
+                    <h5>Job Complete</h5>
+                    <small>Day 4</small>
                   </div>
                   <div class="screen-body">
                     <div class="s-card" style="border-color:rgba(34,227,155,0.2);">
-                      ⭐⭐⭐⭐⭐<br/>
+                      &#9989; <strong>Project complete!</strong><br/>
+                      Final photos uploaded. All milestones met.
+                    </div>
+                    <div class="s-card" style="background:rgba(34,227,155,0.06);">
+                      &#128176; <strong style="color:var(--accent);">Release $2,040?</strong><br/>
+                      <span style="font-size:0.72rem;">Tap to approve &amp; release escrow to contractor</span>
+                    </div>
+                    <div class="s-card">
+                      &#11088;&#11088;&#11088;&#11088;&#11088;<br/>
                       <strong>"Amazing work! Looks better than we imagined."</strong><br/>
-                      <span style="font-size:0.68rem;">— Sarah M. &bull; Verified Homeowner</span>
+                      <span style="font-size:0.68rem;">&mdash; You &bull; Verified Homeowner</span>
                     </div>
-                    <div class="s-card">
-                      <span class="ai-tag">AI</span> Review prompt sent automatically at job close
-                    </div>
-                    <div class="s-card">
-                      📈 <strong>Reputation: 4.9</strong> &bull; 24 reviews<br/>
-                      Profile boosted in search results
-                    </div>
-                    <div class="s-card">
-                      🔥 <strong>3 new leads</strong> from this proof post
-                    </div>
+                    <div class="s-card" style="font-size:0.72rem;">&#127775; Your review helps other homeowners find great pros</div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="demo-progress">
-              <span class="active"></span>
-              <span></span>
-              <span></span>
-              <span></span>
+              <span class="active"></span><span></span><span></span><span></span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Before vs After -->
-      <section class="section" id="compare">
-        <span class="eyebrow">Why switch?</span>
-        <h2>The old way vs. the ProServe way.</h2>
-        <p style="color:var(--muted);max-width:600px;margin:0 auto 32px;">See exactly what changes when AI handles your admin.</p>
-        <div class="bva-grid">
-          <div class="bva-col before reveal">
-            <h3>&#10060; Without ProServe Hub</h3>
-            <div class="bva-item"><span class="bva-icon">&#128196;</span> Estimates typed from scratch every time</div>
-            <div class="bva-item"><span class="bva-icon">&#128241;</span> Client updates via scattered text threads</div>
-            <div class="bva-item"><span class="bva-icon">&#128184;</span> Chasing payments with Venmo / Zelle</div>
-            <div class="bva-item"><span class="bva-icon">&#11088;</span> Hoping clients leave reviews on their own</div>
-            <div class="bva-item"><span class="bva-icon">&#128203;</span> Job details lost in notes &amp; group chats</div>
-            <div class="bva-item"><span class="bva-icon">&#9200;</span> Hours wasted on admin every week</div>
-          </div>
-          <div class="bva-vs"><span>VS</span></div>
-          <div class="bva-col after reveal">
-            <h3>&#9989; With ProServe Hub</h3>
-            <div class="bva-item"><span class="bva-icon">&#9889;</span> AI drafts estimates from photos + scope notes</div>
-            <div class="bva-item"><span class="bva-icon">&#129302;</span> AI writes &amp; sends professional client updates</div>
-            <div class="bva-item"><span class="bva-icon">&#128274;</span> Secure escrow payments via Stripe</div>
-            <div class="bva-item"><span class="bva-icon">&#127775;</span> AI auto-sends review prompts at job close</div>
-            <div class="bva-item"><span class="bva-icon">&#128248;</span> Every job tracked with proof feed &amp; timeline</div>
-            <div class="bva-item"><span class="bva-icon">&#128640;</span> Save 10+ hours/week with AI automation</div>
-          </div>
-        </div>
-      </section>
-
+      <!-- ═══════════════════════════════════════════════
+           HOMEOWNER TESTIMONIALS
+           ═══════════════════════════════════════════════ -->
       <section class="section">
-        <p>
-          A scrollytelling snapshot of how AI keeps every step clean, fast, and
-          professional.
-        </p>
-        <div class="timeline">
-          <div class="timeline-item reveal">
-            <div class="timeline-dot"></div>
-            <div class="timeline-card">
-              <h3>1. Intake captured</h3>
-              <p>AI reads job notes, photos, and location data instantly.</p>
-            </div>
-          </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-dot"></div>
-            <div class="timeline-card">
-              <h3>2. Estimate assembled</h3>
-              <p>Pricing and scope auto-fill into a branded quote.</p>
-            </div>
-          </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-dot"></div>
-            <div class="timeline-card">
-              <h3>3. Client updates</h3>
-              <p>Progress posts become clean client messages automatically.</p>
-            </div>
-          </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-dot"></div>
-            <div class="timeline-card">
-              <h3>4. Close + reviews</h3>
-              <p>AI requests reviews and schedules follow-ups.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="features">
-        <h2>AI features that make you look elite.</h2>
-        <p>
-          Built for speed on the jobsite and clarity for clients. AI handles
-          the admin, so your crew stays focused on craft.
-        </p>
-        <div class="grid">
-          <div class="card reveal">
-            <div class="feature-icon">01</div>
-            <h3>AI estimate builder</h3>
-            <p>Generate polished quotes from quick notes and photos.</p>
-          </div>
-          <div class="card reveal">
-            <div class="feature-icon">02</div>
-            <h3>AI job summaries</h3>
-            <p>Turn site updates into clean client recaps automatically.</p>
-          </div>
-          <div class="card reveal">
-            <div class="feature-icon">03</div>
-            <h3>Smart client portal</h3>
-            <p>Give clients a live feed of progress and approvals.</p>
-          </div>
-          <div class="card reveal">
-            <div class="feature-icon">04</div>
-            <h3>Proof and reviews</h3>
-            <p>AI prompts reviews and turns proof into new leads.</p>
-          </div>
-        </div>
-        <div class="ai-core">
-          <div class="core-card">
-            <h3>AI ops assistant</h3>
-            <p>Auto schedule follow-ups and keep timelines tight.</p>
-          </div>
-          <div class="core-card">
-            <h3>AI quality checks</h3>
-            <p>Flag missing photos and approvals before handoff.</p>
-          </div>
-          <div class="core-card">
-            <h3>AI insights</h3>
-            <p>See which jobs and posts bring the most revenue.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Signal map</h2>
-        <p>
-          A live view of how ProServe Hub connects crews, clients, and proof
-          into one intelligent network.
-        </p>
-        <div class="signal-map reveal">
-          <svg viewBox="0 0 900 420" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Connection lines -->
-            <line class="edge" x1="450" y1="80" x2="200" y2="200" stroke="#36B3FF" stroke-width="1.5" opacity="0.5"/>
-            <line class="edge" x1="450" y1="80" x2="700" y2="200" stroke="#22E39B" stroke-width="1.5" opacity="0.5"/>
-            <line class="edge" x1="450" y1="80" x2="450" y2="340" stroke="#8F5BFF" stroke-width="1.5" opacity="0.4"/>
-            <line class="edge" x1="200" y1="200" x2="120" y2="340" stroke="#36B3FF" stroke-width="1.5" opacity="0.4"/>
-            <line class="edge" x1="200" y1="200" x2="340" y2="340" stroke="#22E39B" stroke-width="1.5" opacity="0.4"/>
-            <line class="edge" x1="700" y1="200" x2="580" y2="340" stroke="#8F5BFF" stroke-width="1.5" opacity="0.4"/>
-            <line class="edge" x1="700" y1="200" x2="780" y2="340" stroke="#36B3FF" stroke-width="1.5" opacity="0.4"/>
-            <line class="edge" x1="200" y1="200" x2="700" y2="200" stroke="rgba(255,255,255,0.08)" stroke-width="1" opacity="0.6"/>
-            <line class="edge" x1="120" y1="340" x2="340" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
-            <line class="edge" x1="580" y1="340" x2="780" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
-            <line class="edge" x1="340" y1="340" x2="450" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
-            <line class="edge" x1="450" y1="340" x2="580" y2="340" stroke="rgba(255,255,255,0.06)" stroke-width="1" opacity="0.5"/>
-
-            <!-- Central AI Hub -->
-            <circle class="node-glow" cx="450" cy="80" r="28" fill="rgba(54,179,255,0.12)" stroke="#36B3FF" stroke-width="2"/>
-            <circle cx="450" cy="80" r="14" fill="#36B3FF"/>
-            <text class="node-label" x="450" y="130">AI HUB</text>
-            <text class="node-sub" x="450" y="143">Central brain</text>
-
-            <!-- Contractor node -->
-            <circle class="node-glow" cx="200" cy="200" r="24" fill="rgba(34,227,155,0.12)" stroke="#22E39B" stroke-width="2"/>
-            <circle cx="200" cy="200" r="12" fill="#22E39B"/>
-            <text class="node-label" x="200" y="248">CONTRACTOR</text>
-            <text class="node-sub" x="200" y="261">Job updates</text>
-
-            <!-- Client node -->
-            <circle class="node-glow" cx="700" cy="200" r="24" fill="rgba(143,91,255,0.12)" stroke="#8F5BFF" stroke-width="2"/>
-            <circle cx="700" cy="200" r="12" fill="#8F5BFF"/>
-            <text class="node-label" x="700" y="248">CLIENT</text>
-            <text class="node-sub" x="700" y="261">Live portal</text>
-
-            <!-- Bottom row nodes -->
-            <circle class="node-glow" cx="120" cy="340" r="18" fill="rgba(54,179,255,0.1)" stroke="#36B3FF" stroke-width="1.5"/>
-            <circle cx="120" cy="340" r="8" fill="#36B3FF"/>
-            <text class="node-label" x="120" y="376">ESTIMATES</text>
-
-            <circle class="node-glow" cx="340" cy="340" r="18" fill="rgba(34,227,155,0.1)" stroke="#22E39B" stroke-width="1.5"/>
-            <circle cx="340" cy="340" r="8" fill="#22E39B"/>
-            <text class="node-label" x="340" y="376">PROOF FEED</text>
-
-            <circle class="node-glow" cx="450" cy="340" r="18" fill="rgba(143,91,255,0.1)" stroke="#8F5BFF" stroke-width="1.5"/>
-            <circle cx="450" cy="340" r="8" fill="#8F5BFF"/>
-            <text class="node-label" x="450" y="376">REVIEWS</text>
-
-            <circle class="node-glow" cx="580" cy="340" r="18" fill="rgba(34,227,155,0.1)" stroke="#22E39B" stroke-width="1.5"/>
-            <circle cx="580" cy="340" r="8" fill="#22E39B"/>
-            <text class="node-label" x="580" y="376">INVOICES</text>
-
-            <circle class="node-glow" cx="780" cy="340" r="18" fill="rgba(54,179,255,0.1)" stroke="#36B3FF" stroke-width="1.5"/>
-            <circle cx="780" cy="340" r="8" fill="#36B3FF"/>
-            <text class="node-label" x="780" y="376">SCHEDULE</text>
-
-            <!-- Data packets moving along edges -->
-            <circle r="3" fill="#36B3FF" opacity="0.9">
-              <animateMotion dur="3s" repeatCount="indefinite" path="M450,80 L200,200" />
-            </circle>
-            <circle r="3" fill="#22E39B" opacity="0.9">
-              <animateMotion dur="2.8s" repeatCount="indefinite" path="M450,80 L700,200" />
-            </circle>
-            <circle r="2.5" fill="#8F5BFF" opacity="0.9">
-              <animateMotion dur="3.5s" repeatCount="indefinite" path="M200,200 L340,340" />
-            </circle>
-            <circle r="2.5" fill="#36B3FF" opacity="0.9">
-              <animateMotion dur="3.2s" repeatCount="indefinite" path="M700,200 L580,340" />
-            </circle>
-            <circle r="2" fill="#22E39B" opacity="0.8">
-              <animateMotion dur="4s" repeatCount="indefinite" path="M200,200 L700,200" />
-            </circle>
-            <circle r="2" fill="#8F5BFF" opacity="0.8">
-              <animateMotion dur="3.8s" repeatCount="indefinite" path="M450,80 L450,340" />
-            </circle>
-          </svg>
-        </div>
-      </section>
-
-      <section class="section" id="proof">
-        <span class="eyebrow">Proof drives growth</span>
-        <h2>Turn every job into an AI powered referral engine.</h2>
-        <p>
-          Clients watch progress, react in real time, and share your work.
-          AI highlights the best moments so your feed sells for you.
-        </p>
-
-        <!-- Animated stats -->
-        <div class="proof-stats reveal">
-          <div class="proof-stat">
-            <div class="big">3.2x</div>
-            <div class="label">More repeat clients</div>
-          </div>
-          <div class="proof-stat">
-            <div class="big">87%</div>
-            <div class="label">Review response rate</div>
-          </div>
-          <div class="proof-stat">
-            <div class="big">+58%</div>
-            <div class="label">Faster approvals</div>
-          </div>
-          <div class="proof-stat">
-            <div class="big">24/7</div>
-            <div class="label">Client visibility</div>
-          </div>
-        </div>
-
-        <!-- Before / After visual -->
-        <div class="before-after reveal">
-          <div class="before-after-half before">
-            <div class="ba-label">Before ProServe</div>
-            <div class="ba-icon">&#128683;</div>
-            <p>Missed follow-ups, lost photos, slow estimates, chasing reviews manually.</p>
-          </div>
-          <div class="before-after-half after">
-            <div class="ba-label">After ProServe</div>
-            <div class="ba-icon">&#9889;</div>
-            <p>AI drafts estimates, auto-updates clients, proof feed drives referrals 24/7.</p>
-          </div>
-        </div>
-
-        <!-- Testimonial cards -->
-        <div class="testimonial-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 24px;">
+        <span class="eyebrow">Real homeowners, real results</span>
+        <h2>Why homeowners love ProServe Hub.</h2>
+        <div class="testimonial-grid">
           <div class="testimonial reveal">
             <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
-            <h3>Booked three new jobs in two days.</h3>
-            <p>Posting a single renovation update brought two referrals and a repeat client. The feed sells for us.</p>
+            <h3>Got an estimate in 10 seconds. Booked same day.</h3>
+            <p>I described my kitchen backsplash, uploaded 2 photos, and had a detailed price instantly. Three contractors bid and I picked the best one. Way faster than Thumbtack.</p>
             <div class="author">
-              <div class="avatar" style="background: linear-gradient(135deg, #22e39b, #36b3ff);">SB</div>
-              <div class="author-info">
-                <strong>Summit Builders Co.</strong>
-                <span>General Contractor &bull; Denver, CO</span>
-              </div>
+              <div class="avatar" style="background: linear-gradient(135deg, #22e39b, #36b3ff);">SM</div>
+              <div class="author-info"><strong>Sarah M.</strong><span>Homeowner &bull; Houston, TX</span></div>
             </div>
           </div>
           <div class="testimonial reveal">
             <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
-            <h3>Clients now approve faster than ever.</h3>
-            <p>AI summaries cut our back-and-forth in half. Clients see real-time progress and approve same-day.</p>
+            <h3>The escrow protection was a game-changer.</h3>
+            <p>I've been burned by contractors before. Knowing my money was held in escrow until the job was done gave me total peace of mind. Plus I could see daily photo updates.</p>
             <div class="author">
               <div class="avatar" style="background: linear-gradient(135deg, #8F5BFF, #36b3ff);">MR</div>
-              <div class="author-info">
-                <strong>Metro Remodeling</strong>
-                <span>Kitchen &amp; Bath &bull; Austin, TX</span>
-              </div>
+              <div class="author-info"><strong>Mike R.</strong><span>Homeowner &bull; Austin, TX</span></div>
             </div>
           </div>
           <div class="testimonial reveal">
             <div class="stars"><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span></div>
-            <h3>Our reviews went from 12 to 80+ in a month.</h3>
-            <p>ProServe's auto-review requests at job close changed everything. We barely have to think about it.</p>
+            <h3>No more spam calls. Finally.</h3>
+            <p>On other sites I'd get 15 calls in an hour. Here, I got 3 real bids from verified pros, compared them side by side, and picked the best. Zero phone spam.</p>
             <div class="author">
-              <div class="avatar" style="background: linear-gradient(135deg, #36b3ff, #22e39b);">EP</div>
-              <div class="author-info">
-                <strong>Elite Painters LLC</strong>
-                <span>Residential Paint &bull; Charlotte, NC</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="pill-row" style="margin-top: 20px;">
-          <span class="pill">Before and after stories</span>
-          <span class="pill">Instant reactions</span>
-          <span class="pill">Verified reviews</span>
-          <span class="pill">Auto follow-ups</span>
-          <span class="pill">AI highlights</span>
-        </div>
-      </section>
-
-      <!-- Phone Showcase Section -->
-      <section class="showcase-section" id="showcase">
-        <div class="showcase-layout">
-          <div class="showcase-phone-wrapper">
-            <div class="person-silhouette"></div>
-            <div class="glow-ring"></div>
-            <div class="glow-ring"></div>
-            <div class="showcase-phone">
-              <div class="notch"></div>
-              <div class="showcase-scroll">
-                <div class="showcase-scroll-inner">
-                  <!-- Screen A: Dashboard -->
-                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(34,227,155,0.06),transparent);">
-                    <div class="sc-header">⚡ Dashboard</div>
-                    <div class="sc-stat-row">
-                      <div class="sc-stat"><span class="num" style="color:var(--accent);">12</span><span class="lbl">Active Jobs</span></div>
-                      <div class="sc-stat"><span class="num" style="color:var(--accent-2);">$8.4k</span><span class="lbl">This Month</span></div>
-                    </div>
-                    <div class="sc-stat-row">
-                      <div class="sc-stat"><span class="num" style="color:var(--accent-3);">4.9</span><span class="lbl">Rating</span></div>
-                      <div class="sc-stat"><span class="num" style="color:var(--ink);">97%</span><span class="lbl">On Time</span></div>
-                    </div>
-                    <div class="sc-row"><div class="sc-dot" style="background:#22e39b;"></div>Kitchen Remodel <span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">Active</span></div>
-                    <div class="sc-row"><div class="sc-dot" style="background:#36b3ff;"></div>Bathroom Tile <span class="sc-chip" style="background:rgba(54,179,255,0.15);color:#36b3ff;">Quoted</span></div>
-                    <div class="sc-row"><div class="sc-dot" style="background:#8f5bff;"></div>Fence Repair <span class="sc-chip" style="background:rgba(143,91,255,0.15);color:#8f5bff;">New Lead</span></div>
-                    <div class="sc-bar"><div class="sc-bar-fill" style="width:78%;background:linear-gradient(90deg,#22e39b,#36b3ff);"></div></div>
-                    <div style="font-size:0.65rem;color:var(--muted);text-align:center;">Monthly goal: 78%</div>
-                  </div>
-                  <!-- Screen B: Proof Feed -->
-                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(54,179,255,0.06),transparent);">
-                    <div class="sc-header">📸 Proof Feed</div>
-                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-                      <div style="display:flex;align-items:center;gap:8px;">
-                        <div class="sc-avatar" style="background:var(--accent);">JP</div>
-                        <div><strong style="color:var(--ink);font-size:0.78rem;">Jake's Plumbing</strong><br/><span style="font-size:0.65rem;">Bathroom remodel &bull; 2h ago</span></div>
-                      </div>
-                      <div style="height:80px;border-radius:8px;background:linear-gradient(135deg,rgba(54,179,255,0.1),rgba(34,227,155,0.1));display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);">Before & After Photos</div>
-                      <div style="font-size:0.72rem;color:var(--muted);">"Complete fixture replacement. Modern chrome finish."</div>
-                      <div style="display:flex;gap:12px;font-size:0.65rem;color:var(--muted);">❤️ 18 &bull; 💬 4 &bull; 🔁 Share</div>
-                    </div>
-                    <div class="sc-row">
-                      <div class="sc-avatar" style="background:var(--accent-3);">EP</div>
-                      <div><strong style="color:var(--ink);font-size:0.75rem;">Elite Painters</strong><br/><span style="font-size:0.65rem;">Exterior paint &bull; 5h ago</span></div>
-                    </div>
-                    <div class="sc-row">
-                      <div class="sc-avatar" style="background:var(--accent-2);">RC</div>
-                      <div><strong style="color:var(--ink);font-size:0.75rem;">Rosales Construction</strong><br/><span style="font-size:0.65rem;">Deck build &bull; 1d ago</span></div>
-                    </div>
-                  </div>
-                  <!-- Screen C: AI Chat -->
-                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(143,91,255,0.06),transparent);">
-                    <div class="sc-header">🤖 AI Assistant</div>
-                    <div class="sc-row" style="background:rgba(143,91,255,0.06);border-color:rgba(143,91,255,0.15);">
-                      <div style="font-size:0.75rem;"><strong style="color:var(--ink);">Draft an estimate for a 200 sq ft patio pour</strong></div>
-                    </div>
-                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:6px;border-color:rgba(34,227,155,0.15);">
-                      <span style="font-size:0.65rem;color:var(--accent);font-weight:700;">AI Response</span>
-                      <span style="font-size:0.72rem;color:var(--muted);">Concrete (200 sf) .... $1,400<br/>Rebar + mesh ............ $320<br/>Labor (2 days) .......... $1,800<br/>Finish & seal .............. $280</span>
-                      <span style="font-size:0.82rem;font-weight:700;color:var(--accent);">Total: $3,800</span>
-                    </div>
-                    <div class="sc-row"><span style="font-size:0.72rem;">✅ Send to client as PDF?</span><span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">Send</span></div>
-                    <div class="sc-row"><span style="font-size:0.72rem;">📋 Add to job timeline?</span><span class="sc-chip" style="background:rgba(54,179,255,0.15);color:#36b3ff;">Add</span></div>
-                  </div>
-                  <!-- Screen D: Reviews -->
-                  <div class="showcase-screen" style="background:linear-gradient(180deg,rgba(34,227,155,0.06),transparent);">
-                    <div class="sc-header">⭐ Reviews</div>
-                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:4px;">
-                      <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.78rem;color:var(--ink);">Sarah M.</strong><span style="font-size:0.72rem;">⭐⭐⭐⭐⭐</span></div>
-                      <span style="font-size:0.72rem;color:var(--muted);">"Best contractor experience ever. The app kept me updated every step."</span>
-                      <span style="font-size:0.62rem;color:var(--muted);">Kitchen remodel &bull; Verified</span>
-                    </div>
-                    <div class="sc-row" style="flex-direction:column;align-items:stretch;gap:4px;">
-                      <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:0.78rem;color:var(--ink);">Mike R.</strong><span style="font-size:0.72rem;">⭐⭐⭐⭐⭐</span></div>
-                      <span style="font-size:0.72rem;color:var(--muted);">"On time, on budget, and the proof feed was amazing."</span>
-                      <span style="font-size:0.62rem;color:var(--muted);">Fence install &bull; Verified</span>
-                    </div>
-                    <div class="sc-stat-row">
-                      <div class="sc-stat"><span class="num" style="color:var(--accent);">4.9</span><span class="lbl">Average</span></div>
-                      <div class="sc-stat"><span class="num" style="color:var(--accent-2);">127</span><span class="lbl">Total</span></div>
-                    </div>
-                    <div class="sc-row"><span style="font-size:0.72rem;">AI auto-requests reviews at job close</span><span class="sc-chip" style="background:rgba(34,227,155,0.15);color:#22e39b;">AI</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="showcase-text">
-            <span class="eyebrow">Your business. One screen.</span>
-            <h2>Everything a contractor needs, in your pocket.</h2>
-            <p>ProServe Hub puts jobs, clients, AI tools, payments, and your proof feed into one app. No more juggling 5 different platforms.</p>
-            <div class="showcase-features">
-              <div class="showcase-feat">
-                <div class="feat-icon" style="background:rgba(34,227,155,0.12);">⚡</div>
-                AI-powered estimates in seconds
-              </div>
-              <div class="showcase-feat">
-                <div class="feat-icon" style="background:rgba(54,179,255,0.12);">📸</div>
-                Photo proof feed that wins new clients
-              </div>
-              <div class="showcase-feat">
-                <div class="feat-icon" style="background:rgba(143,91,255,0.12);">💳</div>
-                Built-in payments with escrow protection
-              </div>
-              <div class="showcase-feat">
-                <div class="feat-icon" style="background:rgba(255,184,54,0.12);">⭐</div>
-                Automated review collection & reputation
-              </div>
-              <div class="showcase-feat">
-                <div class="feat-icon" style="background:rgba(255,100,100,0.12);">📅</div>
-                Smart scheduling & client notifications
-              </div>
+              <div class="avatar" style="background: linear-gradient(135deg, #36b3ff, #22e39b);">LP</div>
+              <div class="author-info"><strong>Lisa P.</strong><span>Homeowner &bull; Charlotte, NC</span></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section" id="workflow">
-        <h2>AI workflow that keeps crews moving.</h2>
+      <!-- ═══════════════════════════════════════════════
+           DIVIDER: SWITCH TO CONTRACTORS
+           ═══════════════════════════════════════════════ -->
+      <div class="section-divider" id="contractors">
+        <div class="divider-label">&#128736;&#65039; Are you a contractor? This section is for you.</div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           CONTRACTOR HERO
+           ═══════════════════════════════════════════════ -->
+      <section class="section">
+        <span class="eyebrow">&#128736;&#65039; For contractors</span>
+        <h2>Let AI run the paperwork. You run the crew.</h2>
         <p>
-          From first message to final invoice, everything stays visible and
-          professional for your client with AI in the background.
+          ProServe Hub uses AI to draft estimates, summarize jobs, write client updates, and request reviews &mdash; automatically.
+          Stop doing admin. Start closing more jobs.
         </p>
         <div class="grid">
           <div class="card reveal">
-            <h3>Step 1 - Intake</h3>
-            <p>AI captures job details and pre-fills estimates.</p>
+            <div class="feature-icon" style="background:rgba(34,227,155,0.12);border:1px solid rgba(34,227,155,0.5);color:var(--accent);">&#9889;</div>
+            <h3>AI Estimates in Seconds</h3>
+            <p>Snap photos or describe the scope. AI generates a detailed, professional estimate with line items and pricing.</p>
           </div>
           <div class="card reveal">
-            <h3>Step 2 - Progress</h3>
-            <p>Auto updates, photo summaries, and approvals in one feed.</p>
+            <div class="feature-icon" style="background:rgba(54,179,255,0.12);border:1px solid rgba(54,179,255,0.5);color:var(--accent-2);">&#128172;</div>
+            <h3>Auto Client Updates</h3>
+            <p>Post a progress photo. AI writes a clean, professional update and sends it to the client automatically.</p>
           </div>
           <div class="card reveal">
-            <h3>Step 3 - Close</h3>
-            <p>AI review prompts and follow-ups drive repeat work.</p>
+            <div class="feature-icon" style="background:rgba(143,91,255,0.12);border:1px solid rgba(143,91,255,0.5);color:var(--accent-3);">&#128248;</div>
+            <h3>Proof Feed That Sells</h3>
+            <p>Every job becomes a portfolio post. Timestamped, geotagged photos that win you new clients on autopilot.</p>
+          </div>
+          <div class="card reveal">
+            <div class="feature-icon" style="background:rgba(255,184,54,0.12);border:1px solid rgba(255,184,54,0.5);color:#ffb836;">&#11088;</div>
+            <h3>Automated Reviews</h3>
+            <p>AI sends review requests at job close. Build a 5-star reputation without lifting a finger.</p>
           </div>
         </div>
-        <div class="stats" id="statsSection">
-          <div class="stat"><span class="counter" data-target="58" data-suffix="%" data-prefix="+">0</span><span class="counter-label">Faster approvals</span></div>
-          <div class="stat"><span class="counter" data-target="2" data-suffix="x">0</span><span class="counter-label">Repeat work rate</span></div>
-          <div class="stat"><span class="counter" data-target="24" data-suffix="/7">0</span><span class="counter-label">Client visibility</span></div>
+
+        <div class="stats" id="statsSection" style="margin-top:32px;">
+          <div class="stat"><span class="counter" data-target="10" data-suffix="+" data-prefix="">0</span><span class="counter-label">Hours saved per week</span></div>
+          <div class="stat"><span class="counter" data-target="3" data-suffix="x">0</span><span class="counter-label">More repeat clients</span></div>
+          <div class="stat"><span class="counter" data-target="87" data-suffix="%">0</span><span class="counter-label">Review response rate</span></div>
           <div class="stat"><span class="counter" data-target="100" data-suffix="%" data-prefix="">0</span><span class="counter-label">AI on every job</span></div>
         </div>
+
         <div class="cta-band">
           <div>
-            <h3>Ready to launch your ProServe profile?</h3>
-            <p>Claim your spot and get early access.</p>
+            <h3>Ready to grow your business with AI?</h3>
+            <p>Join thousands of contractors using ProServe Hub.</p>
           </div>
-          <button class="cta">Join the waitlist</button>
+          <button class="cta">Join the Waitlist</button>
         </div>
       </section>
 
-      <!-- Pricing Section -->
+      <!-- ═══════════════════════════════════════════════
+           CONTRACTOR PRICING
+           ═══════════════════════════════════════════════ -->
       <section class="section" id="pricing">
         <span class="eyebrow">Simple, transparent pricing</span>
         <h2>Plans that grow with your business.</h2>
-        <p style="color:var(--muted);max-width:600px;margin:0 auto 36px;">Start free. Upgrade when you're ready. No contracts, cancel anytime.</p>
+        <p style="color:var(--muted);max-width:600px;margin:0 auto 36px;">Homeowners use ProServe Hub <strong style="color:var(--accent);">completely free</strong>. Contractor plans start free, upgrade when ready. No contracts, cancel anytime.</p>
         <div class="pricing-grid">
           <div class="price-card reveal">
             <h3>Basic</h3>
@@ -2737,19 +1835,19 @@
             <p class="price-desc">Unlock AI tools and unlimited jobs. Built for contractors ready to scale.</p>
             <div class="price-features">
               <div class="price-feat"><span class="pf-check">&#10003;</span> Everything in Basic</div>
-              <div class="price-feat"><span class="pf-check">&#10003;</span> <strong style="color:var(--accent);">AI estimates & updates</strong></div>
+              <div class="price-feat"><span class="pf-check">&#10003;</span> <strong style="color:var(--accent);">AI estimates &amp; updates</strong></div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Unlimited active jobs</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Escrow payments</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Expense tracker + receipts</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Priority lead matching</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Smart scheduling</div>
             </div>
-            <button class="cta">Join the waitlist</button>
+            <button class="cta">Join the Waitlist</button>
           </div>
           <div class="price-card reveal">
             <h3>Enterprise</h3>
             <div class="price">$29.99 <small>/month</small></div>
-            <p class="price-desc">Full platform access with team tools. For established businesses managing crews.</p>
+            <p class="price-desc">Full platform access with team tools. For businesses managing crews.</p>
             <div class="price-features">
               <div class="price-feat"><span class="pf-check">&#10003;</span> Everything in Pro</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> <strong style="color:var(--accent-3);">Team management</strong></div>
@@ -2764,97 +1862,58 @@
         </div>
       </section>
 
-      <!-- ROI Calculator -->
-      <section class="section" id="roi">
-        <span class="eyebrow">See your savings</span>
-        <h2>How much could you save with ProServe Hub?</h2>
-        <p style="color:var(--muted);max-width:600px;margin:0 auto 36px;">Adjust the sliders to match your business and see real-time results.</p>
-        <div class="roi-layout">
-          <div class="roi-inputs">
-            <div class="roi-group">
-              <label>Jobs per month <span class="roi-value" id="roiJobsVal">8</span></label>
-              <input type="range" id="roiJobs" min="1" max="40" value="8" />
-            </div>
-            <div class="roi-group">
-              <label>Average job value <span class="roi-value" id="roiValueVal">$2,500</span></label>
-              <input type="range" id="roiValue" min="500" max="25000" step="500" value="2500" />
-            </div>
-            <div class="roi-group">
-              <label>Hours on admin per week <span class="roi-value" id="roiHoursVal">12</span></label>
-              <input type="range" id="roiHours" min="2" max="40" value="12" />
-            </div>
-            <div class="roi-group">
-              <label>Your hourly rate <span class="roi-value" id="roiRateVal">$65</span></label>
-              <input type="range" id="roiRate" min="25" max="200" step="5" value="65" />
-            </div>
-          </div>
-          <div class="roi-results">
-            <div class="roi-result">
-              <span class="roi-num" style="color:var(--accent);" id="roiTimeSaved">31 hrs</span>
-              <span class="roi-label">Time saved per month</span>
-            </div>
-            <div class="roi-result">
-              <span class="roi-num" style="color:var(--accent-2);" id="roiMoneySaved">$2,015</span>
-              <span class="roi-label">Value of time saved per month</span>
-            </div>
-            <div class="roi-result">
-              <span class="roi-num" style="color:var(--accent-3);" id="roiExtraJobs">+2</span>
-              <span class="roi-label">Extra jobs you could take on</span>
-            </div>
-            <div class="roi-result">
-              <span class="roi-num" style="color:#ffb836;" id="roiAnnualGain">$29,180</span>
-              <span class="roi-label">Potential extra annual revenue</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQ -->
+      <!-- ═══════════════════════════════════════════════
+           FAQ (Mixed)
+           ═══════════════════════════════════════════════ -->
       <section class="section" id="faq">
         <span class="eyebrow">Got questions?</span>
         <h2>Frequently asked questions.</h2>
         <div class="faq-list">
           <div class="faq-item">
-            <div class="faq-q">Is ProServe Hub really free to start?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">Yes! The Basic plan is completely free, forever. You get job management, client messaging, a proof feed, and up to 3 active jobs. Upgrade to Pro or Enterprise when you're ready for AI tools and unlimited jobs.</div>
+            <div class="faq-q">Is ProServe Hub free for homeowners?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">Yes! Homeowners use ProServe Hub completely free &mdash; forever. Get instant AI estimates, compare contractor bids, track your project, and pay securely through escrow at no cost to you.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">How does the escrow payment system work?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">When a customer books a job, their payment is held securely in escrow via Stripe. Once the job is completed and both parties confirm, funds are released to the contractor. This protects both sides and eliminates payment chasing.</div>
+            <div class="faq-q">How does the AI estimate work?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">Describe your project (and add photos if you want). Our AI analyzes the scope, materials, and local market rates to generate a detailed line-by-line estimate in seconds. You can lock that price for 24 hours and book a contractor at that rate, or open it up for pros to submit custom bids.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">Do I need to be tech-savvy to use this?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">Not at all. ProServe Hub is designed for contractors, not developers. The AI handles the heavy lifting &#8212; just snap photos, confirm updates, and let the app do the rest. If you can use Instagram, you can use ProServe Hub.</div>
+            <div class="faq-q">What does "24-hour price lock" mean?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">When AI generates an estimate, you can lock that price for 24 hours. If you book a contractor within that window, the AI price is guaranteed. After 24 hours, you can generate a new estimate or accept contractor bids at their quoted prices.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">What types of contractors is this for?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">Any home service professional &#8212; painters, plumbers, electricians, roofers, landscapers, general contractors, HVAC techs, and more. If you do jobs for clients, ProServe Hub works for you.</div>
+            <div class="faq-q">How does escrow protect me as a homeowner?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">When you book and pay, your funds are held securely in escrow via Stripe. The contractor can see the funds are committed, but they're not released until the job is complete and you approve the work. If there's a dispute, the funds stay locked while we help resolve it.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">How does the AI generate estimates?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">You provide the job scope (description, photos, area) and our AI analyzes it against market rates, material costs, and your pricing history to draft a professional estimate. You review and tweak before sending to the client.</div>
+            <div class="faq-q">Will I get spam calls like on Thumbtack?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">Absolutely not. On ProServe Hub, contractors bid on your project inside the app. You choose who to contact. Your phone number is never shared until you explicitly decide to connect with a contractor.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">Can I try it before committing?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">Absolutely. The Basic plan is free with no credit card required. You can explore the full interface, manage jobs, and see how the platform works before deciding to upgrade.</div>
+            <div class="faq-q">Is it free for contractors to start?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">Yes. The Basic plan is free forever &mdash; manage up to 3 active jobs, message clients, and build your proof feed. Upgrade to Pro ($11.99/mo) for AI estimates, unlimited jobs, escrow payments, and priority lead matching.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">Is my data secure?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">Yes. We use Firebase (Google Cloud) for infrastructure, Stripe for payments, and follow industry best practices for data encryption. Your business data is yours &#8212; we never sell it or share it with third parties.</div>
+            <div class="faq-q">What types of projects does ProServe Hub support?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">Any home service &mdash; kitchen remodels, bathroom renovations, painting, roofing, plumbing, electrical, landscaping, fencing, HVAC, flooring, and more. If it's a project around your home, ProServe Hub can help you find and manage the right pro.</div>
           </div>
           <div class="faq-item">
             <div class="faq-q">When does ProServe Hub launch?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">We're in the final stages of development and will be launching on both Google Play and the App Store very soon. Join the waitlist to get early access and be the first to know when we go live!</div>
+            <div class="faq-a">We're in the final stages and will be launching on Google Play and the App Store very soon. Join the waitlist to get early access and be first to know!</div>
           </div>
         </div>
       </section>
 
     </main>
+
+    <!-- ═══════════════════════════════════════════════
+         WAITLIST MODAL
+         ═══════════════════════════════════════════════ -->
     <div class="modal-overlay" id="waitlistModal">
       <div class="modal">
         <button class="modal-close" id="modalClose">&times;</button>
         <h2>Get Early Access</h2>
-        <p>Join the waitlist and be the first to try ProServe Hub when we launch.</p>
+        <p>Join the waitlist &mdash; homeowners and contractors welcome.</p>
         <form id="waitlistForm">
           <div class="form-group">
             <label for="wlName">Full Name</label>
@@ -2868,8 +1927,8 @@
             <label for="wlRole">I am a...</label>
             <select id="wlRole" required>
               <option value="" disabled selected>Select one</option>
-              <option value="contractor">Contractor</option>
               <option value="homeowner">Homeowner</option>
+              <option value="contractor">Contractor</option>
               <option value="business">Business / Property Manager</option>
               <option value="other">Other</option>
             </select>
@@ -2881,8 +1940,8 @@
 
     <!-- Floating Sticky CTA -->
     <div class="sticky-cta" id="stickyCta">
-      <p><strong>ProServe Hub</strong> &#8212; AI-powered tools for contractors</p>
-      <button class="cta">Get Early Access</button>
+      <p><strong>Get your free AI estimate</strong> &mdash; no account needed</p>
+      <button class="cta">Get Started Free</button>
     </div>
 
     <!-- Toast -->
@@ -2893,16 +1952,15 @@
         <div class="footer-top">
           <div class="footer-brand">
             <strong>ProServe Hub</strong>
-            <p>Built for contractors who care about craft and reputation. AI-powered tools to grow your business.</p>
+            <p>The smarter way to get home projects done. Instant AI estimates, verified pros, and escrow protection for every job.</p>
           </div>
-
           <div class="footer-links">
-            <a href="#features">Help Center</a>
+            <a href="#homeowners">For Homeowners</a>
+            <a href="#contractors">For Contractors</a>
             <a href="mailto:support@proservehub.app">Contact Us</a>
             <a href="terms/">Terms of Service</a>
             <a href="privacy/">Privacy Policy</a>
           </div>
-
           <div class="footer-socials">
             <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
               <svg viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
@@ -2915,9 +1973,7 @@
             </a>
           </div>
         </div>
-
         <hr class="footer-divider" />
-
         <div class="footer-bottom">
           <span>&copy; 2026 Verohue LLC. All rights reserved.</span>
           <span>support@proservehub.app</span>
@@ -2926,72 +1982,90 @@
     </footer>
 
     <script>
+      // ── Reveal animations ────────────
       const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-            }
-          });
-        },
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
         { threshold: 0.2 }
       );
-
-      document.querySelectorAll(".reveal").forEach((el, index) => {
-        el.style.transitionDelay = `${index * 120}ms`;
+      document.querySelectorAll(".reveal").forEach((el, i) => {
+        el.style.transitionDelay = `${i * 80}ms`;
         observer.observe(el);
       });
 
-      // ── Modal & Button Logic ─────────────────────────
+      // ── Modal logic ──────────────────
       const modal = document.getElementById('waitlistModal');
       const modalClose = document.getElementById('modalClose');
       const form = document.getElementById('waitlistForm');
       const submitBtn = document.getElementById('wlSubmit');
       const toastEl = document.getElementById('toast');
 
-      function openModal() {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeModal() {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
-      }
-
+      function openModal() { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+      function closeModal() { modal.classList.remove('active'); document.body.style.overflow = ''; }
       function showToast(msg, duration = 3500) {
         toastEl.textContent = msg;
         toastEl.classList.add('show');
         setTimeout(() => toastEl.classList.remove('show'), duration);
       }
 
-      // Wire CTA buttons → open waitlist modal
+      // CTA buttons open modal
       document.querySelectorAll('.cta').forEach(btn => {
-        // Skip the form submit button and nav links that already have href sections
         if (btn.id === 'wlSubmit') return;
         if (btn.tagName === 'A' && btn.getAttribute('href') === '#start') return;
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          openModal();
-        });
+        btn.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
       });
 
-      // Wire "Watch AI demo" ghost button → scroll to demo
-      document.querySelector('.ghost')?.addEventListener('click', () => {
+      // Watch demo button scrolls to demo section
+      document.getElementById('watchDemo')?.addEventListener('click', () => {
         document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
       });
 
-      // Wire store badges (coming soon)
+      // Store badges
       document.getElementById('googlePlayBadge')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showToast('\uD83D\uDEA7 Google Play listing coming soon!');
+        e.preventDefault(); showToast('\uD83D\uDEA7 Google Play listing coming soon!');
       });
       document.getElementById('appStoreBadge')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showToast('\uD83D\uDEA7 App Store listing coming soon!');
+        e.preventDefault(); showToast('\uD83D\uDEA7 App Store listing coming soon!');
       });
 
-      // ── Interactive AI Demo ────────────────────
+      // ── Segment toggle ──────────────
+      const segHomeowner = document.getElementById('segHomeowner');
+      const segContractor = document.getElementById('segContractor');
+
+      segHomeowner?.addEventListener('click', (e) => {
+        e.preventDefault();
+        segHomeowner.classList.add('seg-active');
+        segContractor.classList.remove('seg-active');
+        document.getElementById('homeowners')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      segContractor?.addEventListener('click', (e) => {
+        e.preventDefault();
+        segContractor.classList.add('seg-active');
+        segHomeowner.classList.remove('seg-active');
+        document.getElementById('contractors')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // Auto-detect which section user is in for nav highlight
+      const contractorSection = document.getElementById('contractors');
+      if (contractorSection) {
+        const segObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach(e => {
+              if (e.isIntersecting) {
+                segContractor?.classList.add('seg-active');
+                segHomeowner?.classList.remove('seg-active');
+              } else {
+                segHomeowner?.classList.add('seg-active');
+                segContractor?.classList.remove('seg-active');
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        segObserver.observe(contractorSection);
+      }
+
+      // ── Interactive Demo ──────────────
       const demoSteps = document.querySelectorAll('.demo-step');
       const phoneScreens = document.querySelectorAll('.phone-screen');
       const progressDots = document.querySelectorAll('.demo-progress span');
@@ -3006,34 +2080,25 @@
       function startDemoAuto() {
         let current = 0;
         clearInterval(demoInterval);
-        demoInterval = setInterval(() => {
-          current = (current + 1) % 4;
-          setDemoStep(current);
-        }, 4000);
+        demoInterval = setInterval(() => { current = (current + 1) % 4; setDemoStep(current); }, 4000);
       }
 
       demoSteps.forEach((step) => {
         step.addEventListener('click', () => {
-          const idx = parseInt(step.dataset.step);
-          setDemoStep(idx);
+          setDemoStep(parseInt(step.dataset.step));
           clearInterval(demoInterval);
-          // Restart auto-play after 10s of inactivity
           setTimeout(startDemoAuto, 10000);
         });
       });
 
       startDemoAuto();
 
-      // Close modal
+      // ── Close modal ──────────────────
       modalClose.addEventListener('click', closeModal);
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-      });
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-      // Form submit → save to Firestore
+      // ── Form submit ──────────────────
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('wlName').value.trim();
@@ -3045,7 +2110,6 @@
         submitBtn.textContent = 'Submitting...';
 
         try {
-          // Use Firestore REST API (no SDK needed)
           const projectId = 'proserve-hub-ada0e';
           const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/waitlist`;
           const body = {
@@ -3065,7 +2129,6 @@
           });
 
           if (!res.ok) throw new Error('Request failed');
-
           closeModal();
           form.reset();
           showToast('\u2705 You\'re on the list! We\'ll be in touch soon.');
@@ -3078,10 +2141,9 @@
         }
       });
 
-      // ── Animated Counters ────────────────────
+      // ── Animated Counters ────────────
       const counters = document.querySelectorAll('.counter');
       let countersDone = false;
-
       const counterObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting && !countersDone) {
@@ -3090,87 +2152,39 @@
               const target = parseInt(c.dataset.target);
               const suffix = c.dataset.suffix || '';
               const prefix = c.dataset.prefix || '';
-              const duration = 2000;
-              const stepTime = 30;
-              const steps = duration / stepTime;
-              const increment = target / steps;
               let current = 0;
+              const increment = target / 66;
               const timer = setInterval(() => {
                 current += increment;
-                if (current >= target) {
-                  current = target;
-                  clearInterval(timer);
-                }
+                if (current >= target) { current = target; clearInterval(timer); }
                 c.textContent = prefix + Math.round(current) + suffix;
-              }, stepTime);
+              }, 30);
             });
           }
         });
       }, { threshold: 0.3 });
-
       const statsSection = document.getElementById('statsSection');
       if (statsSection) counterObserver.observe(statsSection);
 
-      // ── FAQ Accordion ────────────────────────
+      // ── FAQ Accordion ────────────────
       document.querySelectorAll('.faq-q').forEach(q => {
         q.addEventListener('click', () => {
           const item = q.parentElement;
           const wasOpen = item.classList.contains('open');
-          // Close all
           document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-          // Toggle clicked
           if (!wasOpen) item.classList.add('open');
         });
       });
 
-      // ── ROI Calculator ───────────────────────
-      const roiJobs = document.getElementById('roiJobs');
-      const roiValue = document.getElementById('roiValue');
-      const roiHours = document.getElementById('roiHours');
-      const roiRate = document.getElementById('roiRate');
-
-      function calcROI() {
-        const jobs = parseInt(roiJobs.value);
-        const value = parseInt(roiValue.value);
-        const hours = parseInt(roiHours.value);
-        const rate = parseInt(roiRate.value);
-
-        document.getElementById('roiJobsVal').textContent = jobs;
-        document.getElementById('roiValueVal').textContent = '$' + value.toLocaleString();
-        document.getElementById('roiHoursVal').textContent = hours;
-        document.getElementById('roiRateVal').textContent = '$' + rate;
-
-        // AI saves ~65% of admin time
-        const timeSavedWeekly = Math.round(hours * 0.65);
-        const timeSavedMonthly = timeSavedWeekly * 4.3;
-        const moneySaved = Math.round(timeSavedMonthly * rate);
-        // Extra jobs from reclaimed time (assume each job takes ~adminHours/jobs hours of admin)
-        const adminPerJob = hours / Math.max(jobs, 1);
-        const extraJobs = Math.max(1, Math.round(timeSavedWeekly / Math.max(adminPerJob, 1)));
-        const annualGain = Math.round((moneySaved + extraJobs * value) * 12);
-
-        document.getElementById('roiTimeSaved').textContent = Math.round(timeSavedMonthly) + ' hrs';
-        document.getElementById('roiMoneySaved').textContent = '$' + moneySaved.toLocaleString();
-        document.getElementById('roiExtraJobs').textContent = '+' + extraJobs;
-        document.getElementById('roiAnnualGain').textContent = '$' + annualGain.toLocaleString();
-      }
-
-      [roiJobs, roiValue, roiHours, roiRate].forEach(el => {
-        if (el) el.addEventListener('input', calcROI);
-      });
-      calcROI();
-
-      // ── Floating Sticky CTA ──────────────────
+      // ── Sticky CTA ──────────────────
       const stickyCta = document.getElementById('stickyCta');
       const heroSection = document.getElementById('start');
-
       window.addEventListener('scroll', () => {
         if (!heroSection || !stickyCta) return;
-        const heroBottom = heroSection.getBoundingClientRect().bottom;
-        stickyCta.classList.toggle('visible', heroBottom < 0);
+        stickyCta.classList.toggle('visible', heroSection.getBoundingClientRect().bottom < 0);
       });
 
-      // ── Social Proof: Waitlist Count ─────────
+      // ── Waitlist Count ───────────────
       (async () => {
         try {
           const projectId = 'proserve-hub-ada0e';
@@ -3179,12 +2193,9 @@
           if (res.ok) {
             const data = await res.json();
             const count = data.documents ? data.documents.length : 0;
-            // Show count + buffer for credibility
-            const display = count + 47;
-            document.getElementById('waitlistCount').textContent = display;
+            document.getElementById('waitlistCount').textContent = count + 47;
           }
         } catch (e) {
-          // Default fallback
           document.getElementById('waitlistCount').textContent = '50+';
         }
       })();
