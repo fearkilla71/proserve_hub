@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:intl/intl.dart';
+import 'package:proserve_hub/services/native_ocr_service.dart';
 
 class ReceiptOcrResult {
   final String rawText;
@@ -52,15 +52,9 @@ class ReceiptOcrService {
       throw Exception('Receipt OCR is not supported on web.');
     }
 
-    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    try {
-      final inputImage = InputImage.fromFile(imageFile);
-      final result = await recognizer.processImage(inputImage);
-      final rawText = result.text;
-      return _parse(rawText);
-    } finally {
-      await recognizer.close();
-    }
+    const ocr = NativeOcrService();
+    final rawText = await ocr.recognizeText(imageFile);
+    return _parse(rawText);
   }
 
   ReceiptOcrResult _parse(String rawText) {

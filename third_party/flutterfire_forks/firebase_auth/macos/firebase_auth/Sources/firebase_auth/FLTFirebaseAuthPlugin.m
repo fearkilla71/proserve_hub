@@ -662,6 +662,16 @@ static void handleAppleAuthResult(FLTFirebaseAuthPlugin *object, AuthPigeonFireb
   FIRApp *app = [FLTFirebasePlugin firebaseAppNamed:pigeonApp.appName];
   FIRAuth *auth = [FIRAuth authWithApp:app];
 
+  // On macOS, use nil access group so keychain works without team-based code signing
+  NSError *keychainError = nil;
+  BOOL success = [auth useUserAccessGroup:nil error:&keychainError];
+  if (!success) {
+    NSLog(@"Firebase Auth: useUserAccessGroup:nil failed: code=%ld domain=%@ reason=%@",
+          (long)keychainError.code, keychainError.domain, keychainError.userInfo);
+  } else {
+    NSLog(@"Firebase Auth: useUserAccessGroup:nil SUCCESS");
+  }
+
   auth.tenantID = pigeonApp.tenantId;
   auth.customAuthDomain = [FLTFirebaseCorePlugin getCustomDomain:app.name];
   // Auth's `customAuthDomain` supersedes value from `getCustomDomain` set by `initializeApp`
@@ -1445,6 +1455,14 @@ static void handleAppleAuthResult(FLTFirebaseAuthPlugin *object, AuthPigeonFireb
                password:password
              completion:^(FIRAuthDataResult *_Nullable authResult, NSError *_Nullable error) {
                if (error != nil) {
+                 NSLog(@"Firebase signIn error: code=%ld domain=%@ userInfo=%@",
+                       (long)error.code, error.domain, error.userInfo);
+                 NSError *underlying = error.userInfo[NSUnderlyingErrorKey];
+                 if (underlying) {
+                   NSLog(@"Firebase signIn underlying error: code=%ld domain=%@ reason=%@",
+                         (long)underlying.code, underlying.domain,
+                         underlying.userInfo[NSLocalizedFailureReasonErrorKey]);
+                 }
                  if (error.code == FIRAuthErrorCodeSecondFactorRequired) {
                    [self handleMultiFactorError:app completion:completion withError:error];
                  } else if (error.code == FIRAuthErrorCodeInternalError) {

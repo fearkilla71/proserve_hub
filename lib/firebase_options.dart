@@ -52,20 +52,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA4xWmnUNWCq4vLxi1TlzDraeNfPrNljEo',
-    appId: '1:841248185002:ios:2b2b6b19a537dd6fb48ed3',
+    appId: '1:841248185002:ios:03a68f3199134a88b48ed3',
     messagingSenderId: '841248185002',
     projectId: 'proserve-hub-ada0e',
     storageBucket: 'proserve-hub-ada0e.firebasestorage.app',
-    iosBundleId: 'com.proservehub.app',
+    iosBundleId: 'com.verohue.proservehub',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyA4xWmnUNWCq4vLxi1TlzDraeNfPrNljEo',
-    appId: '1:841248185002:ios:2b2b6b19a537dd6fb48ed3',
+    appId: '1:841248185002:ios:03a68f3199134a88b48ed3',
     messagingSenderId: '841248185002',
     projectId: 'proserve-hub-ada0e',
     storageBucket: 'proserve-hub-ada0e.firebasestorage.app',
-    iosBundleId: 'com.proservehub.app',
+    iosBundleId: 'com.verohue.proservehub',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:proserve_hub/services/native_ocr_service.dart';
 import 'dart:typed_data';
 
 class VerificationScreen extends StatefulWidget {
@@ -17,9 +17,7 @@ class VerificationScreen extends StatefulWidget {
 
 class _VerificationScreenState extends State<VerificationScreen> {
   final ImagePicker _picker = ImagePicker();
-  final TextRecognizer _textRecognizer = TextRecognizer(
-    script: TextRecognitionScript.latin,
-  );
+  final NativeOcrService _ocrService = const NativeOcrService();
   bool _isSubmitting = false;
   bool _idFrontScanOk = false;
   bool _idBackScanOk = false;
@@ -153,9 +151,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<String> _extractTextFromImage(String path) async {
-    final inputImage = InputImage.fromFilePath(path);
-    final recognizedText = await _textRecognizer.processImage(inputImage);
-    return recognizedText.text;
+    return _ocrService.recognizeTextFromPath(path);
   }
 
   Future<void> _scanId(bool isFront) async {
@@ -414,7 +410,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   void dispose() {
-    _textRecognizer.close();
+    _ocrService.close();
     _licenseNumberController.dispose();
     _licenseExpiryController.dispose();
     _insurancePolicyController.dispose();

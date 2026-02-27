@@ -1,0 +1,14 @@
+{
+  "dart.analysisExcludedFolders": [
+    "third_party",
+    "build",
+    "ios/Pods",
+    "macos/Pods"
+  ],
+  "files.watcherExclude": {
+    "**/third_party/**": true,
+    "**/build/**": true,
+    "**/ios/Pods/**": true,
+    "**/macos/Pods/**": true
+  }
+}

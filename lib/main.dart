@@ -180,13 +180,13 @@ void main() async {
       unawaited(ErrorLogger.instance.init());
 
       // ── Firebase Crashlytics ─────────────────────────────────────
-      // Supported on Android, iOS, macOS, and web. Skip on Windows/Linux
-      // desktop where the native SDK is unavailable.
+      // Supported on Android, iOS, macOS only. NOT supported on web
+      // or Windows/Linux desktop where the native SDK is unavailable.
       _crashlyticsSupported =
-          kIsWeb ||
-          defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS;
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS);
 
       // NOTE: Crashlytics setup moved below Firebase.initializeApp().
 
@@ -316,6 +316,17 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
       _firebaseInitialized = true;
+
+      // On macOS, the default keychain access group requires a provisioned
+      // signing identity. Passing an empty string tells Firebase Auth to use
+      // the legacy / app-specific keychain which works with ad-hoc signing.
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+        try {
+          await FirebaseAuth.instance.setSettings(userAccessGroup: '');
+        } catch (e) {
+          debugPrint('Failed to set macOS keychain access group: $e');
+        }
+      }
 
       // Enable offline persistence for Firestore.
       // On mobile, persistence is on by default. On web, we explicitly enable
