@@ -1204,28 +1204,6 @@
         font-size: 1.1rem;
       }
 
-      /* ── Sticky CTA ───────────────── */
-      .sticky-cta {
-        position: fixed;
-        bottom: -80px;
-        left: 0; right: 0;
-        z-index: 900;
-        background: rgba(5,11,24,0.92);
-        backdrop-filter: blur(12px);
-        border-top: 1px solid var(--line);
-        padding: 12px 24px;
-        transition: bottom 0.4s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-      }
-
-      .sticky-cta.visible { bottom: 0; }
-      .sticky-cta p { margin: 0; font-size: 0.88rem; color: var(--muted); }
-      .sticky-cta p strong { color: var(--ink); }
-      .sticky-cta .cta { padding: 10px 20px; font-size: 0.88rem; }
-
       /* ── Footer ────────────────────── */
       footer {
         border-top: 1px solid var(--line);
@@ -1938,12 +1916,6 @@
       </div>
     </div>
 
-    <!-- Floating Sticky CTA -->
-    <div class="sticky-cta" id="stickyCta">
-      <p><strong>Get your free AI estimate</strong> &mdash; no account needed</p>
-      <button class="cta">Get Started Free</button>
-    </div>
-
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -2174,14 +2146,6 @@
           document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
           if (!wasOpen) item.classList.add('open');
         });
-      });
-
-      // ── Sticky CTA ──────────────────
-      const stickyCta = document.getElementById('stickyCta');
-      const heroSection = document.getElementById('start');
-      window.addEventListener('scroll', () => {
-        if (!heroSection || !stickyCta) return;
-        stickyCta.classList.toggle('visible', heroSection.getBoundingClientRect().bottom < 0);
       });
 
       // ── Waitlist Count ───────────────
