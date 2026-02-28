@@ -1,0 +1,2 @@
+app_identifier(ENV["IOS_APP_IDENTIFIER"] || "com.verohue.proservehub")
+apple_id(ENV["IOS_APPLE_ID"] || "")

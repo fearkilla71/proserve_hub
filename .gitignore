@@ -44,3 +44,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 ios/build/
+
+# Fastlane / release automation
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+fastlane/screenshots/
+fastlane/AuthKey_*.p8
+*.p8
+vendor/bundle/
+.bundle/

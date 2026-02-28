@@ -137,6 +137,38 @@ The app supports a compile-time flag:
 - PowerShell deploy requires quotes when using comma-separated `--only`:
 	- `firebase deploy --only "functions,firestore:rules" --non-interactive --force`
 
+## iOS Release Automation
+
+This repo now supports a mostly automated iOS release flow using Fastlane.
+
+### One-time setup
+
+- Install Ruby gems:
+	- `bundle install`
+- Create an App Store Connect API key and download the `.p8` file.
+- Export these environment variables before running release commands:
+	- `ASC_KEY_ID`
+	- `ASC_ISSUER_ID`
+	- `ASC_KEY_FILEPATH` (absolute path to the `.p8` file)
+	- Optional: `IOS_APPLE_ID`, `IOS_APP_IDENTIFIER`, `IOS_CHANGELOG`
+
+### Common commands
+
+- Run preflight checks:
+	- `make ios-preflight`
+- Build IPA:
+	- `make ios-build IOS_VERSION_NAME=1.0.0 IOS_BUILD_NUMBER=2`
+- Upload existing IPA to App Store Connect/TestFlight:
+	- `make ios-upload IOS_CHANGELOG="Bug fixes and improvements"`
+- Full pipeline (checks + build + upload):
+	- `make ios-release IOS_VERSION_NAME=1.0.0 IOS_BUILD_NUMBER=2 IOS_CHANGELOG="Release notes"`
+
+### What stays manual
+
+- Selecting the new build in App Store Connect's Distribution page
+- Final `Add for Review` / `Submit for Review` click
+- Any compliance/legal questionnaire answers
+
 ## Extra Documentation
 
 - Security setup and App Check console steps: [SECURITY_SETUP.md](SECURITY_SETUP.md)
