@@ -3,10 +3,12 @@ import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../widgets/apple_sign_in_button.dart';
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
@@ -34,6 +36,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   int _step = 0;
   static const int _totalSteps = 4;
   bool _agreedToTerms = false;
+  bool _appleLoading = false;
 
   @override
   void dispose() {
@@ -43,6 +46,30 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     phone.dispose();
     phoneCode.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleAppleSignUp() async {
+    if (_appleLoading || loading) return;
+    setState(() => _appleLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = await _auth.signInWithApple(role: 'customer');
+      if (!mounted) return;
+      if (user != null) {
+        context.go('/customer-portal');
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code != AuthorizationErrorCode.canceled) {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
   }
 
   String _normalizePhone(String input) {
@@ -409,6 +436,15 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
+            const OrDivider(),
+            _appleLoading
+                ? const Center(child: CircularProgressIndicator())
+                : AppleSignInButton(
+                    label: 'Sign up with Apple',
+                    onPressed: (loading || _appleLoading)
+                        ? null
+                        : _handleAppleSignUp,
+                  ),
           ],
         );
       case 1:

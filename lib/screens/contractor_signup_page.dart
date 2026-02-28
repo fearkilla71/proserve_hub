@@ -3,11 +3,13 @@ import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../services/zip_lookup_service.dart';
 import '../theme/proserve_theme.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../widgets/apple_sign_in_button.dart';
 
 class ContractorSignupPage extends StatefulWidget {
   const ContractorSignupPage({super.key});
@@ -54,6 +56,31 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   bool _showZipPreview = false;
   String _zipAreaLabel = 'your area';
   bool _agreedToTerms = false;
+  bool _appleLoading = false;
+
+  Future<void> _handleAppleSignUp() async {
+    if (_appleLoading || loading) return;
+    setState(() => _appleLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = await _auth.signInWithApple(role: 'contractor');
+      if (!mounted) return;
+      if (user != null) {
+        context.go('/contractor-portal');
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code != AuthorizationErrorCode.canceled) {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
+  }
 
   String _normalizePhone(String input) {
     final digits = input.replaceAll(RegExp(r'\D'), '');
@@ -552,6 +579,17 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 },
                 child: const Text('I verified, refresh status'),
               ),
+            ],
+            if (!_awaitingEmailVerification) ...[
+              const OrDivider(),
+              _appleLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AppleSignInButton(
+                      label: 'Sign up with Apple',
+                      onPressed: (loading || _appleLoading)
+                          ? null
+                          : _handleAppleSignUp,
+                    ),
             ],
           ],
         );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../services/auth_service.dart';
+import '../widgets/apple_sign_in_button.dart';
 
 class CustomerLoginPage extends StatefulWidget {
   const CustomerLoginPage({super.key});
@@ -18,6 +20,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
 
   bool loading = false;
   bool _googleLoading = false;
+  bool _appleLoading = false;
 
   @override
   void dispose() {
@@ -68,6 +71,55 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
       );
     } finally {
       if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    if (_appleLoading || loading) return;
+    setState(() => _appleLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = await _auth.signInWithApple(role: 'customer');
+      final uid = user?.uid;
+      final role = uid == null ? null : await _auth.resolveRoleForUid(uid);
+      if (!mounted) return;
+
+      if (role == 'customer') {
+        context.go('/customer-portal');
+        return;
+      }
+
+      if (role == 'contractor') {
+        await _auth.signOut();
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This Apple ID is registered as a contractor. Please sign in from the Contractor portal.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // No role found — new Apple sign-in created a customer doc, route there.
+      if (uid != null) {
+        context.go('/customer-portal');
+        return;
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        // User cancelled — do nothing.
+      } else {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
     }
   }
 
@@ -158,6 +210,14 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                     )
                   : const Text('Sign In'),
             ),
+            const OrDivider(),
+            _appleLoading
+                ? const Center(child: CircularProgressIndicator())
+                : AppleSignInButton(
+                    onPressed: (loading || _appleLoading)
+                        ? null
+                        : _handleAppleSignIn,
+                  ),
             const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerRight,

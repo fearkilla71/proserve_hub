@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../utils/zip_locations.dart';
 import 'zip_lookup_service.dart';
@@ -274,6 +279,93 @@ class AuthService {
       debugPrintStack(stackTrace: st);
       rethrow;
     }
+  }
+
+  /// Sign in (or sign up) with Apple. Creates Firestore user doc with [role]
+  /// if this is the first time. Returns the Firebase [User] on success.
+  Future<User?> signInWithApple({required String role}) async {
+    // Generate a nonce for security.
+    final rawNonce = _generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+
+    final oauthCredential = OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      rawNonce: rawNonce,
+      accessToken: appleCredential.authorizationCode,
+    );
+
+    final userCredential = await _auth.signInWithCredential(oauthCredential);
+    final user = userCredential.user;
+    if (user == null) return null;
+
+    // Apple only provides the name on the *first* sign-in. Save it.
+    final displayName = [
+      appleCredential.givenName ?? '',
+      appleCredential.familyName ?? '',
+    ].where((s) => s.isNotEmpty).join(' ');
+
+    // Ensure Firestore user doc exists with the correct role.
+    final userDoc = _db.collection('users').doc(user.uid);
+    final snapshot = await userDoc.get();
+
+    if (!snapshot.exists) {
+      // First-time Apple sign-in: create user doc.
+      await userDoc.set({
+        'role': role,
+        'name': displayName.isNotEmpty ? displayName : (user.email ?? ''),
+        'email': user.email ?? appleCredential.email ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+        if (role == 'contractor') 'approved': false,
+        if (role == 'contractor') 'featured': false,
+        if (role == 'contractor') 'credits': 0,
+      });
+
+      // For contractors, also create the contractors collection doc.
+      if (role == 'contractor') {
+        await _db.collection('contractors').doc(user.uid).set({
+          'name': displayName.isNotEmpty ? displayName : (user.email ?? ''),
+          'services': <String>[],
+          'zip': '',
+          'radius': 25,
+          'rating': 0.0,
+          'completedJobs': 0,
+          'reviewCount': 0,
+          'available': true,
+          'availabilityWindow': 'next_week',
+          'avgResponseMinutes': 60,
+          'verified': false,
+          'stripeAccountId': '',
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    }
+
+    // Update display name if Apple provided one and it's not set yet.
+    if (displayName.isNotEmpty &&
+        (user.displayName == null || user.displayName!.isEmpty)) {
+      await user.updateDisplayName(displayName);
+    }
+
+    return user;
+  }
+
+  /// Generates a cryptographically secure random nonce.
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   Future<User?> signIn(String email, String password) async {
