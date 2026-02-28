@@ -17,12 +17,58 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
   final password = TextEditingController();
 
   bool loading = false;
+  bool _googleLoading = false;
 
   @override
   void dispose() {
     email.dispose();
     password.dispose();
     super.dispose();
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_googleLoading) return;
+    setState(() => _googleLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = await _auth.signInWithGoogle();
+      if (user == null) {
+        // User cancelled
+        if (mounted) setState(() => _googleLoading = false);
+        return;
+      }
+
+      final role = await _auth.resolveRoleForUid(user.uid);
+      if (!mounted) return;
+
+      if (role == 'customer') {
+        await _auth.signOut();
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This Google account is registered as a customer. Please sign in from the Customer portal.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Assign contractor role if new user
+      if (role == null) {
+        await _auth.ensureGoogleUserRole(user.uid, 'contractor');
+      }
+
+      if (!mounted) return;
+      context.go('/contractor-portal');
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
   }
 
   Future<void> submit() async {
@@ -157,6 +203,41 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                         }
                       },
                 child: const Text('Forgot password?'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'or',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
+              icon: _googleLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Image.network(
+                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.g_mobiledata, size: 24),
+                    ),
+              label: const Text('Continue with Google'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
               ),
             ),
             const SizedBox(height: 12),

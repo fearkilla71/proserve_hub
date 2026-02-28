@@ -12,7 +12,28 @@
           "package_name": "com.proservehub.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "841248185002-2qjmp3ughqe6q1srrfc2m04s9c10unqr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proservehub.app",
+            "certificate_hash": "ea671a90eb62e06457d0464dedb43b0e61b5beb1"
+          }
+        },
+        {
+          "client_id": "841248185002-orgo4ag85te6bigm51l32rt52qq3hhni.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proservehub.app",
+            "certificate_hash": "98165c0f64b8db77eb4f0097f174ce622a0b039e"
+          }
+        },
+        {
+          "client_id": "841248185002-ik0b3npreugodv1an5t0nc1eh6q0h9p8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDUY2-ys3k4-hB7pgJyjpJsLQCDPTmIrN0"
@@ -20,7 +41,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "841248185002-ik0b3npreugodv1an5t0nc1eh6q0h9p8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "841248185002-staqdqkln3gu4hf27s4vaektmm3ks0q1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.verohue.proservehub"
+              }
+            }
+          ]
         }
       }
     }

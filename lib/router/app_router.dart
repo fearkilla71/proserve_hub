@@ -78,6 +78,7 @@ import '../screens/ai_price_offer_screen.dart';
 import '../screens/escrow_status_screen.dart';
 import '../screens/escrow_rating_screen.dart';
 import '../screens/ai_estimate_chat_screen.dart';
+import '../screens/ai_support_chat_screen.dart';
 import '../screens/live_job_timeline_screen.dart';
 import '../screens/crew_roster_screen.dart';
 import '../screens/rate_homeowner_screen.dart';
@@ -215,6 +216,9 @@ abstract final class AppRoutes {
   static const crewSchedule = '/crew-schedule';
   static const paintColors = '/paint-colors';
   static const contractorQr = '/contractor-qr';
+
+  // ── AI Support ──
+  static const aiSupportChat = '/ai-support-chat';
 
   // ── Enterprise Features ──
   static const pnlDashboard = '/pnl-dashboard';
@@ -892,6 +896,12 @@ GoRouter createRouter() {
       GoRoute(
         path: '/contractor-qr',
         builder: (context, state) => const ContractorQrScreen(),
+      ),
+
+      // ── AI Support Chat ──
+      GoRoute(
+        path: '/ai-support-chat',
+        builder: (context, state) => const AiSupportChatScreen(),
       ),
 
       // ── Enterprise Features ──

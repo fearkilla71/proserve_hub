@@ -932,7 +932,15 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(child: SizedBox()),
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'AI Support',
+                    subtitle: 'Get instant help 24/7',
+                    icon: Icons.support_agent,
+                    onTap: () => context.push('/ai-support-chat'),
+                  ),
+                ),
               ],
             ),
           ],

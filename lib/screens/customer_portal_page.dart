@@ -672,6 +672,19 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 },
               ),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: _quickActionTile(
+                context: context,
+                title: 'AI Support',
+                subtitle: 'Get instant help 24/7',
+                icon: Icons.support_agent,
+                onTap: () {
+                  context.push('/ai-support-chat');
+                },
+              ),
+            ),
           ],
         );
       },

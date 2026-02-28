@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../utils/zip_locations.dart';
 import 'zip_lookup_service.dart';
@@ -283,7 +284,77 @@ class AuthService {
     return cred.user;
   }
 
+  /// Sign in (or sign up) with Google. Returns the Firebase [User] on success,
+  /// or `null` if the user cancelled the Google sign-in flow.
+  Future<User?> signInWithGoogle() async {
+    try {
+      await GoogleSignIn.instance.initialize();
+    } catch (_) {
+      // Already initialized — safe to ignore.
+    }
+
+    final GoogleSignInAccount googleUser;
+    try {
+      googleUser = await GoogleSignIn.instance.authenticate();
+    } on GoogleSignInException {
+      return null; // user cancelled or error
+    }
+
+    final idToken = googleUser.authentication.idToken;
+
+    // Get accessToken via authorization scopes
+    String? accessToken;
+    try {
+      final clientAuth = await googleUser.authorizationClient.authorizeScopes([
+        'email',
+      ]);
+      accessToken = clientAuth.accessToken;
+    } catch (_) {
+      // accessToken is optional for Firebase; idToken is sufficient on mobile
+    }
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: accessToken,
+      idToken: idToken,
+    );
+
+    final cred = await _auth.signInWithCredential(credential);
+    final user = cred.user;
+    if (user == null) return null;
+
+    // Ensure a Firestore user doc exists (first-time Google sign-in creates it).
+    final docRef = _db.collection('users').doc(user.uid);
+    final snap = await docRef.get();
+    if (!snap.exists) {
+      // New user — we don't set a role yet; the caller decides (contractor vs
+      // customer) and should call ensureGoogleUserRole() right after.
+      await docRef.set({
+        'email': user.email ?? '',
+        'name': user.displayName ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    return user;
+  }
+
+  /// After a Google sign-in, ensure the user has the expected [role].
+  /// If the Firestore doc already has a role, this is a no-op.
+  Future<void> ensureGoogleUserRole(String uid, String role) async {
+    final docRef = _db.collection('users').doc(uid);
+    final snap = await docRef.get();
+    final existingRole = snap.data()?['role'] as String?;
+    if (existingRole != null && existingRole.isNotEmpty) return;
+    await docRef.set({'role': role}, SetOptions(merge: true));
+  }
+
   Future<void> signOut() async {
+    try {
+      await GoogleSignIn.instance.initialize();
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // Best-effort Google sign-out.
+    }
     await _auth.signOut();
   }
 }

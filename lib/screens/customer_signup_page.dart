@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
@@ -51,6 +52,53 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     if (digits.length == 10) return '+1$digits';
     if (input.trim().startsWith('+')) return '+$digits';
     return '';
+  }
+
+  Future<void> _handleGoogleSignUp(BuildContext context) async {
+    setState(() => loading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = await _auth.signInWithGoogle();
+      if (user == null) {
+        if (mounted) setState(() => loading = false);
+        return;
+      }
+
+      final role = await _auth.resolveRoleForUid(user.uid);
+      if (!mounted) return;
+
+      if (role == 'contractor') {
+        await _auth.signOut();
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This Google account is already registered as a contractor.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (role == 'customer') {
+        // Already a customer — just go to portal
+        if (!mounted) return;
+        context.go('/customer-portal');
+        return;
+      }
+
+      // New user — assign customer role
+      await _auth.ensureGoogleUserRole(user.uid, 'customer');
+      if (!mounted) return;
+      context.go('/customer-portal');
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
   }
 
   Future<void> _sendPhoneCode() async {
@@ -699,6 +747,33 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                             ],
                           ),
                           const SizedBox(height: 10),
+                          if (_step == 0) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Expanded(child: Divider()),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    'or',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ),
+                                const Expanded(child: Divider()),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            GoogleSignInButton(
+                              label: 'Sign up with Google',
+                              onPressed: loading
+                                  ? null
+                                  : () => _handleGoogleSignUp(context),
+                            ),
+                          ],
                           Center(
                             child: TextButton(
                               onPressed: loading
