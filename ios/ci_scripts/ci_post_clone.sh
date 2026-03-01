@@ -49,6 +49,7 @@ flutter pub get
 # Pod install
 echo "Running pod install..."
 cd "${CI_PRIMARY_REPOSITORY_PATH}/ios"
-pod install
+rm -f Podfile.lock
+pod install --repo-update
 
 echo "=== ci_post_clone.sh done ==="
