@@ -1,10 +1,15 @@
-#!/bin/sh
-set -eo pipefail
+#!/bin/bash
+set -e
+set -x
 
 echo "=== ci_post_clone.sh start ==="
 echo "CI_PRIMARY_REPOSITORY_PATH=$CI_PRIMARY_REPOSITORY_PATH"
+echo "CI_WORKSPACE=$CI_WORKSPACE"
 echo "HOME=$HOME"
 echo "PWD=$PWD"
+echo "Xcode: $(xcodebuild -version)"
+echo "Ruby: $(ruby --version)"
+which pod && echo "pod: $(pod --version)" || echo "pod: not found"
 
 # ── Install Flutter ──────────────────────────────────────────────
 FLUTTER_HOME="$HOME/flutter"
@@ -19,10 +24,11 @@ flutter precache --ios
 flutter --version
 
 # ── CocoaPods (use system if available, else install) ────────────
-if ! command -v pod &>/dev/null; then
+if ! command -v pod > /dev/null 2>&1; then
   echo "Installing CocoaPods…"
-  gem install cocoapods --user-install
-  export PATH="$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin:$PATH"
+  gem install cocoapods --user-install --no-document
+  RUBY_VER=$(ruby -e 'puts RUBY_VERSION')
+  export PATH="$HOME/.gem/ruby/$RUBY_VER/bin:$PATH"
 fi
 echo "pod version: $(pod --version)"
 
@@ -34,6 +40,6 @@ flutter pub get
 # ── Install Pods ─────────────────────────────────────────────────
 echo "Running pod install…"
 cd "$CI_PRIMARY_REPOSITORY_PATH/ios"
-pod install --verbose
+pod install
 
 echo "=== ci_post_clone.sh complete ✓ ==="
