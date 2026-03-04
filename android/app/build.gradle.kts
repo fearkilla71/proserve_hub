@@ -9,7 +9,7 @@ import java.io.FileInputStream
 import java.util.Properties
 
 android {
-    namespace = "com.proservehub.app"
+    namespace = "com.verohue.proservehub"
     compileSdk = 36
 
     val keystoreProperties = Properties()
@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.proservehub.app"
+        applicationId = "com.verohue.proservehub"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = 1
