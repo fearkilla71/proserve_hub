@@ -1358,7 +1358,7 @@
               <button class="ghost" id="watchDemo">See how it works</button>
             </div>
             <div class="store-badges">
-              <a class="store-badge" href="#" id="googlePlayBadge" title="Coming soon to Google Play">
+              <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" id="googlePlayBadge" title="Get ProServe Hub on Google Play" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none"><path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.61-.92z" fill="#4285F4"/><path d="M17.09 8.697L5.024.618C4.473.3 3.87.254 3.61 1.814l10.183 10.183 3.297-3.3z" fill="#EA4335"/><path d="M3.61 22.186c.26 1.56.863 1.514 1.414 1.196l12.066-8.08-3.297-3.299L3.61 22.186z" fill="#34A853"/><path d="M20.996 10.669l-3.906-1.972-3.297 3.3 3.297 3.299 3.906-1.972c.792-.445.792-2.21 0-2.655z" fill="#FBBC05"/></svg>
                 <div class="badge-text"><small>Get it on</small><span>Google Play</span></div>
               </a>
@@ -1993,9 +1993,6 @@
       });
 
       // Store badges
-      document.getElementById('googlePlayBadge')?.addEventListener('click', (e) => {
-        e.preventDefault(); showToast('\uD83D\uDEA7 Google Play listing coming soon!');
-      });
       document.getElementById('appStoreBadge')?.addEventListener('click', (e) => {
         e.preventDefault(); showToast('\uD83D\uDEA7 App Store listing coming soon!');
       });
