@@ -1204,6 +1204,10 @@
         font-size: 1.1rem;
       }
 
+      .social-proof-bar a:hover {
+        color: var(--ink);
+      }
+
       /* ── Footer ────────────────────── */
       footer {
         border-top: 1px solid var(--line);
@@ -1331,9 +1335,9 @@
       </div>
     </header>
 
-    <!-- Social Proof Bar -->
+    <!-- Now-Live Banner -->
     <div class="social-proof-bar">
-      &#127968; <strong id="waitlistCount">0</strong> homeowners have already joined &mdash; <a href="#start" style="color:var(--accent);text-decoration:underline;">get your free estimate</a>
+      &#127881; <strong>ProServe Hub is live!</strong> Download free on <a href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">Google Play</a> &amp; <a href="#" id="bannerAppStore" style="color:var(--accent);text-decoration:underline;">App Store</a>
     </div>
 
     <main>
@@ -1354,7 +1358,7 @@
               Lock the price for 24 hours or invite contractors to bid.
             </p>
             <div class="hero-actions">
-              <button class="cta" style="font-size:1.05rem;padding:14px 28px;">Get My Free Estimate</button>
+              <a class="cta" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener" style="font-size:1.05rem;padding:14px 28px;text-decoration:none;">Get My Free Estimate</a>
               <button class="ghost" id="watchDemo">See how it works</button>
             </div>
             <div class="store-badges">
@@ -1779,9 +1783,9 @@
         <div class="cta-band">
           <div>
             <h3>Ready to grow your business with AI?</h3>
-            <p>Join thousands of contractors using ProServe Hub.</p>
+            <p>Download ProServe Hub and start managing jobs smarter today.</p>
           </div>
-          <button class="cta">Join the Waitlist</button>
+          <a class="cta" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener">Download Free</a>
         </div>
       </section>
 
@@ -1804,7 +1808,7 @@
               <div class="price-feat"><span class="pf-check">&#10003;</span> 3 active jobs</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Invoice maker</div>
             </div>
-            <button class="cta" style="background:rgba(255,255,255,0.08);color:var(--ink);">Get Started Free</button>
+            <a class="cta" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.08);color:var(--ink);">Get Started Free</a>
           </div>
           <div class="price-card popular reveal">
             <div class="pop-badge">Most Popular</div>
@@ -1820,7 +1824,7 @@
               <div class="price-feat"><span class="pf-check">&#10003;</span> Priority lead matching</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> Smart scheduling</div>
             </div>
-            <button class="cta">Join the Waitlist</button>
+            <a class="cta" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener">Get Started</a>
           </div>
           <div class="price-card reveal">
             <h3>Enterprise</h3>
@@ -1835,7 +1839,7 @@
               <div class="price-feat"><span class="pf-check">&#10003;</span> Dedicated support</div>
               <div class="price-feat"><span class="pf-check">&#10003;</span> API access</div>
             </div>
-            <button class="cta" style="background:linear-gradient(120deg,#8f5bff,#36b3ff);">Contact Sales</button>
+            <a class="cta" href="mailto:support@proservehub.app?subject=ProServe%20Hub%20Enterprise%20Inquiry" style="background:linear-gradient(120deg,#8f5bff,#36b3ff);">Contact Sales</a>
           </div>
         </div>
       </section>
@@ -1876,8 +1880,8 @@
             <div class="faq-a">Any home service &mdash; kitchen remodels, bathroom renovations, painting, roofing, plumbing, electrical, landscaping, fencing, HVAC, flooring, and more. If it's a project around your home, ProServe Hub can help you find and manage the right pro.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">When does ProServe Hub launch?<span class="faq-arrow">&#9660;</span></div>
-            <div class="faq-a">We're in the final stages and will be launching on Google Play and the App Store very soon. Join the waitlist to get early access and be first to know!</div>
+            <div class="faq-q">Where can I download ProServe Hub?<span class="faq-arrow">&#9660;</span></div>
+            <div class="faq-a">ProServe Hub is available now! Download it free on <a href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener" style="color:var(--accent)">Google Play</a> and the App Store. Create your free account in seconds and get your first AI estimate today.</div>
           </div>
         </div>
       </section>
@@ -1885,34 +1889,23 @@
     </main>
 
     <!-- ═══════════════════════════════════════════════
-         WAITLIST MODAL
+         DOWNLOAD MODAL
          ═══════════════════════════════════════════════ -->
     <div class="modal-overlay" id="waitlistModal">
       <div class="modal">
         <button class="modal-close" id="modalClose">&times;</button>
-        <h2>Get Early Access</h2>
-        <p>Join the waitlist &mdash; homeowners and contractors welcome.</p>
-        <form id="waitlistForm">
-          <div class="form-group">
-            <label for="wlName">Full Name</label>
-            <input type="text" id="wlName" placeholder="John Smith" required />
-          </div>
-          <div class="form-group">
-            <label for="wlEmail">Email</label>
-            <input type="email" id="wlEmail" placeholder="john@example.com" required />
-          </div>
-          <div class="form-group">
-            <label for="wlRole">I am a...</label>
-            <select id="wlRole" required>
-              <option value="" disabled selected>Select one</option>
-              <option value="homeowner">Homeowner</option>
-              <option value="contractor">Contractor</option>
-              <option value="business">Business / Property Manager</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <button type="submit" class="cta" id="wlSubmit">Join the Waitlist</button>
-        </form>
+        <h2>Get the App</h2>
+        <p>Download ProServe Hub free &mdash; available for homeowners and contractors.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;">
+          <a class="cta" href="https://play.google.com/store/apps/details?id=com.verohue.proservehub" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;">
+            <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.61-.92z" fill="#fff"/><path d="M17.09 8.697L5.024.618C4.473.3 3.87.254 3.61 1.814l10.183 10.183 3.297-3.3z" fill="#fff"/><path d="M3.61 22.186c.26 1.56.863 1.514 1.414 1.196l12.066-8.08-3.297-3.299L3.61 22.186z" fill="#fff"/><path d="M20.996 10.669l-3.906-1.972-3.297 3.3 3.297 3.299 3.906-1.972c.792-.445.792-2.21 0-2.655z" fill="#fff"/></svg>
+            Download on Google Play
+          </a>
+          <a class="cta" href="#" id="modalAppStore" style="background:rgba(255,255,255,0.08);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;">
+            <svg viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.02-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.81-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            App Store &mdash; Coming Soon
+          </a>
+        </div>
       </div>
     </div>
 
@@ -1968,8 +1961,6 @@
       // ── Modal logic ──────────────────
       const modal = document.getElementById('waitlistModal');
       const modalClose = document.getElementById('modalClose');
-      const form = document.getElementById('waitlistForm');
-      const submitBtn = document.getElementById('wlSubmit');
       const toastEl = document.getElementById('toast');
 
       function openModal() { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
@@ -1980,9 +1971,9 @@
         setTimeout(() => toastEl.classList.remove('show'), duration);
       }
 
-      // CTA buttons open modal
+      // CTA buttons open download modal (skip links that already go somewhere)
       document.querySelectorAll('.cta').forEach(btn => {
-        if (btn.id === 'wlSubmit') return;
+        if (btn.tagName === 'A' && btn.getAttribute('href') && btn.getAttribute('href') !== '#' && btn.getAttribute('href') !== '#start') return;
         if (btn.tagName === 'A' && btn.getAttribute('href') === '#start') return;
         btn.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
       });
@@ -1992,10 +1983,15 @@
         document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
       });
 
-      // Store badges
-      document.getElementById('googlePlayBadge')?.addEventListener('click', (e) => {
-        e.preventDefault(); showToast('\uD83D\uDEA7 Google Play listing coming soon!');
+      // Store badges — App Store coming soon
+      document.getElementById('appStoreBadge')?.addEventListener('click', (e) => {
+        e.preventDefault(); showToast('\uD83D\uDEA7 App Store listing coming soon!');
       });
+      document.getElementById('bannerAppStore')?.addEventListener('click', (e) => {
+        e.preventDefault(); showToast('\uD83D\uDEA7 App Store listing coming soon!');
+      });
+      document.getElementById('modalAppStore')?.addEventListener('click', (e) => {
+        e.preventDefault(); showToast('\uD83D\uDEA7 App Store listing coming soon!');
       });
 
       // ── Segment toggle ──────────────
@@ -2069,49 +2065,6 @@
       modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-      // ── Form submit ──────────────────
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('wlName').value.trim();
-        const email = document.getElementById('wlEmail').value.trim();
-        const role = document.getElementById('wlRole').value;
-        if (!name || !email || !role) return;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
-
-        try {
-          const projectId = 'proserve-hub-ada0e';
-          const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/waitlist`;
-          const body = {
-            fields: {
-              name: { stringValue: name },
-              email: { stringValue: email },
-              role: { stringValue: role },
-              source: { stringValue: 'website' },
-              createdAt: { timestampValue: new Date().toISOString() }
-            }
-          };
-
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-
-          if (!res.ok) throw new Error('Request failed');
-          closeModal();
-          form.reset();
-          showToast('\u2705 You\'re on the list! We\'ll be in touch soon.');
-        } catch (err) {
-          console.error('Waitlist error:', err);
-          showToast('\u26A0\uFE0F Something went wrong. Try again or email support@proservehub.app');
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Join the Waitlist';
-        }
-      });
-
       // ── Animated Counters ────────────
       const counters = document.querySelectorAll('.counter');
       let countersDone = false;
@@ -2146,22 +2099,6 @@
           if (!wasOpen) item.classList.add('open');
         });
       });
-
-      // ── Waitlist Count ───────────────
-      (async () => {
-        try {
-          const projectId = 'proserve-hub-ada0e';
-          const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/waitlist?pageSize=200`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const count = data.documents ? data.documents.length : 0;
-            document.getElementById('waitlistCount').textContent = count + 47;
-          }
-        } catch (e) {
-          document.getElementById('waitlistCount').textContent = '50+';
-        }
-      })();
     </script>
   </body>
 </html>
