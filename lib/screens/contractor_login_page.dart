@@ -188,16 +188,53 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     return Scaffold(
       appBar: AppBar(title: const Text('Contractor Sign In')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: ListView(
           children: [
+            // ── Social sign-in buttons first ──
+            OutlinedButton.icon(
+              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
+              icon: _googleLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Image.network(
+                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.g_mobiledata, size: 24),
+                    ),
+              label: const Text('Continue with Google'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+            if (isApplePlatform) ...[
+              const SizedBox(height: 12),
+              _appleLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AppleSignInButton(
+                      onPressed: (loading || _appleLoading)
+                          ? null
+                          : _handleAppleSignIn,
+                    ),
+            ],
+            const SizedBox(height: 8),
+            const OrDivider(),
+            // ── Email / password ──
             TextField(
               controller: email,
               decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: password,
               decoration: const InputDecoration(labelText: 'Password'),
@@ -214,15 +251,6 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                     )
                   : const Text('Sign In'),
             ),
-            const OrDivider(),
-            _appleLoading
-                ? const Center(child: CircularProgressIndicator())
-                : AppleSignInButton(
-                    onPressed: (loading || _appleLoading)
-                        ? null
-                        : _handleAppleSignIn,
-                  ),
-            const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
