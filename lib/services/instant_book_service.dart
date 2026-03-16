@@ -70,7 +70,7 @@ class InstantBookService {
     await _firestore.collection('service_packages').add(pkg.toMap());
   }
 
-  /// Book a package instantly — creates a job request with status 'booked'.
+  /// Book a package instantly — creates a job request and booking record.
   Future<String> bookPackage({
     required ServicePackage package,
     required String preferredDate,
@@ -80,9 +80,17 @@ class InstantBookService {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
 
-    final ref = await _firestore.collection('job_requests').add({
+    final batch = _firestore.batch();
+
+    // Create job request
+    final jobRef = _firestore.collection('job_requests').doc();
+    batch.set(jobRef, {
+      'requesterUid': uid,
       'customerId': uid,
       'contractorId': package.contractorId,
+      'claimedBy': package.contractorId,
+      'claimed': true,
+      'service': package.serviceType,
       'serviceType': package.serviceType,
       'packageId': package.id,
       'packageTitle': package.title,
@@ -96,6 +104,23 @@ class InstantBookService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    return ref.id;
+    // Create booking record (triggers onBookingCreated notification)
+    final bookingRef = _firestore.collection('bookings').doc();
+    batch.set(bookingRef, {
+      'jobId': jobRef.id,
+      'customerId': uid,
+      'contractorId': package.contractorId,
+      'service': package.serviceType,
+      'packageName': package.title,
+      'price': package.price,
+      'date': preferredDate,
+      'time': preferredTime,
+      'notes': notes ?? '',
+      'status': 'confirmed',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+    return jobRef.id;
   }
 }

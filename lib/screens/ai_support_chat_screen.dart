@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
 import '../services/ai_support_service.dart';
 import '../theme/proserve_theme.dart';
@@ -78,12 +77,14 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
         if (role.isEmpty || content.isEmpty) continue;
 
         _messages.add({'role': role, 'content': content});
-        _displayMessages.add(_ChatMessage(
-          text: content,
-          isUser: role == 'user',
-          timestamp: (data['createdAt'] as Timestamp?)?.toDate() ??
-              DateTime.now(),
-        ));
+        _displayMessages.add(
+          _ChatMessage(
+            text: content,
+            isUser: role == 'user',
+            timestamp:
+                (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('[AiSupport] Failed to load history: $e');
@@ -100,20 +101,23 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
 
   void _addWelcomeMessage() {
     setState(() {
-      _displayMessages.add(_ChatMessage(
-        text: 'Hi! 👋 I\'m your ProServe Hub support assistant. '
-            'I can help with questions about the app, your account, '
-            'pricing, how to post a job, find contractors, and more.\n\n'
-            'What can I help you with?',
-        isUser: false,
-        timestamp: DateTime.now(),
-        quickReplies: const [
-          'How do I post a job?',
-          'How does escrow work?',
-          'What are the contractor plans?',
-          'I need help with my account',
-        ],
-      ));
+      _displayMessages.add(
+        _ChatMessage(
+          text:
+              'Hi! 👋 I\'m your ProServe Hub support assistant. '
+              'I can help with questions about the app, your account, '
+              'pricing, how to post a job, find contractors, and more.\n\n'
+              'What can I help you with?',
+          isUser: false,
+          timestamp: DateTime.now(),
+          quickReplies: const [
+            'How do I post a job?',
+            'How does escrow work?',
+            'What are the contractor plans?',
+            'I need help with my account',
+          ],
+        ),
+      );
     });
   }
 
@@ -127,11 +131,9 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
     HapticFeedback.selectionClick();
 
     setState(() {
-      _displayMessages.add(_ChatMessage(
-        text: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _displayMessages.add(
+        _ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+      );
     });
     _scrollToBottom();
 
@@ -147,21 +149,22 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
 
       setState(() {
         _isTyping = false;
-        _displayMessages.add(_ChatMessage(
-          text: reply,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _displayMessages.add(
+          _ChatMessage(text: reply, isUser: false, timestamp: DateTime.now()),
+        );
       });
     } catch (e) {
       setState(() {
         _isTyping = false;
-        _displayMessages.add(_ChatMessage(
-          text: 'Sorry, I had trouble connecting. Please try again in a moment.',
-          isUser: false,
-          timestamp: DateTime.now(),
-          isError: true,
-        ));
+        _displayMessages.add(
+          _ChatMessage(
+            text:
+                'Sorry, I had trouble connecting. Please try again in a moment.',
+            isUser: false,
+            timestamp: DateTime.now(),
+            isError: true,
+          ),
+        );
       });
     }
 
@@ -255,10 +258,9 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
             const SizedBox(width: 10),
             Text(
               'AI Support',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -307,16 +309,18 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.bolt,
-                          size: 16, color: scheme.onSurfaceVariant),
+                      Icon(
+                        Icons.bolt,
+                        size: 16,
+                        color: scheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Powered by AI — available 24/7',
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const Spacer(),
                       Container(
@@ -348,8 +352,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                       horizontal: 16,
                       vertical: 12,
                     ),
-                    itemCount:
-                        _displayMessages.length + (_isTyping ? 1 : 0),
+                    itemCount: _displayMessages.length + (_isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == _displayMessages.length && _isTyping) {
                         return _buildTypingIndicator(scheme);
@@ -381,11 +384,9 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
           _aiAvatar(scheme),
           const SizedBox(width: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color:
-                  scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+              color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(18),
@@ -403,8 +404,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
                       child: Opacity(
-                        opacity:
-                            0.3 + 0.7 * ((value + i * 0.33) % 1.0),
+                        opacity: 0.3 + 0.7 * ((value + i * 0.33) % 1.0),
                         child: Container(
                           width: 8,
                           height: 8,
@@ -451,10 +451,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
           const SizedBox(width: 48),
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: ProServeColors.accent,
                 borderRadius: const BorderRadius.only(
@@ -499,8 +496,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                   decoration: BoxDecoration(
                     color: msg.isError
                         ? scheme.errorContainer.withValues(alpha: 0.3)
-                        : scheme.surfaceContainerHighest
-                            .withValues(alpha: 0.6),
+                        : scheme.surfaceContainerHighest.withValues(alpha: 0.6),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(18),
@@ -511,9 +507,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                   child: SelectableText(
                     msg.text,
                     style: TextStyle(
-                      color: msg.isError
-                          ? scheme.error
-                          : scheme.onSurface,
+                      color: msg.isError ? scheme.error : scheme.onSurface,
                       fontSize: 15,
                       height: 1.45,
                     ),
@@ -541,11 +535,11 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    backgroundColor:
-                        ProServeColors.accent2.withValues(alpha: 0.1),
+                    backgroundColor: ProServeColors.accent2.withValues(
+                      alpha: 0.1,
+                    ),
                     side: BorderSide(
-                      color:
-                          ProServeColors.accent2.withValues(alpha: 0.3),
+                      color: ProServeColors.accent2.withValues(alpha: 0.3),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -572,9 +566,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
       decoration: BoxDecoration(
         color: scheme.surface,
         border: Border(
-          top: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.3),
-          ),
+          top: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
@@ -597,8 +589,9 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor:
-                    scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                fillColor: scheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 12,
@@ -614,8 +607,9 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
             style: IconButton.styleFrom(
               backgroundColor: ProServeColors.accent2,
               foregroundColor: Colors.white,
-              disabledBackgroundColor:
-                  ProServeColors.accent2.withValues(alpha: 0.4),
+              disabledBackgroundColor: ProServeColors.accent2.withValues(
+                alpha: 0.4,
+              ),
             ),
           ),
         ],

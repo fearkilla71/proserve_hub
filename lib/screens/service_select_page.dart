@@ -15,6 +15,22 @@ IconData _iconFromName(String? name) {
       return Icons.water;
     case 'kitchen':
       return Icons.kitchen;
+    case 'hvac':
+      return Icons.thermostat;
+    case 'pool':
+      return Icons.pool;
+    case 'garage':
+      return Icons.garage;
+    case 'window':
+      return Icons.window;
+    case 'solar':
+      return Icons.solar_power;
+    case 'pest':
+      return Icons.pest_control;
+    case 'tree':
+      return Icons.park;
+    case 'roofing':
+      return Icons.roofing;
     default:
       return Icons.home_repair_service;
   }
@@ -35,6 +51,17 @@ const List<Map<String, dynamic>> _fallbackServices = [
   {'name': 'Drywall Repair', 'icon': 'build', 'type': 'drywall_repair'},
   {'name': 'Pressure Washing', 'icon': 'water', 'type': 'pressure_washing'},
   {'name': 'Cabinets', 'icon': 'kitchen', 'type': 'cabinets'},
+  {'name': 'HVAC', 'icon': 'hvac', 'type': 'hvac'},
+  {'name': 'Pool Installation', 'icon': 'pool', 'type': 'pool_installation'},
+  {'name': 'Garage Door', 'icon': 'garage', 'type': 'garage_door'},
+  {
+    'name': 'Window Replacement',
+    'icon': 'window',
+    'type': 'window_replacement',
+  },
+  {'name': 'Solar Panels', 'icon': 'solar', 'type': 'solar_panels'},
+  {'name': 'Pest Control', 'icon': 'pest', 'type': 'pest_control'},
+  {'name': 'Tree Service', 'icon': 'tree', 'type': 'tree_service'},
 ];
 
 class ServiceSelectPage extends StatelessWidget {
@@ -48,6 +75,13 @@ class ServiceSelectPage extends StatelessWidget {
     'pressure_washing': 'Pressure Washing',
     'cabinets': 'Cabinet Refinishing',
     'painting': 'Painting',
+    'hvac': 'HVAC',
+    'pool_installation': 'Pool Installation',
+    'garage_door': 'Garage Door',
+    'window_replacement': 'Window Replacement',
+    'solar_panels': 'Solar Panels',
+    'pest_control': 'Pest Control',
+    'tree_service': 'Tree Service',
   };
 
   void _navigateToFlow(BuildContext context, String type) {

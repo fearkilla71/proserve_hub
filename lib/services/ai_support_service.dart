@@ -22,7 +22,8 @@ class AiSupportService {
     final payload = <String, dynamic>{'messages': messages};
 
     // Use callable on mobile/web, HTTP fallback on desktop (Windows/Linux).
-    final useCallable = kIsWeb ||
+    final useCallable =
+        kIsWeb ||
         defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
@@ -54,8 +55,7 @@ class AiSupportService {
   Future<Map<String, dynamic>> _sendViaHttp(
     Map<String, dynamic> payload,
   ) async {
-    final idToken =
-        await FirebaseAuth.instance.currentUser?.getIdToken() ?? '';
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken() ?? '';
     final url = Uri.parse(
       'https://us-central1-proserve-hub-ada0e.cloudfunctions.net/aiSupportChatHttp',
     );

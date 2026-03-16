@@ -582,7 +582,8 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 child: const Text('I verified, refresh status'),
               ),
             ],
-            if (!_awaitingEmailVerification && (Platform.isIOS || Platform.isMacOS)) ...[
+            if (!_awaitingEmailVerification &&
+                (Platform.isIOS || Platform.isMacOS)) ...[
               const OrDivider(),
               _appleLoading
                   ? const Center(child: CircularProgressIndicator())

@@ -1197,5 +1197,22 @@ service cloud.firestore {
         request.auth.uid == contractorId || isAdmin()
       );
     }
+
+    // --- INSTANT BOOKINGS ---
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || resource.data.customerId == request.auth.uid
+        || resource.data.contractorId == request.auth.uid
+      );
+      allow create: if isSignedIn()
+        && request.resource.data.customerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || resource.data.contractorId == request.auth.uid
+        || resource.data.customerId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:typed_data';
+import '../widgets/before_after_slider.dart';
 
 class PortfolioScreen extends StatefulWidget {
   final String? contractorId;
@@ -36,6 +37,13 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     'Cabinet Refinishing',
     'Drywall Repair',
     'Pressure Washing',
+    'HVAC',
+    'Pool Installation',
+    'Garage Door',
+    'Window Replacement',
+    'Solar Panels',
+    'Pest Control',
+    'Tree Service',
   ];
 
   List<Map<String, dynamic>> get _filteredItems {
@@ -446,7 +454,16 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => isVideo ? _showVideoPlayer(item) : _showFullImage(item),
+        onTap: () {
+          if (isVideo) {
+            _showVideoPlayer(item);
+          } else if (item['beforeAfterId'] != null &&
+              item['beforeAfterId'].toString().isNotEmpty) {
+            _showBeforeAfterComparison(item);
+          } else {
+            _showFullImage(item);
+          }
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -601,6 +618,59 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     );
   }
 
+  void _showBeforeAfterComparison(Map<String, dynamic> item) {
+    final pairId = item['beforeAfterId']?.toString() ?? '';
+    if (pairId.isEmpty) {
+      _showFullImage(item);
+      return;
+    }
+
+    // Find the paired item
+    final pair = _portfolioItems.where((it) =>
+        it['beforeAfterId']?.toString() == pairId && it['id'] != item['id']);
+    if (pair.isEmpty) {
+      _showFullImage(item);
+      return;
+    }
+
+    final other = pair.first;
+    final isBefore = item['photoType'] == 'before';
+    final beforeItem = isBefore ? item : other;
+    final afterItem = isBefore ? other : item;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppBar(
+              title: Text(beforeItem['title'] ?? 'Before & After'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            BeforeAfterSlider(
+              beforeUrl: beforeItem['url'] as String,
+              afterUrl: afterItem['url'] as String,
+              beforeLabel: 'BEFORE',
+              afterLabel: 'AFTER',
+              height: 350,
+            ),
+            if (beforeItem['description'] != null &&
+                beforeItem['description'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(beforeItem['description']),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showFullImage(Map<String, dynamic> item) {
     showDialog(
       context: context,
@@ -662,6 +732,13 @@ class _AddPhotoDialogState extends State<_AddPhotoDialog> {
     'Cabinet Refinishing',
     'Drywall Repair',
     'Pressure Washing',
+    'HVAC',
+    'Pool Installation',
+    'Garage Door',
+    'Window Replacement',
+    'Solar Panels',
+    'Pest Control',
+    'Tree Service',
   ];
 
   @override

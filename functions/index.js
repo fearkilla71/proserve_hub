@@ -8957,3 +8957,272 @@ exports.aiSupportChatHttp = functions
       throw toSafeHttpsErrorFromOpenAi(e);
     }
   }));
+
+// ==================== NOTIFICATION PREFERENCE HELPER ====================
+
+/**
+ * Check if a user has a given notification category enabled.
+ * Categories: messages, bids, jobUpdates, reviews, referrals, promotions
+ * Returns true if preference missing (opt-in by default).
+ */
+async function isNotificationEnabled(uid, category) {
+  if (!uid || !category) return true;
+  try {
+    const snap = await admin.firestore().collection('users').doc(uid).get();
+    const prefs = snap.data()?.notificationPrefs;
+    if (!prefs || typeof prefs !== 'object') return true;
+    return prefs[category] !== false;
+  } catch (_) {
+    return true;
+  }
+}
+
+/**
+ * Send a push notification and persist it to the user's notifications subcollection.
+ */
+async function sendAndPersistNotification({ recipientId, title, body, data, category }) {
+  if (!recipientId) return;
+
+  // Check notification preferences
+  if (category && !(await isNotificationEnabled(recipientId, category))) {
+    console.log(`[notify] ${category} disabled for ${recipientId}, skipping.`);
+    return;
+  }
+
+  const userSnap = await admin.firestore().collection('users').doc(recipientId).get();
+  if (!userSnap.exists) return;
+
+  const fcmToken = (userSnap.data()?.fcmToken || '').toString().trim();
+
+  // Always persist to notifications subcollection
+  await admin.firestore()
+    .collection('users')
+    .doc(recipientId)
+    .collection('notifications')
+    .add({
+      title,
+      body,
+      type: data?.type || 'general',
+      route: data?.route || null,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      data: data || {},
+    });
+
+  // Send FCM push if token available
+  if (fcmToken) {
+    try {
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: { title, body },
+        data: data || {},
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'proserve_hub_channel',
+            priority: 'high',
+            sound: 'default',
+          },
+        },
+        apns: {
+          payload: { aps: { sound: 'default', badge: 1 } },
+        },
+      });
+    } catch (e) {
+      // Token might be stale; log but don't throw
+      console.warn(`[notify] FCM send failed for ${recipientId}:`, e.code || e.message);
+    }
+  }
+}
+
+// ==================== NEW LEAD NOTIFICATIONS ====================
+
+// Notify contractors when a new job is posted in their service area
+exports.onNewJobPosted = functions.firestore
+  .document('job_requests/{jobId}')
+  .onCreate(async (snap, context) => {
+    try {
+      const job = snap.data();
+      const jobId = context.params.jobId;
+      const service = (job.service || '').toString();
+      const city = (job.city || job.location || '').toString().toLowerCase();
+
+      if (!service) return;
+
+      // Find contractors who offer this service (limit to 50 to avoid quota issues)
+      let query = admin.firestore().collection('contractors').limit(50);
+
+      const contractorsSnap = await query.get();
+      if (contractorsSnap.empty) return;
+
+      const notifications = [];
+      for (const doc of contractorsSnap.docs) {
+        const contractor = doc.data();
+        const contractorId = doc.id;
+
+        // Skip the job poster if they're somehow a contractor
+        if (contractorId === job.requesterUid) continue;
+
+        // Check if contractor's services include this service type
+        const services = contractor.services || contractor.serviceTypes || [];
+        const serviceList = Array.isArray(services) ? services.map(s => s.toString().toLowerCase()) : [];
+        const matchesService = serviceList.length === 0 || serviceList.includes(service.toLowerCase());
+        if (!matchesService) continue;
+
+        notifications.push(
+          sendAndPersistNotification({
+            recipientId: contractorId,
+            title: 'New Job Lead! 🔔',
+            body: `${service} job posted${city ? ' in ' + city : ''}. Be the first to bid!`,
+            data: {
+              type: 'new_lead',
+              jobId: jobId,
+              route: `/job/${jobId}`,
+            },
+            category: 'jobUpdates',
+          })
+        );
+      }
+
+      await Promise.all(notifications);
+      console.log(`[onNewJobPosted] Sent ${notifications.length} new lead notifications`);
+    } catch (e) {
+      console.error('[onNewJobPosted] Error:', e);
+    }
+  });
+
+// ==================== ESCROW RELEASE NOTIFICATION ====================
+
+// Notify contractor when escrow payment is released to them
+exports.onEscrowReleased = functions.firestore
+  .document('escrow/{escrowId}')
+  .onUpdate(async (change, context) => {
+    try {
+      const before = change.before.data();
+      const after = change.after.data();
+
+      // Only trigger when status changes to 'released'
+      if (before.status === after.status) return;
+      if (after.status !== 'released') return;
+
+      const contractorId = (after.contractorId || '').toString().trim();
+      const amount = after.amount || after.totalAmount || 0;
+      const jobId = (after.jobId || '').toString().trim();
+
+      if (!contractorId) return;
+
+      await sendAndPersistNotification({
+        recipientId: contractorId,
+        title: 'Payment Released! 💰',
+        body: amount > 0
+          ? `$${Number(amount).toFixed(2)} has been released from escrow to your account.`
+          : 'Your escrow payment has been released.',
+        data: {
+          type: 'escrow_released',
+          jobId: jobId,
+          escrowId: context.params.escrowId,
+          route: jobId ? `/job/${jobId}` : null,
+        },
+        category: 'jobUpdates',
+      });
+
+      // Also notify the customer that their payment was released
+      const customerId = (after.customerId || after.payerId || '').toString().trim();
+      if (customerId) {
+        await sendAndPersistNotification({
+          recipientId: customerId,
+          title: 'Payment Complete ✅',
+          body: 'Escrow funds have been released to your contractor. Job complete!',
+          data: {
+            type: 'escrow_released',
+            jobId: jobId,
+            route: jobId ? `/job/${jobId}` : null,
+          },
+          category: 'jobUpdates',
+        });
+      }
+
+      console.log(`[onEscrowReleased] Notifications sent for escrow ${context.params.escrowId}`);
+    } catch (e) {
+      console.error('[onEscrowReleased] Error:', e);
+    }
+  });
+
+// ==================== REVIEW NOTIFICATION ====================
+
+// Notify contractor when they receive a new review
+exports.onReviewCreated = functions.firestore
+  .document('reviews/{reviewId}')
+  .onCreate(async (snap, context) => {
+    try {
+      const review = snap.data();
+      const contractorId = (review.contractorId || '').toString().trim();
+      const rating = review.rating || 0;
+      const customerName = review.customerName || 'A customer';
+
+      if (!contractorId) return;
+
+      const stars = '⭐'.repeat(Math.min(Math.round(rating), 5));
+
+      await sendAndPersistNotification({
+        recipientId: contractorId,
+        title: 'New Review! ' + stars,
+        body: `${customerName} left you a ${rating}-star review.`,
+        data: {
+          type: 'review',
+          reviewId: context.params.reviewId,
+          route: `/reviews/${contractorId}`,
+        },
+        category: 'reviews',
+      });
+    } catch (e) {
+      console.error('[onReviewCreated] Error:', e);
+    }
+  });
+
+// ==================== BOOKING NOTIFICATION ====================
+
+// Notify contractor when a customer books them directly
+exports.onBookingCreated = functions.firestore
+  .document('bookings/{bookingId}')
+  .onCreate(async (snap, context) => {
+    try {
+      const booking = snap.data();
+      const contractorId = (booking.contractorId || '').toString().trim();
+      const customerId = (booking.customerId || '').toString().trim();
+      const service = (booking.service || booking.packageName || 'a service').toString();
+      const date = booking.date || '';
+
+      if (!contractorId) return;
+
+      await sendAndPersistNotification({
+        recipientId: contractorId,
+        title: 'New Booking! 📅',
+        body: `A customer booked ${service}${date ? ' for ' + date : ''}.`,
+        data: {
+          type: 'booking',
+          bookingId: context.params.bookingId,
+          customerId: customerId,
+          route: '/contractor-portal',
+        },
+        category: 'jobUpdates',
+      });
+
+      // Confirm to customer
+      if (customerId) {
+        await sendAndPersistNotification({
+          recipientId: customerId,
+          title: 'Booking Confirmed! ✅',
+          body: `Your ${service} booking has been confirmed${date ? ' for ' + date : ''}.`,
+          data: {
+            type: 'booking_confirmed',
+            bookingId: context.params.bookingId,
+            route: '/customer-portal',
+          },
+          category: 'jobUpdates',
+        });
+      }
+    } catch (e) {
+      console.error('[onBookingCreated] Error:', e);
+    }
+  });
