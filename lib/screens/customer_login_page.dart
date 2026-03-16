@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -184,16 +186,53 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     return Scaffold(
       appBar: AppBar(title: const Text('Customer Sign In')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: ListView(
           children: [
+            // ── Social sign-in buttons first ──
+            OutlinedButton.icon(
+              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
+              icon: _googleLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Image.network(
+                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.g_mobiledata, size: 24),
+                    ),
+              label: const Text('Continue with Google'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+            if (isApplePlatform) ...[
+              const SizedBox(height: 12),
+              _appleLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AppleSignInButton(
+                      onPressed: (loading || _appleLoading)
+                          ? null
+                          : _handleAppleSignIn,
+                    ),
+            ],
+            const SizedBox(height: 8),
+            const OrDivider(),
+            // ── Email / password ──
             TextField(
               controller: email,
               decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: password,
               decoration: const InputDecoration(labelText: 'Password'),
@@ -210,15 +249,6 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                     )
                   : const Text('Sign In'),
             ),
-            const OrDivider(),
-            _appleLoading
-                ? const Center(child: CircularProgressIndicator())
-                : AppleSignInButton(
-                    onPressed: (loading || _appleLoading)
-                        ? null
-                        : _handleAppleSignIn,
-                  ),
-            const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -263,42 +293,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 child: const Text('Forgot password?'),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                const Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'or',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-                const Expanded(child: Divider()),
-              ],
-            ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
-              icon: _googleLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Image.network(
-                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                      width: 20,
-                      height: 20,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.g_mobiledata, size: 24),
-                    ),
-              label: const Text('Continue with Google'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-            ),
-            const SizedBox(height: 12),
             TextButton(
               onPressed: loading
                   ? null

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -436,15 +438,17 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const OrDivider(),
-            _appleLoading
-                ? const Center(child: CircularProgressIndicator())
-                : AppleSignInButton(
-                    label: 'Sign up with Apple',
-                    onPressed: (loading || _appleLoading)
-                        ? null
-                        : _handleAppleSignUp,
-                  ),
+            if (Platform.isIOS || Platform.isMacOS) ...[
+              const OrDivider(),
+              _appleLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AppleSignInButton(
+                      label: 'Sign up with Apple',
+                      onPressed: (loading || _appleLoading)
+                          ? null
+                          : _handleAppleSignUp,
+                    ),
+            ],
           ],
         );
       case 1:

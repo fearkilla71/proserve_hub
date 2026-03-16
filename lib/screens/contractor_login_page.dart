@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -265,42 +267,7 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                 child: const Text('Forgot password?'),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                const Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'or',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-                const Expanded(child: Divider()),
-              ],
-            ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
-              icon: _googleLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Image.network(
-                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                      width: 20,
-                      height: 20,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.g_mobiledata, size: 24),
-                    ),
-              label: const Text('Continue with Google'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-            ),
-            const SizedBox(height: 12),
             TextButton(
               onPressed: loading
                   ? null

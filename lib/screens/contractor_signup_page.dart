@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -580,7 +582,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 child: const Text('I verified, refresh status'),
               ),
             ],
-            if (!_awaitingEmailVerification) ...[
+            if (!_awaitingEmailVerification && (Platform.isIOS || Platform.isMacOS)) ...[
               const OrDivider(),
               _appleLoading
                   ? const Center(child: CircularProgressIndicator())

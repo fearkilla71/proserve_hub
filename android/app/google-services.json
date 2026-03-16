@@ -69,6 +69,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "841248185002-khnnvog7etg3vfkt1jegpm8fev6k3uvc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.verohue.proservehub",
+            "certificate_hash": "9849477fc05c4cd4501d9dfd79d347826a3f15bb"
+          }
+        },
+        {
+          "client_id": "841248185002-p6vho1v8l3i8qrt3eq0ifv21eis63hkh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.verohue.proservehub",
+            "certificate_hash": "ea671a90eb62e06457d0464dedb43b0e61b5beb1"
+          }
+        },
+        {
           "client_id": "841248185002-ik0b3npreugodv1an5t0nc1eh6q0h9p8.apps.googleusercontent.com",
           "client_type": 3
         }
