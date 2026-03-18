@@ -60,7 +60,11 @@ class VersionCheckService {
         if (!context.mounted) return;
         final message = remoteConfig.getString('optional_update_message');
         _showOptionalUpdateDialog(
-            context, message, latestVersion, remoteConfig);
+          context,
+          message,
+          latestVersion,
+          remoteConfig,
+        );
       }
     } catch (_) {
       // Non-critical – silently ignore so the app remains usable.
