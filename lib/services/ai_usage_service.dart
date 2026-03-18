@@ -21,9 +21,9 @@ class AiUsageService {
 
   // ── Daily limits per tier (0 = blocked, -1 = unlimited) ──
   static const Map<String, Map<String, int>> _limits = {
-    'basic': {'renders': 1, 'estimates': 3, 'invoiceAi': 2},
-    'pro': {'renders': 5, 'estimates': 10, 'invoiceAi': 10},
-    'enterprise': {'renders': -1, 'estimates': -1, 'invoiceAi': -1},
+    'basic': {'renders': 1, 'estimates': 3, 'invoiceAi': 2, 'bidAnalyzer': 0, 'qualityInspect': 0},
+    'pro': {'renders': 8, 'estimates': 10, 'invoiceAi': 10, 'bidAnalyzer': 0, 'qualityInspect': 0},
+    'enterprise': {'renders': -1, 'estimates': -1, 'invoiceAi': -1, 'bidAnalyzer': -1, 'qualityInspect': -1},
   };
 
   /// Returns the daily limit for [feature] at [tier].
@@ -114,6 +114,10 @@ class AiUsageService {
         return 'AI estimates';
       case 'invoiceAi':
         return 'AI invoice drafts';
+      case 'bidAnalyzer':
+        return 'bid analyses';
+      case 'qualityInspect':
+        return 'quality inspections';
       default:
         return 'AI uses';
     }

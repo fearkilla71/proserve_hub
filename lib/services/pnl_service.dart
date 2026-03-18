@@ -8,6 +8,7 @@ class MonthlyPnl {
   final double materialCosts;
   final double laborCosts;
   final double otherExpenses;
+  final double estimatedRevenue;
 
   const MonthlyPnl({
     required this.month,
@@ -15,6 +16,7 @@ class MonthlyPnl {
     required this.materialCosts,
     required this.laborCosts,
     required this.otherExpenses,
+    this.estimatedRevenue = 0,
   });
 
   double get totalExpenses => materialCosts + laborCosts + otherExpenses;
@@ -29,6 +31,7 @@ class PnlReport {
   final double totalMaterialCosts;
   final double totalLaborCosts;
   final double totalOtherExpenses;
+  final double totalEstimatedRevenue;
   final Map<String, double> expensesByCategory;
 
   const PnlReport({
@@ -38,6 +41,7 @@ class PnlReport {
     required this.totalLaborCosts,
     required this.totalOtherExpenses,
     required this.expensesByCategory,
+    this.totalEstimatedRevenue = 0,
   });
 
   double get totalExpenses =>
@@ -45,6 +49,10 @@ class PnlReport {
   double get netProfit => totalRevenue - totalExpenses;
   double get marginPercent =>
       totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  double get estimateAccuracy =>
+      totalEstimatedRevenue > 0
+          ? (totalRevenue / totalEstimatedRevenue) * 100
+          : 0;
 }
 
 /// Service that aggregates revenue, expenses, and labor costs into a P&L
@@ -91,6 +99,13 @@ class PnlService {
         .collection('contractors')
         .doc(uid)
         .collection('labor_logs')
+        .get();
+
+    // ── 4. Cost estimates (for estimate vs actual) ──
+    final estimatesSnap = await _fs
+        .collection('contractors')
+        .doc(uid)
+        .collection('cost_estimates')
         .get();
 
     // ── Bucket into months ──
@@ -161,6 +176,21 @@ class PnlService {
       buckets[key]!.laborCosts += cost;
     }
 
+    // Estimates
+    for (final doc in estimatesSnap.docs) {
+      final data = doc.data();
+      final date = _toDateTime(data['createdAt']);
+      if (date == null || date.isBefore(cutoff)) continue;
+
+      final est = _toDouble(data['estimateTotal']);
+      final key = _monthKey(date);
+      buckets.putIfAbsent(
+        key,
+        () => _MonthBucket(month: DateTime(date.year, date.month, 1)),
+      );
+      buckets[key]!.estimatedRevenue += est;
+    }
+
     // Sort chronologically
     final sortedKeys = buckets.keys.toList()..sort();
     final months = sortedKeys.map((k) {
@@ -171,15 +201,18 @@ class PnlService {
         materialCosts: b.materialCosts,
         laborCosts: b.laborCosts,
         otherExpenses: b.otherExpenses,
+        estimatedRevenue: b.estimatedRevenue,
       );
     }).toList();
 
     double totalRev = 0, totalMat = 0, totalLab = 0, totalOther = 0;
+    double totalEst = 0;
     for (final m in months) {
       totalRev += m.revenue;
       totalMat += m.materialCosts;
       totalLab += m.laborCosts;
       totalOther += m.otherExpenses;
+      totalEst += m.estimatedRevenue;
     }
 
     return PnlReport(
@@ -188,6 +221,7 @@ class PnlService {
       totalMaterialCosts: totalMat,
       totalLaborCosts: totalLab,
       totalOtherExpenses: totalOther,
+      totalEstimatedRevenue: totalEst,
       expensesByCategory: categoryTotals,
     );
   }
@@ -216,6 +250,7 @@ class _MonthBucket {
   double materialCosts = 0;
   double laborCosts = 0;
   double otherExpenses = 0;
+  double estimatedRevenue = 0;
 
   _MonthBucket({required this.month});
 }

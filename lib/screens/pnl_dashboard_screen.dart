@@ -141,6 +141,31 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
           SizedBox(height: 220, child: _revenueVsExpensesChart(report, scheme)),
           const SizedBox(height: 24),
 
+          // ── Estimate vs Actual ──
+          if (report.totalEstimatedRevenue > 0) ...[
+            Text(
+              'Estimate vs Actual',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+                height: 220,
+                child: _estimateVsActualChart(report, scheme)),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                'Accuracy: ${report.estimateAccuracy.toStringAsFixed(1)}%',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
           // ── Net Profit trend ──
           Text(
             'Net Profit Trend',
@@ -230,6 +255,16 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
           profitColor,
           scheme,
         ),
+        if (report.totalEstimatedRevenue > 0)
+          _statCard(
+            'Est. Accuracy',
+            '${report.estimateAccuracy.toStringAsFixed(1)}%',
+            Icons.compare_arrows,
+            report.estimateAccuracy >= 80 && report.estimateAccuracy <= 120
+                ? Colors.green.shade700
+                : Colors.orange.shade700,
+            scheme,
+          ),
       ],
     );
   }
@@ -369,6 +404,105 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(4),
                 ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Estimate vs Actual Bar Chart ──
+  Widget _estimateVsActualChart(PnlReport report, ColorScheme scheme) {
+    final months =
+        report.months.where((m) => m.estimatedRevenue > 0 || m.revenue > 0).toList();
+    if (months.isEmpty) {
+      return Center(
+        child: Text('No data yet',
+            style: TextStyle(color: scheme.onSurfaceVariant)),
+      );
+    }
+
+    final maxVal = months.fold<double>(0, (prev, m) {
+      final v =
+          m.estimatedRevenue > m.revenue ? m.estimatedRevenue : m.revenue;
+      return v > prev ? v : prev;
+    });
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxVal * 1.15,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final label = rodIndex == 0 ? 'Estimated' : 'Actual';
+              return BarTooltipItem(
+                '$label\n\$${rod.toY.toStringAsFixed(0)}',
+                TextStyle(color: scheme.onInverseSurface, fontSize: 12),
+              );
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx < 0 || idx >= months.length) return const SizedBox();
+                return Text(
+                  DateFormat.MMM().format(months[idx].month),
+                  style: const TextStyle(fontSize: 10),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 48,
+              getTitlesWidget: (value, meta) {
+                if (value == 0) return const SizedBox();
+                return Text(
+                  '\$${(value / 1000).toStringAsFixed(1)}k',
+                  style: const TextStyle(fontSize: 10),
+                );
+              },
+            ),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxVal > 0 ? maxVal / 4 : 1,
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: List.generate(months.length, (i) {
+          final m = months[i];
+          return BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: m.estimatedRevenue,
+                color: scheme.tertiary,
+                width: 12,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+              BarChartRodData(
+                toY: m.revenue,
+                color: scheme.primary,
+                width: 12,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(4)),
               ),
             ],
           );

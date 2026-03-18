@@ -2595,14 +2595,14 @@ async function estimateLaborFromInputsCore({ uid, input }) {
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: userText },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 600,
     });
 
     const raw = resp.choices?.[0]?.message?.content || '{}';
@@ -3719,14 +3719,14 @@ async function estimateJobFromImagesCore({ uid, jobId, imagePaths }) {
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 600,
     });
 
     const raw = resp.choices?.[0]?.message?.content || '{}';
@@ -3949,14 +3949,14 @@ async function estimateFromImagesInputsCore({
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 600,
     });
 
     const raw = resp.choices?.[0]?.message?.content || '{}';
@@ -4215,14 +4215,14 @@ async function analyzeExteriorPhotosCore({ uid, imagePaths }) {
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 600,
     });
     const raw = resp.choices?.[0]?.message?.content || '{}';
     ai = JSON.parse(raw);
@@ -5133,14 +5133,14 @@ async function draftInvoiceCore({ uid, invoice }) {
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: userText },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.3,
-      max_tokens: 800,
+      max_tokens: 1000,
     });
 
     const raw = resp.choices?.[0]?.message?.content || '{}';
@@ -5240,14 +5240,14 @@ async function suggestMaterialQuantitiesCore({ uid, input }) {
   let ai;
   try {
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: userText },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 600,
     });
 
     const raw = resp.choices?.[0]?.message?.content || '{}';
@@ -8106,15 +8106,26 @@ KEY QUESTIONS TO ASK (in natural order, 1-2 per message):
 8. Any accent / feature walls (different color)?
 9. Does any room have wallpaper that needs removal? Which rooms?
 10. How many windows / window frames need painting?
-11. What is the ZIP code for the property?
-12. Any special requests? (specific paint brand, prep work needed)
+11. Ceiling height? (standard 8ft, 9ft, 10ft+, vaulted?)
+12. Wall texture? (smooth, orange peel, knockdown, skip trowel?)
+13. Current wall condition? (good shape, minor holes/cracks, major damage/peeling?)
+14. What paint finish do they prefer? (flat/matte, eggshell, satin, semi-gloss, high-gloss)
+15. What is the ZIP code for the property?
+16. Any special requests? (specific paint brand, extra prep work, furniture moving)
 
 IMPORTANT: If the user has uploaded photos, analyze them carefully for:
 - Room type identification (bedroom, bathroom, kitchen, living room, etc.)
-- Current wall condition (clean, marks, holes, peeling)
-- Ceiling condition and whether it needs painting
-- Number of rooms visible
+- Current wall condition (clean, marks, holes, peeling, water damage, stains)
+- Wall texture type (smooth, orange peel, knockdown, popcorn)
+- Ceiling condition, height clues, and whether it needs painting
+- Trim, baseboards, crown molding presence and condition
+- Number of doors and windows visible
+- Furniture that may need covering or moving
+- Any damage requiring prep work (patch, sand, prime)
+- Color of existing paint — helps assess if color change adds difficulty
+- Special features (accent walls, wainscoting, chair rail, built-ins)
 Use photo observations to refine your estimate and skip questions you can answer from the photos.
+Reference what you see: "I can see from your photo that..."
 
 PRICING — EXACT ROOM-BASED RATES (use these numbers precisely):
 
@@ -8160,12 +8171,30 @@ CALCULATION RULES:
 3. Add door costs based on count and one-side vs both-sides
 4. Add trim and/or crown molding costs for each room category
 5. Add stairwells, railings, accent walls, wallpaper removal, windows, garage, laundry
-6. Sum all = total estimate
-7. The "recommended" price is the exact calculated total
-8. "low" = recommended x 0.88 (discount for simple/standard conditions)
-9. "premium" = recommended x 1.15 (for extras, difficult access, or premium paint)
+6. Apply CEILING HEIGHT multiplier to total:
+   - Standard 8ft ceilings: 1.0x (no adjustment)
+   - 9ft ceilings: 1.10x
+   - 10ft ceilings: 1.20x
+   - 12ft+ or vaulted: 1.35x
+7. Apply DIFFICULTY multiplier (if applicable):
+   - Standard access, good condition: 1.0x
+   - Moderate difficulty (tight spaces, lots of trim, minor repairs): 1.10x
+   - Difficult (heavy prep, wallpaper under paint, extensive damage repair): 1.20x
+8. Apply SURFACE PREP add-on:
+   - Minor patching (nail holes, small cracks): included in base
+   - Moderate prep (multiple patches, light sanding, one coat primer): +$150 flat
+   - Heavy prep (skim coating, major damage, full prime): +$300 flat
+9. Apply PAINT FINISH premium:
+   - Flat/matte, eggshell: standard pricing (no add-on)
+   - Satin: +3%
+   - Semi-gloss: +5%
+   - High-gloss (requires more coats, shows imperfections): +10%
+10. Sum all = total estimate. Minimum job fee: $350
+11. The "recommended" price is the exact calculated total
+12. "low" = recommended x 0.88 (discount for simple/standard conditions)
+13. "premium" = recommended x 1.15 (for extras, difficult access, or premium paint)
 
-EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all, 8 doors (one side), trim on all, 1 stairwell, 1 railing, 2 accent walls, 1 laundry, 4 windows:
+EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, 9ft ceilings, ceilings on all, 8 doors (one side), trim on all, 1 stairwell, 1 railing, 2 accent walls, 1 laundry, 4 windows, satin finish:
 - 3 bedrooms x $500 = $1,500
 - 1 kitchen x $560 = $560
 - 1 living room x $560 = $560
@@ -8179,8 +8208,11 @@ EXAMPLE: 3 bedrooms + 1 kitchen + 1 living room, with paint, ceilings on all, 8 
 - 1 railing x $240 = $240
 - 2 accent walls x $200 = $400
 - 4 windows x $50 = $200
-- Total recommended = $5,790
-- Low = $5,095, Premium = $6,659
+- Subtotal = $5,790
+- 9ft ceiling multiplier: $5,790 x 1.10 = $6,369
+- Satin finish: $6,369 x 1.03 = $6,560
+- Total recommended = $6,560
+- Low = $5,773, Premium = $7,544
 
 NOTE: Hallways are counted together with dining rooms. Wallpaper removal is labor only (no paint add-on).`,
 
@@ -8194,10 +8226,18 @@ KEY QUESTIONS TO ASK:
 5. Are you changing the color or keeping it similar?
 6. Does any surface need scraping, sanding, or repair before painting?
 7. Any special areas? (shutters, trim, fascia, soffits, front door, garage door, deck/fence)
-8. What's the ZIP code?
-9. Any HOA color requirements or timeline needs?
+8. Current condition of the exterior? (good shape, peeling, chalking, bare wood, caulking needed?)
+9. Any areas with difficult access? (steep roof line, tall peaks, landscaping obstacles)
+10. What's the ZIP code?
+11. Any HOA color requirements or timeline needs?
 
-PHOTO ANALYSIS: If photos provided, assess home size, stories, siding condition, trim complexity, and prep work needed. Estimate total exterior wall sqft.
+PHOTO ANALYSIS: If photos provided, assess:
+- Home size, stories, overall style
+- Siding material and condition (peeling, chalking, bare spots, rot)
+- Trim complexity (simple vs ornate, number of window frames)
+- Prep work needed (scraping, caulking, wood repair)
+- Accessibility challenges (height, landscaping, roof pitch)
+- Color clues — current color helps estimate color-change difficulty
 
 PRICING RATES (per sqft of exterior wall area):
 - Siding: $1.75/sqft labor only, $2.25/sqft labor + paint
@@ -8213,7 +8253,9 @@ FLAT-RATE ADD-ONS:
 MULTIPLIERS:
 - Story height: 1 story = 1.0x, 2 stories = 1.25x, 3+ stories = 1.50x
 - Color change (dark over light or opposite): +15%
-- Low estimate = base × 0.88, Premium = base × 1.15
+- Surface condition: Good = 1.0x, Fair (moderate scraping/caulking) = 1.10x, Poor (extensive prep, wood repair) = 1.25x
+- Accessibility: difficult access (steep pitch, tall peaks) +10%
+- Low estimate = base × 0.85, Premium = base × 1.18
 - Minimum job: $1,200
 
 EXAMPLE: 2,000 sqft exterior wall area, 2-story, siding + fascia + soffit, labor + paint, 3 doors, 8 trim openings, 1 garage door:
@@ -8224,7 +8266,7 @@ EXAMPLE: 2,000 sqft exterior wall area, 2-story, siding + fascia + soffit, labor
   Doors: 3 × $300 = $900
   Trim: 8 × $50 = $400
   Garage door: 1 × $300 = $300
-  Total: $8,800 → Low: $7,744, Premium: $10,120`,
+  Total: $8,800 → Low: $7,480, Premium: $10,384`,
 
     drywall_repair: `
 SERVICE: Drywall Repair
@@ -8236,9 +8278,16 @@ KEY QUESTIONS TO ASK:
 5. Do you need texture matching? (smooth, orange peel, knockdown, popcorn)
 6. Will you also need the repaired area painted to match?
 7. Labor only or labor + materials?
-8. What's the ZIP code?
+8. Ceiling height in affected areas? (standard 8ft vs tall ceilings affects difficulty)
+9. What's the ZIP code?
 
-PHOTO ANALYSIS: If photos provided, assess damage type, size, wall condition, texture type, and whether painting is needed.
+PHOTO ANALYSIS: If photos provided, assess:
+- Damage type and severity (holes, cracks, water stains, mold)
+- Size of damaged area relative to surrounding objects
+- Wall texture type (smooth, orange peel, knockdown, popcorn)
+- Whether painting will be needed to match surrounding area
+- Ceiling vs wall damage (ceiling is harder to work on)
+- Any structural concerns visible (sagging, bowing)
 
 PRICING GUIDANCE:
 - Small patches (nail holes, small dings): $75-$200 per patch
@@ -8247,7 +8296,10 @@ PRICING GUIDANCE:
 - Full ceiling or wall section: $1,500-$4,000+
 - Texture matching adds 15-25%
 - Painting the repaired area adds $100-$250 per area
-- Labor only: reduce by 20-25%`,
+- Labor only: reduce by 20-25%
+- Ceiling repairs: add 15% (overhead work difficulty)
+- Low estimate = base × 0.87, Premium = base × 1.18
+- Minimum job: $250`,
 
     pressure_washing: `
 SERVICE: Pressure Washing
@@ -8258,9 +8310,16 @@ KEY QUESTIONS TO ASK:
 4. How dirty is it? (light dust/buildup, moderate grime, heavy mold/mildew, oil stains, years of neglect)
 5. Is the area easily accessible with a truck/equipment?
 6. Any areas that need special care? (delicate plants nearby, freshly sealed surfaces)
-7. What's the ZIP code?
+7. Do you want sealing/coating after washing? (concrete sealer, deck stain, etc.)
+8. What's the ZIP code?
 
-PHOTO ANALYSIS: If photos provided, assess surface type, dirt/mold level, area size estimates, and accessibility.
+PHOTO ANALYSIS: If photos provided, assess:
+- Surface type and material
+- Dirt, mold, mildew, algae severity — compare clean vs dirty areas
+- Estimated area size using context clues (cars, furniture, etc.)
+- Staining type (organic growth vs oil/rust vs general grime)
+- Accessibility (slope, fencing, equipment path)
+- Any surfaces requiring soft wash vs high pressure
 
 PRICING GUIDANCE:
 - Driveway (standard 2-car): $150-$300
@@ -8271,7 +8330,10 @@ PRICING GUIDANCE:
 - Fence (per 100 linear ft): $100-$250
 - Full property package: $400-$1,000+
 - Heavy mold/mildew treatment adds 25-40%
-- Oil stain removal adds $50-$150 per stain`,
+- Oil stain removal adds $50-$150 per stain
+- Post-wash sealing: driveway $150-$300, deck $200-$400
+- Low estimate = base × 0.87, Premium = base × 1.18
+- Minimum job: $150`,
 
     cabinets: `
 SERVICE: Cabinet Refinishing / Painting
@@ -8283,10 +8345,18 @@ KEY QUESTIONS TO ASK:
 5. What's the desired new color/finish?
 6. Do the cabinets need repairs? (loose hinges, damaged doors, water damage, delaminating)
 7. Are you keeping the same hardware or replacing it?
-8. Labor only or labor + materials?
-9. What's the ZIP code?
+8. Do you want the interior of the cabinets painted too?
+9. Labor only or labor + materials?
+10. What's the ZIP code?
 
-PHOTO ANALYSIS: If photos provided, count doors/drawers, assess current finish condition, cabinet style, and hardware.
+PHOTO ANALYSIS: If photos provided, assess:
+- Count of doors and drawer fronts visible
+- Current finish type and condition
+- Cabinet style (shaker, raised panel, slab, ornate)
+- Hardware type and condition
+- Any damage (water stains, peeling, chipping, delamination)
+- Kitchen vs bathroom — size of the space
+- Upper vs lower cabinets, island cabinets
 
 PRICING GUIDANCE:
 - Small kitchen (10-15 doors): $1,500-$3,500
@@ -8296,7 +8366,10 @@ PRICING GUIDANCE:
 - Staining costs 10-20% more than painting
 - Labor only: reduce by 20-30%
 - Cabinet repairs add $50-$200 per door
-- New hardware is extra ($5-$30 per piece)`,
+- New hardware is extra ($5-$30 per piece)
+- Interior of cabinets add 20-30%
+- Low estimate = base × 0.87, Premium = base × 1.18
+- Minimum job: $500`,
   };
 
   const serviceGuide = serviceGuides[serviceType] || `
@@ -8363,7 +8436,10 @@ After you have enough details, you MUST respond with a JSON block (and ONLY the 
       "color_change": "<same/light-to-light/dark-to-light>",
       "labor_type": "<labor_only or labor_and_materials>",
       "furniture_moving": "<yes/no/rooms_cleared>",
-      "ceiling_height": "<standard/tall/vaulted>",
+      "ceiling_height": "<standard_8ft/9ft/10ft/vaulted>",
+      "wall_texture": "<smooth/orange_peel/knockdown/popcorn>",
+      "paint_finish": "<flat/eggshell/satin/semi_gloss/high_gloss>",
+      "prep_work": "<none/minor_patching/moderate_prep/heavy_prep>",
       "special_requests": "<any special requests>",
       "photo_observations": "<what you observed from photos, if any>"
     }
@@ -8377,9 +8453,11 @@ After you have enough details, you MUST respond with a JSON block (and ONLY the 
 \`\`\`
 
 The THREE price tiers should be:
-- low: Budget option (basic materials, simpler scope) — roughly 85-90% of recommended
-- recommended: Best value (quality materials, thorough job) — your best estimate
-- premium: Premium option (top materials, extra prep, premium brand paint) — roughly 115-120% of recommended
+- low: Budget option — standard conditions, no complications. Use the low multiplier from the service guide (typically 0.85-0.88 of recommended)
+- recommended: Best value — your accurate calculated estimate based on all collected details
+- premium: Premium option — top materials, extra prep, premium brands, difficult conditions. Use the premium multiplier from the service guide (typically 1.15-1.20 of recommended)
+
+IMPORTANT: Use the EXACT low/premium multipliers specified in each service's pricing section. They vary by service type.
 
 UNTIL YOU'RE READY:
 Respond with natural text. After your message, suggest 2-4 quick reply options the user could tap (common answers to your question).
@@ -8480,15 +8558,15 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
     }
   }
 
-  // Use gpt-4o for vision (when images), gpt-4o-mini for text-only
-  const model = hasImages ? 'gpt-4o' : 'gpt-4o-mini';
+  // Use gpt-4o for all estimate chats (better pricing accuracy)
+  const model = 'gpt-4o';
   console.log(`[aiEstimateChat] Sending ${openAiMessages.length} messages to OpenAI (${model}) for service: ${serviceType}, images: ${hasImages ? images.length : 0}`);
 
   const completion = await openai.chat.completions.create({
     model,
     messages: openAiMessages,
-    temperature: 0.7,
-    max_tokens: 800,
+    temperature: 0.6,
+    max_tokens: 1200,
   });
 
   const raw = (completion.choices?.[0]?.message?.content || '').trim();
@@ -8541,10 +8619,10 @@ async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isI
 
     // Sanity check — low < recommended < premium
     if (result.estimate.low >= result.estimate.recommended) {
-      result.estimate.low = Math.round(result.estimate.recommended * 0.87);
+      result.estimate.low = Math.round(result.estimate.recommended * 0.86);
     }
     if (result.estimate.premium <= result.estimate.recommended) {
-      result.estimate.premium = Math.round(result.estimate.recommended * 1.17);
+      result.estimate.premium = Math.round(result.estimate.recommended * 1.18);
     }
   }
 
@@ -9284,3 +9362,238 @@ exports.onBookingCreated = functions.firestore
       console.error('[onBookingCreated] Error:', e);
     }
   });
+
+// ── Bid Analyzer (Enterprise) ─────────────────────────────────────────────
+
+const ANALYZE_BID_SYSTEM = `You are a bid comparison analyst for home service contractors (painting, drywall, pressure washing, cabinets, etc.).
+
+The user will paste text from a competitor's bid, proposal, or RFP document. Your job:
+1. Extract every line item with its description and price.
+2. Estimate what the user (a competent local contractor) should charge for each item based on fair market pricing.
+3. Flag each item: "over" (competitor charges more than fair), "under" (competitor charges less), "fair" (within 10%).
+4. Summarize the overall competitiveness.
+5. Suggest a counter-bid strategy.
+
+Return ONLY valid JSON:
+{
+  "lineItems": [
+    { "description": "string", "theirPrice": number, "yourPrice": number, "difference": number, "flag": "over|under|fair" }
+  ],
+  "theirTotal": number,
+  "yourTotal": number,
+  "summary": "2-3 sentence competitive analysis",
+  "counterBid": "2-3 sentence counter-bid strategy suggestion"
+}
+
+Rules:
+- Prices in USD, rounded to nearest dollar.
+- If a line item has no clear price, estimate it and mark flag as "estimated".
+- "difference" = theirPrice - yourPrice (positive means they charge more).
+- Be realistic with your pricing — use standard rates for the region.`;
+
+async function analyzeBidCore({ uid, bidText, jobLabel }) {
+  await enforceRateLimit(uid, 'analyzeBid', 30, 60 * 60 * 1000);
+
+  if (!bidText || typeof bidText !== 'string' || bidText.trim().length < 20) {
+    throw new functions.https.HttpsError('invalid-argument', 'bidText must be at least 20 characters.');
+  }
+  if (bidText.length > 15000) {
+    throw new functions.https.HttpsError('invalid-argument', 'bidText too long (max 15,000 chars).');
+  }
+
+  // Verify enterprise tier.
+  const userDoc = await admin.firestore().collection('users').doc(uid).get();
+  const tier = ((userDoc.data() || {}).subscriptionTier || '').toLowerCase();
+  if (tier !== 'enterprise') {
+    throw new functions.https.HttpsError('permission-denied', 'Enterprise plan required for Bid Analyzer.');
+  }
+
+  const openai = getOpenAiClient();
+  const userText = `Analyze this competitor bid${jobLabel ? ` for job: ${jobLabel}` : ''}:\n\n${bidText.trim()}`;
+
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: ANALYZE_BID_SYSTEM },
+      { role: 'user', content: userText },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.3,
+    max_tokens: 1500,
+  });
+
+  const raw = resp.choices?.[0]?.message?.content || '{}';
+  let ai;
+  try { ai = JSON.parse(raw); } catch { ai = {}; }
+
+  const lineItems = Array.isArray(ai.lineItems)
+    ? ai.lineItems.map(item => ({
+        description: String(item.description || ''),
+        theirPrice: Number(item.theirPrice) || 0,
+        yourPrice: Number(item.yourPrice) || 0,
+        difference: Number(item.difference) || 0,
+        flag: ['over', 'under', 'fair', 'estimated'].includes(item.flag) ? item.flag : 'fair',
+      }))
+    : [];
+
+  return {
+    lineItems,
+    theirTotal: Number(ai.theirTotal) || lineItems.reduce((s, i) => s + i.theirPrice, 0),
+    yourTotal: Number(ai.yourTotal) || lineItems.reduce((s, i) => s + i.yourPrice, 0),
+    summary: String(ai.summary || 'Analysis complete.'),
+    counterBid: String(ai.counterBid || ''),
+  };
+}
+
+exports.analyzeBid = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    return analyzeBidCore({ uid: context.auth.uid, ...(data || {}) });
+  });
+
+exports.analyzeBidHttp = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const body = req.body || {};
+    return analyzeBidCore({ uid, bidText: body.bidText, jobLabel: body.jobLabel });
+  }));
+
+// ── Quality Inspector (Enterprise) ────────────────────────────────────────
+
+const INSPECT_QUALITY_SYSTEM = `You are a quality control inspector for home painting and finishing projects.
+
+Analyze the provided completion photos and check for common defects:
+- Roller marks or brush strokes
+- Cut-line bleed (paint bleeding over trim/edges)
+- Missed spots, thin coverage, or uneven coat
+- Drips, runs, or sags
+- Tape lines or masking artifacts left behind
+- Unpainted trim, baseboard, or edge gaps
+- Dust/debris embedded in wet paint
+- Color inconsistency between walls or sections
+- Ceiling line waviness
+- Hardware/fixture paint splatter
+
+For each defect found, describe its location and severity (Low, Medium, High).
+
+Return ONLY valid JSON:
+{
+  "defects": [
+    { "type": "string", "severity": "Low|Medium|High", "description": "string", "location": "string" }
+  ],
+  "score": "A|B|C|D|F",
+  "summary": "2-3 sentence overall quality assessment",
+  "passed": boolean
+}
+
+Scoring:
+- A: Excellent (0 Medium/High defects)
+- B: Good (1-2 Low defects only)
+- C: Acceptable (1 Medium or 3+ Low defects)
+- D: Needs touch-up (2+ Medium or 1 High defect)
+- F: Redo required (multiple High defects)
+- "passed" = true if score is A, B, or C.
+
+Be thorough but fair. Minor imperfections are normal. Focus on defects a homeowner would notice.`;
+
+async function inspectQualityCore({ uid, imagePaths, jobLabel }) {
+  await enforceRateLimit(uid, 'inspectQuality', 20, 60 * 60 * 1000);
+
+  if (!Array.isArray(imagePaths) || imagePaths.length === 0) {
+    throw new functions.https.HttpsError('invalid-argument', 'At least one image is required.');
+  }
+  if (imagePaths.length > 10) {
+    throw new functions.https.HttpsError('invalid-argument', 'Maximum 10 images per inspection.');
+  }
+
+  // Verify enterprise tier.
+  const userDoc = await admin.firestore().collection('users').doc(uid).get();
+  const tier = ((userDoc.data() || {}).subscriptionTier || '').toLowerCase();
+  if (tier !== 'enterprise') {
+    throw new functions.https.HttpsError('permission-denied', 'Enterprise plan required for Quality Inspector.');
+  }
+
+  // Download images from Firebase Storage and convert to base64.
+  const bucket = admin.storage().bucket();
+  const imageContents = [];
+  for (const path of imagePaths) {
+    // Validate path belongs to user
+    if (!path.startsWith(`quality_inspector/${uid}/`)) {
+      throw new functions.https.HttpsError('permission-denied', 'Cannot access images from other users.');
+    }
+    try {
+      const file = bucket.file(path);
+      const [buffer] = await file.download();
+      const b64 = buffer.toString('base64');
+      const ext = path.split('.').pop() || 'jpg';
+      const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+      imageContents.push({ b64, mime });
+    } catch (e) {
+      console.warn(`[inspectQuality] Failed to download ${path}:`, e.message);
+    }
+  }
+
+  if (imageContents.length === 0) {
+    throw new functions.https.HttpsError('not-found', 'No images could be loaded.');
+  }
+
+  const openai = getOpenAiClient();
+  const content = [
+    { type: 'text', text: `Inspect these completion photos${jobLabel ? ` for job: ${jobLabel}` : ''} for quality defects.` },
+  ];
+  for (const img of imageContents) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:${img.mime};base64,${img.b64}` },
+    });
+  }
+
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: INSPECT_QUALITY_SYSTEM },
+      { role: 'user', content },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.2,
+    max_tokens: 1500,
+  });
+
+  const raw = resp.choices?.[0]?.message?.content || '{}';
+  let ai;
+  try { ai = JSON.parse(raw); } catch { ai = {}; }
+
+  const defects = Array.isArray(ai.defects)
+    ? ai.defects.map(d => ({
+        type: String(d.type || 'Unknown'),
+        severity: ['Low', 'Medium', 'High'].includes(d.severity) ? d.severity : 'Low',
+        description: String(d.description || ''),
+        location: String(d.location || ''),
+      }))
+    : [];
+
+  const score = ['A', 'B', 'C', 'D', 'F'].includes(ai.score) ? ai.score : 'C';
+  const passed = ai.passed === true || ['A', 'B', 'C'].includes(score);
+
+  return {
+    defects,
+    score,
+    summary: String(ai.summary || 'Inspection complete.'),
+    passed,
+  };
+}
+
+exports.inspectQuality = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '1GB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    return inspectQualityCore({ uid: context.auth.uid, ...(data || {}) });
+  });
+
+exports.inspectQualityHttp = functions
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '1GB' })
+  .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
+    const body = req.body || {};
+    return inspectQualityCore({ uid, imagePaths: body.imagePaths, jobLabel: body.jobLabel });
+  }));
