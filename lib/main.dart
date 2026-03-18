@@ -23,6 +23,7 @@ import 'screens/landing_page.dart';
 import 'router/app_router.dart';
 import 'services/service_locator.dart';
 import 'services/offline_sync_service.dart';
+import 'services/version_check_service.dart';
 import 'state/app_state.dart';
 
 DateTime? _lastMouseTrackerAssertionLog;
@@ -483,8 +484,25 @@ class _ProServeHubAppState extends State<ProServeHubApp> {
   }
 }
 
-class RootGate extends StatelessWidget {
+class RootGate extends StatefulWidget {
   const RootGate({super.key});
+
+  @override
+  State<RootGate> createState() => _RootGateState();
+}
+
+class _RootGateState extends State<RootGate> {
+  bool _versionChecked = false;
+
+  void _checkVersion() {
+    if (_versionChecked) return;
+    _versionChecked = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        VersionCheckService.instance.checkForUpdate(context);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -504,6 +522,9 @@ class RootGate extends StatelessWidget {
     if (!user.emailVerified || !state.phoneVerified) {
       return const VerifyContactInfoPage();
     }
+
+    // Trigger version check once the user reaches a portal page
+    _checkVersion();
 
     if (state.isCustomer) return const CustomerPortalPage();
     if (state.isContractor) return const ContractorPortalPage();
