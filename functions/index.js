@@ -92,7 +92,12 @@ function wrapHttpEndpoint(handler) {
  */
 async function isAdminUser(uid) {
   if (!uid) return false;
-  const userSnap = await admin.firestore().collection('users').doc(uid).get();
+  const db = admin.firestore();
+  const [userSnap, adminSnap] = await Promise.all([
+    db.collection('users').doc(uid).get(),
+    db.collection('admins').doc(uid).get(),
+  ]);
+  if (adminSnap.exists) return true;
   const data = userSnap.data() || {};
   return data.role === 'admin';
 }
@@ -664,14 +669,12 @@ exports.grantLeadCredits = functions.https.onCall(
 
 exports.grantLeadCreditsHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -836,14 +839,12 @@ exports.removeFreeSignupCredits = functions.https.onCall(
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.removeFreeSignupCreditsHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -963,7 +964,13 @@ exports.hardDeleteUser = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
 
-  await checkRateLimit(uid, 'hardDeleteUser', 20, 24 * 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(uid, 'hardDeleteUser', 20, 24 * 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    throw new functions.https.HttpsError(
+      'resource-exhausted',
+      `Rate limit exceeded. Try again after ${new Date(rateLimit.resetTime).toISOString()}.`
+    );
+  }
 
   const targetUid = (data?.targetUid || '').toString().trim();
   const reason = data?.reason;
@@ -972,14 +979,12 @@ exports.hardDeleteUser = functions.https.onCall(async (data, context) => {
 
 exports.hardDeleteUserHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -1002,7 +1007,11 @@ exports.hardDeleteUserHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    await checkRateLimit(uid, 'hardDeleteUser', 20, 24 * 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(uid, 'hardDeleteUser', 20, 24 * 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      res.status(429).json({ error: `Rate limit exceeded. Try again after ${new Date(rateLimit.resetTime).toISOString()}.` });
+      return;
+    }
 
     const targetUid = (req.body?.targetUid || '').toString().trim();
     const reason = req.body?.reason;
@@ -1127,14 +1136,12 @@ exports.createLeadPackCheckoutSessionHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -1375,14 +1382,12 @@ exports.unlockLead = functions.https.onCall(
 
 exports.unlockExclusiveLeadHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -1443,14 +1448,12 @@ exports.unlockExclusiveLeadHttp = functions.https.onRequest(async (req, res) => 
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.unlockLeadHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -2378,14 +2381,12 @@ exports.estimateJob = functions.https.onCall(
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.estimateJobHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -3068,14 +3069,12 @@ exports.aiRenderPromptAny = functions
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.estimateFromInputsHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -3151,14 +3150,12 @@ exports.estimateLaborFromInputsHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
     if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      setCorsHeaders(req, res);
       res.status(204).send('');
       return;
     }
 
-    res.set('Access-Control-Allow-Origin', '*');
+    setCorsHeaders(req, res);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
@@ -3316,14 +3313,12 @@ exports.claimJob = functions.https.onCall(async (data, context) => {
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.claimJobHttp = functions.https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -4051,14 +4046,12 @@ exports.estimateFromImagesInputsHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -4253,13 +4246,11 @@ exports.analyzeExteriorPhotosHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
     return;
@@ -4333,14 +4324,12 @@ exports.estimateJobFromImagesHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -4445,14 +4434,12 @@ exports.createConnectOnboardingLinkHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY, STRIPE_CONNECT_RETURN_URL, STRIPE_CONNECT_REFRESH_URL] })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5296,14 +5283,12 @@ exports.draftInvoiceHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5398,14 +5383,12 @@ exports.suggestMaterialQuantitiesHttp = functions
   .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5516,14 +5499,12 @@ exports.createContractorSubscriptionCheckoutSessionHttp = functions
   .https.onRequest(
   async (req, res) => {
     if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      setCorsHeaders(req, res);
       res.status(204).send('');
       return;
     }
 
-    res.set('Access-Control-Allow-Origin', '*');
+    setCorsHeaders(req, res);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
@@ -5609,14 +5590,12 @@ exports.syncContractorProEntitlementHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -5893,14 +5872,12 @@ exports.debugContractorProStatusHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
     if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      setCorsHeaders(req, res);
       res.status(204).send('');
       return;
     }
 
-    res.set('Access-Control-Allow-Origin', '*');
+    setCorsHeaders(req, res);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
@@ -5933,14 +5910,12 @@ exports.createCheckoutSessionHttp = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    setCorsHeaders(req, res);
     res.status(204).send('');
     return;
   }
 
-  res.set('Access-Control-Allow-Origin', '*');
+  setCorsHeaders(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
@@ -6740,14 +6715,12 @@ exports.migrateLegacyJobContactsHttp = functions
   .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .https.onRequest(async (req, res) => {
     if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      setCorsHeaders(req, res);
       res.status(204).send('');
       return;
     }
 
-    res.set('Access-Control-Allow-Origin', '*');
+    setCorsHeaders(req, res);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });
@@ -7754,11 +7727,7 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
     );
   }
 
-  // Already transferred?
-  if (escrow.stripeTransferId) {
-    return { ok: true, alreadyTransferred: true };
-  }
-
+  // --- Race-condition guard: use a transaction to claim the transfer lock ---
   const contractorId = (escrow.contractorId || '').toString().trim();
   if (!contractorId) {
     throw new functions.https.HttpsError(
@@ -7773,7 +7742,6 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
   const stripeAccountId = (contractorData.stripeAccountId || '').toString().trim();
 
   if (!stripeAccountId) {
-    // If no Stripe account, mark as pending manual payout
     await escrowRef.update({
       payoutStatus: 'pending_manual',
       payoutNote: 'Contractor has no Stripe Connected Account',
@@ -7786,6 +7754,21 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
     throw new functions.https.HttpsError('failed-precondition', 'Invalid payout amount');
   }
 
+  // Atomically check stripeTransferId and claim a lock before calling Stripe
+  const alreadyDone = await db.runTransaction(async (txn) => {
+    const freshSnap = await txn.get(escrowRef);
+    const freshData = freshSnap.data() || {};
+    if (freshData.stripeTransferId) return true;           // already transferred
+    if (freshData.payoutStatus === 'transferring') return true; // another call in progress
+    txn.update(escrowRef, { payoutStatus: 'transferring' });
+    return false;
+  });
+
+  if (alreadyDone) {
+    return { ok: true, alreadyTransferred: true };
+  }
+
+  // Stripe transfer happens outside the transaction (idempotent via metadata)
   const stripe = getStripeClient();
   try {
     const transfer = await stripe.transfers.create({
