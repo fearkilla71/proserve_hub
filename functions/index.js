@@ -5755,32 +5755,29 @@ async function verifyContractorSubscriptionPurchaseCore({ uid, productId, purcha
 
       console.log(`Google Play verification for uid=${uid}: verified=${verified}, expiry=${data.expiryTimeMillis}`);
     } catch (err) {
-      // If googleapis isn't installed or API not linked, fall back to
-      // trust-but-record mode. The receipt is stored for manual review.
-      console.warn('Google Play verification failed (googleapis may not be configured):', err.message);
-      // Grant anyway for now — you should set up the Google Play Developer API
-      // link for production. The receipt is recorded for audit.
-      verified = true;
+      // Google Play API verification failed — do NOT auto-approve.
+      console.error('Google Play verification failed:', err.message);
+      verified = false;
       await receiptRef.update({
-        verified: true,
-        verificationNote: 'Auto-approved: Google Play API not configured. Receipt stored for manual review.',
+        verified: false,
+        verificationNote: 'REJECTED: Google Play API verification failed. Receipt stored for manual review.',
+        verificationError: (err.message || '').toString().slice(0, 500),
       });
     }
   } else if (verificationSource === 'app_store') {
-    // For App Store verification, you'd call Apple's verifyReceipt endpoint.
-    // For now, trust the client and record the receipt for audit.
-    verified = true;
+    // App Store server validation not yet implemented — reject until it is.
+    verified = false;
     await receiptRef.update({
-      verified: true,
-      verificationNote: 'Auto-approved: App Store server validation not yet implemented. Receipt stored for manual review.',
+      verified: false,
+      verificationNote: 'REJECTED: App Store server validation not yet implemented. Receipt stored for manual review.',
     });
-    console.log(`App Store purchase recorded for uid=${uid}, productId=${productId}`);
+    console.warn(`App Store purchase REJECTED for uid=${uid}, productId=${productId} — server validation not implemented`);
   } else {
-    // Unknown source — still grant but flag
-    verified = true;
+    // Unknown source — reject
+    verified = false;
     await receiptRef.update({
-      verified: true,
-      verificationNote: `Auto-approved: Unknown source "${verificationSource}". Receipt stored for manual review.`,
+      verified: false,
+      verificationNote: `REJECTED: Unknown verification source "${verificationSource}". Receipt stored for manual review.`,
     });
   }
 
@@ -6413,6 +6410,13 @@ exports.fulfillCheckoutSession = functions
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const sessionType = (session.metadata?.type || '').toString().trim();
 
+    // Ownership check: the caller must be the owner of this checkout session.
+    const sessionOwner = (session.metadata?.contractorId || session.metadata?.customerId || session.client_reference_id || '').toString().trim();
+    if (!sessionOwner || sessionOwner !== uid) {
+      res.status(403).json({ error: 'You are not the owner of this checkout session' });
+      return;
+    }
+
     if (sessionType === 'lead_pack') {
       await fulfillLeadPackFromCheckoutSession(session);
       res.json({ ok: true });
@@ -6428,8 +6432,8 @@ exports.fulfillCheckoutSession = functions
     // Nothing to fulfill for other session types here.
     res.json({ ok: true, ignored: true, type: sessionType || null });
   } catch (err) {
-    const msg = (err && err.message) ? err.message : 'Internal error';
-    res.status(500).json({ error: msg });
+    console.error('[fulfillCheckoutSession] Error:', err);
+    res.status(500).json({ error: 'Fulfillment failed' });
   }
   });
 
@@ -6475,23 +6479,14 @@ exports.fulfillPaymentIntent = functions
       sessions = [];
     }
 
-    // Fallback: scan recent sessions (bounded) and match by payment_intent.
+    // Fallback: scan recent sessions — limited to 1 page (100) to prevent API exhaustion.
     if (!sessions.length) {
-      let startingAfter = undefined;
-      for (let page = 0; page < 5; page++) {
-        // Cap to ~500 sessions max.
-        const resp = await stripe.checkout.sessions.list({
-          limit: 100,
-          ...(startingAfter ? { starting_after: startingAfter } : {}),
-        });
-        const data = resp?.data || [];
-        for (const s of data) {
-          if ((s?.payment_intent || '').toString() === paymentIntentId) {
-            sessions.push(s);
-          }
+      const resp = await stripe.checkout.sessions.list({ limit: 100 });
+      const data = resp?.data || [];
+      for (const s of data) {
+        if ((s?.payment_intent || '').toString() === paymentIntentId) {
+          sessions.push(s);
         }
-        if (!resp?.has_more || data.length === 0) break;
-        startingAfter = data[data.length - 1].id;
       }
     }
 
@@ -6509,14 +6504,21 @@ exports.fulfillPaymentIntent = functions
         continue;
       }
 
+      // Ownership check: the caller must be the owner of this session.
+      const sessionOwner = (session.metadata?.contractorId || session.client_reference_id || '').toString().trim();
+      if (!sessionOwner || sessionOwner !== uid) {
+        ignored++;
+        continue;
+      }
+
       await fulfillLeadPackFromCheckoutSession(session);
       fulfilled++;
     }
 
     res.json({ ok: true, sessions: sessions.length, fulfilled, ignored });
   } catch (err) {
-    const msg = (err && err.message) ? err.message : 'Internal error';
-    res.status(500).json({ error: msg });
+    console.error('[fulfillPaymentIntent] Error:', err);
+    res.status(500).json({ error: 'Fulfillment failed' });
   }
   });
 
@@ -9159,7 +9161,8 @@ exports.onEscrowReleased = functions.firestore
 // ==================== REVIEW NOTIFICATION ====================
 
 // Notify contractor when they receive a new review
-exports.onReviewCreated = functions.firestore
+// NOTE: Must use a DIFFERENT export name than the integrity trigger above.
+exports.onReviewCreatedNotify = functions.firestore
   .document('reviews/{reviewId}')
   .onCreate(async (snap, context) => {
     try {
