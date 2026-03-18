@@ -231,15 +231,22 @@ service cloud.firestore {
       // Anyone signed-in can look up a code to apply it.
       allow read: if isSignedIn();
       // Only the code owner can create their own code doc.
-      allow create: if isSignedIn();
+      // Format: 4-20 alphanumeric/dash/underscore chars.
+      allow create: if isSignedIn()
+        && code.matches('^[A-Za-z0-9_-]{4,20}$')
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
       // Updates (usageCount increment) are allowed for any signed-in user.
-      allow update: if isSignedIn();
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['usageCount', 'lastUsedAt']);
       allow delete: if isAdmin();
 
       // Sub-collection tracking who used the code.
       match /usedBy/{userId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn();
+        allow create: if isSignedIn()
+          && userId == request.auth.uid
+          && request.resource.data.redeemedAt == request.time;
       }
     }
 
@@ -248,9 +255,15 @@ service cloud.firestore {
       // Anyone can create (website form), only admins can read/delete
       allow create: if true
         && request.resource.data.keys().hasAll(['name', 'email', 'role', 'source', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'source', 'createdAt'])
         && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
         && request.resource.data.email is string
-        && request.resource.data.role is string;
+        && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && request.resource.data.role is string
+        && request.resource.data.role in ['customer', 'contractor']
+        && request.resource.data.createdAt == request.time;
       allow read, delete: if isAdmin();
       allow update: if false;
     }
@@ -365,6 +378,8 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid
           && (request.resource.data.text is string)
           && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.timestamp == request.time
           && request.resource.data.keys().hasOnly(['senderId', 'text', 'timestamp']);
 
         allow update, delete: if false;
@@ -610,6 +625,7 @@ service cloud.firestore {
         && request.resource.data.details.size() > 0
         && request.resource.data.details.size() <= 1000
         && (request.resource.data.messages is list)
+        && request.resource.data.createdAt == request.time
         && request.resource.data.keys().hasOnly([
           'jobId',
           'requesterUid',

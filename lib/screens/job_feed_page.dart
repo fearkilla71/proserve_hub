@@ -36,14 +36,18 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   bool _useSimpleQuery = false;
-  bool _distanceEnabled = false;
-  double _distanceMiles = 25;
+  bool _distanceEnabled = true;
+  double _distanceMiles = 30;
   String? _currentZip;
   bool _loadingLocation = false;
 
   // ─── Enterprise early access ──
   String _userTier = 'basic';
   bool get _isEnterprise => _userTier == 'enterprise';
+
+  // ─── My services filter ──
+  List<String> _myServices = [];
+  bool _matchMyServices = true; // ON by default – only show relevant leads
 
   // ─── Advanced filters ──
   String? _serviceFilter;
@@ -52,11 +56,30 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   int _datePostedDays = 0; // 0 = any, 1/3/7/30 = within N days
 
   static const List<String> _serviceTypes = [
-    'Interior',
-    'Exterior',
-    'PW',
-    'Cabinets',
-    'Drywall Repairs',
+    'Interior Painting',
+    'Exterior Painting',
+    'Power Washing & Staining',
+    'Cabinet Refinishing',
+    'Drywall Repair & Texture',
+    'Wallpaper Removal & Install',
+    'Popcorn Ceiling Removal',
+    'Epoxy Flooring',
+    'Trim & Crown Molding',
+    'Tile & Backsplash',
+    'Fence Staining',
+    'Commercial Painting',
+    'Roofing',
+    'Plumbing',
+    'Electrical',
+    'Flooring',
+    'Landscaping',
+    'Fencing',
+    'Bathroom Remodel',
+    'Kitchen Remodel',
+    'Deck & Patio',
+    'Concrete & Masonry',
+    'Demolition',
+    'General Handyman',
   ];
 
   Future<QuerySnapshot<Map<String, dynamic>>>? _diagnoseFetch;
@@ -80,9 +103,21 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       final data = doc.data() ?? <String, dynamic>{};
       final zip = (data['zip'] as String?)?.trim();
       final tier = effectiveSubscriptionTier(data);
+      final services =
+          (data['servicesOffered'] as List?)?.whereType<String>().toList() ??
+          <String>[];
+      final profileRadius = (data['radius'] as num?)?.toDouble();
       if (!mounted) return;
       setState(() {
         _userTier = tier;
+        _myServices = services;
+        // If the contractor has no services selected, disable the filter
+        // so they still see all leads.
+        if (services.isEmpty) _matchMyServices = false;
+        // Use contractor's configured radius, default 30 mi.
+        if (profileRadius != null && profileRadius > 0) {
+          _distanceMiles = profileRadius.clamp(5.0, 100.0);
+        }
       });
       if (zip != null && zip.isNotEmpty) {
         setState(() {
@@ -198,21 +233,11 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Nearby leads',
+                'Service radius',
                 style: Theme.of(
                   context,
                 ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-            ),
-            Switch.adaptive(
-              value: _distanceEnabled && hasZip,
-              onChanged: (value) {
-                if (!hasZip) {
-                  _useMyLocation();
-                  return;
-                }
-                setState(() => _distanceEnabled = value);
-              },
             ),
           ],
         ),
@@ -220,37 +245,22 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              'Using ZIP $zip',
+              'Only leads within $rangeLabel of ZIP $zip',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'Set your ZIP to filter leads by distance',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.error),
+            ),
           ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            Chip(
-              label: Text(hasZip ? 'ZIP $zip' : 'ZIP needed'),
-              avatar: Icon(
-                hasZip ? Icons.location_on_outlined : Icons.location_off,
-                size: 18,
-                color: scheme.primary,
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-            Chip(
-              label: Text(rangeLabel),
-              avatar: Icon(
-                Icons.route_outlined,
-                size: 18,
-                color: scheme.primary,
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -267,7 +277,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 max: 100,
                 divisions: 19,
                 label: rangeLabel,
-                onChanged: (_distanceEnabled && hasZip)
+                onChanged: hasZip
                     ? (value) {
                         setState(() => _distanceMiles = value);
                       }
@@ -282,40 +292,43 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.tonalIcon(
-            onPressed: _loadingLocation ? null : _useMyLocation,
-            icon: _loadingLocation
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.my_location),
-            label: const Text('Use my location'),
+        if (!hasZip) ...[
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              onPressed: _loadingLocation ? null : _useMyLocation,
+              icon: _loadingLocation
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location),
+              label: const Text('Use my location'),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 
   bool _hasActiveFilters() {
-    return _serviceFilter != null ||
+    return _matchMyServices ||
+        _serviceFilter != null ||
         _minPrice != null ||
         _maxPrice != null ||
-        _datePostedDays > 0 ||
-        _distanceEnabled;
+        _datePostedDays > 0;
   }
 
   void _clearAdvancedFilters() {
     setState(() {
+      _matchMyServices = false;
       _serviceFilter = null;
       _minPrice = null;
       _maxPrice = null;
       _datePostedDays = 0;
-      _distanceEnabled = false;
+      // Distance stays enabled — contractors always see leads in their radius.
     });
   }
 
@@ -351,10 +364,71 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── My services toggle ──
+                if (_myServices.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.handyman_outlined,
+                        color: scheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'My services only',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              'Show leads matching your ${_myServices.length} selected service${_myServices.length == 1 ? '' : 's'}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: _matchMyServices,
+                        onChanged: (v) => setState(() => _matchMyServices = v),
+                      ),
+                    ],
+                  ),
+                  if (_matchMyServices)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 4),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: _myServices
+                            .map(
+                              (s) => Chip(
+                                label: Text(s),
+                                visualDensity: VisualDensity.compact,
+                                labelStyle: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(color: scheme.primary),
+                                side: BorderSide(
+                                  color: scheme.primary.withValues(alpha: 0.3),
+                                ),
+                                backgroundColor: scheme.primaryContainer
+                                    .withValues(alpha: 0.15),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  const Divider(height: 28),
+                ],
+
                 // Nearby leads
                 _nearbyLeadsSection(),
                 const Divider(height: 28),
-                // Service type
+                // Service type (manual)
                 Text(
                   'Service type',
                   style: Theme.of(context).textTheme.labelMedium,
@@ -496,7 +570,21 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       }
     }
 
-    // Service filter
+    // ── My-services filter ──
+    if (_matchMyServices && _myServices.isNotEmpty) {
+      final svc = (data['service'] ?? '').toString().toLowerCase();
+      final svcName = (data['serviceName'] ?? '').toString().toLowerCase();
+      final matched = _myServices.any((mine) {
+        final lower = mine.toLowerCase();
+        return svc == lower ||
+            svcName == lower ||
+            svc.contains(lower) ||
+            svcName.contains(lower);
+      });
+      if (!matched) return false;
+    }
+
+    // Service filter (manual override)
     if (_serviceFilter != null) {
       final svc = (data['service'] ?? '').toString().toLowerCase();
       final svcName = (data['serviceName'] ?? '').toString().toLowerCase();
@@ -811,7 +899,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   }
 
   double? _distanceForJob(Map<String, dynamic> data) {
-    if (!_distanceEnabled) return null;
     final zip = _currentZip;
     if (zip == null || zip.trim().isEmpty) return null;
 
@@ -1403,11 +1490,22 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               builder: (context, userSnap) {
                 final userData = userSnap.data?.data() ?? <String, dynamic>{};
 
-                // Keep tier in sync reactively.
+                // Keep tier and services in sync reactively.
                 final latestTier = effectiveSubscriptionTier(userData);
-                if (latestTier != _userTier) {
+                final latestServices =
+                    (userData['servicesOffered'] as List?)
+                        ?.whereType<String>()
+                        .toList() ??
+                    <String>[];
+                if (latestTier != _userTier ||
+                    latestServices.length != _myServices.length) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _userTier = latestTier);
+                    if (mounted) {
+                      setState(() {
+                        _userTier = latestTier;
+                        _myServices = latestServices;
+                      });
+                    }
                   });
                 }
 
@@ -1750,9 +1848,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              _distanceEnabled
-                                                  ? 'No nearby leads in range'
-                                                  : 'No leads available right now',
+                                              'No leads in your area',
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .titleMedium
@@ -1761,8 +1857,8 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                                   ),
                                             ),
                                             const SizedBox(height: 8),
-                                            const Text(
-                                              'Firestore responded, but there are no matching jobs for the current feed filters.',
+                                            Text(
+                                              'No matching leads within ${_distanceMiles.toStringAsFixed(0)} miles of your ZIP. Try expanding your radius.',
                                             ),
                                             const SizedBox(height: 12),
                                             SizedBox(

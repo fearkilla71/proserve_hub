@@ -223,6 +223,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   Future<void> _handleGoogleSignUp(BuildContext context) async {
     setState(() => loading = true);
     final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
     try {
       final user = await _auth.signInWithGoogle();
       if (user == null) {
@@ -248,15 +249,13 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
       if (role == 'contractor') {
         // Already a contractor — just go to portal
-        if (!mounted) return;
-        context.go('/contractor-portal');
+        if (mounted) router.go('/contractor-portal');
         return;
       }
 
       // New user — assign contractor role
       await _auth.ensureGoogleUserRole(user.uid, 'contractor');
-      if (!mounted) return;
-      context.go('/contractor-portal');
+      if (mounted) router.go('/contractor-portal');
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(

@@ -134,7 +134,10 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
 
-      allow read: if isSignedIn() && (isAdmin() || isContractor());
+      // Only the owner, admin, or the job's customer can view photos.
+      allow read: if isSignedIn()
+        && (isAdmin() || request.auth.uid == uid
+            || isJobParticipant(jobId));
     }
 
     // Community post images
@@ -158,7 +161,9 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
 
-      allow read: if isSignedIn();
+      // Only the owner or admin can read verification docs (IDs, licenses).
+      allow read: if isSignedIn()
+        && (isAdmin() || request.auth.uid == uid);
     }
 
     // Job receipts & expenses

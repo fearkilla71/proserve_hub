@@ -31,6 +31,28 @@ IconData _iconFromName(String? name) {
       return Icons.park;
     case 'roofing':
       return Icons.roofing;
+    case 'plumbing':
+      return Icons.plumbing;
+    case 'electrical_services':
+      return Icons.electrical_services;
+    case 'layers':
+      return Icons.layers;
+    case 'grass':
+      return Icons.grass;
+    case 'fence':
+      return Icons.fence;
+    case 'bathtub':
+      return Icons.bathtub;
+    case 'countertops':
+      return Icons.countertops;
+    case 'deck':
+      return Icons.deck;
+    case 'foundation':
+      return Icons.foundation;
+    case 'construction':
+      return Icons.construction;
+    case 'handyman':
+      return Icons.handyman;
     default:
       return Icons.home_repair_service;
   }
@@ -62,6 +84,22 @@ const List<Map<String, dynamic>> _fallbackServices = [
   {'name': 'Solar Panels', 'icon': 'solar', 'type': 'solar_panels'},
   {'name': 'Pest Control', 'icon': 'pest', 'type': 'pest_control'},
   {'name': 'Tree Service', 'icon': 'tree', 'type': 'tree_service'},
+  {'name': 'Roofing', 'icon': 'roofing', 'type': 'roofing'},
+  {'name': 'Plumbing', 'icon': 'plumbing', 'type': 'plumbing'},
+  {'name': 'Electrical', 'icon': 'electrical_services', 'type': 'electrical'},
+  {'name': 'Flooring', 'icon': 'layers', 'type': 'flooring'},
+  {'name': 'Landscaping', 'icon': 'grass', 'type': 'landscaping'},
+  {'name': 'Fencing', 'icon': 'fence', 'type': 'fencing'},
+  {'name': 'Bathroom Remodel', 'icon': 'bathtub', 'type': 'bathroom_remodel'},
+  {'name': 'Kitchen Remodel', 'icon': 'countertops', 'type': 'kitchen_remodel'},
+  {'name': 'Deck & Patio', 'icon': 'deck', 'type': 'deck_patio'},
+  {
+    'name': 'Concrete & Masonry',
+    'icon': 'foundation',
+    'type': 'concrete_masonry',
+  },
+  {'name': 'Demolition', 'icon': 'construction', 'type': 'demolition'},
+  {'name': 'General Handyman', 'icon': 'handyman', 'type': 'general_handyman'},
 ];
 
 class ServiceSelectPage extends StatelessWidget {
@@ -82,6 +120,18 @@ class ServiceSelectPage extends StatelessWidget {
     'solar_panels': 'Solar Panels',
     'pest_control': 'Pest Control',
     'tree_service': 'Tree Service',
+    'roofing': 'Roofing',
+    'plumbing': 'Plumbing',
+    'electrical': 'Electrical',
+    'flooring': 'Flooring',
+    'landscaping': 'Landscaping',
+    'fencing': 'Fencing',
+    'bathroom_remodel': 'Bathroom Remodel',
+    'kitchen_remodel': 'Kitchen Remodel',
+    'deck_patio': 'Deck & Patio',
+    'concrete_masonry': 'Concrete & Masonry',
+    'demolition': 'Demolition',
+    'general_handyman': 'General Handyman',
   };
 
   void _navigateToFlow(BuildContext context, String type) {

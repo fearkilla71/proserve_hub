@@ -626,8 +626,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     }
 
     // Find the paired item
-    final pair = _portfolioItems.where((it) =>
-        it['beforeAfterId']?.toString() == pairId && it['id'] != item['id']);
+    final pair = _portfolioItems.where(
+      (it) =>
+          it['beforeAfterId']?.toString() == pairId && it['id'] != item['id'],
+    );
     if (pair.isEmpty) {
       _showFullImage(item);
       return;

@@ -2640,7 +2640,7 @@ async function estimateLaborFromInputsCore({ uid, input }) {
 }
 
 exports.estimateLaborFromInputs = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onCall(async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -3148,7 +3148,7 @@ exports.estimateFromInputsHttp = functions.https.onRequest(async (req, res) => {
 // Desktop-safe endpoint for AI labor estimate.
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.estimateLaborFromInputsHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
     if (req.method === 'OPTIONS') {
       res.set('Access-Control-Allow-Origin', '*');
@@ -3514,13 +3514,18 @@ exports.matchContractors = functions.firestore
       const responseScore =
         avgResp <= 15 ? 100 : avgResp <= 30 ? 70 : 40;
 
-      const matchScore = Math.round(
+      let matchScore = Math.round(
         distanceScore * 0.30 +
           ratingScore * 0.25 +
           experienceScore * 0.20 +
           availabilityScore * 0.15 +
           responseScore * 0.10
       );
+
+      // Featured contractors get a boost
+      if (c.featured === true) {
+        matchScore = Math.min(100, matchScore + 10);
+      }
 
       const matchRef = db
         .collection('job_matches')
@@ -4005,7 +4010,7 @@ async function estimateFromImagesInputsCore({
   };
 }
 
-exports.estimateFromImagesInputs = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
+exports.estimateFromImagesInputs = functions.runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' }).https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -4043,7 +4048,7 @@ exports.estimateFromImagesInputs = functions.runWith({ secrets: [OPENAI_API_KEY]
 // Desktop-safe endpoint for customer photo AI estimator.
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.estimateFromImagesInputsHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Origin', '*');
@@ -4227,7 +4232,7 @@ async function analyzeExteriorPhotosCore({ uid, imagePaths }) {
   return { estimatedExteriorSqft: estimatedSqft, stories, confidence, notes };
 }
 
-exports.analyzeExteriorPhotos = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
+exports.analyzeExteriorPhotos = functions.runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' }).https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -4245,7 +4250,7 @@ exports.analyzeExteriorPhotos = functions.runWith({ secrets: [OPENAI_API_KEY] })
 );
 
 exports.analyzeExteriorPhotosHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Origin', '*');
@@ -4292,7 +4297,7 @@ exports.analyzeExteriorPhotosHttp = functions
   }
 });
 
-exports.estimateJobFromImages = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
+exports.estimateJobFromImages = functions.runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' }).https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -4325,7 +4330,7 @@ exports.estimateJobFromImages = functions.runWith({ secrets: [OPENAI_API_KEY] })
 // Desktop-safe endpoint (callable isn't implemented on Windows).
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.estimateJobFromImagesHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Origin', '*');
@@ -4568,6 +4573,9 @@ async function createCheckoutSessionCore({ jobId, uid }) {
   const amountCents = Math.round(priceDollars * 100);
   if (!Number.isFinite(amountCents) || amountCents <= 0) {
     throw new functions.https.HttpsError('failed-precondition', 'Invalid job price');
+  }
+  if (amountCents > 50000) {
+    throw new functions.https.HttpsError('failed-precondition', 'Lead price exceeds maximum ($500)');
   }
 
   const stripe = getStripeClient();
@@ -5261,7 +5269,7 @@ async function suggestMaterialQuantitiesCore({ uid, input }) {
   return { quantities, assumptions };
 }
 
-exports.draftInvoice = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.onCall(
+exports.draftInvoice = functions.runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' }).https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -5285,7 +5293,7 @@ exports.draftInvoice = functions.runWith({ secrets: [OPENAI_API_KEY] }).https.on
 // Desktop-safe endpoint (callable isn't implemented on Windows).
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.draftInvoiceHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Origin', '*');
@@ -5357,7 +5365,7 @@ exports.draftInvoiceHttp = functions
   });
 
 exports.suggestMaterialQuantities = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
@@ -5387,7 +5395,7 @@ exports.suggestMaterialQuantities = functions
 // Desktop-safe endpoint (callable isn't implemented on Windows).
 // Call with: Authorization: Bearer <Firebase ID token>
 exports.suggestMaterialQuantitiesHttp = functions
-  .runWith({ secrets: [OPENAI_API_KEY] })
+  .runWith({ secrets: [OPENAI_API_KEY], timeoutSeconds: 120, memory: '512MB' })
   .https.onRequest(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Origin', '*');

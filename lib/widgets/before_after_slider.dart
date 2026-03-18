@@ -40,8 +40,10 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
           return GestureDetector(
             onHorizontalDragUpdate: (details) {
               setState(() {
-                _sliderPosition =
-                    (details.localPosition.dx / width).clamp(0.05, 0.95);
+                _sliderPosition = (details.localPosition.dx / width).clamp(
+                  0.05,
+                  0.95,
+                );
               });
             },
             child: Stack(
@@ -80,10 +82,7 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                   left: dividerX - 1.5,
                   top: 0,
                   bottom: 0,
-                  child: Container(
-                    width: 3,
-                    color: Colors.white,
-                  ),
+                  child: Container(width: 3, color: Colors.white),
                 ),
                 // Drag handle
                 Positioned(
@@ -158,5 +157,6 @@ class _LeftClipper extends CustomClipper<Rect> {
   Rect getClip(Size size) => Rect.fromLTWH(0, 0, clipWidth, size.height);
 
   @override
-  bool shouldReclip(_LeftClipper oldClipper) => oldClipper.clipWidth != clipWidth;
+  bool shouldReclip(_LeftClipper oldClipper) =>
+      oldClipper.clipWidth != clipWidth;
 }

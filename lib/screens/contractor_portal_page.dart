@@ -594,6 +594,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                           ? (data?['name'] as String).trim()
                           : fallbackName)));
     final phone = (data?['publicPhone'] as String?)?.trim() ?? '';
+    final contractorName = (data?['name'] as String?)?.trim() ?? '';
     final headline = (data?['headline'] as String?)?.trim() ?? '';
     final bio = (data?['bio'] as String?)?.trim() ?? '';
     final logoUrl = (data?['logoUrl'] as String?)?.trim() ?? '';
@@ -664,6 +665,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
         return ContractorCard(
           data: ContractorCardData(
             displayName: displayName,
+            contractorName: contractorName,
             contactLine: phone.isNotEmpty ? phone : (user.email ?? ''),
             logoUrl: logoUrl,
             headline: headline,

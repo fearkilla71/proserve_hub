@@ -136,6 +136,9 @@ class _RecommendedContractorsPageState
     if (contractor['stripePayoutsEnabled'] == true) {
       score += 5;
     }
+    if (contractor['featured'] == true) {
+      score += 10;
+    }
 
     final ratingPts = (_ratingScoreFromContractor(contractor) / 5)
         .round(); // 0..20

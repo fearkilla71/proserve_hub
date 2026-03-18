@@ -45,6 +45,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   String _bannerIcon = 'spark';
   bool _avatarGlow = false;
   List<String> _selectedBadges = [];
+  List<String> _selectedServices = [];
   String _cardAura = 'none';
   int _totalJobsCompleted = 0;
   int _reviewCount = 0;
@@ -61,18 +62,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     _ThemePreset('amber', 'Amber', Color(0xFF4E2A0C), Color(0xFFFFA726)),
     _ThemePreset('slate', 'Slate', Color(0xFF1F2937), Color(0xFF64748B)),
     _ThemePreset('rose', 'Rose', Color(0xFF4A1D2D), Color(0xFFF472B6)),
-  ];
-
-  final List<Color> _gradientPalette = const [
-    Color(0xFF0F172A),
-    Color(0xFF1F2937),
-    Color(0xFF2563EB),
-    Color(0xFF0F3D2E),
-    Color(0xFF3BAA6B),
-    Color(0xFF4E2A0C),
-    Color(0xFFFFA726),
-    Color(0xFF4A1D2D),
-    Color(0xFFF472B6),
   ];
 
   @override
@@ -146,6 +135,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _cardAura = (data['cardAura'] as String?)?.trim() ?? _cardAura;
         _selectedBadges =
             (data['badges'] as List?)?.whereType<String>().toList() ?? [];
+        _selectedServices =
+            (data['servicesOffered'] as List?)?.whereType<String>().toList() ??
+            [];
         _totalJobsCompleted =
             (data['totalJobsCompleted'] as num?)?.toInt() ?? 0;
         _reviewCount =
@@ -204,6 +196,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
               'avatarGlow': _avatarGlow,
               'cardAura': _cardAura,
               'badges': _selectedBadges,
+              'servicesOffered': _selectedServices,
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
       }
@@ -387,37 +380,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     );
   }
 
-  Widget _colorChip({
-    required Color color,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? Colors.white : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                  ),
-                ]
-              : null,
-        ),
-      ),
-    );
-  }
-
   List<Color> _defaultGradientForTheme(String theme) {
     final match = _themePresets
         .where((preset) => preset.key == theme)
@@ -440,6 +402,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       displayName: _publicNameController.text.trim().isNotEmpty
           ? _publicNameController.text.trim()
           : 'Summit Builders Co.',
+      contractorName: _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : 'John Smith',
       contactLine: _publicPhoneController.text.trim().isNotEmpty
           ? _publicPhoneController.text.trim()
           : 'Licensed / Insured',
@@ -467,56 +432,24 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       aura: auraFromString(_cardAura),
       latestReview: 'Quick response and flawless finish.',
       totalJobsCompleted: _totalJobsCompleted,
+      servicesOffered: _selectedServices,
     );
   }
 
   void _randomizeCard() {
     final rand = math.Random();
     final preset = _themePresets[rand.nextInt(_themePresets.length)];
-    final usePreset = rand.nextBool();
-    final start = _gradientPalette[rand.nextInt(_gradientPalette.length)];
-    Color end = _gradientPalette[rand.nextInt(_gradientPalette.length)];
-    while (end.toARGB32() == start.toARGB32()) {
-      end = _gradientPalette[rand.nextInt(_gradientPalette.length)];
-    }
-
-    const avatarStyles = ['monogram', 'logo'];
-    const avatarShapes = ['circle', 'hex', 'shield', 'diamond'];
-    const textures = [
-      'none',
-      'dots',
-      'grid',
-      'waves',
-      'diamonds',
-      'crosshatch',
-    ];
-    const auras = ['none', 'lightning', 'fire', 'rainbow', 'ice', 'gold'];
     const bannerIcons = ['spark', 'bolt', 'shield', 'star', 'check'];
 
     final badgePool = profileBadges.map((b) => b.id).toList()..shuffle(rand);
     final badgeCount = 2 + rand.nextInt(3);
 
     setState(() {
-      if (usePreset) {
-        _cardTheme = preset.key;
-        _gradientStart = preset.start.toARGB32();
-        _gradientEnd = preset.end.toARGB32();
-      } else {
-        _cardTheme = 'custom';
-        _gradientStart = start.toARGB32();
-        _gradientEnd = end.toARGB32();
-      }
-
-      _avatarStyle = avatarStyles[rand.nextInt(avatarStyles.length)];
-      _avatarShape = avatarShapes[rand.nextInt(avatarShapes.length)];
-      _texture = textures[rand.nextInt(textures.length)];
-      _textureOpacity = _texture == 'none'
-          ? 0.12
-          : 0.08 + (rand.nextDouble() * 0.22);
+      _cardTheme = preset.key;
+      _gradientStart = preset.start.toARGB32();
+      _gradientEnd = preset.end.toARGB32();
       _showBanner = rand.nextBool();
       _bannerIcon = bannerIcons[rand.nextInt(bannerIcons.length)];
-      _avatarGlow = rand.nextBool();
-      _cardAura = auras[rand.nextInt(auras.length)];
       _selectedBadges = badgePool.take(badgeCount).toList();
     });
   }
@@ -782,6 +715,56 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                               maxLines: 4,
                               textInputAction: TextInputAction.newline,
                             ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Services offered',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Select the services you provide. These show on your public card.',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _allServices.map((svc) {
+                                final selected = _selectedServices.contains(
+                                  svc,
+                                );
+                                return FilterChip(
+                                  label: Text(svc),
+                                  selected: selected,
+                                  onSelected: (isSelected) {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedServices = [
+                                          ..._selectedServices,
+                                          svc,
+                                        ];
+                                      } else {
+                                        _selectedServices = _selectedServices
+                                            .where((s) => s != svc)
+                                            .toList();
+                                      }
+                                    });
+                                  },
+                                  selectedColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.2),
+                                  checkmarkColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                );
+                              }).toList(),
+                            ),
                           ],
                         ),
                       ),
@@ -856,251 +839,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   children: _themePresets
                                       .map(_themePresetChip)
                                       .toList(),
-                                ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Gradient start',
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _gradientPalette.map((color) {
-                                    final selected =
-                                        _gradientStart == color.toARGB32();
-                                    return _colorChip(
-                                      color: color,
-                                      selected: selected,
-                                      onTap: () {
-                                        setState(() {
-                                          _gradientStart = color.toARGB32();
-                                          _cardTheme = 'custom';
-                                        });
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Gradient end',
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _gradientPalette.map((color) {
-                                    final selected =
-                                        _gradientEnd == color.toARGB32();
-                                    return _colorChip(
-                                      color: color,
-                                      selected: selected,
-                                      onTap: () {
-                                        setState(() {
-                                          _gradientEnd = color.toARGB32();
-                                          _cardTheme = 'custom';
-                                        });
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Avatar',
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('Monogram'),
-                                      selected: _avatarStyle == 'monogram',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(
-                                          () => _avatarStyle = 'monogram',
-                                        );
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Logo'),
-                                      selected: _avatarStyle == 'logo',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _avatarStyle = 'logo');
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('Circle'),
-                                      selected: _avatarShape == 'circle',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _avatarShape = 'circle');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Hex'),
-                                      selected: _avatarShape == 'hex',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _avatarShape = 'hex');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Shield'),
-                                      selected: _avatarShape == 'shield',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _avatarShape = 'shield');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Diamond'),
-                                      selected: _avatarShape == 'diamond',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(
-                                          () => _avatarShape = 'diamond',
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                SwitchListTile(
-                                  value: _avatarGlow,
-                                  onChanged: (value) {
-                                    setState(() => _avatarGlow = value);
-                                  },
-                                  title: const Text('Avatar glow'),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Texture',
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('None'),
-                                      selected: _texture == 'none',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'none');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Dots'),
-                                      selected: _texture == 'dots',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'dots');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Grid'),
-                                      selected: _texture == 'grid',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'grid');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Waves'),
-                                      selected: _texture == 'waves',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'waves');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Diamonds'),
-                                      selected: _texture == 'diamonds',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'diamonds');
-                                      },
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Crosshatch'),
-                                      selected: _texture == 'crosshatch',
-                                      onSelected: (selected) {
-                                        if (!selected) return;
-                                        setState(() => _texture = 'crosshatch');
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                if (_texture != 'none') ...[
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Text('Opacity'),
-                                      Expanded(
-                                        child: Slider(
-                                          value: _textureOpacity,
-                                          min: 0.04,
-                                          max: 0.4,
-                                          divisions: 6,
-                                          label: _textureOpacity
-                                              .toStringAsFixed(2),
-                                          onChanged: (value) {
-                                            setState(
-                                              () => _textureOpacity = value,
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Card Aura',
-                              children: [
-                                Text(
-                                  'Add an animated aura effect around your card. Stand out with lightning, fire, rainbow, ice, or gold effects!',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
-                                ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: AuraType.values.map((aura) {
-                                    final key = auraToString(aura);
-                                    final selected = _cardAura == key;
-                                    return ChoiceChip(
-                                      selected: selected,
-                                      label: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(auraIcon(aura), size: 16),
-                                          const SizedBox(width: 4),
-                                          Text(auraLabel(aura)),
-                                        ],
-                                      ),
-                                      onSelected: (isSelected) {
-                                        if (!isSelected) return;
-                                        setState(() => _cardAura = key);
-                                      },
-                                    );
-                                  }).toList(),
                                 ),
                               ],
                             ),
@@ -1346,3 +1084,30 @@ class _ThemePreset {
   final Color start;
   final Color end;
 }
+
+const List<String> _allServices = [
+  'Interior Painting',
+  'Exterior Painting',
+  'Drywall Repair',
+  'Pressure Washing',
+  'Cabinets',
+  'HVAC',
+  'Pool Installation',
+  'Garage Door',
+  'Window Replacement',
+  'Solar Panels',
+  'Pest Control',
+  'Tree Service',
+  'Roofing',
+  'Plumbing',
+  'Electrical',
+  'Flooring',
+  'Landscaping',
+  'Fencing',
+  'Bathroom Remodel',
+  'Kitchen Remodel',
+  'Deck & Patio',
+  'Concrete & Masonry',
+  'Demolition',
+  'General Handyman',
+];

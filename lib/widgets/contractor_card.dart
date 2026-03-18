@@ -36,6 +36,7 @@ class ContractorCardData {
     this.certifications = const [],
     this.servicesOffered = const [],
     this.memberSince = '',
+    this.contractorName = '',
   });
 
   final String displayName;
@@ -66,6 +67,7 @@ class ContractorCardData {
   final List<String> certifications;
   final List<String> servicesOffered;
   final String memberSince;
+  final String contractorName;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -248,27 +250,50 @@ class _CardFront extends StatelessWidget {
       end: Alignment.bottomRight,
     );
 
+    final level = _levelLabel(data.reviewCount);
+
     return Card(
-      elevation: 0,
+      elevation: 6,
+      shadowColor: accent.withValues(alpha: 0.25),
       color: scheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: accent.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: accent.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Stack(
         children: [
           // Gradient background
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               child: Container(decoration: BoxDecoration(gradient: gradient)),
+            ),
+          ),
+          // Subtle overlay for better contrast
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.15),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.1),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.3, 1.0],
+                  ),
+                ),
+              ),
             ),
           ),
           // Texture overlay
           if (data.texture != 'none')
             Positioned.fill(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 child: CustomPaint(
                   painter: _CardTexturePainter(
                     texture: data.texture,
@@ -288,12 +313,13 @@ class _CardFront extends StatelessWidget {
             ),
           // Content
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Header: Avatar + Name + Edit ──
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _AvatarBadge(
                       name: data.displayName,
@@ -304,89 +330,222 @@ class _CardFront extends StatelessWidget {
                       accent: accent,
                       aura: data.aura,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             data.displayName,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 20,
+                                  letterSpacing: -0.3,
+                                ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            data.contactLine,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          if (data.contractorName.isNotEmpty &&
+                              data.contractorName.toLowerCase() !=
+                                  data.displayName.toLowerCase())
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1),
+                              child: Text(
+                                data.contractorName,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 13,
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  data.contactLine,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant
+                                            .withValues(alpha: 0.8),
+                                        letterSpacing: 0.2,
+                                      ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                     if (showEdit && onEdit != null)
-                      TextButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit'),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onEdit,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: accent.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 15,
+                                  color: accent,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                   ],
                 ),
+                // ── Headline ──
                 if (data.headline.isNotEmpty || data.bio.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     data.headline.isNotEmpty ? data.headline : data.bio,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                      color: scheme.onSurface.withValues(alpha: 0.85),
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _StatChip(
-                      label: data.ratingValue > 0
-                          ? '${data.ratingValue.toStringAsFixed(1)} (${data.reviewCount})'
-                          : 'No ratings yet',
-                      icon: Icons.star,
-                      color: accent,
+                const SizedBox(height: 16),
+                // ── Stats Row ──
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
-                    if (data.yearsExp > 0)
-                      _StatChip(
-                        label: '${data.yearsExp} yrs exp',
-                        icon: Icons.timeline,
-                        color: accent,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _FrontStat(
+                            icon: Icons.star_rounded,
+                            value: data.ratingValue > 0
+                                ? data.ratingValue.toStringAsFixed(1)
+                                : '—',
+                            label: data.reviewCount > 0
+                                ? '${data.reviewCount} reviews'
+                                : 'No ratings',
+                            accent: const Color(0xFFFFD54F),
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                        Expanded(
+                          child: _FrontStat(
+                            icon: Icons.work_history_outlined,
+                            value: data.yearsExp > 0
+                                ? '${data.yearsExp} yrs'
+                                : '—',
+                            label: 'Experience',
+                            accent: accent,
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                        Expanded(
+                          child: _FrontStat(
+                            icon: Icons.military_tech_rounded,
+                            value: level,
+                            label: 'Tier',
+                            accent: _tierColor(level),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // ── Latest Review Quote ──
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.06),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.format_quote_rounded,
+                        size: 18,
+                        color: accent.withValues(alpha: 0.5),
                       ),
-                    _StatChip(
-                      label: _levelLabel(data.reviewCount),
-                      icon: Icons.military_tech_outlined,
-                      color: accent,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  data.latestReview.isNotEmpty
-                      ? '"${data.latestReview}"'
-                      : 'No review comments yet.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          data.latestReview.isNotEmpty
+                              ? data.latestReview
+                              : 'No review comments yet.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: scheme.onSurface.withValues(alpha: 0.75),
+                                height: 1.5,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (data.badges.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  BadgeRow(
-                    badgeIds: data.badges,
-                    maxVisible: 5,
-                    size: BadgeSize.small,
-                  ),
-                ],
-                // Achievement badges (auto-earned)
+                // ── Badges & Achievements ──
                 Builder(
                   builder: (context) {
                     final earned = computeEarnedAchievements(
@@ -394,48 +553,70 @@ class _CardFront extends StatelessWidget {
                       reviewCount: data.reviewCount,
                       avgRating: data.ratingValue,
                     );
-                    if (earned.isEmpty) return const SizedBox.shrink();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-                        Text(
-                          'ACHIEVEMENTS',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                                color: scheme.onSurfaceVariant.withValues(
-                                  alpha: 0.6,
-                                ),
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        BadgeRow(
-                          badgeIds: earned,
-                          maxVisible: 4,
-                          size: BadgeSize.small,
-                        ),
-                      ],
+                    final allBadges = [...data.badges, ...earned];
+                    if (allBadges.isEmpty) return const SizedBox.shrink();
+                    // Deduplicate
+                    final seen = <String>{};
+                    final unique = allBadges.where((b) => seen.add(b)).toList();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: BadgeRow(
+                        badgeIds: unique,
+                        maxVisible: 6,
+                        size: BadgeSize.small,
+                      ),
                     );
                   },
                 ),
-                // Flip hint
-                const SizedBox(height: 8),
+                // ── Services Offered (compact) ──
+                if (data.servicesOffered.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: data.servicesOffered.take(4).map((svc) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: accent.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          svc,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: scheme.onSurface.withValues(alpha: 0.85),
+                                fontSize: 10,
+                              ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+                // ── Flip hint ──
+                const SizedBox(height: 10),
                 Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.swipe,
-                        size: 14,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        size: 12,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.3),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Swipe or double-tap to flip',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -446,6 +627,63 @@ class _CardFront extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Color _tierColor(String tier) {
+    switch (tier) {
+      case 'Platinum':
+        return const Color(0xFFE0E0E0);
+      case 'Gold':
+        return const Color(0xFFFFD54F);
+      case 'Silver':
+        return const Color(0xFFB0BEC5);
+      default:
+        return const Color(0xFFCD7F32);
+    }
+  }
+}
+
+/// Clean stat column for the front card stats row.
+class _FrontStat extends StatelessWidget {
+  const _FrontStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: accent),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: scheme.onSurface,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+            fontSize: 10,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -472,17 +710,18 @@ class _CardBack extends StatelessWidget {
     final darkEnd = Color.lerp(data.gradientEnd, Colors.black, 0.2)!;
 
     return Card(
-      elevation: 0,
+      elevation: 6,
+      shadowColor: accent.withValues(alpha: 0.25),
       color: scheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: accent.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: accent.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Stack(
         children: [
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -497,7 +736,7 @@ class _CardBack extends StatelessWidget {
           // Circuit board texture for the back
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               child: CustomPaint(
                 painter: _CardTexturePainter(
                   texture: 'circuit',
@@ -650,9 +889,7 @@ class _CardBack extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               cert,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
+                              style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: scheme.onSurfaceVariant,
@@ -693,9 +930,7 @@ class _CardBack extends StatelessWidget {
                         ),
                         child: Text(
                           svc,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
+                          style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: scheme.onSurfaceVariant,
@@ -838,9 +1073,7 @@ class _BackStatBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: accent.withValues(alpha: 0.12)),
       ),
       child: Column(
         children: [
@@ -983,7 +1216,7 @@ class _StatusBanner extends StatelessWidget {
             accent.withValues(alpha: 0.08),
           ],
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1074,10 +1307,9 @@ class _AvatarBadge extends StatelessWidget {
           ? null
           : Text(
               monogram,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
     );
 
@@ -1104,8 +1336,9 @@ class _AvatarBadge extends StatelessWidget {
               ]
             : null,
         border: Border.all(
-          color: (aura != AuraType.none ? glowColor : accent)
-              .withValues(alpha: 0.6),
+          color: (aura != AuraType.none ? glowColor : accent).withValues(
+            alpha: 0.6,
+          ),
           width: aura != AuraType.none ? 2.5 : 2,
         ),
       ),
@@ -1133,44 +1366,6 @@ class _AvatarBadge extends StatelessWidget {
       default:
         return decorated;
     }
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1241,8 +1436,16 @@ class _CardTexturePainter extends CustomPainter {
         break;
       case 'crosshatch':
         for (double i = -size.height; i < size.width; i += 12) {
-          canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), paint);
-          canvas.drawLine(Offset(i + size.height, 0), Offset(i, size.height), paint);
+          canvas.drawLine(
+            Offset(i, 0),
+            Offset(i + size.height, size.height),
+            paint,
+          );
+          canvas.drawLine(
+            Offset(i + size.height, 0),
+            Offset(i, size.height),
+            paint,
+          );
         }
         break;
       case 'circuit':
