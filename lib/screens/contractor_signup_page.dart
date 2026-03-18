@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../services/zip_lookup_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/apple_sign_in_button.dart';
 
@@ -75,10 +76,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
         if (!mounted) return;
         messenger.showSnackBar(SnackBar(content: Text(e.message)));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      AppError.show(context, e, st, action: 'Apple sign-up');
     } finally {
       if (mounted) setState(() => _appleLoading = false);
     }
@@ -212,11 +212,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
           content: Text('Verification email sent. Check your inbox.'),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      AppError.show(context, e, st, action: 'send verification email');
     }
   }
 
@@ -256,11 +254,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       // New user — assign contractor role
       await _auth.ensureGoogleUserRole(user.uid, 'contractor');
       if (mounted) router.go('/contractor-portal');
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
+      AppError.show(context, e, st, action: 'Google sign-up');
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -902,11 +898,9 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
           content: Text('Verification email sent. Check your inbox.'),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      AppError.show(context, e, st, action: 'create account');
     } finally {
       if (mounted) setState(() => loading = false);
     }

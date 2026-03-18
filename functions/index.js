@@ -1576,6 +1576,20 @@ async function checkRateLimit(uid, functionName, maxCalls, windowMs) {
   }
 }
 
+/**
+ * Convenience wrapper: calls checkRateLimit and throws if denied.
+ * Use in Core functions so both callable & HTTP variants are covered.
+ */
+async function enforceRateLimit(uid, functionName, maxCalls, windowMs) {
+  const rl = await checkRateLimit(uid, functionName, maxCalls, windowMs);
+  if (!rl.allowed) {
+    throw new functions.https.HttpsError(
+      'resource-exhausted',
+      `Rate limit exceeded. Try again after ${new Date(rl.resetTime).toISOString()}.`
+    );
+  }
+}
+
 function distanceMiles(lat1, lon1, lat2, lon2) {
   const R = 3958.8;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -4727,6 +4741,7 @@ async function syncContractorProEntitlementCore({ uid }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'syncContractorProEntitlement', 100, 60 * 60 * 1000);
 
   const { userRef, userData } = await assertContractor(uid);
 
@@ -4897,6 +4912,7 @@ async function debugContractorProStatusCore({ uid }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'debugContractorProStatus', 100, 60 * 60 * 1000);
 
   const { userData } = await assertContractor(uid);
   const stripe = getStripeClient();
@@ -6372,6 +6388,7 @@ exports.fulfillCheckoutSession = functions
   try {
     // Auth required — only authenticated users can trigger fulfillment
     const uid = await authenticateHttpRequest(req);
+    await enforceRateLimit(uid, 'fulfillCheckoutSession', 30, 60 * 60 * 1000);
 
     const sessionId = (req.body?.sessionId || req.query?.sessionId || '')
       .toString()
@@ -6429,6 +6446,7 @@ exports.fulfillPaymentIntent = functions
   try {
     // Auth required — only authenticated users can trigger fulfillment
     const uid = await authenticateHttpRequest(req);
+    await enforceRateLimit(uid, 'fulfillPaymentIntent', 30, 60 * 60 * 1000);
 
     const paymentIntentId = (req.body?.paymentIntentId || req.query?.paymentIntentId || '')
       .toString()
@@ -6738,6 +6756,8 @@ exports.migrateLegacyJobContactsHttp = functions
 
       const decoded = await admin.auth().verifyIdToken(idToken);
       const uid = decoded.uid;
+
+      await enforceRateLimit(uid, 'migrateLegacyJobContacts', 5, 60 * 60 * 1000);
 
       const db = admin.firestore();
       const adminSnap = await db.collection('admins').doc(uid).get();
@@ -7484,6 +7504,7 @@ exports.recalculateReputationHttp = functions.https.onRequest(async (req, res) =
 
   try {
     const uid = await authenticateHttpRequest(req);
+    await enforceRateLimit(uid, 'recalculateReputation', 50, 60 * 60 * 1000);
     const admin_check = await isAdminUser(uid);
     if (!admin_check) {
       res.status(403).json({ error: 'Admin access required' });
@@ -7525,6 +7546,7 @@ async function createEscrowCheckoutSessionCore({ escrowId, uid }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'createEscrowCheckoutSession', 30, 60 * 60 * 1000);
   if (!escrowId) {
     throw new functions.https.HttpsError('invalid-argument', 'escrowId required');
   }
@@ -7701,6 +7723,7 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'releaseEscrowFunds', 30, 60 * 60 * 1000);
 
   const db = admin.firestore();
   const escrowRef = db.collection('escrow_bookings').doc(escrowId);
@@ -7829,6 +7852,10 @@ exports.releaseEscrowFundsHttp = functions
  * (i.e. before funds are released to the contractor).
  */
 async function refundEscrowCore({ escrowId, uid }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+  await enforceRateLimit(uid, 'refundEscrow', 30, 60 * 60 * 1000);
   if (!escrowId) {
     throw new functions.https.HttpsError('invalid-argument', 'escrowId is required');
   }
@@ -8385,6 +8412,26 @@ IMPORTANT RULES:
  * Core logic for conversational AI estimate chat.
  */
 async function aiEstimateChatCore({ uid, serviceType, serviceName, messages, isInitial, images }) {
+  await enforceRateLimit(uid, 'aiEstimateChat', 60, 60 * 60 * 1000);
+
+  // M2: bound payload sizes to prevent OOM / large OpenAI bills
+  const MAX_IMAGES = 5;
+  const MAX_IMAGE_B64_LEN = 1_500_000; // ~1 MB decoded
+  const MAX_MESSAGES = 50;
+  if (Array.isArray(images) && images.length > MAX_IMAGES) {
+    throw new functions.https.HttpsError('invalid-argument', `Maximum ${MAX_IMAGES} images allowed per request.`);
+  }
+  if (Array.isArray(images)) {
+    for (const img of images) {
+      if (typeof img.b64 === 'string' && img.b64.length > MAX_IMAGE_B64_LEN) {
+        throw new functions.https.HttpsError('invalid-argument', 'Image too large (max ~1 MB).');
+      }
+    }
+  }
+  if (Array.isArray(messages) && messages.length > MAX_MESSAGES) {
+    throw new functions.https.HttpsError('invalid-argument', `Maximum ${MAX_MESSAGES} messages allowed.`);
+  }
+
   const openai = getOpenAiClient();
   const hasImages = Array.isArray(images) && images.length > 0;
 
@@ -8555,6 +8602,7 @@ async function adminForceReleaseEscrowCore({ escrowId, uid, reason }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'adminForceReleaseEscrow', 50, 60 * 60 * 1000);
   if (!(await isAdminUser(uid))) {
     throw new functions.https.HttpsError('permission-denied', 'Admin access required');
   }
@@ -8623,6 +8671,7 @@ async function adminForceCancelEscrowCore({ escrowId, uid, reason }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
+  await enforceRateLimit(uid, 'adminForceCancelEscrow', 50, 60 * 60 * 1000);
   if (!(await isAdminUser(uid))) {
     throw new functions.https.HttpsError('permission-denied', 'Admin access required');
   }
@@ -8662,7 +8711,19 @@ async function adminForceCancelEscrowCore({ escrowId, uid, reason }) {
       refundId = refund.id;
     } catch (refundErr) {
       console.error(`[adminForceCancel] Stripe refund failed for ${escrowId}:`, refundErr.message);
-      // Still cancel the escrow — mark refund as failed for manual follow-up
+      // Refund failed — mark escrow as cancel_pending so admin can retry.
+      // Do NOT reset the job to open (customer's money is still held).
+      await escrowRef.update({
+        status: 'cancel_pending_refund',
+        adminForceCancelled: true,
+        adminForceCancelledBy: uid,
+        adminForceCancelReason: reason || 'Admin override',
+        adminForceCancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        refundFailed: true,
+        refundError: (refundErr.message || 'Refund failed').toString().slice(0, 500),
+      });
+      console.log(`[adminForceCancel] Admin ${uid} cancel-pending escrow ${escrowId} (refund failed)`);
+      return { success: false, escrowId, refundFailed: true, error: 'Stripe refund failed — escrow marked for manual follow-up.' };
     }
   }
 
@@ -8672,10 +8733,10 @@ async function adminForceCancelEscrowCore({ escrowId, uid, reason }) {
     adminForceCancelledBy: uid,
     adminForceCancelReason: reason || 'Admin override',
     adminForceCancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-    ...(refundId ? { stripeRefundId: refundId } : { refundFailed: !paymentIntentId ? false : true }),
+    ...(refundId ? { stripeRefundId: refundId } : {}),
   });
 
-  // Reset the job_request back to open
+  // Only reset the job_request back to open if refund succeeded (or there was no payment)
   const jobId = escrow.jobId;
   if (jobId) {
     await db.collection('job_requests').doc(jobId).update({
@@ -8712,8 +8773,11 @@ exports.adminForceCancelEscrowHttp = functions
 
 async function createInvoicePaymentLinkCore({ uid, invoiceId, amount, clientEmail, description }) {
   if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  await enforceRateLimit(uid, 'createInvoicePaymentLink', 30, 60 * 60 * 1000);
   if (!invoiceId) throw new functions.https.HttpsError('invalid-argument', 'invoiceId is required');
   if (!amount || amount <= 0) throw new functions.https.HttpsError('invalid-argument', 'amount must be > 0');
+  if (amount < 1) throw new functions.https.HttpsError('invalid-argument', 'Minimum invoice amount is $1.');
+  if (amount > 50000) throw new functions.https.HttpsError('invalid-argument', 'Maximum invoice amount is $50,000.');
 
   // Verify this is an Enterprise user.
   const userDoc = await admin.firestore().collection('users').doc(uid).get();

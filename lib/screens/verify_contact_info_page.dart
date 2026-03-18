@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/app_error_handler.dart';
+
 import 'contractor_portal_page.dart';
 import 'customer_portal_page.dart';
 import 'contractor_signup_pitch_page.dart';
@@ -215,11 +217,9 @@ class _VerifyContactInfoPageState extends State<VerifyContactInfoPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not send email: $e')));
+      AppError.show(context, e, st, action: 'send verification email');
     } finally {
       if (mounted) setState(() => _sendingEmail = false);
     }
@@ -381,11 +381,9 @@ class _VerifyContactInfoPageState extends State<VerifyContactInfoPage>
           duration: const Duration(seconds: 8),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not send code: $e')));
+      AppError.show(context, e, st, action: 'send verification code');
     } finally {
       if (mounted) setState(() => _sendingCode = false);
     }
@@ -432,11 +430,9 @@ class _VerifyContactInfoPageState extends State<VerifyContactInfoPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? 'Could not verify code.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not verify code: $e')));
+      AppError.show(context, e, st, action: 'verify code');
     } finally {
       if (mounted) setState(() => _verifyingCode = false);
     }

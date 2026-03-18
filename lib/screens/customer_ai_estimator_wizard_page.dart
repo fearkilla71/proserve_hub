@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/app_error_handler.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -140,11 +141,9 @@ class _CustomerAiEstimatorWizardPageState
 
       _zipController.text = result.zip.trim();
       setState(() {});
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
+      AppError.show(context, e, st, action: 'detect location');
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -210,7 +209,7 @@ class _CustomerAiEstimatorWizardPageState
       setState(() {
         _estimateId = ref.id;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       final msg = e.toString().toLowerCase();
       if (msg.contains('permission') || msg.contains('denied')) {
@@ -222,9 +221,7 @@ class _CustomerAiEstimatorWizardPageState
           ),
         );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to start estimate: $e')));
+        AppError.show(context, e, st, action: 'start estimate');
       }
     } finally {
       if (mounted) {
@@ -484,8 +481,8 @@ class _CustomerAiEstimatorWizardPageState
       }
     } on FirebaseFunctionsException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message ?? e.code)));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Estimate failed: $e')));
+    } catch (e, st) {
+      AppError.show(context, e, st, action: 'generate estimate');
     } finally {
       if (mounted) {
         setState(() {
@@ -599,8 +596,8 @@ class _CustomerAiEstimatorWizardPageState
       messenger.showSnackBar(
         SnackBar(content: Text('Uploaded ${uploaded.length} photo(s).')),
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } catch (e, st) {
+      AppError.show(context, e, st, action: 'upload photos');
     } finally {
       if (mounted) {
         setState(() {
@@ -706,8 +703,8 @@ class _CustomerAiEstimatorWizardPageState
       await _saveDraftFields();
 
       messenger.showSnackBar(const SnackBar(content: Text('Photo uploaded.')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } catch (e, st) {
+      AppError.show(context, e, st, action: 'upload photo');
     } finally {
       if (mounted) {
         setState(() {
@@ -879,7 +876,7 @@ class _CustomerAiEstimatorWizardPageState
         return;
       }
       messenger.showSnackBar(SnackBar(content: Text(e.message ?? e.code)));
-    } catch (e) {
+    } catch (e, st) {
       final msg = e.toString().toLowerCase();
       if (msg.contains('openai key')) {
         messenger.showSnackBar(
@@ -892,7 +889,7 @@ class _CustomerAiEstimatorWizardPageState
         await _generateRoughEstimate();
         return;
       }
-      messenger.showSnackBar(SnackBar(content: Text('Estimate failed: $e')));
+      AppError.show(context, e, st, action: 'photo estimate');
     } finally {
       if (mounted) {
         setState(() {

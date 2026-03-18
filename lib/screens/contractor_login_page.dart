@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../services/auth_service.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/apple_sign_in_button.dart';
 
 class ContractorLoginPage extends StatefulWidget {
@@ -66,11 +67,9 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
 
       if (!mounted) return;
       context.go('/contractor-portal');
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
+      AppError.show(context, e, st, action: 'Google sign-in');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -116,10 +115,9 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
         if (!mounted) return;
         messenger.showSnackBar(SnackBar(content: Text(e.message)));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      AppError.show(context, e, st, action: 'Apple sign-in');
     } finally {
       if (mounted) setState(() => _appleLoading = false);
     }

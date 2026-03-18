@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
+import '../utils/app_error_handler.dart';
 
 class QuotesScreen extends StatefulWidget {
   final String jobId;
@@ -529,9 +530,9 @@ class _SubmitQuoteScreenState extends State<SubmitQuoteScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(e.message ?? 'AI estimate failed.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('AI estimate failed: $e')));
+      AppError.show(context, e, st, action: 'AI estimate');
     } finally {
       if (mounted) setState(() => _loadingAiEstimate = false);
     }

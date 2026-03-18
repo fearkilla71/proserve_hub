@@ -9,6 +9,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/apple_sign_in_button.dart';
 
@@ -65,10 +66,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
         if (!mounted) return;
         messenger.showSnackBar(SnackBar(content: Text(e.message)));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      AppError.show(context, e, st, action: 'Apple sign-up');
     } finally {
       if (mounted) setState(() => _appleLoading = false);
     }
@@ -119,11 +119,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       // New user — assign customer role
       await _auth.ensureGoogleUserRole(user.uid, 'customer');
       if (mounted) router.go('/customer-portal');
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
+      AppError.show(context, e, st, action: 'Google sign-up');
     } finally {
       if (mounted) setState(() => loading = false);
     }

@@ -6,6 +6,7 @@ import 'dart:async';
 
 import '../services/stripe_service.dart';
 import '../services/subscription_service.dart';
+import '../utils/app_error_handler.dart';
 
 class ContractorSubscriptionScreen extends StatefulWidget {
   const ContractorSubscriptionScreen({super.key});
@@ -225,8 +226,8 @@ class _ContractorSubscriptionScreenState
           ),
         ),
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    } catch (e, st) {
+      AppError.show(context, e, st, action: 'start Stripe checkout');
     } finally {
       if (mounted) setState(() => _isLoadingStripe = false);
     }
@@ -245,12 +246,10 @@ class _ContractorSubscriptionScreenState
     setState(() => _isLoadingIap = true);
     try {
       await _subs.buy(product);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isLoadingIap = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      AppError.show(context, e, st, action: 'start store subscription');
     }
   }
 

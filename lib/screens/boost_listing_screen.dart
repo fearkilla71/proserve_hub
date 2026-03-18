@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/boost_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 
 class BoostListingScreen extends StatefulWidget {
   const BoostListingScreen({super.key});
@@ -51,11 +52,9 @@ class _BoostListingScreenState extends State<BoostListingScreen> {
         ),
       );
       await _loadStatus();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      AppError.show(context, e, st, action: 'activate boost');
     } finally {
       if (mounted) setState(() => _activating = false);
     }
