@@ -19,7 +19,7 @@ class ReferralService {
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   /// Credit amount granted to both referrer and referred user.
-  static const double creditAmount = 10.0;
+  static const double creditAmount = 25.0;
 
   // ─── Code Generation ────────────────────────────────────────────────
 

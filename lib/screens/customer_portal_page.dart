@@ -276,9 +276,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             label: 'Team',
           ),
           NavigationDestination(
-            icon: Icon(Icons.forum_outlined),
-            selectedIcon: Icon(Icons.forum),
-            label: 'Community',
+            icon: Icon(Icons.photo_library_outlined),
+            selectedIcon: Icon(Icons.photo_library),
+            label: 'Gallery',
           ),
         ],
       ),
@@ -384,7 +384,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         ),
                         child: FilledButton(
                           onPressed: () {
-                            context.push('/select-service');
+                            context.push('/smart-request');
                           },
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -411,6 +411,23 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      context.push('/instant-quote');
+                    },
+                    icon: const Icon(Icons.camera_alt, size: 18),
+                    label: const Text('Snap for Instant Quote'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ProServeColors.accent,
+                      side: BorderSide(
+                        color: ProServeColors.accent.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -554,10 +571,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   child: _quickActionTile(
                     context: context,
                     title: 'Start request',
-                    subtitle: 'Post a job in minutes',
+                    subtitle: 'Smart 4-step flow',
                     icon: Icons.add_circle_outline,
                     onTap: () {
-                      context.push('/select-service');
+                      context.push('/smart-request');
                     },
                   ),
                 ),
@@ -1446,7 +1463,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   ],
                 ),
                 _buildTeamTab(context),
-                const CommunityFeedScreen(),
+                const CommunityFeedScreen(title: 'Project Gallery'),
               ],
             ),
           ),

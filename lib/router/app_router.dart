@@ -79,6 +79,8 @@ import '../screens/escrow_status_screen.dart';
 import '../screens/escrow_rating_screen.dart';
 import '../screens/ai_estimate_chat_screen.dart';
 import '../screens/ai_support_chat_screen.dart';
+import '../screens/smart_request_flow_page.dart';
+import '../screens/instant_quote_screen.dart';
 import '../screens/live_job_timeline_screen.dart';
 import '../screens/crew_roster_screen.dart';
 import '../screens/rate_homeowner_screen.dart';
@@ -194,6 +196,8 @@ abstract final class AppRoutes {
   static const escrowStatus = '/escrow-status/:escrowId';
 
   // ── Service Request Flows ──
+  static const smartRequest = '/smart-request';
+  static const instantQuote = '/instant-quote';
   static const flowPainting = '/flow/painting';
   static const flowExteriorPainting = '/flow/exterior-painting';
   static const flowDrywallRepair = '/flow/drywall-repair';
@@ -337,6 +341,20 @@ GoRouter createRouter() {
       GoRoute(
         path: '/select-service',
         builder: (context, state) => const ServiceSelectPage(),
+      ),
+      GoRoute(
+        path: '/smart-request',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return SmartRequestFlowPage(
+            initialServiceType: extra['serviceType'] as String?,
+            initialServiceName: extra['serviceName'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/instant-quote',
+        builder: (context, state) => const InstantQuoteScreen(),
       ),
 
       // ── Conversations & Chat ──

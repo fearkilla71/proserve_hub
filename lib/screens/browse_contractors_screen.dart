@@ -24,6 +24,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
   String _sortBy = 'rating'; // rating, reviews, distance
   bool _verifiedOnly = false;
   bool _filtersExpanded = false;
+  bool _mapView = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -177,6 +178,11 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
         automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Browse Contractors'),
         actions: [
+          IconButton(
+            tooltip: _mapView ? 'List view' : 'Map view',
+            icon: Icon(_mapView ? Icons.view_list : Icons.map_outlined),
+            onPressed: () => setState(() => _mapView = !_mapView),
+          ),
           IconButton(
             tooltip: 'Saved contractors',
             icon: const Icon(Icons.favorite_border),
@@ -706,21 +712,23 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: contractors.length,
-                  itemBuilder: (context, index) {
-                    final contractor =
-                        contractors[index].data() as Map<String, dynamic>;
-                    final contractorId = contractors[index].id;
+                return _mapView
+                    ? _buildMapView(context, contractors)
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: contractors.length,
+                        itemBuilder: (context, index) {
+                          final contractor =
+                              contractors[index].data() as Map<String, dynamic>;
+                          final contractorId = contractors[index].id;
 
-                    return _ContractorCard(
-                      contractorId: contractorId,
-                      contractor: contractor,
-                      distanceMiles: _distanceForContractor(contractor),
-                    );
-                  },
-                );
+                          return _ContractorCard(
+                            contractorId: contractorId,
+                            contractor: contractor,
+                            distanceMiles: _distanceForContractor(contractor),
+                          );
+                        },
+                      );
               },
             ),
           ),
@@ -728,6 +736,174 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
       ),
     );
   }
+  Widget _buildMapView(
+      BuildContext context, List<QueryDocumentSnapshot> contractors) {
+    final scheme = Theme.of(context).colorScheme;
+
+    // Sort by distance for map view.
+    final sorted = List<QueryDocumentSnapshot>.from(contractors)
+      ..sort((a, b) {
+        final dA = _distanceForContractor(a.data() as Map<String, dynamic>) ??
+            double.infinity;
+        final dB = _distanceForContractor(b.data() as Map<String, dynamic>) ??
+            double.infinity;
+        return dA.compareTo(dB);
+      });
+
+    // Group into distance bands.
+    final nearby = <QueryDocumentSnapshot>[];
+    final midRange = <QueryDocumentSnapshot>[];
+    final farAway = <QueryDocumentSnapshot>[];
+
+    for (final doc in sorted) {
+      final data = doc.data() as Map<String, dynamic>;
+      final d = _distanceForContractor(data);
+      if (d == null) {
+        farAway.add(doc);
+      } else if (d <= 10) {
+        nearby.add(doc);
+      } else if (d <= 25) {
+        midRange.add(doc);
+      } else {
+        farAway.add(doc);
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Your location
+        if (_currentZip != null && _currentZip!.isNotEmpty)
+          Card(
+            color: scheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.my_location, color: scheme.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Your location: ZIP $_currentZip',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (_currentZip == null || _currentZip!.isEmpty)
+          Card(
+            color: scheme.errorContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.location_off, color: scheme.onErrorContainer),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Set your ZIP code in filters to see distance-based results.',
+                      style: TextStyle(color: scheme.onErrorContainer),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 16),
+        if (nearby.isNotEmpty) ...[
+          _distanceBandHeader(context, Icons.near_me, 'Nearby (< 10 mi)',
+              '${nearby.length} pros', Colors.green),
+          const SizedBox(height: 8),
+          ...nearby.map((doc) => _mapCard(context, doc)),
+          const SizedBox(height: 16),
+        ],
+        if (midRange.isNotEmpty) ...[
+          _distanceBandHeader(context, Icons.directions_car, '10–25 miles',
+              '${midRange.length} pros', Colors.orange),
+          const SizedBox(height: 8),
+          ...midRange.map((doc) => _mapCard(context, doc)),
+          const SizedBox(height: 16),
+        ],
+        if (farAway.isNotEmpty) ...[
+          _distanceBandHeader(context, Icons.explore, '25+ miles',
+              '${farAway.length} pros', Colors.grey),
+          const SizedBox(height: 8),
+          ...farAway.map((doc) => _mapCard(context, doc)),
+        ],
+      ],
+    );
+  }
+
+  Widget _distanceBandHeader(BuildContext context, IconData icon, String title,
+      String count, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Text(title,
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const Spacer(),
+        Text(count,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13)),
+      ],
+    );
+  }
+
+  Widget _mapCard(BuildContext context, QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final name = (data['businessName'] as String?)?.trim() ??
+        (data['companyName'] as String?)?.trim() ??
+        (data['name'] as String?)?.trim() ??
+        'Unknown';
+    final rating = (data['averageRating'] as num?)?.toDouble() ?? 0;
+    final dist = _distanceForContractor(data);
+    final profileImage = data['profileImage'] as String?;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: scheme.primaryContainer,
+          backgroundImage: profileImage != null
+              ? CachedNetworkImageProvider(profileImage)
+              : null,
+          child: profileImage == null
+              ? Text(name.isNotEmpty ? name[0] : '?')
+              : null,
+        ),
+        title: Text(name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
+        subtitle: Row(
+          children: [
+            Icon(Icons.star, size: 14, color: Colors.amber[700]),
+            const SizedBox(width: 2),
+            Text(rating.toStringAsFixed(1)),
+            if (dist != null) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.route, size: 14, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 2),
+              Text(formatDistance(dist)),
+            ],
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push('/contractor/${doc.id}'),
+      ),
+    );
+  }
+
 }
 
 class _ContractorCard extends StatefulWidget {

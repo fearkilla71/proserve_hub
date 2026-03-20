@@ -361,7 +361,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text(_loadError!, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
