@@ -31,6 +31,48 @@ class PricingEngine {
     return s.contains('paint');
   }
 
+  /// Mirror backend normalizeServiceKey() so client looks up the same doc.
+  static String _normalizeServiceKey(String service) {
+    final s = service.trim().toLowerCase();
+    if (s.isEmpty) return '';
+    if (s.contains('paint')) return 'painting';
+    if (s.contains('plumb')) return 'plumbing';
+    if (s.contains('electric')) return 'electrical';
+    if (s.contains('clean')) return 'cleaning';
+    if (s.contains('handyman') || s.contains('handy')) return 'handyman';
+    if (s.contains('drywall')) return 'drywall';
+    if (s.contains('pressure')) return 'pressure_washing';
+    if (s.contains('floor')) return 'flooring';
+    if (s.contains('cabinet')) return 'cabinets';
+    return s;
+  }
+
+  /// Hardcoded defaults matching backend getDefaultPricingRule().
+  static Map<String, dynamic>? _defaultPricingRule(String normalizedKey) {
+    switch (normalizedKey) {
+      case 'painting':
+        return {'baseRate': 1.95, 'unit': 'sqft', 'minPrice': 450, 'maxPrice': 100000};
+      case 'drywall':
+        return {'baseRate': 3.25, 'unit': 'sqft', 'minPrice': 225, 'maxPrice': 25000};
+      case 'plumbing':
+        return {'baseRate': 110, 'unit': 'hour', 'minPrice': 200, 'maxPrice': 2500};
+      case 'electrical':
+        return {'baseRate': 120, 'unit': 'hour', 'minPrice': 250, 'maxPrice': 3500};
+      case 'handyman':
+        return {'baseRate': 85, 'unit': 'hour', 'minPrice': 150, 'maxPrice': 2500};
+      case 'cleaning':
+        return {'baseRate': 50, 'unit': 'hour', 'minPrice': 120, 'maxPrice': 1200};
+      case 'flooring':
+        return {'baseRate': 5.75, 'unit': 'sqft', 'minPrice': 550, 'maxPrice': 30000};
+      case 'pressure_washing':
+        return {'baseRate': 0.28, 'unit': 'sqft', 'minPrice': 150, 'maxPrice': 2500};
+      case 'cabinets':
+        return {'baseRate': 200, 'unit': 'door', 'minPrice': 500, 'maxPrice': 15000};
+      default:
+        return null;
+    }
+  }
+
   /// Fetch a Firestore doc with in-memory caching + TTL.
   static Future<_CachedDoc> _getCachedDoc(
     String collection,
@@ -54,18 +96,30 @@ class PricingEngine {
   }
 
   static Future<_CachedDoc> _getPricingDoc({required String service}) async {
-    final raw = service.trim();
-    final lower = raw.toLowerCase();
-
-    final lowerDoc = await _getCachedDoc('pricing_rules', lower);
-    if (lowerDoc.exists) return lowerDoc;
-
-    if (raw.isNotEmpty && raw != lower) {
-      final rawDoc = await _getCachedDoc('pricing_rules', raw);
-      if (rawDoc.exists) return rawDoc;
+    final normalized = _normalizeServiceKey(service);
+    if (normalized.isNotEmpty) {
+      final normDoc = await _getCachedDoc('pricing_rules', normalized);
+      if (normDoc.exists) return normDoc;
     }
 
-    return lowerDoc;
+    // Try raw lowercase in case Firestore has a non-normalized key.
+    final lower = service.trim().toLowerCase();
+    if (lower != normalized && lower.isNotEmpty) {
+      final lowerDoc = await _getCachedDoc('pricing_rules', lower);
+      if (lowerDoc.exists) return lowerDoc;
+    }
+
+    // Return a synthetic doc from hardcoded defaults.
+    final fallback = _defaultPricingRule(normalized);
+    if (fallback != null) {
+      return _CachedDoc(
+        data: fallback,
+        exists: true,
+        fetchedAt: DateTime.now(),
+      );
+    }
+
+    return _CachedDoc(data: null, exists: false, fetchedAt: DateTime.now());
   }
 
   /// Look up the ZIP-based cost multiplier. Returns 1.0 if no override.

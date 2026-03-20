@@ -49,10 +49,9 @@ class PnlReport {
   double get netProfit => totalRevenue - totalExpenses;
   double get marginPercent =>
       totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-  double get estimateAccuracy =>
-      totalEstimatedRevenue > 0
-          ? (totalRevenue / totalEstimatedRevenue) * 100
-          : 0;
+  double get estimateAccuracy => totalEstimatedRevenue > 0
+      ? (totalRevenue / totalEstimatedRevenue) * 100
+      : 0;
 }
 
 /// Service that aggregates revenue, expenses, and labor costs into a P&L

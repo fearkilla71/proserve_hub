@@ -151,16 +151,17 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-                height: 220,
-                child: _estimateVsActualChart(report, scheme)),
+              height: 220,
+              child: _estimateVsActualChart(report, scheme),
+            ),
             const SizedBox(height: 4),
             Center(
               child: Text(
                 'Accuracy: ${report.estimateAccuracy.toStringAsFixed(1)}%',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -414,18 +415,20 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
 
   // ── Estimate vs Actual Bar Chart ──
   Widget _estimateVsActualChart(PnlReport report, ColorScheme scheme) {
-    final months =
-        report.months.where((m) => m.estimatedRevenue > 0 || m.revenue > 0).toList();
+    final months = report.months
+        .where((m) => m.estimatedRevenue > 0 || m.revenue > 0)
+        .toList();
     if (months.isEmpty) {
       return Center(
-        child: Text('No data yet',
-            style: TextStyle(color: scheme.onSurfaceVariant)),
+        child: Text(
+          'No data yet',
+          style: TextStyle(color: scheme.onSurfaceVariant),
+        ),
       );
     }
 
     final maxVal = months.fold<double>(0, (prev, m) {
-      final v =
-          m.estimatedRevenue > m.revenue ? m.estimatedRevenue : m.revenue;
+      final v = m.estimatedRevenue > m.revenue ? m.estimatedRevenue : m.revenue;
       return v > prev ? v : prev;
     });
 
@@ -494,15 +497,17 @@ class _PnlDashboardScreenState extends State<PnlDashboardScreen> {
                 toY: m.estimatedRevenue,
                 color: scheme.tertiary,
                 width: 12,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
               ),
               BarChartRodData(
                 toY: m.revenue,
                 color: scheme.primary,
                 width: 12,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
               ),
             ],
           );
