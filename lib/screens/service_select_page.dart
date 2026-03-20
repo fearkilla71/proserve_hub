@@ -111,7 +111,7 @@ class ServiceSelectPage extends StatelessWidget {
     'exterior_painting': 'Exterior Painting',
     'drywall_repair': 'Drywall Repair',
     'pressure_washing': 'Pressure Washing',
-    'cabinets': 'Cabinet Refinishing',
+    'cabinets': 'Cabinet Painting',
     'painting': 'Painting',
     'hvac': 'HVAC',
     'pool_installation': 'Pool Installation',

@@ -17,6 +17,7 @@ class ContractorAnalyticsScreen extends StatefulWidget {
 class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
   String _selectedPeriod = '30'; // days
   bool _isLoading = true;
+  String? _error;
 
   Map<String, dynamic> _stats = {
     'totalJobs': 0,
@@ -208,7 +209,12 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
       });
     } catch (e) {
       debugPrint('Error loading analytics: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Failed to load analytics. Pull to refresh.';
+        });
+      }
     }
   }
 
@@ -303,7 +309,28 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
                 ),
               ],
             )
-          : RefreshIndicator(
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline, size: 48,
+                          color: Theme.of(context).colorScheme.error),
+                      const SizedBox(height: 12),
+                      Text(_error!, textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () {
+                          setState(() => _error = null);
+                          _loadAnalytics();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
               onRefresh: _loadAnalytics,
               child: ListView(
                 padding: const EdgeInsets.all(16),

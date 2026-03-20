@@ -17,6 +17,7 @@ class CustomerAnalyticsScreen extends StatefulWidget {
 class _CustomerAnalyticsScreenState extends State<CustomerAnalyticsScreen> {
   String _selectedPeriod = '30'; // days
   bool _isLoading = true;
+  String? _error;
 
   Map<String, dynamic> _stats = {
     'totalJobs': 0,
@@ -143,7 +144,10 @@ class _CustomerAnalyticsScreenState extends State<CustomerAnalyticsScreen> {
       });
     } catch (e) {
       debugPrint('Error loading analytics: $e');
-      setState(() => _isLoading = false);
+      setState(() {
+        _error = 'Failed to load analytics. Pull to refresh.';
+        _isLoading = false;
+      });
     }
   }
 
@@ -244,6 +248,29 @@ class _CustomerAnalyticsScreenState extends State<CustomerAnalyticsScreen> {
                 ),
               ],
             )
+          : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text(_error!, textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            _error = null;
+                            _loadAnalytics();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
           : RefreshIndicator(
               onRefresh: _loadAnalytics,
               child: ListView(

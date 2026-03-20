@@ -42,7 +42,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     'Exterior Painting',
     'Pressure Washing',
     'Cabinets',
-    'Drywall Repairs',
+    'Drywall Repair',
   ];
 
   bool loading = false;

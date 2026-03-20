@@ -76,6 +76,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
     } catch (e) {
       debugPrint('Error loading verification data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load verification data')),
+        );
+      }
     }
   }
 

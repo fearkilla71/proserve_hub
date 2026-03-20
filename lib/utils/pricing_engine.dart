@@ -28,6 +28,8 @@ class PricingEngine {
 
   static bool _isPainting(String service) {
     final s = service.trim().toLowerCase();
+    // "Cabinet Painting" should NOT be treated as wall painting.
+    if (s.contains('cabinet')) return false;
     return s.contains('paint');
   }
 
@@ -35,6 +37,8 @@ class PricingEngine {
   static String _normalizeServiceKey(String service) {
     final s = service.trim().toLowerCase();
     if (s.isEmpty) return '';
+    // Cabinet check MUST come before paint ("Cabinet Painting" contains both).
+    if (s.contains('cabinet')) return 'cabinets';
     if (s.contains('paint')) return 'painting';
     if (s.contains('plumb')) return 'plumbing';
     if (s.contains('electric')) return 'electrical';
@@ -43,7 +47,6 @@ class PricingEngine {
     if (s.contains('drywall')) return 'drywall';
     if (s.contains('pressure')) return 'pressure_washing';
     if (s.contains('floor')) return 'flooring';
-    if (s.contains('cabinet')) return 'cabinets';
     return s;
   }
 
@@ -51,23 +54,68 @@ class PricingEngine {
   static Map<String, dynamic>? _defaultPricingRule(String normalizedKey) {
     switch (normalizedKey) {
       case 'painting':
-        return {'baseRate': 1.95, 'unit': 'sqft', 'minPrice': 450, 'maxPrice': 100000};
+        return {
+          'baseRate': 1.95,
+          'unit': 'sqft',
+          'minPrice': 450,
+          'maxPrice': 100000,
+        };
       case 'drywall':
-        return {'baseRate': 3.25, 'unit': 'sqft', 'minPrice': 225, 'maxPrice': 25000};
+        return {
+          'baseRate': 3.25,
+          'unit': 'sqft',
+          'minPrice': 225,
+          'maxPrice': 25000,
+        };
       case 'plumbing':
-        return {'baseRate': 110, 'unit': 'hour', 'minPrice': 200, 'maxPrice': 2500};
+        return {
+          'baseRate': 110,
+          'unit': 'hour',
+          'minPrice': 200,
+          'maxPrice': 2500,
+        };
       case 'electrical':
-        return {'baseRate': 120, 'unit': 'hour', 'minPrice': 250, 'maxPrice': 3500};
+        return {
+          'baseRate': 120,
+          'unit': 'hour',
+          'minPrice': 250,
+          'maxPrice': 3500,
+        };
       case 'handyman':
-        return {'baseRate': 85, 'unit': 'hour', 'minPrice': 150, 'maxPrice': 2500};
+        return {
+          'baseRate': 85,
+          'unit': 'hour',
+          'minPrice': 150,
+          'maxPrice': 2500,
+        };
       case 'cleaning':
-        return {'baseRate': 50, 'unit': 'hour', 'minPrice': 120, 'maxPrice': 1200};
+        return {
+          'baseRate': 50,
+          'unit': 'hour',
+          'minPrice': 120,
+          'maxPrice': 1200,
+        };
       case 'flooring':
-        return {'baseRate': 5.75, 'unit': 'sqft', 'minPrice': 550, 'maxPrice': 30000};
+        return {
+          'baseRate': 5.75,
+          'unit': 'sqft',
+          'minPrice': 550,
+          'maxPrice': 30000,
+        };
       case 'pressure_washing':
-        return {'baseRate': 0.28, 'unit': 'sqft', 'minPrice': 150, 'maxPrice': 2500};
+        return {
+          'baseRate': 0.28,
+          'unit': 'sqft',
+          'minPrice': 150,
+          'maxPrice': 2500,
+        };
       case 'cabinets':
-        return {'baseRate': 200, 'unit': 'door', 'minPrice': 500, 'maxPrice': 15000};
+        return {
+          'baseRate': 200,
+          'unit': 'door',
+          'minPrice': 500,
+          'maxPrice': 15000,
+        };
       default:
         return null;
     }
@@ -598,9 +646,13 @@ class PricingEngine {
     final pricingDoc = await _getPricingDoc(service: service);
 
     if (!pricingDoc.exists) {
-      throw Exception(
-        "Pricing not configured for '$service'. Create pricing_rules/$serviceKey",
-      );
+      // Fallback: generic per-unit pricing for unknown services.
+      final fallbackPrice = 100.0 * quantity;
+      return {
+        'low': fallbackPrice * 0.85,
+        'recommended': fallbackPrice,
+        'premium': fallbackPrice * 1.20,
+      };
     }
 
     final pricing = pricingDoc.data ?? {};

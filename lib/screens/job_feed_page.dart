@@ -59,7 +59,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     'Interior Painting',
     'Exterior Painting',
     'Power Washing & Staining',
-    'Cabinet Refinishing',
+    'Cabinet Painting',
     'Drywall Repair & Texture',
     'Wallpaper Removal & Install',
     'Popcorn Ceiling Removal',

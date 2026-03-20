@@ -48,7 +48,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   static const _builtInServices = <String>[
     'Painting',
     'Exterior Painting',
-    'Cabinet Refinishing',
+    'Cabinet Painting',
     'Drywall Repair',
     'Pressure Washing',
   ];
@@ -56,7 +56,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   static const _builtInRates = <String, double>{
     'Painting': 60.0,
     'Exterior Painting': 55.0,
-    'Cabinet Refinishing': 70.0,
+    'Cabinet Painting': 70.0,
     'Drywall Repair': 65.0,
     'Pressure Washing': 55.0,
   };

@@ -1655,7 +1655,8 @@ function normalizeServiceKey(service) {
   const raw = (service || '').toString().trim().toLowerCase();
   if (!raw) return '';
 
-  // Keep this conservative: only map when we're confident.
+  // Cabinet check MUST come before paint ("Cabinet Painting" contains both).
+  if (raw.includes('cabinet')) return 'cabinets';
   if (raw.includes('paint')) return 'painting';
   if (raw.includes('plumb')) return 'plumbing';
   if (raw.includes('electric')) return 'electrical';
@@ -1699,6 +1700,9 @@ function getDefaultPricingRule(service) {
   }
   if (key === 'pressure_washing') {
     return { baseRate: 0.28, unit: 'sqft', minPrice: 150, maxPrice: 2500 };
+  }
+  if (key === 'cabinets') {
+    return { baseRate: 200, unit: 'door', minPrice: 500, maxPrice: 15000 };
   }
 
   return null;

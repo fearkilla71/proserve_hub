@@ -27,6 +27,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = true;
   bool _isUploading = false;
+  String? _loadError;
   List<Map<String, dynamic>> _portfolioItems = [];
   String _selectedCategory = 'All';
 
@@ -34,7 +35,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     'All',
     'Painting',
     'Exterior Painting',
-    'Cabinet Refinishing',
+    'Cabinet Painting',
     'Drywall Repair',
     'Pressure Washing',
     'HVAC',
@@ -70,7 +71,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   }
 
   Future<void> _loadPortfolio() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       final snapshot = await _portfolioRef
@@ -84,6 +88,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       });
     } catch (e) {
       debugPrint('Error loading portfolio: $e');
+      setState(() => _loadError = 'Failed to load portfolio.');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -349,6 +354,26 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(_loadError!, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _loadPortfolio,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : _portfolioItems.isEmpty
           ? _buildEmptyState()
           : Column(
@@ -731,7 +756,7 @@ class _AddPhotoDialogState extends State<_AddPhotoDialog> {
   static const _categories = [
     'Painting',
     'Exterior Painting',
-    'Cabinet Refinishing',
+    'Cabinet Painting',
     'Drywall Repair',
     'Pressure Washing',
     'HVAC',

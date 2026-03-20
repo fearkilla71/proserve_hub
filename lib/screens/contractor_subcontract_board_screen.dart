@@ -35,7 +35,7 @@ class _ContractorSubcontractBoardScreenState
     'Exterior Painting',
     'Pressure Washing',
     'Cabinets',
-    'Drywall Repairs',
+    'Drywall Repair',
   ];
 
   @override
