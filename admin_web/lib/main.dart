@@ -11,16 +11,28 @@ import 'firebase_options.dart';
 import 'screens/admin/activity_log_admin_tab.dart';
 import 'screens/admin/ai_insights_admin_tab.dart';
 import 'screens/admin/analytics_admin_tab.dart';
+import 'screens/admin/bid_intelligence_admin_tab.dart';
 import 'screens/admin/contractor_admin_tab.dart';
+import 'screens/admin/crew_multi_location_admin_tab.dart';
 import 'screens/admin/customer_admin_tab.dart';
+import 'screens/admin/customer_crm_admin_tab.dart';
 import 'screens/admin/dispute_admin_tab.dart';
 import 'screens/admin/escrow_admin_tab.dart';
 import 'screens/admin/job_admin_tab.dart';
+import 'screens/admin/lead_credits_admin_tab.dart';
+import 'screens/admin/loyalty_admin_tab.dart';
+import 'screens/admin/maintenance_reminder_admin_tab.dart';
 import 'screens/admin/notification_admin_tab.dart';
+import 'screens/admin/price_guarantee_admin_tab.dart';
+import 'screens/admin/promotions_admin_tab.dart';
+import 'screens/admin/quality_inspector_admin_tab.dart';
+import 'screens/admin/recurring_jobs_admin_tab.dart';
 import 'screens/admin/revenue_admin_tab.dart';
+import 'screens/admin/sub_marketplace_admin_tab.dart';
 import 'screens/admin/subscription_admin_tab.dart';
 import 'screens/admin/system_health_tab.dart';
 import 'screens/admin/verification_admin_tab.dart';
+import 'screens/admin/verification_tier_admin_tab.dart';
 import 'theme/admin_theme.dart';
 
 void _hideElement(String id) {
@@ -568,6 +580,67 @@ class _AdminDashboardState extends State<AdminDashboard> {
       selectedIcon: Icons.analytics,
       label: 'Analytics',
     ),
+    // ── Phase 2 tabs ──
+    _NavDestination(
+      icon: Icons.local_offer_outlined,
+      selectedIcon: Icons.local_offer,
+      label: 'Promos',
+    ),
+    _NavDestination(
+      icon: Icons.workspace_premium_outlined,
+      selectedIcon: Icons.workspace_premium,
+      label: 'Tiers',
+    ),
+    _NavDestination(
+      icon: Icons.loyalty_outlined,
+      selectedIcon: Icons.loyalty,
+      label: 'Loyalty',
+    ),
+    _NavDestination(
+      icon: Icons.price_check_outlined,
+      selectedIcon: Icons.price_check,
+      label: 'Pricing',
+    ),
+    _NavDestination(
+      icon: Icons.contact_phone_outlined,
+      selectedIcon: Icons.contact_phone,
+      label: 'CRM',
+    ),
+    _NavDestination(
+      icon: Icons.insights_outlined,
+      selectedIcon: Icons.insights,
+      label: 'Bids',
+    ),
+    _NavDestination(
+      icon: Icons.checklist_outlined,
+      selectedIcon: Icons.checklist,
+      label: 'QA',
+    ),
+    _NavDestination(
+      icon: Icons.campaign_outlined,
+      selectedIcon: Icons.campaign,
+      label: 'Campaigns',
+    ),
+    _NavDestination(
+      icon: Icons.repeat_outlined,
+      selectedIcon: Icons.repeat,
+      label: 'Recurring',
+    ),
+    _NavDestination(
+      icon: Icons.storefront_outlined,
+      selectedIcon: Icons.storefront,
+      label: 'Marketplace',
+    ),
+    _NavDestination(
+      icon: Icons.groups_outlined,
+      selectedIcon: Icons.groups,
+      label: 'Crews',
+    ),
+    _NavDestination(
+      icon: Icons.monetization_on_outlined,
+      selectedIcon: Icons.monetization_on,
+      label: 'Lead Credits',
+    ),
   ];
 
   Widget _buildBody() {
@@ -586,9 +659,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 5:
         return JobAdminTab(canWrite: cw);
       case 6:
-        return const VerificationAdminTab();
+        return VerificationAdminTab(canWrite: cw);
       case 7:
-        return const DisputeAdminTab();
+        return DisputeAdminTab(canWrite: cw);
       case 8:
         return EscrowAdminTab(canWrite: cw);
       case 9:
@@ -599,6 +672,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return const AiInsightsAdminTab();
       case 12:
         return const AnalyticsAdminTab();
+      // ── Phase 2 tabs ──
+      case 13:
+        return PromotionsAdminTab(canWrite: cw);
+      case 14:
+        return VerificationTierAdminTab(canWrite: cw);
+      case 15:
+        return LoyaltyAdminTab(canWrite: cw);
+      case 16:
+        return PriceGuaranteeAdminTab(canWrite: cw);
+      case 17:
+        return CustomerCrmAdminTab(canWrite: cw);
+      case 18:
+        return const BidIntelligenceAdminTab();
+      case 19:
+        return QualityInspectorAdminTab(canWrite: cw);
+      case 20:
+        return MaintenanceReminderAdminTab(canWrite: cw);
+      case 21:
+        return RecurringJobsAdminTab(canWrite: cw);
+      case 22:
+        return SubMarketplaceAdminTab(canWrite: cw);
+      case 23:
+        return const CrewMultiLocationAdminTab();
+      case 24:
+        return LeadCreditsAdminTab(canWrite: cw);
       default:
         return const SizedBox.shrink();
     }
@@ -671,39 +769,99 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
       body: Row(
         children: [
-          // Desktop sidebar
+          // Desktop sidebar — scrollable for 25+ items
           if (isWide)
-            NavigationRail(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-              labelType: NavigationRailLabelType.all,
-              leading: const SizedBox(height: 8),
-              destinations: _navItems.asMap().entries.map((e) {
-                final i = e.key;
-                final item = e.value;
-                int? badge;
-                if (i == 6 && _pendingVerifications > 0) {
-                  badge = _pendingVerifications;
-                }
-                if (i == 7 && _activeDisputes > 0) {
-                  badge = _activeDisputes;
-                }
-                if (i == 8 && _activeEscrow > 0) {
-                  badge = _activeEscrow;
-                }
-                return NavigationRailDestination(
-                  icon: badge != null
-                      ? Badge(label: Text('$badge'), child: Icon(item.icon))
-                      : Icon(item.icon),
-                  selectedIcon: badge != null
-                      ? Badge(
-                          label: Text('$badge'),
-                          child: Icon(item.selectedIcon),
-                        )
-                      : Icon(item.selectedIcon),
-                  label: Text(item.label),
-                );
-              }).toList(),
+            SizedBox(
+              width: 72,
+              child: Material(
+                color: AdminColors.bgDeep,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: _navItems.asMap().entries.map((e) {
+                    final i = e.key;
+                    final item = e.value;
+                    final selected = _selectedIndex == i;
+                    int? badge;
+                    if (i == 6 && _pendingVerifications > 0) {
+                      badge = _pendingVerifications;
+                    }
+                    if (i == 7 && _activeDisputes > 0) {
+                      badge = _activeDisputes;
+                    }
+                    if (i == 8 && _activeEscrow > 0) {
+                      badge = _activeEscrow;
+                    }
+
+                    // Divider before Phase 2 section
+                    final divider = i == 13
+                        ? const Divider(
+                            color: AdminColors.line,
+                            height: 16,
+                            indent: 12,
+                            endIndent: 12,
+                          )
+                        : const SizedBox.shrink();
+
+                    final icon = selected ? item.selectedIcon : item.icon;
+                    final color =
+                        selected ? AdminColors.accent : AdminColors.muted;
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        divider,
+                        Tooltip(
+                          message: item.label,
+                          preferBelow: false,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () =>
+                                setState(() => _selectedIndex = i),
+                            child: Container(
+                              width: 56,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 6),
+                              decoration: selected
+                                  ? BoxDecoration(
+                                      color: AdminColors.accent
+                                          .withValues(alpha: 0.12),
+                                      borderRadius:
+                                          BorderRadius.circular(12),
+                                    )
+                                  : null,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  badge != null
+                                      ? Badge(
+                                          label: Text('$badge'),
+                                          child: Icon(icon,
+                                              size: 22, color: color),
+                                        )
+                                      : Icon(icon,
+                                          size: 22, color: color),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.label,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: selected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: color,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
             ),
           if (isWide)
             const VerticalDivider(
@@ -716,40 +874,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
 
-      // Mobile bottom nav
-      bottomNavigationBar: isWide
-          ? null
-          : NavigationBar(
-              backgroundColor: AdminColors.bgDeep,
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-              destinations: _navItems.asMap().entries.map((e) {
-                final i = e.key;
-                final item = e.value;
-                int? badge;
-                if (i == 6 && _pendingVerifications > 0) {
-                  badge = _pendingVerifications;
-                }
-                if (i == 7 && _activeDisputes > 0) {
-                  badge = _activeDisputes;
-                }
-                if (i == 8 && _activeEscrow > 0) {
-                  badge = _activeEscrow;
-                }
-                return NavigationDestination(
-                  icon: badge != null
-                      ? Badge(label: Text('$badge'), child: Icon(item.icon))
-                      : Icon(item.icon),
-                  selectedIcon: badge != null
-                      ? Badge(
-                          label: Text('$badge'),
-                          child: Icon(item.selectedIcon),
-                        )
-                      : Icon(item.selectedIcon),
-                  label: item.label,
-                );
-              }).toList(),
-            ),
+      // Mobile: use drawer for navigation (25 items don't fit bottom bar)
     );
   }
 
@@ -776,56 +901,80 @@ class _AdminDashboardState extends State<AdminDashboard> {
             'Admin Console',
             style: GoogleFonts.manrope(fontSize: 12, color: AdminColors.muted),
           ),
-          const SizedBox(height: 24),
-          ..._navItems.asMap().entries.map((e) {
-            final i = e.key;
-            final item = e.value;
-            final selected = _selectedIndex == i;
-            int? badge;
-            if (i == 6 && _pendingVerifications > 0) {
-              badge = _pendingVerifications;
-            }
-            if (i == 7 && _activeDisputes > 0) {
-              badge = _activeDisputes;
-            }
-            if (i == 8 && _activeEscrow > 0) {
-              badge = _activeEscrow;
-            }
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: _navItems.asMap().entries.map((e) {
+                final i = e.key;
+                final item = e.value;
+                final selected = _selectedIndex == i;
+                int? badge;
+                if (i == 6 && _pendingVerifications > 0) {
+                  badge = _pendingVerifications;
+                }
+                if (i == 7 && _activeDisputes > 0) {
+                  badge = _activeDisputes;
+                }
+                if (i == 8 && _activeEscrow > 0) {
+                  badge = _activeEscrow;
+                }
 
-            return ListTile(
-              leading: badge != null
-                  ? Badge(
-                      label: Text('$badge'),
-                      child: Icon(
-                        selected ? item.selectedIcon : item.icon,
-                        color: selected
-                            ? AdminColors.accent
-                            : AdminColors.muted,
-                      ),
-                    )
-                  : Icon(
-                      selected ? item.selectedIcon : item.icon,
-                      color: selected ? AdminColors.accent : AdminColors.muted,
+                final tile = ListTile(
+                  dense: true,
+                  leading: badge != null
+                      ? Badge(
+                          label: Text('$badge'),
+                          child: Icon(
+                            selected ? item.selectedIcon : item.icon,
+                            color: selected
+                                ? AdminColors.accent
+                                : AdminColors.muted,
+                          ),
+                        )
+                      : Icon(
+                          selected ? item.selectedIcon : item.icon,
+                          color:
+                              selected ? AdminColors.accent : AdminColors.muted,
+                        ),
+                  title: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: selected ? AdminColors.accent : AdminColors.ink,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
                     ),
-              title: Text(
-                item.label,
-                style: TextStyle(
-                  color: selected ? AdminColors.accent : AdminColors.ink,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-              selected: selected,
-              selectedTileColor: AdminColors.accent.withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onTap: () {
-                setState(() => _selectedIndex = i);
-                Navigator.pop(context);
-              },
-            );
-          }),
-          const Spacer(),
+                  ),
+                  selected: selected,
+                  selectedTileColor:
+                      AdminColors.accent.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onTap: () {
+                    setState(() => _selectedIndex = i);
+                    Navigator.pop(context);
+                  },
+                );
+
+                // Section divider before Phase 2
+                if (i == 13) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Divider(
+                          color: AdminColors.line,
+                          height: 12,
+                          indent: 16,
+                          endIndent: 16),
+                      tile,
+                    ],
+                  );
+                }
+                return tile;
+              }).toList(),
+            ),
+          ),
           const Divider(color: AdminColors.line),
           ListTile(
             leading: const Icon(Icons.logout, color: AdminColors.muted),

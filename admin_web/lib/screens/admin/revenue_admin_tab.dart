@@ -20,6 +20,8 @@ class RevenueAdminTab extends StatefulWidget {
 class _RevenueAdminTabState extends State<RevenueAdminTab> {
   StreamSubscription? _escrowSub;
   StreamSubscription? _usersSub;
+  StreamSubscription? _leadCreditSub;
+  StreamSubscription? _marketplaceSub;
   bool _loading = true;
   int _periodDays = 30;
 
@@ -27,6 +29,10 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
   List<Map<String, dynamic>> _escrows = [];
   int _proCount = 0;
   int _enterpriseCount = 0;
+
+  // Per-feature revenue
+  double _leadCreditRevenue = 0;
+  double _marketplaceCommissions = 0;
 
   // Computed KPIs
   double _totalEscrowVolume = 0;
@@ -49,6 +55,8 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
   void dispose() {
     _escrowSub?.cancel();
     _usersSub?.cancel();
+    _leadCreditSub?.cancel();
+    _marketplaceSub?.cancel();
     super.dispose();
   }
 
@@ -84,6 +92,34 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
           }
           _proCount = pro;
           _enterpriseCount = enterprise;
+          _recalculate();
+        });
+
+    // Lead credit purchases
+    _leadCreditSub = FirebaseFirestore.instance
+        .collection('lead_credit_transactions')
+        .where('type', isEqualTo: 'purchase')
+        .snapshots()
+        .listen((snap) {
+          double rev = 0;
+          for (final d in snap.docs) {
+            rev += (d.data()['pricePaid'] as num?)?.toDouble() ?? 0;
+          }
+          _leadCreditRevenue = rev;
+          _recalculate();
+        });
+
+    // Sub-marketplace commissions
+    _marketplaceSub = FirebaseFirestore.instance
+        .collection('sub_partnerships')
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .listen((snap) {
+          double comm = 0;
+          for (final d in snap.docs) {
+            comm += (d.data()['totalCommission'] as num?)?.toDouble() ?? 0;
+          }
+          _marketplaceCommissions = comm;
           _recalculate();
         });
   }
@@ -132,7 +168,7 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
     }
 
     final mrr = (_proCount * 11.99) + (_enterpriseCount * 29.99);
-    final totalRev = fees + mrr;
+    final totalRev = fees + mrr + _leadCreditRevenue + _marketplaceCommissions;
 
     setState(() {
       _totalEscrowVolume = volume;
@@ -222,7 +258,9 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                 const SizedBox(height: 4),
                 Text(
                   'Platform Fees: \$${_totalPlatformFees.toStringAsFixed(2)}  ·  '
-                  'Subscription MRR: \$${_subscriptionMrr.toStringAsFixed(2)}',
+                  'Subscription MRR: \$${_subscriptionMrr.toStringAsFixed(2)}  ·  '
+                  'Lead Credits: \$${_leadCreditRevenue.toStringAsFixed(2)}  ·  '
+                  'Marketplace: \$${_marketplaceCommissions.toStringAsFixed(2)}',
                   style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
@@ -284,6 +322,18 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
               Icons.autorenew,
               Colors.amber,
             ),
+            _kpiCard(
+              'Lead Credits',
+              '\$${_fmt(_leadCreditRevenue)}',
+              Icons.token,
+              Colors.cyan,
+            ),
+            _kpiCard(
+              'Marketplace',
+              '\$${_fmt(_marketplaceCommissions)}',
+              Icons.storefront,
+              Colors.pink,
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -330,6 +380,28 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                         ),
                         radius: 55,
                       ),
+                      PieChartSectionData(
+                        value: _leadCreditRevenue > 0 ? _leadCreditRevenue : 0.01,
+                        color: Colors.cyan,
+                        title: 'Leads\n\$${_leadCreditRevenue.toStringAsFixed(0)}',
+                        titleStyle: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        radius: 55,
+                      ),
+                      PieChartSectionData(
+                        value: _marketplaceCommissions > 0 ? _marketplaceCommissions : 0.01,
+                        color: Colors.pink,
+                        title: 'Market\n\$${_marketplaceCommissions.toStringAsFixed(0)}',
+                        titleStyle: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        radius: 55,
+                      ),
                     ],
                   ),
                 ),
@@ -370,6 +442,18 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                           '+ Subscriptions',
                           '\$${_fmt(_subscriptionMrr)}',
                           Colors.amber,
+                        ),
+                        const SizedBox(height: 4),
+                        _flowRow(
+                          '+ Lead Credits',
+                          '\$${_fmt(_leadCreditRevenue)}',
+                          Colors.cyan,
+                        ),
+                        const SizedBox(height: 4),
+                        _flowRow(
+                          '+ Marketplace',
+                          '\$${_fmt(_marketplaceCommissions)}',
+                          Colors.pink,
                         ),
                         const Divider(height: 16),
                         _flowRow(

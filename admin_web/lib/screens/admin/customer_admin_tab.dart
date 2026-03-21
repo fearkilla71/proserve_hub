@@ -139,6 +139,23 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
       );
     }).length;
 
+    // LTV / Segmentation analytics
+    double totalLtv = 0;
+    int highValue = 0;
+    int atRisk = 0;
+    for (final c in _customers) {
+      if (c['isDeleted'] == true) continue;
+      final ltv = (c['lifetimeSpend'] as num?)?.toDouble() ?? 0;
+      totalLtv += ltv;
+      if (ltv > 1000) highValue++;
+      final lastBooking = (c['lastBookingAt'] as Timestamp?)?.toDate();
+      if (lastBooking != null &&
+          DateTime.now().difference(lastBooking).inDays > 90) {
+        atRisk++;
+      }
+    }
+    final avgLtv = total > 0 ? totalLtv / total : 0.0;
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -166,6 +183,24 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
               '${_customers.where((u) => u['isDeleted'] == true).length}',
               Icons.person_off,
               Colors.red,
+            ),
+            _kpiCard(
+              'Avg LTV',
+              '\$${NumberFormat.compact().format(avgLtv)}',
+              Icons.trending_up,
+              Colors.teal,
+            ),
+            _kpiCard(
+              'High Value',
+              '$highValue',
+              Icons.star,
+              Colors.purple,
+            ),
+            _kpiCard(
+              'At Risk (90d)',
+              '$atRisk',
+              Icons.warning_amber,
+              Colors.amber,
             ),
           ],
         ),
@@ -227,6 +262,28 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
         : '—';
     final hasFcm = (u['fcmToken'] ?? '').toString().isNotEmpty;
     final isDeleted = u['isDeleted'] == true;
+    final ltv = (u['lifetimeSpend'] as num?)?.toDouble() ?? 0;
+    final bookings = (u['completedBookings'] as num?)?.toInt() ?? 0;
+    final lastBooking = (u['lastBookingAt'] as Timestamp?)?.toDate();
+    final daysSince = lastBooking != null
+        ? DateTime.now().difference(lastBooking).inDays
+        : 999;
+
+    String healthLabel;
+    Color healthColor;
+    if (daysSince > 90) {
+      healthLabel = 'Churned';
+      healthColor = Colors.red;
+    } else if (ltv > 1000 && bookings > 5) {
+      healthLabel = 'High';
+      healthColor = Colors.green;
+    } else if (ltv > 300 || bookings > 2) {
+      healthLabel = 'Medium';
+      healthColor = Colors.blue;
+    } else {
+      healthLabel = 'Low';
+      healthColor = Colors.grey;
+    }
 
     return Card(
       color: isDeleted ? Colors.red.withValues(alpha: 0.05) : null,
@@ -271,7 +328,10 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
           '$email\n'
           '${city.isNotEmpty ? '$city, ' : ''}$zip'
           '${phone.isNotEmpty ? ' · $phone' : ''}'
-          ' · Joined: $createdStr',
+          ' · Joined: $createdStr'
+          ' · LTV: \$${ltv.toStringAsFixed(0)}'
+          ' · $bookings jobs'
+          ' · $healthLabel',
         ),
         isThreeLine: true,
         trailing: widget.canWrite

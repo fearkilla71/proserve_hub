@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import '../../theme/admin_theme.dart';
 
 class VerificationAdminTab extends StatefulWidget {
-  const VerificationAdminTab({super.key});
+  final bool canWrite;
+  const VerificationAdminTab({super.key, this.canWrite = false});
 
   @override
   State<VerificationAdminTab> createState() => _VerificationAdminTabState();
@@ -194,9 +195,12 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: contractors.length + 1,
+          itemCount: contractors.length + 2, // +1 tier banner, +1 filter card
           itemBuilder: (context, index) {
             if (index == 0) {
+              return _buildTierOverviewBanner(snapshot.data!.docs);
+            }
+            if (index == 1) {
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
@@ -322,8 +326,8 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
             }
 
             final contractor =
-                contractors[index - 1].data() as Map<String, dynamic>;
-            final contractorId = contractors[index - 1].id;
+                contractors[index - 2].data() as Map<String, dynamic>;
+            final contractorId = contractors[index - 2].id;
             final businessName = contractor['businessName'] ?? 'Unknown';
 
             final types = _typeFilter == 'all'
@@ -552,6 +556,82 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
       context: context,
       builder: (context) =>
           Dialog(child: InteractiveViewer(child: Image.network(url))),
+    );
+  }
+
+  /// Quick tier management section — shown above the verification list
+  Widget _buildTierOverviewBanner(List<QueryDocumentSnapshot> contractors) {
+    final tierCounts = <String, int>{
+      'none': 0,
+      'verified': 0,
+      'trusted_pro': 0,
+      'elite_pro': 0,
+    };
+
+    for (final doc in contractors) {
+      final data = doc.data() as Map<String, dynamic>;
+      final tier =
+          (data['verificationTier'] as String?)?.toLowerCase() ?? 'none';
+      tierCounts[tier] = (tierCounts[tier] ?? 0) + 1;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: AdminColors.card,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Verification Tier Overview',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AdminColors.ink,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _tierBadge('None', tierCounts['none'] ?? 0, AdminColors.muted),
+                _tierBadge(
+                    'Verified', tierCounts['verified'] ?? 0, AdminColors.accent),
+                _tierBadge('Trusted Pro', tierCounts['trusted_pro'] ?? 0,
+                    AdminColors.accent2),
+                _tierBadge('Elite Pro', tierCounts['elite_pro'] ?? 0,
+                    AdminColors.accent3),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tierBadge(String label, int count, Color color) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Text('$count',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: color)),
+            const SizedBox(height: 2),
+            Text(label,
+                style: TextStyle(fontSize: 10, color: color),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
     );
   }
 }

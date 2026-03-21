@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import '../../theme/admin_theme.dart';
 
 class DisputeAdminTab extends StatefulWidget {
-  const DisputeAdminTab({super.key});
+  final bool canWrite;
+  const DisputeAdminTab({super.key, this.canWrite = false});
 
   @override
   State<DisputeAdminTab> createState() => _DisputeAdminTabState();
@@ -113,6 +114,174 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
     );
   }
 
+  /// Escalate a dispute to senior admin
+  Future<void> _escalateDispute(
+    BuildContext context,
+    String disputeId,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('disputes')
+          .doc(disputeId)
+          .update({
+        'status': 'escalated',
+        'escalatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Write to mediation history
+      await FirebaseFirestore.instance
+          .collection('disputes')
+          .doc(disputeId)
+          .collection('mediation_history')
+          .add({
+        'action': 'escalated',
+        'note': 'Dispute escalated by admin for senior review',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dispute escalated')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  /// Issue a refund for the dispute's escrow booking
+  void _showRefundDialog(BuildContext context, String disputeId,
+      Map<String, dynamic> dispute) {
+    final amountCtrl = TextEditingController();
+    final reasonCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Issue Refund'),
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Refund Amount (\$)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Refund Reason',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: AdminColors.error),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final amount =
+                  double.tryParse(amountCtrl.text.trim()) ?? 0;
+              if (amount <= 0) return;
+
+              // Record refund
+              await FirebaseFirestore.instance
+                  .collection('disputes')
+                  .doc(disputeId)
+                  .update({
+                'refundAmount': amount,
+                'refundReason': reasonCtrl.text.trim(),
+                'refundIssuedAt': FieldValue.serverTimestamp(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              // Add to mediation history
+              await FirebaseFirestore.instance
+                  .collection('disputes')
+                  .doc(disputeId)
+                  .collection('mediation_history')
+                  .add({
+                'action': 'refund_issued',
+                'amount': amount,
+                'note': reasonCtrl.text.trim(),
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'Refund of \$${amount.toStringAsFixed(2)} issued')),
+                );
+              }
+            },
+            child: const Text('Issue Refund'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Add a mediation note
+  void _showAddNoteDialog(BuildContext context, String disputeId) {
+    final noteCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Add Mediation Note'),
+        content: TextField(
+          controller: noteCtrl,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            labelText: 'Note',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              if (noteCtrl.text.trim().isEmpty) return;
+              await FirebaseFirestore.instance
+                  .collection('disputes')
+                  .doc(disputeId)
+                  .collection('mediation_history')
+                  .add({
+                'action': 'note',
+                'note': noteCtrl.text.trim(),
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -140,7 +309,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                 (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
             final status = (data['status'] as String?)?.trim().toLowerCase();
             if (_statusFilter == 'active') {
-              return status == 'open' || status == 'under_review';
+              return status == 'open' ||
+                  status == 'under_review' ||
+                  status == 'escalated';
             }
             return status == _statusFilter;
           }).toList();
@@ -210,6 +381,13 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                             selected: _statusFilter == 'under_review',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'under_review');
+                            },
+                          ),
+                          ChoiceChip(
+                            label: const Text('Escalated'),
+                            selected: _statusFilter == 'escalated',
+                            onSelected: (_) {
+                              setState(() => _statusFilter = 'escalated');
                             },
                           ),
                           ChoiceChip(
@@ -329,7 +507,45 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                             ).colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        if (dispute['refundAmount'] != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.money_off,
+                                  size: 16, color: AdminColors.error),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Refund issued: \$${(dispute['refundAmount'] as num).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AdminColors.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (status == 'escalated') ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AdminColors.warning.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '⚠ ESCALATED — Awaiting senior review',
+                              style: TextStyle(
+                                color: AdminColors.warning,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
+
+                        // ── Action buttons ──
                         Row(
                           children: [
                             if (status == 'open')
@@ -368,6 +584,159 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               ),
                             ),
                           ],
+                        ),
+
+                        // ── Escalation + Refund row ──
+                        if (widget.canWrite &&
+                            status != 'resolved' &&
+                            status != 'closed') ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (status != 'escalated')
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    icon: const Icon(Icons.arrow_upward,
+                                        size: 16),
+                                    label: const Text('Escalate'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AdminColors.warning,
+                                    ),
+                                    onPressed: () => _escalateDispute(
+                                        context, disputeId),
+                                  ),
+                                ),
+                              if (status != 'escalated')
+                                const SizedBox(width: 8),
+                              if (dispute['refundAmount'] == null)
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    icon: const Icon(Icons.money_off,
+                                        size: 16),
+                                    label: const Text('Issue Refund'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AdminColors.error,
+                                    ),
+                                    onPressed: () => _showRefundDialog(
+                                        context, disputeId, dispute),
+                                  ),
+                                ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(Icons.note_add, size: 16),
+                                  label: const Text('Add Note'),
+                                  onPressed: () =>
+                                      _showAddNoteDialog(context, disputeId),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+
+                        // ── Mediation History ──
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Mediation History',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('disputes')
+                              .doc(disputeId)
+                              .collection('mediation_history')
+                              .orderBy('createdAt', descending: true)
+                              .snapshots(),
+                          builder: (ctx, histSnap) {
+                            if (!histSnap.hasData ||
+                                histSnap.data!.docs.isEmpty) {
+                              return const Text(
+                                'No mediation entries yet.',
+                                style: TextStyle(
+                                    fontSize: 12, fontStyle: FontStyle.italic),
+                              );
+                            }
+                            final entries = histSnap.data!.docs;
+                            return Column(
+                              children: entries.map((doc) {
+                                final d = doc.data() as Map<String, dynamic>;
+                                final action =
+                                    d['action'] as String? ?? 'note';
+                                final note = d['note'] as String? ?? '';
+                                final ts = d['createdAt'] as Timestamp?;
+                                final amount = d['amount'] as num?;
+
+                                IconData icon;
+                                Color iconColor;
+                                switch (action) {
+                                  case 'escalated':
+                                    icon = Icons.arrow_upward;
+                                    iconColor = AdminColors.warning;
+                                    break;
+                                  case 'refund_issued':
+                                    icon = Icons.money_off;
+                                    iconColor = AdminColors.error;
+                                    break;
+                                  default:
+                                    icon = Icons.note;
+                                    iconColor = AdminColors.accent2;
+                                }
+
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(icon,
+                                          size: 16, color: iconColor),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              action == 'refund_issued'
+                                                  ? 'Refund \$${amount?.toStringAsFixed(2) ?? ''}'
+                                                  : action
+                                                      .replaceAll('_', ' ')
+                                                      .toUpperCase(),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                                color: iconColor,
+                                              ),
+                                            ),
+                                            if (note.isNotEmpty)
+                                              Text(note,
+                                                  style: const TextStyle(
+                                                      fontSize: 12)),
+                                            if (ts != null)
+                                              Text(
+                                                DateFormat('MMM d, y h:mm a')
+                                                    .format(ts.toDate()),
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color:
+                                                        AdminColors.muted),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         ),
                       ],
                     ),
