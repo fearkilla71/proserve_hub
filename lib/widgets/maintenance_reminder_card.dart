@@ -24,7 +24,7 @@ class MaintenanceReminderCard extends StatelessWidget {
           .limit(3)
           .snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.docs.isEmpty) {
+        if (snap.hasError || !snap.hasData || snap.data!.docs.isEmpty) {
           return const SizedBox.shrink();
         }
 
@@ -55,11 +55,7 @@ class MaintenanceReminderCard extends StatelessWidget {
             const SizedBox(height: 8),
             ...reminders.map((doc) {
               final data = doc.data();
-              return _ReminderTile(
-                reminderId: doc.id,
-                userId: uid,
-                data: data,
-              );
+              return _ReminderTile(reminderId: doc.id, userId: uid, data: data);
             }),
           ],
         );

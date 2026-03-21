@@ -779,6 +779,14 @@ GoRouter createRouter() {
       GoRoute(
         path: '/project-boards',
         builder: (context, state) => const SavedProjectBoardsScreen(),
+        routes: [
+          GoRoute(
+            path: ':boardId',
+            builder: (context, state) => SavedProjectBoardsScreen(
+              highlightBoardId: state.pathParameters['boardId'],
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/landing',

@@ -17,7 +17,7 @@ class SeasonalDealsCarousel extends StatelessWidget {
           .limit(10)
           .snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.docs.isEmpty) {
+        if (snap.hasError || !snap.hasData || snap.data!.docs.isEmpty) {
           return const SizedBox.shrink();
         }
 
@@ -116,9 +116,7 @@ class _DealCard extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: ProServeColors.accent.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,10 +157,7 @@ class _DealCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -179,10 +174,7 @@ class _DealCard extends StatelessWidget {
           if (service.isNotEmpty)
             Text(
               service,
-              style: TextStyle(
-                fontSize: 10,
-                color: ProServeColors.muted,
-              ),
+              style: TextStyle(fontSize: 10, color: ProServeColors.muted),
             ),
         ],
       ),

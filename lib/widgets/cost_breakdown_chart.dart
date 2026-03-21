@@ -20,10 +20,10 @@ class CostBreakdownChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Default split: 55% labor, 35% materials, 5% platform, 5% escrow protection
-    final labor = laborPercent ?? 55;
-    final materials = materialsPercent ?? 35;
-    final platform = platformFeePercent;
-    final escrow = 100.0 - labor - materials - platform;
+    final labor = (laborPercent ?? 55).clamp(0, 100).toDouble();
+    final materials = (materialsPercent ?? 35).clamp(0, 100).toDouble();
+    final platform = platformFeePercent.clamp(0.0, 100.0);
+    final escrow = (100.0 - labor - materials - platform).clamp(0.0, 100.0);
 
     final laborAmt = totalPrice * labor / 100;
     final materialsAmt = totalPrice * materials / 100;
@@ -49,17 +49,13 @@ class CostBreakdownChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.donut_large,
-                size: 18,
-                color: ProServeColors.accent2,
-              ),
+              Icon(Icons.donut_large, size: 18, color: ProServeColors.accent2),
               const SizedBox(width: 8),
               Text(
                 'Cost Breakdown',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -108,9 +104,7 @@ class CostBreakdownChart extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 s.label,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 11,

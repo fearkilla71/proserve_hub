@@ -1221,6 +1221,74 @@ service cloud.firestore {
       );
     }
 
+    // --- PROMOTIONS (seasonal deals, flash offers — admin-managed) ---
+    match /promotions/{promoId} {
+      // Any signed-in user can browse active promotions.
+      allow read: if isSignedIn();
+      // Only admins can create / edit / delete promotions.
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- PROJECT BOARDS (customer-owned) ---
+    match /users/{uid}/project_boards/{boardId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- MAINTENANCE REMINDERS (customer-owned, created by Cloud Functions) ---
+    match /users/{uid}/maintenance_reminders/{reminderId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      // Customers can dismiss / delete their own reminders.
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['dismissed']);
+      allow delete: if isSignedIn() && request.auth.uid == uid;
+      // Only server (Admin SDK / Cloud Functions) creates reminders.
+      allow create: if false;
+    }
+
+    // --- CREDITS (price-guarantee refunds, server-created) ---
+    match /users/{uid}/credits/{creditId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      // Only server creates / updates credits.
+      allow create, update, delete: if false;
+    }
+
+    // --- JOB TIMELINE STAGE PHOTOS ---
+    match /job_timelines/{jobId}/stage_photos/{photoId} {
+      // Both job participants can view stage photos.
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || (exists(/databases/$(database)/documents/job_requests/$(jobId))
+            && (job(jobId).requesterUid == request.auth.uid
+                || job(jobId).claimedBy == request.auth.uid))
+      );
+      // Only the assigned contractor can upload stage photos.
+      allow create: if isSignedIn()
+        && exists(/databases/$(database)/documents/job_requests/$(jobId))
+        && job(jobId).claimedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // --- JOB TIMELINE PHOTO REQUESTS ---
+    match /job_timelines/{jobId}/photo_requests/{requestId} {
+      // Both participants can read photo requests.
+      allow read: if isSignedIn() && (
+        isAdmin()
+        || (exists(/databases/$(database)/documents/job_requests/$(jobId))
+            && (job(jobId).requesterUid == request.auth.uid
+                || job(jobId).claimedBy == request.auth.uid))
+      );
+      // Only the customer can request a photo.
+      allow create: if isSignedIn()
+        && exists(/databases/$(database)/documents/job_requests/$(jobId))
+        && job(jobId).requesterUid == request.auth.uid;
+      // Contractor can mark as fulfilled.
+      allow update: if isSignedIn()
+        && exists(/databases/$(database)/documents/job_requests/$(jobId))
+        && job(jobId).claimedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['fulfilled', 'fulfilledAt']);
+      allow delete: if isAdmin();
+    }
+
     // --- INSTANT BOOKINGS ---
     match /bookings/{bookingId} {
       allow read: if isSignedIn() && (

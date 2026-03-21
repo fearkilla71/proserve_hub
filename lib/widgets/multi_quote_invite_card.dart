@@ -54,9 +54,9 @@ class MultiQuoteInviteCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Getting $candidateCount Quotes for You',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
             ],
@@ -72,7 +72,7 @@ class MultiQuoteInviteCard extends StatelessWidget {
                 .limit(candidateCount)
                 .snapshots(),
             builder: (context, snap) {
-              if (!snap.hasData || snap.data!.docs.isEmpty) {
+              if (snap.hasError || !snap.hasData || snap.data!.docs.isEmpty) {
                 return Row(
                   children: List.generate(
                     candidateCount,
@@ -103,8 +103,7 @@ class MultiQuoteInviteCard extends StatelessWidget {
                       children: candidates.asMap().entries.map((entry) {
                         final i = entry.key;
                         final data = entry.value.data();
-                        final name =
-                            data['contractorName'] as String? ?? '?';
+                        final name = data['contractorName'] as String? ?? '?';
 
                         return Positioned(
                           left: i * 20.0,
@@ -166,10 +165,7 @@ class _CountdownBarState extends State<_CountdownBar> {
   @override
   void initState() {
     super.initState();
-    _ticker = Stream.periodic(
-      const Duration(seconds: 60),
-      (i) => i,
-    );
+    _ticker = Stream.periodic(const Duration(seconds: 60), (i) => i);
   }
 
   @override
@@ -193,19 +189,14 @@ class _CountdownBarState extends State<_CountdownBar> {
         final minutes = remaining.inMinutes % 60;
         final totalHours = 24;
         final elapsed = totalHours - hours;
-        final progress =
-            (elapsed / totalHours).clamp(0.0, 1.0);
+        final progress = (elapsed / totalHours).clamp(0.0, 1.0);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.timer,
-                  size: 14,
-                  color: ProServeColors.warning,
-                ),
+                Icon(Icons.timer, size: 14, color: ProServeColors.warning),
                 const SizedBox(width: 4),
                 Text(
                   '${hours}h ${minutes}m remaining',

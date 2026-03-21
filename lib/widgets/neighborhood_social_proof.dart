@@ -31,8 +31,10 @@ class _NeighborhoodSocialProofState extends State<NeighborhoodSocialProof> {
       }
 
       // Get user's ZIP
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final zip = userDoc.data()?['zip'] as String? ?? '';
       if (zip.isEmpty) {
         if (mounted) setState(() => _loading = false);
@@ -40,7 +42,7 @@ class _NeighborhoodSocialProofState extends State<NeighborhoodSocialProof> {
       }
 
       // Prefix match for neighborhood (first 3 digits)
-      final prefix = zip.substring(0, 3.clamp(0, zip.length));
+      final prefix = zip.substring(0, zip.length.clamp(0, 3));
 
       // Count recently completed jobs nearby
       final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
@@ -131,9 +133,9 @@ class _NeighborhoodSocialProofState extends State<NeighborhoodSocialProof> {
               children: [
                 Text(
                   '$total homes near you this month',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -145,11 +147,7 @@ class _NeighborhoodSocialProofState extends State<NeighborhoodSocialProof> {
               ],
             ),
           ),
-          Icon(
-            Icons.trending_up,
-            color: ProServeColors.accent,
-            size: 20,
-          ),
+          Icon(Icons.trending_up, color: ProServeColors.accent, size: 20),
         ],
       ),
     );

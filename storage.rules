@@ -177,6 +177,30 @@ service firebase.storage {
       allow read: if isJobParticipant(jobId);
     }
 
+    // Project board photos (customer-owned)
+    // Stored at: project_board_photos/{uid}/{boardId}/{fileName}
+    match /project_board_photos/{uid}/{boardId}/{fileName} {
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Stage photos (uploaded by assigned contractor)
+    // Stored at: stage_photos/{jobId}/{stageKey}/{fileName}
+    match /stage_photos/{jobId}/{stageKey}/{fileName} {
+      allow write: if isSignedIn()
+        && isJobParticipant(jobId)
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow read: if isJobParticipant(jobId);
+    }
+
     // Default deny everything else.
     match /{allPaths=**} {
       allow read, write: if false;

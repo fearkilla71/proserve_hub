@@ -53,16 +53,13 @@ class FinancingOptionCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Payment Plans Available',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: ProServeColors.accent3.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -167,17 +164,11 @@ class _PlanOption extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '\$${perMonth.toStringAsFixed(0)}/mo',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
           ),
           Text(
             'for $months months',
-            style: TextStyle(
-              fontSize: 11,
-              color: ProServeColors.muted,
-            ),
+            style: TextStyle(fontSize: 11, color: ProServeColors.muted),
           ),
         ],
       ),

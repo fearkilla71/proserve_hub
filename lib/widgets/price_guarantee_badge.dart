@@ -32,18 +32,12 @@ class PriceGuaranteeBadge extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: ProServeColors.accent.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.verified_outlined,
-            size: 14,
-            color: ProServeColors.accent,
-          ),
+          Icon(Icons.verified_outlined, size: 14, color: ProServeColors.accent),
           const SizedBox(width: 4),
           Text(
             'AI Price Match',
@@ -73,9 +67,7 @@ class PriceGuaranteeBadge extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: ProServeColors.accent.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -90,11 +82,7 @@ class PriceGuaranteeBadge extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              Icons.verified,
-              color: ProServeColors.accent,
-              size: 22,
-            ),
+            child: Icon(Icons.verified, color: ProServeColors.accent, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -103,9 +91,9 @@ class PriceGuaranteeBadge extends StatelessWidget {
               children: [
                 Text(
                   'AI Price Match Guarantee',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
                 Text(

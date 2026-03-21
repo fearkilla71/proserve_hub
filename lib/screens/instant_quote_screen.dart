@@ -539,9 +539,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
             children: [
               Text(
                 'Save Your Quote',
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
               Text(

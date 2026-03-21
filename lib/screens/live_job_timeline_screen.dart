@@ -776,11 +776,11 @@ class _StagePhotos extends StatelessWidget {
         .doc(jobId)
         .collection('stage_photos')
         .add({
-      'stageKey': stageKey,
-      'url': url,
-      'storagePath': path,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+          'stageKey': stageKey,
+          'url': url,
+          'storagePath': path,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
   }
 
   Future<void> _requestPhoto(BuildContext context) async {
@@ -790,16 +790,14 @@ class _StagePhotos extends StatelessWidget {
         .doc(jobId)
         .collection('photo_requests')
         .add({
-      'stageKey': stageKey,
-      'requestedAt': FieldValue.serverTimestamp(),
-      'fulfilled': false,
-    });
+          'stageKey': stageKey,
+          'requestedAt': FieldValue.serverTimestamp(),
+          'fulfilled': false,
+        });
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Photo request sent to contractor!'),
-        ),
+        const SnackBar(content: Text('Photo request sent to contractor!')),
       );
     }
   }

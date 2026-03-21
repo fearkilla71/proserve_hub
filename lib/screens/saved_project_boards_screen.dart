@@ -13,7 +13,8 @@ import '../theme/proserve_theme.dart';
 /// Saved Project Boards — customers save future projects with photos, notes,
 /// and pinned contractors for later booking.
 class SavedProjectBoardsScreen extends StatelessWidget {
-  const SavedProjectBoardsScreen({super.key});
+  final String? highlightBoardId;
+  const SavedProjectBoardsScreen({super.key, this.highlightBoardId});
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +27,7 @@ class SavedProjectBoardsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Projects'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Saved Projects'), centerTitle: true),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateBoard(context, uid),
         icon: const Icon(Icons.add),
@@ -47,6 +45,13 @@ class SavedProjectBoardsScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (snap.hasError) {
+            return Center(
+              child: Text('Could not load projects.',
+                  style: TextStyle(color: ProServeColors.muted)),
+            );
+          }
+
           final boards = snap.data?.docs ?? [];
 
           if (boards.isEmpty) return _buildEmptyState(context, uid);
@@ -61,6 +66,7 @@ class SavedProjectBoardsScreen extends StatelessWidget {
                 boardId: boards[i].id,
                 userId: uid,
                 data: data,
+                highlight: boards[i].id == highlightBoardId,
               );
             },
           );
@@ -84,9 +90,9 @@ class SavedProjectBoardsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No projects yet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
@@ -194,14 +200,14 @@ class SavedProjectBoardsScreen extends StatelessWidget {
                             .doc(uid)
                             .collection('project_boards')
                             .add({
-                          'name': name,
-                          'service': selectedService ?? '',
-                          'notes': notesCtrl.text.trim(),
-                          'photos': <String>[],
-                          'savedContractors': <String>[],
-                          'createdAt': FieldValue.serverTimestamp(),
-                          'updatedAt': FieldValue.serverTimestamp(),
-                        });
+                              'name': name,
+                              'service': selectedService ?? '',
+                              'notes': notesCtrl.text.trim(),
+                              'photos': <String>[],
+                              'savedContractors': <String>[],
+                              'createdAt': FieldValue.serverTimestamp(),
+                              'updatedAt': FieldValue.serverTimestamp(),
+                            });
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
                       child: const Text('Create Board'),
@@ -221,11 +227,13 @@ class _BoardCard extends StatelessWidget {
   final String boardId;
   final String userId;
   final Map<String, dynamic> data;
+  final bool highlight;
 
   const _BoardCard({
     required this.boardId,
     required this.userId,
     required this.data,
+    this.highlight = false,
   });
 
   @override
@@ -241,7 +249,10 @@ class _BoardCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: ProServeColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ProServeColors.line),
+        border: Border.all(
+          color: highlight ? ProServeColors.accent2 : ProServeColors.line,
+          width: highlight ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,6 +274,13 @@ class _BoardCard extends StatelessWidget {
                       width: 120,
                       height: 100,
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 120,
+                        height: 100,
+                        color: ProServeColors.card,
+                        child: Icon(Icons.broken_image,
+                            color: ProServeColors.muted),
+                      ),
                     );
                   },
                 ),
@@ -327,8 +345,7 @@ class _BoardCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     notes,
-                    style:
-                        TextStyle(color: ProServeColors.muted, fontSize: 13),
+                    style: TextStyle(color: ProServeColors.muted, fontSize: 13),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -359,10 +376,7 @@ class _BoardCard extends StatelessWidget {
                       onPressed: () {
                         context.push(
                           '/smart-request',
-                          extra: {
-                            'serviceType': service,
-                            'serviceName': name,
-                          },
+                          extra: {'serviceType': service, 'serviceName': name},
                         );
                       },
                       style: FilledButton.styleFrom(
@@ -405,7 +419,7 @@ class _BoardCard extends StatelessWidget {
     );
 
     final path =
-        'project_boards/$userId/$boardId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        'project_board_photos/$userId/$boardId/${DateTime.now().millisecondsSinceEpoch}.jpg';
     final ref = FirebaseStorage.instance.ref(path);
     await ref.putData(Uint8List.fromList(compressed));
     final url = await ref.getDownloadURL();
@@ -416,9 +430,9 @@ class _BoardCard extends StatelessWidget {
         .collection('project_boards')
         .doc(boardId)
         .update({
-      'photos': FieldValue.arrayUnion([url]),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+          'photos': FieldValue.arrayUnion([url]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 }
 

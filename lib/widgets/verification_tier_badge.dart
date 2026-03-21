@@ -107,11 +107,7 @@ class _TierConfig {
   final IconData icon;
   final Color color;
 
-  _TierConfig({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
+  _TierConfig({required this.label, required this.icon, required this.color});
 }
 
 /// Full detail card showing tier criteria & benefits.
@@ -143,17 +139,13 @@ class VerificationTierCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.military_tech,
-                color: ProServeColors.accent,
-                size: 20,
-              ),
+              Icon(Icons.military_tech, color: ProServeColors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Verification Tiers',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -229,17 +221,13 @@ class _TierRow extends StatelessWidget {
                   config.label,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color:
-                        met ? config.color : ProServeColors.muted,
+                    color: met ? config.color : ProServeColors.muted,
                     fontSize: 13,
                   ),
                 ),
                 Text(
                   requirement,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: ProServeColors.muted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: ProServeColors.muted),
                 ),
               ],
             ),

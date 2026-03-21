@@ -507,10 +507,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         const SizedBox(height: 12),
 
         // ── Cost Breakdown Donut Chart (Feature D) ──
-        CostBreakdownChart(
-          totalPrice: aiPrice,
-          platformFeePercent: 5.0,
-        ),
+        CostBreakdownChart(totalPrice: aiPrice, platformFeePercent: 5.0),
 
         const SizedBox(height: 12),
 
