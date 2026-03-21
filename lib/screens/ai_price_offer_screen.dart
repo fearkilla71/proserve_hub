@@ -10,6 +10,10 @@ import '../services/ai_pricing_service.dart';
 import '../services/escrow_service.dart';
 import '../services/escrow_stats_service.dart';
 import '../services/stripe_service.dart';
+import '../widgets/cost_breakdown_chart.dart';
+import '../widgets/financing_option_card.dart';
+import '../widgets/multi_quote_invite_card.dart';
+import '../widgets/price_guarantee_badge.dart';
 import '../widgets/price_lock_timer.dart';
 import '../widgets/savings_comparison.dart';
 import '../widgets/social_proof_banner.dart';
@@ -500,6 +504,19 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           ),
         ),
 
+        const SizedBox(height: 12),
+
+        // ── Cost Breakdown Donut Chart (Feature D) ──
+        CostBreakdownChart(
+          totalPrice: aiPrice,
+          platformFeePercent: 5.0,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Price Guarantee Badge (Feature C) ──
+        PriceGuaranteeBadge(estimatedPrice: aiPrice),
+
         // ── AI Analysis ──
         if (factors.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -757,6 +774,20 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
             ],
           ),
         ),
+
+        const SizedBox(height: 16),
+
+        // ── Multi-Contractor Quote Card (Feature B) ──
+        MultiQuoteInviteCard(
+          jobId: widget.jobId,
+          candidateCount: 3,
+          expiresAt: DateTime.now().add(const Duration(hours: 24)),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Financing option for jobs >$1k (Feature I) ──
+        FinancingOptionCard(totalPrice: aiPrice),
 
         const SizedBox(height: 24),
 

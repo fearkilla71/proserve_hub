@@ -16,7 +16,10 @@ import '../services/fcm_service.dart';
 import '../services/conversation_service.dart';
 import '../services/trusted_pros_service.dart';
 import '../widgets/escrow_bookings_card.dart';
+import '../widgets/maintenance_reminder_card.dart';
+import '../widgets/neighborhood_social_proof.dart';
 import '../widgets/profile_completion_card.dart';
+import '../widgets/seasonal_deals_carousel.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/persistent_job_state_bar.dart';
 import 'onboarding_screen.dart';
@@ -557,7 +560,23 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               fade: _nextFade,
               slide: _nextSlide,
             ),
+            const SizedBox(height: 12),
+
+            // ── Maintenance Reminders (Feature E) ──
+            const MaintenanceReminderCard(),
+            const SizedBox(height: 12),
+
+            // ── Seasonal Deals & Flash Offers (Feature F) ──
+            const SeasonalDealsCarousel(),
+            const SizedBox(height: 12),
+
+            // ── Neighborhood Social Proof (Feature G) ──
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 0),
+              child: NeighborhoodSocialProof(),
+            ),
             const SizedBox(height: 16),
+
             Text(
               'Quick actions',
               style: Theme.of(
@@ -677,17 +696,32 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               ],
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: _quickActionTile(
-                context: context,
-                title: 'My Estimates',
-                subtitle: 'View saved AI estimates',
-                icon: Icons.calculate_outlined,
-                onTap: () {
-                  context.push('/saved-estimates');
-                },
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'Saved projects',
+                    subtitle: 'Plan future work',
+                    icon: Icons.dashboard_customize_outlined,
+                    onTap: () {
+                      context.push('/project-boards');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _quickActionTile(
+                    context: context,
+                    title: 'My Estimates',
+                    subtitle: 'View saved AI estimates',
+                    icon: Icons.calculate_outlined,
+                    onTap: () {
+                      context.push('/saved-estimates');
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             SizedBox(

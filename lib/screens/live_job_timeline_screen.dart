@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../services/job_timeline_service.dart';
+import '../theme/proserve_theme.dart';
 
 /// Icon resolver from string keys stored in Firestore.
 IconData _iconFromKey(String key) {
@@ -141,6 +145,7 @@ class _LiveJobTimelineScreenState extends State<LiveJobTimelineScreen>
                       isLast: isLast,
                       pulseAnimation: _pulseCtrl,
                       isContractor: widget.isContractor,
+                      jobId: widget.jobId,
                       onComplete:
                           widget.isContractor &&
                               (status == 'in_progress' || status == 'pending')
@@ -419,6 +424,7 @@ class _StageRow extends StatelessWidget {
   final bool isLast;
   final AnimationController pulseAnimation;
   final bool isContractor;
+  final String jobId;
   final VoidCallback? onComplete;
 
   const _StageRow({
@@ -428,6 +434,7 @@ class _StageRow extends StatelessWidget {
     required this.isLast,
     required this.pulseAnimation,
     required this.isContractor,
+    required this.jobId,
     this.onComplete,
   });
 
@@ -599,6 +606,14 @@ class _StageRow extends StatelessWidget {
                       ),
                     ),
                   ],
+
+                  // ── Stage photos (Live Camera Feed) ──
+                  _StagePhotos(
+                    jobId: jobId,
+                    stageKey: stage['key'] as String? ?? '',
+                    isContractor: isContractor,
+                  ),
+
                   if (onComplete != null && isActive) ...[
                     const SizedBox(height: 10),
                     SizedBox(
@@ -617,5 +632,175 @@ class _StageRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Stage Photos — Live Camera Feed for timeline stages
+// ────────────────────────────────────────────────────────────
+class _StagePhotos extends StatelessWidget {
+  final String jobId;
+  final String stageKey;
+  final bool isContractor;
+
+  const _StagePhotos({
+    required this.jobId,
+    required this.stageKey,
+    required this.isContractor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (stageKey.isEmpty) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('job_timelines')
+          .doc(jobId)
+          .collection('stage_photos')
+          .where('stageKey', isEqualTo: stageKey)
+          .orderBy('createdAt', descending: true)
+          .limit(6)
+          .snapshots(),
+      builder: (context, snap) {
+        final photos = snap.data?.docs ?? [];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (photos.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 64,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: photos.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (ctx, i) {
+                    final url = photos[i].data()['url'] as String? ?? '';
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        url,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 64,
+                          height: 64,
+                          color: Colors.grey.shade800,
+                          child: const Icon(
+                            Icons.broken_image,
+                            size: 20,
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            if (isContractor) ...[
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 30,
+                child: OutlinedButton.icon(
+                  onPressed: () => _uploadPhoto(context),
+                  icon: const Icon(Icons.add_a_photo, size: 14),
+                  label: const Text(
+                    'Add Photo',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    side: BorderSide(
+                      color: ProServeColors.accent2.withValues(alpha: 0.4),
+                    ),
+                    foregroundColor: ProServeColors.accent2,
+                  ),
+                ),
+              ),
+            ] else if (photos.isEmpty) ...[
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 30,
+                child: OutlinedButton.icon(
+                  onPressed: () => _requestPhoto(context),
+                  icon: const Icon(Icons.camera_alt_outlined, size: 14),
+                  label: const Text(
+                    'Request Photo',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    side: BorderSide(
+                      color: ProServeColors.accent.withValues(alpha: 0.4),
+                    ),
+                    foregroundColor: ProServeColors.accent,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _uploadPhoto(BuildContext context) async {
+    final photo = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+    if (photo == null) return;
+
+    final bytes = await photo.readAsBytes();
+    final compressed = await FlutterImageCompress.compressWithList(
+      bytes,
+      minWidth: 1920,
+      minHeight: 1920,
+      quality: 85,
+    );
+
+    final path =
+        'timeline_photos/$jobId/$stageKey/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final ref = FirebaseStorage.instance.ref(path);
+    await ref.putData(Uint8List.fromList(compressed));
+    final url = await ref.getDownloadURL();
+
+    await FirebaseFirestore.instance
+        .collection('job_timelines')
+        .doc(jobId)
+        .collection('stage_photos')
+        .add({
+      'stageKey': stageKey,
+      'url': url,
+      'storagePath': path,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> _requestPhoto(BuildContext context) async {
+    // Create a photo request notification for the contractor
+    await FirebaseFirestore.instance
+        .collection('job_timelines')
+        .doc(jobId)
+        .collection('photo_requests')
+        .add({
+      'stageKey': stageKey,
+      'requestedAt': FieldValue.serverTimestamp(),
+      'fulfilled': false,
+    });
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo request sent to contractor!'),
+        ),
+      );
+    }
   }
 }

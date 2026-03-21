@@ -9601,3 +9601,212 @@ exports.inspectQualityHttp = functions
     const body = req.body || {};
     return inspectQualityCore({ uid, imagePaths: body.imagePaths, jobLabel: body.jobLabel });
   }));
+
+// ==================== MAINTENANCE REMINDERS (Feature E) ====================
+
+// After a job completes, create smart maintenance reminders for the customer.
+// Triggers off the existing onJobCompleted path.
+exports.createMaintenanceReminders = functions.firestore
+  .document('job_requests/{jobId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+
+    if (before.status === 'completed' || after.status !== 'completed') return;
+
+    const service = (after.serviceName || after.service || '').toString();
+    const customerId = (after.customerId || after.userId || '').toString();
+    if (!customerId || !service) return;
+
+    // Service → reminder schedule (months until follow-up)
+    const reminderMap = {
+      interior_painting: { months: 36, title: 'Time for a touch-up? Interior paint refresh' },
+      exterior_painting: { months: 24, title: 'Exterior paint check-up due' },
+      drywall_repair:    { months: 12, title: 'Drywall inspection recommended' },
+      pressure_washing:  { months: 6,  title: 'Pressure washing refresh time' },
+      cabinets:          { months: 24, title: 'Cabinet finish check-up' },
+      roofing:           { months: 12, title: 'Annual roof inspection due' },
+      flooring:          { months: 12, title: 'Floor maintenance reminder' },
+      plumbing:          { months: 12, title: 'Plumbing check-up recommended' },
+      electrical:        { months: 12, title: 'Electrical system review due' },
+    };
+
+    const sched = reminderMap[service] || { months: 12, title: `Follow-up maintenance for ${service.replace(/_/g, ' ')}` };
+
+    const reminderDate = new Date();
+    reminderDate.setMonth(reminderDate.getMonth() + sched.months);
+
+    try {
+      await admin.firestore()
+        .collection('users')
+        .doc(customerId)
+        .collection('maintenance_reminders')
+        .add({
+          title: sched.title,
+          service,
+          jobId: context.params.jobId,
+          reminderDate: admin.firestore.Timestamp.fromDate(reminderDate),
+          dismissed: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    } catch (e) {
+      console.error('[createMaintenanceReminders] Error:', e);
+    }
+  });
+
+// ==================== AUTO-INVITE CONTRACTORS (Feature B) ====================
+
+// When matchContractors completes (candidates written), auto-create bid invites
+// for top 3 with 24-hour expiry.
+exports.autoInviteTopCandidates = functions.firestore
+  .document('job_matches/{jobId}/candidates/{candidateId}')
+  .onCreate(async (snap, context) => {
+    const { jobId, candidateId } = context.params;
+    const candidateData = snap.data() || {};
+
+    // Check how many invites already sent for this job
+    const existingInvites = await admin.firestore()
+      .collection('bid_invites')
+      .where('jobId', '==', jobId)
+      .where('autoInvite', '==', true)
+      .get();
+
+    if (existingInvites.size >= 3) return; // Already invited top 3
+
+    const contractorId = candidateData.contractorId || candidateId;
+    if (!contractorId) return;
+
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    try {
+      await admin.firestore()
+        .collection('bid_invites')
+        .add({
+          jobId,
+          contractorId,
+          autoInvite: true,
+          matchScore: candidateData.totalScore || 0,
+          status: 'pending',
+          expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      // Send notification to contractor
+      try {
+        const contractorSnap = await admin.firestore()
+          .collection('contractors')
+          .doc(contractorId)
+          .get();
+        const contractorData = contractorSnap.data() || {};
+        const fcmToken = contractorData.fcmToken;
+        if (fcmToken) {
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: 'New Job Invitation!',
+              body: 'You\'ve been matched to a new job. Submit your quote within 24 hours.',
+            },
+            data: { type: 'bid_invite', jobId },
+          });
+        }
+      } catch (notifErr) {
+        console.error('[autoInviteTopCandidates] Notification error:', notifErr);
+      }
+    } catch (e) {
+      console.error('[autoInviteTopCandidates] Error:', e);
+    }
+  });
+
+// ==================== VERIFICATION TIERS (Feature K) ====================
+
+// Auto-promote contractor verification tier during daily reputation recalc.
+// This is an additional scheduled function that evaluates tier criteria.
+exports.updateVerificationTiers = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async () => {
+    const contractorsSnap = await admin.firestore()
+      .collection('contractors')
+      .get();
+
+    const batch = admin.firestore().batch();
+    let updates = 0;
+
+    for (const doc of contractorsSnap.docs) {
+      const data = doc.data() || {};
+      const completedJobs = data.completedJobs || 0;
+      const avgRating = data.avgRating || data.rating || 0;
+      const createdAt = data.createdAt;
+      const yearsActive = createdAt
+        ? (Date.now() - createdAt.toDate().getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+        : 0;
+
+      let newTier = 'none';
+      if (completedJobs >= 100 && avgRating >= 4.7 && yearsActive >= 2) {
+        newTier = 'elite_pro';
+      } else if (completedJobs >= 25 && avgRating >= 4.2 && yearsActive >= 1) {
+        newTier = 'trusted_pro';
+      } else if (completedJobs >= 5 && avgRating >= 3.5) {
+        newTier = 'verified';
+      }
+
+      if (data.verificationTier !== newTier) {
+        batch.update(doc.ref, { verificationTier: newTier });
+        updates++;
+      }
+    }
+
+    if (updates > 0) {
+      await batch.commit();
+      console.log(`[updateVerificationTiers] Updated ${updates} contractor tiers`);
+    }
+  });
+
+// ==================== PRICE GUARANTEE CHECK (Feature C) ====================
+
+// When a job is completed, check if final cost exceeded AI estimate by >15%.
+// If so, create a credit for the customer.
+exports.checkPriceGuarantee = functions.firestore
+  .document('job_requests/{jobId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+
+    if (before.status === 'completed' || after.status !== 'completed') return;
+    if (after.priceGuaranteeChecked) return;
+
+    const aiEstimate = Number(after.aiEstimate || after.estimatedPrice || 0);
+    const finalCost = Number(after.finalCost || after.totalCost || 0);
+    const customerId = (after.customerId || after.userId || '').toString();
+
+    if (!aiEstimate || !finalCost || !customerId) return;
+
+    const threshold = aiEstimate * 1.15;
+
+    try {
+      // Mark as checked regardless
+      await change.after.ref.update({ priceGuaranteeChecked: true });
+
+      if (finalCost > threshold) {
+        const creditAmount = finalCost - aiEstimate;
+
+        await admin.firestore()
+          .collection('users')
+          .doc(customerId)
+          .collection('credits')
+          .add({
+            type: 'price_guarantee',
+            amount: creditAmount,
+            jobId: context.params.jobId,
+            aiEstimate,
+            finalCost,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            used: false,
+          });
+
+        console.log(`[checkPriceGuarantee] Credited $${creditAmount.toFixed(2)} to ${customerId}`);
+      }
+    } catch (e) {
+      console.error('[checkPriceGuarantee] Error:', e);
+    }
+  });

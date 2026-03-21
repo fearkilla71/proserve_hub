@@ -9,7 +9,11 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../widgets/price_guarantee_badge.dart';
+
 /// Camera-first screen: snap → instant AI price → CTA to full request flow.
+///
+/// Supports no-signup first quote via anonymous auth — email capture after.
 class InstantQuoteScreen extends StatefulWidget {
   const InstantQuoteScreen({super.key});
 
@@ -47,8 +51,10 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (doc.data() != null && mounted) {
         setState(() => _zip = doc.data()!['zip'] as String?);
       }
@@ -80,7 +86,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
   Future<void> _getInstantQuote() async {
     if (_photo == null || _selectedService == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a photo and select a service.')),
+        const SnackBar(
+          content: Text('Please add a photo and select a service.'),
+        ),
       );
       return;
     }
@@ -98,9 +106,17 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
     });
 
     try {
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      final estimateId =
-          FirebaseFirestore.instance.collection('estimates').doc().id;
+      // Support no-signup: sign in anonymously if needed.
+      var user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        final cred = await FirebaseAuth.instance.signInAnonymously();
+        user = cred.user;
+      }
+      final uid = user!.uid;
+      final estimateId = FirebaseFirestore.instance
+          .collection('estimates')
+          .doc()
+          .id;
 
       // Upload photo.
       final bytes = await _photo!.readAsBytes();
@@ -116,8 +132,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
           .putData(Uint8List.fromList(compressed));
 
       // Call cloud function.
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('estimateFromImagesInputs');
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'estimateFromImagesInputs',
+      );
       final res = await callable.call<dynamic>({
         'estimateId': estimateId,
         'service': _selectedService,
@@ -131,7 +148,8 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
       if (!mounted) return;
       setState(() {
         _result = Map<String, dynamic>.from(
-            res.data as Map<dynamic, dynamic>? ?? {});
+          res.data as Map<dynamic, dynamic>? ?? {},
+        );
         _loading = false;
       });
     } catch (e) {
@@ -174,8 +192,10 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
                     Icon(Icons.error_outline, color: scheme.onErrorContainer),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(_error!,
-                          style: TextStyle(color: scheme.onErrorContainer)),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: scheme.onErrorContainer),
+                      ),
                     ),
                   ],
                 ),
@@ -196,9 +216,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
                     'Snap a photo, get a price in seconds',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: scheme.onPrimaryContainer,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: scheme.onPrimaryContainer,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -248,7 +268,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
                         return Container(
                           height: 200,
                           color: Colors.grey.shade200,
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
                       }
                       return Image.memory(
@@ -288,8 +310,7 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
               return ChoiceChip(
                 label: Text(e.value),
                 selected: sel,
-                onSelected: (_) =>
-                    setState(() => _selectedService = e.key),
+                onSelected: (_) => setState(() => _selectedService = e.key),
               );
             }).toList(),
           ),
@@ -344,10 +365,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
             const SizedBox(height: 32),
             Text(
               'Analyzing your photo...',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
@@ -366,7 +386,8 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
     final confidence = (_result!['confidence'] as num?)?.toDouble() ?? 0;
     final notes = _result!['notes']?.toString() ?? '';
     final qty = (_result!['quantity'] as num?)?.toDouble() ?? 0;
-    final serviceName = _quickServices[_selectedService] ?? _selectedService ?? '';
+    final serviceName =
+        _quickServices[_selectedService] ?? _selectedService ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Your Estimate')),
@@ -405,7 +426,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: scheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
@@ -425,24 +448,47 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
 
           const SizedBox(height: 16),
 
+          // Price Guarantee badge
+          PriceGuaranteeBadge(estimatedPrice: price),
+
+          const SizedBox(height: 16),
+
           if (qty > 0) ...[
-            _detailTile(scheme, Icons.square_foot, 'Estimated Size',
-                '${qty.toStringAsFixed(0)} sqft'),
+            _detailTile(
+              scheme,
+              Icons.square_foot,
+              'Estimated Size',
+              '${qty.toStringAsFixed(0)} sqft',
+            ),
           ],
           if (notes.isNotEmpty) ...[
             _detailTile(scheme, Icons.notes, 'AI Notes', notes),
           ],
-          _detailTile(scheme, Icons.location_on_outlined, 'ZIP Code', _zip ?? ''),
+          _detailTile(
+            scheme,
+            Icons.location_on_outlined,
+            'ZIP Code',
+            _zip ?? '',
+          ),
 
           const SizedBox(height: 28),
 
-          // Primary CTA: Get real quotes
+          // Primary CTA: Get real quotes (email capture for anon users)
           FilledButton.icon(
-            onPressed: () {
-              context.go('/smart-request', extra: {
-                'serviceType': _selectedService,
-                'serviceName': serviceName,
-              });
+            onPressed: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null && user.isAnonymous) {
+                final captured = await _showEmailCapture(context);
+                if (!captured && !context.mounted) return;
+              }
+              if (!context.mounted) return;
+              context.go(
+                '/smart-request',
+                extra: {
+                  'serviceType': _selectedService,
+                  'serviceName': serviceName,
+                },
+              );
             },
             icon: const Icon(Icons.groups),
             label: const Text('Get Real Quotes from Pros'),
@@ -471,8 +517,104 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
     );
   }
 
+  // ─── Email Capture for Anonymous Users ──────────────────
+  Future<bool> _showEmailCapture(BuildContext context) async {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            0,
+            20,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Save Your Quote',
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Create a free account to get quotes from real pros and track your project.',
+                style: TextStyle(
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final email = emailCtrl.text.trim();
+                    final pass = passCtrl.text.trim();
+                    if (email.isEmpty || pass.length < 6) return;
+                    try {
+                      final cred = EmailAuthProvider.credential(
+                        email: email,
+                        password: pass,
+                      );
+                      await FirebaseAuth.instance.currentUser
+                          ?.linkWithCredential(cred);
+                      if (ctx.mounted) Navigator.pop(ctx, true);
+                    } catch (_) {
+                      if (ctx.mounted) Navigator.pop(ctx, false);
+                    }
+                  },
+                  child: const Text('Create Account'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Skip for now'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    return result ?? true; // default: proceed even if dismissed
+  }
+
   Widget _detailTile(
-      ColorScheme scheme, IconData icon, String label, String value) {
+    ColorScheme scheme,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -484,9 +626,13 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(value, style: TextStyle(color: scheme.onSurfaceVariant)),
               ],
@@ -515,9 +661,7 @@ class _BigButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: primary
-          ? scheme.primaryContainer
-          : scheme.surfaceContainerLow,
+      color: primary ? scheme.primaryContainer : scheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -526,9 +670,11 @@ class _BigButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 32),
           child: Column(
             children: [
-              Icon(icon,
-                  size: 40,
-                  color: primary ? scheme.primary : scheme.onSurfaceVariant),
+              Icon(
+                icon,
+                size: 40,
+                color: primary ? scheme.primary : scheme.onSurfaceVariant,
+              ),
               const SizedBox(height: 8),
               Text(
                 label,

@@ -736,16 +736,21 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
       ),
     );
   }
+
   Widget _buildMapView(
-      BuildContext context, List<QueryDocumentSnapshot> contractors) {
+    BuildContext context,
+    List<QueryDocumentSnapshot> contractors,
+  ) {
     final scheme = Theme.of(context).colorScheme;
 
     // Sort by distance for map view.
     final sorted = List<QueryDocumentSnapshot>.from(contractors)
       ..sort((a, b) {
-        final dA = _distanceForContractor(a.data() as Map<String, dynamic>) ??
+        final dA =
+            _distanceForContractor(a.data() as Map<String, dynamic>) ??
             double.infinity;
-        final dB = _distanceForContractor(b.data() as Map<String, dynamic>) ??
+        final dB =
+            _distanceForContractor(b.data() as Map<String, dynamic>) ??
             double.infinity;
         return dA.compareTo(dB);
       });
@@ -814,22 +819,37 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
           ),
         const SizedBox(height: 16),
         if (nearby.isNotEmpty) ...[
-          _distanceBandHeader(context, Icons.near_me, 'Nearby (< 10 mi)',
-              '${nearby.length} pros', Colors.green),
+          _distanceBandHeader(
+            context,
+            Icons.near_me,
+            'Nearby (< 10 mi)',
+            '${nearby.length} pros',
+            Colors.green,
+          ),
           const SizedBox(height: 8),
           ...nearby.map((doc) => _mapCard(context, doc)),
           const SizedBox(height: 16),
         ],
         if (midRange.isNotEmpty) ...[
-          _distanceBandHeader(context, Icons.directions_car, '10–25 miles',
-              '${midRange.length} pros', Colors.orange),
+          _distanceBandHeader(
+            context,
+            Icons.directions_car,
+            '10–25 miles',
+            '${midRange.length} pros',
+            Colors.orange,
+          ),
           const SizedBox(height: 8),
           ...midRange.map((doc) => _mapCard(context, doc)),
           const SizedBox(height: 16),
         ],
         if (farAway.isNotEmpty) ...[
-          _distanceBandHeader(context, Icons.explore, '25+ miles',
-              '${farAway.length} pros', Colors.grey),
+          _distanceBandHeader(
+            context,
+            Icons.explore,
+            '25+ miles',
+            '${farAway.length} pros',
+            Colors.grey,
+          ),
           const SizedBox(height: 8),
           ...farAway.map((doc) => _mapCard(context, doc)),
         ],
@@ -837,29 +857,39 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
     );
   }
 
-  Widget _distanceBandHeader(BuildContext context, IconData icon, String title,
-      String count, Color color) {
+  Widget _distanceBandHeader(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String count,
+    Color color,
+  ) {
     return Row(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
-        Text(title,
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
         const Spacer(),
-        Text(count,
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13)),
+        Text(
+          count,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 13,
+          ),
+        ),
       ],
     );
   }
 
   Widget _mapCard(BuildContext context, QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final name = (data['businessName'] as String?)?.trim() ??
+    final name =
+        (data['businessName'] as String?)?.trim() ??
         (data['companyName'] as String?)?.trim() ??
         (data['name'] as String?)?.trim() ??
         'Unknown';
@@ -881,10 +911,12 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
               ? Text(name.isNotEmpty ? name[0] : '?')
               : null,
         ),
-        title: Text(name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
+        title: Text(
+          name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: Row(
           children: [
             Icon(Icons.star, size: 14, color: Colors.amber[700]),
@@ -903,7 +935,6 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
       ),
     );
   }
-
 }
 
 class _ContractorCard extends StatefulWidget {

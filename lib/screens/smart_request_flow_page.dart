@@ -98,8 +98,10 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
   Future<void> _loadUserProfile(String uid) async {
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final data = doc.data();
       if (data == null || !mounted) return;
       setState(() {
@@ -210,8 +212,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       }
 
       // Call estimateFromImagesInputs function.
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('estimateFromImagesInputs');
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'estimateFromImagesInputs',
+      );
       final result = await callable.call<dynamic>({
         'estimateId': estimateId,
         'service': _selectedServiceType,
@@ -286,8 +289,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
       // Upload photos.
       final List<String> uploadedPaths = [];
-      final jobRef =
-          FirebaseFirestore.instance.collection('job_requests').doc();
+      final jobRef = FirebaseFirestore.instance
+          .collection('job_requests')
+          .doc();
       for (int i = 0; i < _photos.length && i < 10; i++) {
         final bytes = await _photos[i].readAsBytes();
         final compressed = await FlutterImageCompress.compressWithList(
@@ -380,17 +384,20 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       if (!mounted) return;
 
       // Navigate to AI price offer.
-      context.go('/ai-price-offer/${jobRef.id}', extra: {
-        'service': serviceLabel,
-        'zip': zip,
-        'quantity': sqft,
-        'urgent': urgent,
-        'jobDetails': {
-          'sqft': sqft,
-          'propertyType': _propertyType,
-          'condition': _condition,
+      context.go(
+        '/ai-price-offer/${jobRef.id}',
+        extra: {
+          'service': serviceLabel,
+          'zip': zip,
+          'quantity': sqft,
+          'urgent': urgent,
+          'jobDetails': {
+            'sqft': sqft,
+            'propertyType': _propertyType,
+            'condition': _condition,
+          },
         },
-      });
+      );
     } catch (e) {
       if (!mounted) return;
       _showError('Failed to submit request: $e');
@@ -444,10 +451,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       children: [
         Text(
           'Snap & Describe',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -511,8 +517,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
                             top: 4,
                             right: 4,
                             child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _photos.removeAt(i)),
+                              onTap: () => setState(() => _photos.removeAt(i)),
                               child: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: const BoxDecoration(
@@ -619,10 +624,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       children: [
         Text(
           'AI-Detected Details',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -704,8 +708,16 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         const SizedBox(height: 8),
         SegmentedButton<String>(
           segments: const [
-            ButtonSegment(value: 'home', label: Text('Home'), icon: Icon(Icons.home)),
-            ButtonSegment(value: 'business', label: Text('Business'), icon: Icon(Icons.business)),
+            ButtonSegment(
+              value: 'home',
+              label: Text('Home'),
+              icon: Icon(Icons.home),
+            ),
+            ButtonSegment(
+              value: 'business',
+              label: Text('Business'),
+              icon: Icon(Icons.business),
+            ),
           ],
           selected: {_propertyType},
           onSelectionChanged: (v) => setState(() => _propertyType = v.first),
@@ -714,7 +726,10 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         const SizedBox(height: 20),
 
         // Condition
-        Text('Surface Condition', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Surface Condition',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
           segments: const [
@@ -739,8 +754,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.auto_awesome,
-                            size: 18, color: scheme.primary),
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 18,
+                          color: scheme.primary,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'AI Notes',
@@ -782,10 +800,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       children: [
         Text(
           'Timeline & Budget',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -873,10 +890,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       children: [
         Text(
           'Review & Submit',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -895,7 +911,10 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
                 _summaryRow('Service', _selectedServiceName ?? '—'),
                 _summaryRow('ZIP Code', _zipController.text),
                 _summaryRow('Size', '${_sqftController.text} sqft'),
-                _summaryRow('Property', _propertyType == 'business' ? 'Business' : 'Home'),
+                _summaryRow(
+                  'Property',
+                  _propertyType == 'business' ? 'Business' : 'Home',
+                ),
                 _summaryRow('Condition', _condition),
                 _summaryRow('Timeline', _timeline),
                 _summaryRow('Budget', _budgetPref),
@@ -1125,9 +1144,7 @@ class _TimelineOption extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: selected
-                            ? scheme.primary
-                            : scheme.onSurface,
+                        color: selected ? scheme.primary : scheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1141,8 +1158,7 @@ class _TimelineOption extends StatelessWidget {
                   ],
                 ),
               ),
-              if (selected)
-                Icon(Icons.check_circle, color: scheme.primary),
+              if (selected) Icon(Icons.check_circle, color: scheme.primary),
             ],
           ),
         ),

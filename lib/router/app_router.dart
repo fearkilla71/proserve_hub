@@ -66,6 +66,7 @@ import '../screens/invoice_preview_screen.dart';
 import '../screens/community_feed_screen.dart';
 import '../screens/notification_center_screen.dart';
 import '../screens/saved_estimates_screen.dart';
+import '../screens/saved_project_boards_screen.dart';
 import '../screens/invoice_drafts_screen.dart';
 import '../screens/painting_request_flow_page.dart';
 import '../screens/exterior_painting_request_flow_page.dart';
@@ -231,6 +232,9 @@ abstract final class AppRoutes {
   static const multiLocationDashboard = '/multi-location-dashboard';
   static const subMarketplace = '/sub-marketplace';
   static const bidAnalyzer = '/bid-analyzer';
+
+  // ── Acquisition Features ──
+  static const projectBoards = '/project-boards';
 }
 
 /// Creates and returns the application's [GoRouter].
@@ -244,6 +248,7 @@ GoRouter createRouter() {
     '/contractor-login',
     '/contractor-signup',
     '/select-service',
+    '/instant-quote',
   };
 
   return GoRouter(
@@ -770,6 +775,10 @@ GoRouter createRouter() {
       GoRoute(
         path: '/saved-estimates',
         builder: (context, state) => const SavedEstimatesScreen(),
+      ),
+      GoRoute(
+        path: '/project-boards',
+        builder: (context, state) => const SavedProjectBoardsScreen(),
       ),
       GoRoute(
         path: '/landing',
