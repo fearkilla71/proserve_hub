@@ -38,6 +38,8 @@ class _PaymentsTab extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('payments')
               .where('customerId', isEqualTo: uid)
+              .orderBy('createdAt', descending: true)
+              .limit(50)
               .snapshots(),
           emptyText: 'No customer payments yet.',
         ),
@@ -47,6 +49,8 @@ class _PaymentsTab extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('payments')
               .where('contractorId', isEqualTo: uid)
+              .orderBy('createdAt', descending: true)
+              .limit(50)
               .snapshots(),
           emptyText: 'No contractor payments yet.',
         ),
@@ -102,16 +106,7 @@ class _PaymentsSection extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final docs = snapshot.data!.docs.toList();
-                docs.sort((a, b) {
-                  final ad = a.data();
-                  final bd = b.data();
-                  final at = ad['createdAt'];
-                  final bt = bd['createdAt'];
-                  final aMs = at is Timestamp ? at.millisecondsSinceEpoch : 0;
-                  final bMs = bt is Timestamp ? bt.millisecondsSinceEpoch : 0;
-                  return bMs.compareTo(aMs);
-                });
+                final docs = snapshot.data!.docs;
 
                 if (docs.isEmpty) {
                   return Text(emptyText);

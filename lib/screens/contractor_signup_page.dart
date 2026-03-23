@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../constants/service_types.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -37,13 +39,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
   final List<String> _selectedServices = ['Interior Painting'];
 
-  static const List<String> _availableServices = [
-    'Interior Painting',
-    'Exterior Painting',
-    'Pressure Washing',
-    'Cabinets',
-    'Drywall Repair',
-  ];
+  static const List<String> _availableServices = kPaintingServices;
 
   bool loading = false;
   bool _obscurePassword = true;
@@ -172,8 +168,8 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     if (user == null) return;
     try {
       await user.reload();
-    } catch (_) {
-      // best-effort
+    } catch (e) {
+      debugPrint('Email verification refresh failed: $e');
     }
 
     if (!mounted) return;
@@ -255,7 +251,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       await _auth.ensureGoogleUserRole(user.uid, 'contractor');
       if (mounted) router.go('/contractor-portal');
     } catch (e, st) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       AppError.show(context, e, st, action: 'Google sign-up');
     } finally {
       if (mounted) setState(() => loading = false);
@@ -364,11 +360,12 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
     try {
       await user.linkWithCredential(credential);
-    } on FirebaseAuthException catch (_) {
+    } on FirebaseAuthException catch (e) {
+      debugPrint('linkWithCredential failed, trying updatePhoneNumber: $e');
       try {
         await user.updatePhoneNumber(credential);
-      } catch (_) {
-        // Ignore; we still set app-level verification flag below.
+      } catch (e2) {
+        debugPrint('updatePhoneNumber also failed: $e2');
       }
     }
 

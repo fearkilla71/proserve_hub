@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Customer CRM Admin — LTV analytics, spending segmentation, health scores,
@@ -52,35 +51,35 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
         .where('role', isEqualTo: 'customer')
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      double totalLtv = 0;
-      int high = 0;
-      int atRisk = 0;
-      for (final c in docs) {
-        final ltv = (c['lifetimeSpend'] as num?)?.toDouble() ?? 0;
-        totalLtv += ltv;
-        if (ltv > 1000) high++;
-        final lastBooking = (c['lastBookingAt'] as Timestamp?)?.toDate();
-        if (lastBooking != null &&
-            DateTime.now().difference(lastBooking).inDays > 90) {
-          atRisk++;
-        }
-      }
+          double totalLtv = 0;
+          int high = 0;
+          int atRisk = 0;
+          for (final c in docs) {
+            final ltv = (c['lifetimeSpend'] as num?)?.toDouble() ?? 0;
+            totalLtv += ltv;
+            if (ltv > 1000) high++;
+            final lastBooking = (c['lastBookingAt'] as Timestamp?)?.toDate();
+            if (lastBooking != null &&
+                DateTime.now().difference(lastBooking).inDays > 90) {
+              atRisk++;
+            }
+          }
 
-      setState(() {
-        _customers = docs;
-        _totalCustomers = docs.length;
-        _avgLtv = docs.isEmpty ? 0 : totalLtv / docs.length;
-        _highValue = high;
-        _atRisk = atRisk;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _customers = docs;
+            _totalCustomers = docs.length;
+            _avgLtv = docs.isEmpty ? 0 : totalLtv / docs.length;
+            _highValue = high;
+            _atRisk = atRisk;
+            _loading = false;
+          });
+        });
   }
 
   String _healthScore(Map<String, dynamic> c) {
@@ -104,9 +103,11 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((c) =>
-              (c['displayName'] ?? '').toString().toLowerCase().contains(q) ||
-              (c['email'] ?? '').toString().toLowerCase().contains(q))
+          .where(
+            (c) =>
+                (c['displayName'] ?? '').toString().toLowerCase().contains(q) ||
+                (c['email'] ?? '').toString().toLowerCase().contains(q),
+          )
           .toList();
     }
     return list;
@@ -114,7 +115,7 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     final filtered = _filtered;
 
@@ -126,9 +127,11 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
           child: Row(
             children: [
               _kpi('Customers', '$_totalCustomers', AdminColors.accent2),
-              _kpi('Avg LTV',
-                  '\$${NumberFormat.compact().format(_avgLtv)}',
-                  AdminColors.accent),
+              _kpi(
+                'Avg LTV',
+                '\$${NumberFormat.compact().format(_avgLtv)}',
+                AdminColors.accent,
+              ),
               _kpi('High Value', '$_highValue', AdminColors.accent3),
               _kpi('At Risk', '$_atRisk', AdminColors.warning),
             ],
@@ -144,8 +147,10 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(s[0].toUpperCase() + s.substring(1),
-                        style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      s[0].toUpperCase() + s.substring(1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: _segment == s,
                     selectedColor: AdminColors.accent.withValues(alpha: 0.15),
                     onSelected: (_) => setState(() => _segment = s),
@@ -160,7 +165,8 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -174,23 +180,25 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No customers found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No customers found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final c = filtered[i];
                     final name = c['displayName'] ?? 'Unknown';
                     final email = c['email'] ?? '';
-                    final ltv =
-                        (c['lifetimeSpend'] as num?)?.toDouble() ?? 0;
+                    final ltv = (c['lifetimeSpend'] as num?)?.toDouble() ?? 0;
                     final bookings =
                         (c['completedBookings'] as num?)?.toInt() ?? 0;
                     final score = _healthScore(c);
-                    final lastBooking =
-                        (c['lastBookingAt'] as Timestamp?)?.toDate();
+                    final lastBooking = (c['lastBookingAt'] as Timestamp?)
+                        ?.toDate();
 
                     Color scoreColor;
                     switch (score) {
@@ -218,46 +226,62 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundColor:
-                                scoreColor.withValues(alpha: 0.15),
-                            child: Text(name.toString().substring(0, 1),
-                                style: TextStyle(
-                                    color: scoreColor,
-                                    fontWeight: FontWeight.w700)),
+                            backgroundColor: scoreColor.withValues(alpha: 0.15),
+                            child: Text(
+                              name.toString().substring(0, 1),
+                              style: TextStyle(
+                                color: scoreColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(name.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
-                                Text(email.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AdminColors.muted)),
+                                Text(
+                                  name.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
+                                Text(
+                                  email.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AdminColors.muted,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('\$${ltv.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AdminColors.ink)),
-                              Text('$bookings jobs',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AdminColors.muted)),
+                              Text(
+                                '\$${ltv.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminColors.ink,
+                                ),
+                              ),
+                              Text(
+                                '$bookings jobs',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AdminColors.muted,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(width: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: scoreColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
@@ -265,9 +289,10 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
                             child: Text(
                               score,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: scoreColor),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: scoreColor,
+                              ),
                             ),
                           ),
                           if (lastBooking != null) ...[
@@ -275,8 +300,9 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
                             Text(
                               DateFormat.MMMd().format(lastBooking),
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AdminColors.muted),
+                                fontSize: 11,
+                                color: AdminColors.muted,
+                              ),
                             ),
                           ],
                         ],
@@ -301,15 +327,19 @@ class _CustomerCrmAdminTabState extends State<CustomerCrmAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

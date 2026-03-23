@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Loyalty Program Admin — Award / revoke points, view loyalty_events,
@@ -27,6 +26,7 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
   String _search = '';
 
   List<Map<String, dynamic>> _events = [];
+  // ignore: unused_field – kept for future CRM cross-reference
   List<Map<String, dynamic>> _users = [];
 
   // KPIs
@@ -55,55 +55,55 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
         .limit(500)
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      int issued = 0, redeemed = 0;
-      for (final e in docs) {
-        final pts = (e['points'] as num?)?.toInt() ?? 0;
-        if (e['type'] == 'redeem') {
-          redeemed += pts;
-        } else {
-          issued += pts;
-        }
-      }
+          int issued = 0, redeemed = 0;
+          for (final e in docs) {
+            final pts = (e['points'] as num?)?.toInt() ?? 0;
+            if (e['type'] == 'redeem') {
+              redeemed += pts;
+            } else {
+              issued += pts;
+            }
+          }
 
-      setState(() {
-        _events = docs;
-        _totalPointsIssued = issued;
-        _totalPointsRedeemed = redeemed;
-        _totalEvents = docs.length;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _events = docs;
+            _totalPointsIssued = issued;
+            _totalPointsRedeemed = redeemed;
+            _totalEvents = docs.length;
+            _loading = false;
+          });
+        });
 
     _usersSub = FirebaseFirestore.instance
         .collection('users')
         .where('role', isEqualTo: 'customer')
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['uid'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['uid'] = d.id;
+            return data;
+          }).toList();
 
-      int active = 0;
-      for (final u in docs) {
-        if ((u['loyaltyPoints'] as num?)?.toInt() != null &&
-            (u['loyaltyPoints'] as num).toInt() > 0) {
-          active++;
-        }
-      }
+          int active = 0;
+          for (final u in docs) {
+            if ((u['loyaltyPoints'] as num?)?.toInt() != null &&
+                (u['loyaltyPoints'] as num).toInt() > 0) {
+              active++;
+            }
+          }
 
-      setState(() {
-        _users = docs;
-        _activeMembers = active;
-      });
-    });
+          setState(() {
+            _users = docs;
+            _activeMembers = active;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -124,7 +124,7 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     return Column(
       children: [
@@ -133,11 +133,16 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _kpi('Issued', NumberFormat.compact().format(_totalPointsIssued),
-                  AdminColors.accent),
-              _kpi('Redeemed',
-                  NumberFormat.compact().format(_totalPointsRedeemed),
-                  AdminColors.accent3),
+              _kpi(
+                'Issued',
+                NumberFormat.compact().format(_totalPointsIssued),
+                AdminColors.accent,
+              ),
+              _kpi(
+                'Redeemed',
+                NumberFormat.compact().format(_totalPointsRedeemed),
+                AdminColors.accent3,
+              ),
               _kpi('Active Members', '$_activeMembers', AdminColors.accent2),
               _kpi('Events', '$_totalEvents', AdminColors.muted),
             ],
@@ -157,8 +162,7 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
                   ButtonSegment(value: 'redeem', label: Text('Redeemed')),
                 ],
                 selected: {_filter},
-                onSelectionChanged: (v) =>
-                    setState(() => _filter = v.first),
+                onSelectionChanged: (v) => setState(() => _filter = v.first),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -187,14 +191,16 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
         Expanded(
           child: _filtered.isEmpty
               ? Center(
-                  child: Text('No events',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No events',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 6),
-                  itemBuilder: (context, i) =>
-                      _EventRow(data: _filtered[i]),
+                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  itemBuilder: (context, i) => _EventRow(data: _filtered[i]),
                 ),
         ),
       ],
@@ -220,31 +226,36 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
               TextField(
                 controller: uidCtrl,
                 decoration: const InputDecoration(
-                    labelText: 'Customer UID',
-                    border: OutlineInputBorder()),
+                  labelText: 'Customer UID',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ptsCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                    labelText: 'Points', border: OutlineInputBorder()),
+                  labelText: 'Points',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: reasonCtrl,
                 decoration: const InputDecoration(
-                    labelText: 'Reason',
-                    hintText: 'e.g. Welcome bonus',
-                    border: OutlineInputBorder()),
+                  labelText: 'Reason',
+                  hintText: 'e.g. Welcome bonus',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               final uid = uidCtrl.text.trim();
@@ -255,25 +266,25 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
               await FirebaseFirestore.instance
                   .collection('loyalty_events')
                   .add({
-                'uid': uid,
-                'type': 'earn',
-                'action': 'admin_award',
-                'reason': reasonCtrl.text.trim(),
-                'points': pts,
-                'createdAt': FieldValue.serverTimestamp(),
-              });
+                    'uid': uid,
+                    'type': 'earn',
+                    'action': 'admin_award',
+                    'reason': reasonCtrl.text.trim(),
+                    'points': pts,
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
 
               // Increment user points
               await FirebaseFirestore.instance
                   .collection('users')
                   .doc(uid)
                   .update({
-                'loyaltyPoints': FieldValue.increment(pts),
-                'totalPointsEarned': FieldValue.increment(pts),
-              });
+                    'loyaltyPoints': FieldValue.increment(pts),
+                    'totalPointsEarned': FieldValue.increment(pts),
+                  });
 
               if (ctx.mounted) Navigator.pop(ctx);
-              if (mounted) {
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Awarded $pts pts to $uid')),
                 );
@@ -298,15 +309,19 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),
@@ -352,14 +367,19 @@ class _EventRow extends StatelessWidget {
                 Text(
                   action.toString().replaceAll('_', ' '),
                   style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AdminColors.ink,
-                      fontSize: 13),
+                    fontWeight: FontWeight.w600,
+                    color: AdminColors.ink,
+                    fontSize: 13,
+                  ),
                 ),
                 if (reason.isNotEmpty)
-                  Text(reason,
-                      style: const TextStyle(
-                          fontSize: 11, color: AdminColors.muted)),
+                  Text(
+                    reason,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AdminColors.muted,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -377,9 +397,10 @@ class _EventRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           if (ts != null)
-            Text(DateFormat.MMMd().add_jm().format(ts),
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              DateFormat.MMMd().add_jm().format(ts),
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
         ],
       ),
     );

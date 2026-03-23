@@ -200,6 +200,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
+                        tooltip: 'Clear search',
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           setState(() {

@@ -92,9 +92,9 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
       );
       return;
     }
-    if (_zip == null || _zip!.length < 5) {
+    if (_zip == null || !RegExp(r'^\d{5}$').hasMatch(_zip!)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your ZIP code.')),
+        const SnackBar(content: Text('Please enter a valid 5-digit ZIP code.')),
       );
       return;
     }
@@ -152,10 +152,19 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
         );
         _loading = false;
       });
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            e.message ??
+            'The AI service is temporarily unavailable. Please try again.';
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not generate estimate. Please try again.';
+        _error =
+            'Could not generate estimate. Check your connection and try again.';
         _loading = false;
       });
     }
@@ -187,14 +196,31 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
               color: scheme.errorContainer,
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.error_outline, color: scheme.onErrorContainer),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: TextStyle(color: scheme.onErrorContainer),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: scheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: TextStyle(color: scheme.onErrorContainer),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _getInstantQuote,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
                       ),
                     ),
                   ],
@@ -479,9 +505,10 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
               final user = FirebaseAuth.instance.currentUser;
               if (user != null && user.isAnonymous) {
                 final captured = await _showEmailCapture(context);
-                if (!captured && !context.mounted) return;
+                if (!captured) return;
               }
               if (!context.mounted) return;
+              // ignore: use_build_context_synchronously
               context.go(
                 '/smart-request',
                 extra: {

@@ -35,8 +35,10 @@ class _SubmitBidScreenState extends State<SubmitBidScreen> {
     final estimatedDays = int.tryParse(_daysController.text);
     if (amount == null ||
         amount <= 0 ||
+        amount > 500000 ||
         estimatedDays == null ||
-        estimatedDays <= 0) {
+        estimatedDays <= 0 ||
+        estimatedDays > 365) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid amount and timeline.'),
@@ -152,6 +154,9 @@ class _SubmitBidScreenState extends State<SubmitBidScreen> {
                   if (amount == null || amount <= 0) {
                     return 'Please enter a valid amount';
                   }
+                  if (amount > 500000) {
+                    return 'Amount cannot exceed \$500,000';
+                  }
                   return null;
                 },
               ),
@@ -170,6 +175,9 @@ class _SubmitBidScreenState extends State<SubmitBidScreen> {
                   final days = int.tryParse(value);
                   if (days == null || days <= 0) {
                     return 'Please enter a valid number';
+                  }
+                  if (days > 365) {
+                    return 'Estimated days cannot exceed 365';
                   }
                   return null;
                 },

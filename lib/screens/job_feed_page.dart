@@ -194,6 +194,27 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         .timeout(const Duration(seconds: 10));
   }
 
+  /// Batch-load multiple job docs by ID (avoids N+1 individual fetches).
+  Future<Map<String, Map<String, dynamic>>> _batchLoadJobs(
+    List<String> ids,
+  ) async {
+    if (ids.isEmpty) return {};
+    final db = FirebaseFirestore.instance;
+    final results = <String, Map<String, dynamic>>{};
+    // Firestore 'in' queries support max 10 items.
+    for (var i = 0; i < ids.length; i += 10) {
+      final chunk = ids.sublist(i, (i + 10).clamp(0, ids.length));
+      final snap = await db
+          .collection('job_requests')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        results[doc.id] = doc.data();
+      }
+    }
+    return results;
+  }
+
   void _openJobDetail({required String jobId, Map<String, dynamic>? jobData}) {
     if (_isNavigatingToDetail) return;
     _isNavigatingToDetail = true;
@@ -1271,52 +1292,64 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               final invites = invitesSnap.data!.docs;
               if (invites.isEmpty) return const SizedBox.shrink();
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Invited to bid',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-                        for (final invite in invites)
-                          FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                            future: FirebaseFirestore.instance
-                                .collection('job_requests')
-                                .doc((invite.data()['jobId'] ?? '').toString())
-                                .get(),
-                            builder: (context, jobSnap) {
-                              final job = jobSnap.data?.data();
-                              if (job == null) return const SizedBox.shrink();
+              // Batch-load all invited job docs to avoid N+1.
+              final jobIds = invites
+                  .map((d) => (d.data()['jobId'] ?? '').toString())
+                  .where((id) => id.isNotEmpty)
+                  .toSet()
+                  .toList();
 
-                              final service = (job['service'] ?? 'Service')
-                                  .toString();
-                              final location = (job['location'] ?? 'Unknown')
-                                  .toString();
-                              final jobId = jobSnap.data!.id;
-
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const Icon(Icons.mail_outline),
-                                title: Text(service),
-                                subtitle: Text(location),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () {
-                                  _openJobDetail(jobId: jobId, jobData: job);
+              return FutureBuilder<Map<String, Map<String, dynamic>>>(
+                future: _batchLoadJobs(jobIds),
+                builder: (context, jobsSnap) {
+                  final jobsMap = jobsSnap.data ?? {};
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Invited to bid',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 10),
+                            for (final invite in invites)
+                              Builder(
+                                builder: (context) {
+                                  final jobId = (invite.data()['jobId'] ?? '')
+                                      .toString();
+                                  final job = jobsMap[jobId];
+                                  if (job == null)
+                                    return const SizedBox.shrink();
+                                  final service = (job['service'] ?? 'Service')
+                                      .toString();
+                                  final location =
+                                      (job['location'] ?? 'Unknown').toString();
+                                  return ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(Icons.mail_outline),
+                                    title: Text(service),
+                                    subtitle: Text(location),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () {
+                                      _openJobDetail(
+                                        jobId: jobId,
+                                        jobData: job,
+                                      );
+                                    },
+                                  );
                                 },
-                              );
-                            },
-                          ),
-                      ],
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           );

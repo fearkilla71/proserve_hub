@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Lead Credits Marketplace Admin — Credit transaction history, pricing
@@ -55,47 +54,47 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
         .limit(500)
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      double revenue = 0;
-      int circ = 0;
-      for (final t in docs) {
-        final type = t['type'] ?? '';
-        final amount = (t['credits'] as num?)?.toInt() ?? 0;
-        if (type == 'purchase') {
-          revenue += (t['pricePaid'] as num?)?.toDouble() ?? 0;
-          circ += amount;
-        } else if (type == 'spend') {
-          circ -= amount;
-        }
-      }
+          double revenue = 0;
+          int circ = 0;
+          for (final t in docs) {
+            final type = t['type'] ?? '';
+            final amount = (t['credits'] as num?)?.toInt() ?? 0;
+            if (type == 'purchase') {
+              revenue += (t['pricePaid'] as num?)?.toDouble() ?? 0;
+              circ += amount;
+            } else if (type == 'spend') {
+              circ -= amount;
+            }
+          }
 
-      setState(() {
-        _transactions = docs;
-        _totalTxns = docs.length;
-        _totalRevenue = revenue;
-        _creditsInCirculation = circ;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _transactions = docs;
+            _totalTxns = docs.length;
+            _totalRevenue = revenue;
+            _creditsInCirculation = circ;
+            _loading = false;
+          });
+        });
 
     _packSub = FirebaseFirestore.instance
         .collection('lead_credit_packs')
         .snapshots()
         .listen((snap) {
-      setState(() {
-        _packs = snap.docs.map((d) {
-          final data = d.data();
-          data['id'] = d.id;
-          return data;
-        }).toList();
-        _activePacks = _packs.where((p) => p['active'] == true).length;
-      });
-    });
+          setState(() {
+            _packs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
+            _activePacks = _packs.where((p) => p['active'] == true).length;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -106,9 +105,11 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((t) =>
-              (t['userId'] ?? '').toString().toLowerCase().contains(q) ||
-              (t['userName'] ?? '').toString().toLowerCase().contains(q))
+          .where(
+            (t) =>
+                (t['userId'] ?? '').toString().toLowerCase().contains(q) ||
+                (t['userName'] ?? '').toString().toLowerCase().contains(q),
+          )
           .toList();
     }
     return list;
@@ -116,7 +117,7 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     return DefaultTabController(
       length: 2,
@@ -128,28 +129,31 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
             child: Row(
               children: [
                 _kpi('Transactions', '$_totalTxns', AdminColors.accent2),
-                _kpi('Revenue',
-                    '\$${NumberFormat.compact().format(_totalRevenue)}',
-                    AdminColors.accent),
-                _kpi('In Circulation',
-                    NumberFormat.compact().format(_creditsInCirculation),
-                    AdminColors.accent3),
+                _kpi(
+                  'Revenue',
+                  '\$${NumberFormat.compact().format(_totalRevenue)}',
+                  AdminColors.accent,
+                ),
+                _kpi(
+                  'In Circulation',
+                  NumberFormat.compact().format(_creditsInCirculation),
+                  AdminColors.accent3,
+                ),
                 _kpi('Packs', '$_activePacks', AdminColors.warning),
               ],
             ),
           ),
 
-          const TabBar(tabs: [
-            Tab(text: 'Transactions'),
-            Tab(text: 'Credit Packs'),
-          ]),
+          const TabBar(
+            tabs: [
+              Tab(text: 'Transactions'),
+              Tab(text: 'Credit Packs'),
+            ],
+          ),
 
           Expanded(
             child: TabBarView(
-              children: [
-                _buildTransactionsTab(),
-                _buildPacksTab(),
-              ],
+              children: [_buildTransactionsTab(), _buildPacksTab()],
             ),
           ),
         ],
@@ -173,11 +177,12 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(s[0].toUpperCase() + s.substring(1),
-                        style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      s[0].toUpperCase() + s.substring(1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: _filter == s,
-                    selectedColor:
-                        AdminColors.accent2.withValues(alpha: 0.15),
+                    selectedColor: AdminColors.accent2.withValues(alpha: 0.15),
                     onSelected: (_) => setState(() => _filter = s),
                   ),
                 ),
@@ -190,7 +195,8 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -203,22 +209,22 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No transactions found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No transactions found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final t = filtered[i];
                     final type = t['type'] ?? 'purchase';
-                    final credits =
-                        (t['credits'] as num?)?.toInt() ?? 0;
-                    final price =
-                        (t['pricePaid'] as num?)?.toDouble();
+                    final credits = (t['credits'] as num?)?.toInt() ?? 0;
+                    final price = (t['pricePaid'] as num?)?.toDouble();
                     final userName = t['userName'] ?? '';
-                    final ts =
-                        (t['createdAt'] as Timestamp?)?.toDate();
+                    final ts = (t['createdAt'] as Timestamp?)?.toDate();
 
                     final isSpend = type == 'spend';
                     final color = isSpend
@@ -244,24 +250,24 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    userName.toString().isNotEmpty
-                                        ? userName.toString()
-                                        : type,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                  userName.toString().isNotEmpty
+                                      ? userName.toString()
+                                      : type,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 if (ts != null)
                                   Text(
-                                    DateFormat.yMMMd()
-                                        .add_jm()
-                                        .format(ts),
+                                    DateFormat.yMMMd().add_jm().format(ts),
                                     style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AdminColors.muted),
+                                      fontSize: 11,
+                                      color: AdminColors.muted,
+                                    ),
                                   ),
                               ],
                             ),
@@ -269,21 +275,27 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                           Text(
                             '${isSpend ? '-' : '+'}$credits',
                             style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: color),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: color,
+                            ),
                           ),
                           if (price != null) ...[
                             const SizedBox(width: 10),
-                            Text('\$${price.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AdminColors.muted)),
+                            Text(
+                              '\$${price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AdminColors.muted,
+                              ),
+                            ),
                           ],
                           const SizedBox(width: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
@@ -291,9 +303,10 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                             child: Text(
                               type,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: color),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: color,
+                              ),
                             ),
                           ),
                         ],
@@ -326,22 +339,22 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
         Expanded(
           child: _packs.isEmpty
               ? Center(
-                  child: Text('No credit packs configured',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No credit packs configured',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _packs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final p = _packs[i];
                     final name = p['name'] ?? 'Pack';
-                    final credits =
-                        (p['credits'] as num?)?.toInt() ?? 0;
-                    final price =
-                        (p['price'] as num?)?.toDouble() ?? 0;
+                    final credits = (p['credits'] as num?)?.toInt() ?? 0;
+                    final price = (p['price'] as num?)?.toDouble() ?? 0;
                     final active = p['active'] == true;
-                    final sold =
-                        (p['totalSold'] as num?)?.toInt() ?? 0;
+                    final sold = (p['totalSold'] as num?)?.toInt() ?? 0;
 
                     return Container(
                       padding: const EdgeInsets.all(14),
@@ -352,26 +365,31 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.token,
-                              size: 18,
-                              color: active
-                                  ? AdminColors.accent
-                                  : AdminColors.muted),
+                          Icon(
+                            Icons.token,
+                            size: 18,
+                            color: active
+                                ? AdminColors.accent
+                                : AdminColors.muted,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(name.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                Text(
+                                  name.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 Text(
                                   '$credits credits · \$${price.toStringAsFixed(2)} · $sold sold',
                                   style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AdminColors.muted),
+                                    fontSize: 11,
+                                    color: AdminColors.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -387,11 +405,12 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
                               },
                             ),
                             IconButton(
-                              icon: const Icon(Icons.edit,
-                                  size: 18,
-                                  color: AdminColors.accent2),
-                              onPressed: () =>
-                                  _showPackDialog(context, p),
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 18,
+                                color: AdminColors.accent2,
+                              ),
+                              onPressed: () => _showPackDialog(context, p),
                             ),
                           ],
                         ],
@@ -404,14 +423,16 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
     );
   }
 
-  void _showPackDialog(
-      BuildContext context, Map<String, dynamic>? pack) {
+  void _showPackDialog(BuildContext context, Map<String, dynamic>? pack) {
     final nameCtrl = TextEditingController(
-        text: pack?['name'] as String? ?? '');
+      text: pack?['name'] as String? ?? '',
+    );
     final creditsCtrl = TextEditingController(
-        text: (pack?['credits'] ?? 10).toString());
+      text: (pack?['credits'] ?? 10).toString(),
+    );
     final priceCtrl = TextEditingController(
-        text: (pack?['price'] ?? 9.99).toString());
+      text: (pack?['price'] ?? 9.99).toString(),
+    );
 
     showDialog(
       context: context,
@@ -425,40 +446,42 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
               TextField(
                 controller: nameCtrl,
                 decoration: const InputDecoration(
-                    labelText: 'Pack Name',
-                    border: OutlineInputBorder()),
+                  labelText: 'Pack Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: creditsCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                    labelText: 'Credits',
-                    border: OutlineInputBorder()),
+                  labelText: 'Credits',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: priceCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                    labelText: 'Price (\$)',
-                    border: OutlineInputBorder()),
+                  labelText: 'Price (\$)',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               final data = {
                 'name': nameCtrl.text.trim(),
-                'credits':
-                    int.tryParse(creditsCtrl.text.trim()) ?? 10,
-                'price':
-                    double.tryParse(priceCtrl.text.trim()) ?? 9.99,
+                'credits': int.tryParse(creditsCtrl.text.trim()) ?? 10,
+                'price': double.tryParse(priceCtrl.text.trim()) ?? 9.99,
                 'updatedAt': FieldValue.serverTimestamp(),
               };
               if (pack != null) {
@@ -495,15 +518,19 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ChatPage extends StatefulWidget {
   final String jobId;
@@ -16,11 +19,33 @@ class _ChatPageState extends State<ChatPage> {
   bool _readyChecked = false;
   String? _lockReason;
   bool _didClearUnread = false;
+  Timer? _typingTimer;
+  bool _isTyping = false;
 
   @override
   void dispose() {
+    _typingTimer?.cancel();
+    _setTyping(false);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged(String value) {
+    if (value.trim().isNotEmpty && !_isTyping) {
+      _setTyping(true);
+    }
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () => _setTyping(false));
+  }
+
+  void _setTyping(bool typing) {
+    if (_isTyping == typing) return;
+    _isTyping = typing;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    FirebaseFirestore.instance.collection('chats').doc(widget.jobId).set({
+      'typing': {uid: typing},
+    }, SetOptions(merge: true));
   }
 
   Future<void> _ensureChatReady() async {
@@ -107,9 +132,11 @@ class _ChatPageState extends State<ChatPage> {
         'senderId': user.uid,
         'text': text,
         'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
       });
     });
 
+    _setTyping(false);
     _controller.clear();
   }
 
@@ -148,22 +175,35 @@ class _ChatPageState extends State<ChatPage> {
                 final userId = FirebaseAuth.instance.currentUser?.uid;
                 final messages = snapshot.data!.docs;
 
+                // Mark unread messages as read.
+                if (userId != null) {
+                  for (final doc in messages) {
+                    final d = doc.data();
+                    if (d['senderId'] != userId && d['read'] != true) {
+                      doc.reference.update({'read': true});
+                    }
+                  }
+                }
+
                 if (messages.isEmpty) {
                   return const Center(child: Text('No messages yet'));
                 }
 
                 return ListView.builder(
+                  reverse: true,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
                   ),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final data = messages[index].data();
+                    final data = messages[messages.length - 1 - index].data();
                     final senderId =
                         (data['senderId'] as String?)?.trim() ?? '';
                     final text = (data['text'] as String?)?.trim() ?? '';
                     final isMe = userId != null && senderId == userId;
+                    final ts = data['timestamp'] as Timestamp?;
+                    final isRead = data['read'] == true;
 
                     final bubbleColor = isMe
                         ? scheme.primary
@@ -187,13 +227,89 @@ class _ChatPageState extends State<ChatPage> {
                           color: bubbleColor,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Text(text, style: TextStyle(color: textColor)),
+                        child: Column(
+                          crossAxisAlignment: isMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(text, style: TextStyle(color: textColor)),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (ts != null)
+                                  Text(
+                                    DateFormat.jm().format(ts.toDate()),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: textColor.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                if (isMe) ...[
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    isRead ? Icons.done_all : Icons.done,
+                                    size: 14,
+                                    color: isRead
+                                        ? Colors.lightBlueAccent
+                                        : textColor.withValues(alpha: 0.6),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
                 );
               },
             ),
+          ),
+          // Typing indicator
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('chats')
+                .doc(widget.jobId)
+                .snapshots(),
+            builder: (context, snap) {
+              final uid = FirebaseAuth.instance.currentUser?.uid;
+              if (!snap.hasData || uid == null) return const SizedBox.shrink();
+              final typing =
+                  snap.data?.data()?['typing'] as Map<String, dynamic>? ?? {};
+              final otherTyping = typing.entries.any(
+                (e) => e.key != uid && e.value == true,
+              );
+              if (!otherTyping) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'typing…',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           SafeArea(
             top: false,
@@ -208,6 +324,7 @@ class _ChatPageState extends State<ChatPage> {
                       decoration: const InputDecoration(
                         hintText: 'Type message…',
                       ),
+                      onChanged: _onTextChanged,
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),

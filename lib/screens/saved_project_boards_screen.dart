@@ -3,18 +3,42 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/proserve_theme.dart';
+import '../widgets/skeleton_loader.dart';
 
 /// Saved Project Boards — customers save future projects with photos, notes,
 /// and pinned contractors for later booking.
-class SavedProjectBoardsScreen extends StatelessWidget {
+class SavedProjectBoardsScreen extends StatefulWidget {
   final String? highlightBoardId;
   const SavedProjectBoardsScreen({super.key, this.highlightBoardId});
+
+  @override
+  State<SavedProjectBoardsScreen> createState() =>
+      _SavedProjectBoardsScreenState();
+}
+
+class _SavedProjectBoardsScreenState extends State<SavedProjectBoardsScreen> {
+  String _search = '';
+  String _serviceFilter = 'all';
+
+  static const _serviceOptions = {
+    'all': 'All',
+    'interior_painting': 'Interior',
+    'exterior_painting': 'Exterior',
+    'drywall_repair': 'Drywall',
+    'pressure_washing': 'Pressure Wash',
+    'cabinets': 'Cabinets',
+    'roofing': 'Roofing',
+    'flooring': 'Flooring',
+    'plumbing': 'Plumbing',
+    'electrical': 'Electrical',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +50,59 @@ class SavedProjectBoardsScreen extends StatelessWidget {
       );
     }
 
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved Projects'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Saved Projects'),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(90),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search projects…',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    filled: true,
+                    fillColor: scheme.surfaceContainerHighest,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  onChanged: (v) =>
+                      setState(() => _search = v.trim().toLowerCase()),
+                ),
+              ),
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: _serviceOptions.entries.map((e) {
+                    final active = _serviceFilter == e.key;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: FilterChip(
+                        label: Text(e.value),
+                        selected: active,
+                        onSelected: (_) =>
+                            setState(() => _serviceFilter = e.key),
+                        showCheckmark: false,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateBoard(context, uid),
         icon: const Icon(Icons.add),
@@ -42,31 +117,67 @@ class SavedProjectBoardsScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 3,
+              itemBuilder: (_, _) => _BoardCardSkeleton(),
+            );
           }
 
           if (snap.hasError) {
             return Center(
-              child: Text('Could not load projects.',
-                  style: TextStyle(color: ProServeColors.muted)),
+              child: Text(
+                'Could not load projects.',
+                style: TextStyle(color: ProServeColors.muted),
+              ),
             );
           }
 
-          final boards = snap.data?.docs ?? [];
+          final allBoards = snap.data?.docs ?? [];
 
-          if (boards.isEmpty) return _buildEmptyState(context, uid);
+          if (allBoards.isEmpty) return _buildEmptyState(context, uid);
+
+          // Client-side search + service filter.
+          final boards = allBoards.where((doc) {
+            final data = doc.data();
+            if (_serviceFilter != 'all') {
+              final svc =
+                  (data['service'] ?? '').toString().toLowerCase();
+              if (svc != _serviceFilter) return false;
+            }
+            if (_search.isNotEmpty) {
+              final searchable = [
+                data['name'] ?? '',
+                data['service'] ?? '',
+                data['notes'] ?? '',
+              ].join(' ').toLowerCase();
+              if (!searchable.contains(_search)) return false;
+            }
+            return true;
+          }).toList();
+
+          if (boards.isEmpty) {
+            return Center(
+              child: Text(
+                'No matching projects.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            );
+          }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: boards.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, i) {
               final data = boards[i].data();
               return _BoardCard(
                 boardId: boards[i].id,
                 userId: uid,
                 data: data,
-                highlight: boards[i].id == highlightBoardId,
+                highlight: boards[i].id == widget.highlightBoardId,
               );
             },
           );
@@ -274,12 +385,15 @@ class _BoardCard extends StatelessWidget {
                       width: 120,
                       height: 100,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      semanticLabel: 'Project photo ${i + 1}',
+                      errorBuilder: (_, _, _) => Container(
                         width: 120,
                         height: 100,
                         color: ProServeColors.card,
-                        child: Icon(Icons.broken_image,
-                            color: ProServeColors.muted),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: ProServeColors.muted,
+                        ),
                       ),
                     );
                   },
@@ -458,6 +572,40 @@ class _MiniStat extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BoardCardSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonLoader(
+              width: 180,
+              height: 18,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const SizedBox(height: 12),
+            SkeletonLoader(
+              width: 120,
+              height: 14,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const SizedBox(height: 12),
+            SkeletonLoader(
+              width: double.infinity,
+              height: 100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

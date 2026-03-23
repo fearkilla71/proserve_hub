@@ -1398,9 +1398,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                   final result = diagSnap.data;
                                   final docs = result?.docs ?? const [];
                                   if (docs.isEmpty) {
-                                    return const Text(
-                                      'No requests yet. Start a new request to see it here.',
-                                    );
+                                    return _buildEmptyRequestsState(context);
                                   }
 
                                   // Render what we got from the one-shot
@@ -1478,19 +1476,48 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         });
 
                         if (docs.isEmpty) {
-                          return const Text(
-                            'No requests yet. Start a new request to see it here.',
-                          );
+                          return _buildEmptyRequestsState(context);
                         }
 
+                        final isFromCache = jobsSnap.data!.metadata.isFromCache;
+
                         return Column(
-                          children: docs.map((doc) {
-                            return _buildRequestCard(
-                              context: context,
-                              docId: doc.id,
-                              data: doc.data(),
-                            );
-                          }).toList(),
+                          children: [
+                            if (isFromCache)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_off,
+                                      size: 16,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Showing cached data — you appear to be offline',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ...docs.map((doc) {
+                              return _buildRequestCard(
+                                context: context,
+                                docId: doc.id,
+                                data: doc.data(),
+                              );
+                            }),
+                          ],
                         );
                       },
                     ),
@@ -1503,6 +1530,47 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           ),
         );
       },
+    );
+  }
+
+  // ────────────────── Empty Requests State ────────────────────
+
+  Widget _buildEmptyRequestsState(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Column(
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              size: 56,
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No requests yet',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Post your first service request and local pros will send you quotes.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context.push('/smart-request'),
+              icon: const Icon(Icons.add),
+              label: const Text('Start a Request'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

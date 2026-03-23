@@ -1,17 +1,74 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
-/// Point values for different actions.
-const int pointsPerJobBooked = 100;
-const int pointsPerReviewLeft = 25;
-const int pointsPerReferral = 200;
-const int pointsPerRepeatBooking = 50;
+/// Remote-configurable loyalty / gamification values.
+///
+/// Call [LoyaltyConfig.init] once at app startup (idempotent).  Values are
+/// pulled from Firebase Remote Config; the compile-time defaults below are
+/// used as fallbacks when no remote value is available.
+class LoyaltyConfig {
+  LoyaltyConfig._();
+  static final instance = LoyaltyConfig._();
 
-/// XP values for contractor actions.
-const int xpPerJobCompleted = 150;
-const int xpPerFiveStarReview = 50;
-const int xpPerMilestoneCompleted = 20;
-const int xpPerPhotoUploaded = 10;
-const int xpPerQuoteSubmitted = 15;
+  bool _initialised = false;
+
+  // ── Homeowner points (defaults) ──
+  int pointsPerJobBooked = 100;
+  int pointsPerReviewLeft = 25;
+  int pointsPerReferral = 200;
+  int pointsPerRepeatBooking = 50;
+
+  // ── Contractor XP (defaults) ──
+  int xpPerJobCompleted = 150;
+  int xpPerFiveStarReview = 50;
+  int xpPerMilestoneCompleted = 20;
+  int xpPerPhotoUploaded = 10;
+  int xpPerQuoteSubmitted = 15;
+
+  /// Fetch the latest values from Remote Config.
+  Future<void> init() async {
+    if (_initialised) return;
+    _initialised = true;
+    try {
+      final rc = FirebaseRemoteConfig.instance;
+      await rc.setDefaults({
+        'loyalty_points_per_job_booked': 100,
+        'loyalty_points_per_review_left': 25,
+        'loyalty_points_per_referral': 200,
+        'loyalty_points_per_repeat_booking': 50,
+        'loyalty_xp_per_job_completed': 150,
+        'loyalty_xp_per_five_star_review': 50,
+        'loyalty_xp_per_milestone_completed': 20,
+        'loyalty_xp_per_photo_uploaded': 10,
+        'loyalty_xp_per_quote_submitted': 15,
+      });
+      await rc.fetchAndActivate();
+      pointsPerJobBooked = rc.getInt('loyalty_points_per_job_booked');
+      pointsPerReviewLeft = rc.getInt('loyalty_points_per_review_left');
+      pointsPerReferral = rc.getInt('loyalty_points_per_referral');
+      pointsPerRepeatBooking = rc.getInt('loyalty_points_per_repeat_booking');
+      xpPerJobCompleted = rc.getInt('loyalty_xp_per_job_completed');
+      xpPerFiveStarReview = rc.getInt('loyalty_xp_per_five_star_review');
+      xpPerMilestoneCompleted = rc.getInt('loyalty_xp_per_milestone_completed');
+      xpPerPhotoUploaded = rc.getInt('loyalty_xp_per_photo_uploaded');
+      xpPerQuoteSubmitted = rc.getInt('loyalty_xp_per_quote_submitted');
+    } catch (_) {
+      // Keep compile-time defaults on failure.
+    }
+  }
+}
+
+// Top-level getters for backward compatibility.
+int get pointsPerJobBooked => LoyaltyConfig.instance.pointsPerJobBooked;
+int get pointsPerReviewLeft => LoyaltyConfig.instance.pointsPerReviewLeft;
+int get pointsPerReferral => LoyaltyConfig.instance.pointsPerReferral;
+int get pointsPerRepeatBooking => LoyaltyConfig.instance.pointsPerRepeatBooking;
+int get xpPerJobCompleted => LoyaltyConfig.instance.xpPerJobCompleted;
+int get xpPerFiveStarReview => LoyaltyConfig.instance.xpPerFiveStarReview;
+int get xpPerMilestoneCompleted =>
+    LoyaltyConfig.instance.xpPerMilestoneCompleted;
+int get xpPerPhotoUploaded => LoyaltyConfig.instance.xpPerPhotoUploaded;
+int get xpPerQuoteSubmitted => LoyaltyConfig.instance.xpPerQuoteSubmitted;
 
 /// Contractor level thresholds (total XP).
 const List<Map<String, dynamic>> contractorLevels = [

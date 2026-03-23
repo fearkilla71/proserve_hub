@@ -102,6 +102,7 @@ import '../screens/multi_location_dashboard_screen.dart';
 import '../screens/sub_marketplace_screen.dart';
 import '../screens/bid_analyzer_screen.dart';
 import '../widgets/offline_banner.dart';
+import '../state/app_state.dart';
 
 /// Centralised route path constants.
 ///
@@ -279,6 +280,46 @@ GoRouter createRouter() {
       final loggedIn = FirebaseAuth.instance.currentUser != null;
       final isPublic = publicPaths.contains(state.matchedLocation);
       if (!loggedIn && !isPublic) return '/';
+
+      // ── Role-based guards ──
+      if (loggedIn) {
+        final appState = AppState.read(context);
+        final path = state.matchedLocation;
+
+        // Contractor-only paths (exclude login/signup which are public).
+        const contractorPrefixes = [
+          '/contractor-portal',
+          '/contractor-subscription',
+          '/contractor-profile-settings',
+          '/contractor-analytics',
+          '/contractor-post-job',
+          '/contractor-job-detail',
+          '/contractor-qr',
+        ];
+
+        // Customer-only paths (exclude login/signup which are public).
+        const customerPrefixes = [
+          '/customer-portal',
+          '/customer-profile',
+          '/customer-analytics',
+          '/customer-crm',
+        ];
+
+        // Block customers from contractor-only routes.
+        if (appState.isCustomer) {
+          for (final prefix in contractorPrefixes) {
+            if (path.startsWith(prefix)) return '/customer-portal';
+          }
+        }
+
+        // Block contractors from customer-only routes.
+        if (appState.isContractor) {
+          for (final prefix in customerPrefixes) {
+            if (path.startsWith(prefix)) return '/contractor-portal';
+          }
+        }
+      }
+
       return null;
     },
     routes: [

@@ -22,7 +22,9 @@ class ContractorReputationCard extends StatelessWidget {
     final repeatCustomerRate =
         (reputationData['repeatCustomerRate'] as num?)?.toDouble() ?? 0.0;
     final totalJobs =
-        (reputationData['totalJobsCompleted'] as num?)?.toInt() ?? 0;
+        (reputationData['totalJobsCompleted'] as num?)?.toInt() ??
+        (reputationData['completedJobs'] as num?)?.toInt() ??
+        0;
     final isTopPro = reputationData['topProBadge'] == true;
 
     if (compact) {

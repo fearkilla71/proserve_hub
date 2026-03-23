@@ -548,7 +548,8 @@ exports.onUserDeletedCleanupLeads = functions.auth.user().onDelete(async (user) 
 // - Exclusive: $80 each, first buyer locks the lead (others cannot purchase/see contact).
 // Credits stored on users/{uid}.leadCredits and users/{uid}.exclusiveLeadCredits.
 // `users/{uid}.credits` is kept as a backwards-compatible alias for non-exclusive credits.
-const LEAD_PACKS = {
+// Default lead packs – used as fallback when config/lead_packs doc is missing.
+const DEFAULT_LEAD_PACKS = {
   // Non-exclusive packs
   ne_1: { leads: 1, amountCents: 5000, name: '1 Lead (Non-exclusive)', creditType: 'non_exclusive' },
   ne_10: { leads: 10, amountCents: 45000, name: '10 Leads (Non-exclusive)', creditType: 'non_exclusive' },
@@ -559,10 +560,41 @@ const LEAD_PACKS = {
   ex_20: { leads: 20, amountCents: 136000, name: '20 Leads (Exclusive)', creditType: 'exclusive' },
 };
 
-function getLeadPack(packId) {
+// In-memory cache for Firestore-configured lead packs (TTL: 5 min).
+let _leadPacksCache = null;
+let _leadPacksCacheTs = 0;
+const LEAD_PACKS_CACHE_TTL = 5 * 60 * 1000;
+
+async function loadLeadPacks() {
+  const now = Date.now();
+  if (_leadPacksCache && now - _leadPacksCacheTs < LEAD_PACKS_CACHE_TTL) {
+    return _leadPacksCache;
+  }
+  try {
+    const doc = await admin.firestore().collection('config').doc('lead_packs').get();
+    if (doc.exists) {
+      const data = doc.data() || {};
+      const packs = data.packs;
+      if (packs && typeof packs === 'object' && Object.keys(packs).length > 0) {
+        _leadPacksCache = packs;
+        _leadPacksCacheTs = now;
+        return packs;
+      }
+    }
+  } catch (e) {
+    console.warn('[loadLeadPacks] Failed to load config, using defaults', e);
+  }
+  _leadPacksCache = DEFAULT_LEAD_PACKS;
+  _leadPacksCacheTs = now;
+  return DEFAULT_LEAD_PACKS;
+}
+
+async function getLeadPack(packId) {
   const key = (packId || '').toString().trim();
-  return key && Object.prototype.hasOwnProperty.call(LEAD_PACKS, key)
-    ? { id: key, ...LEAD_PACKS[key] }
+  if (!key) return null;
+  const packs = await loadLeadPacks();
+  return Object.prototype.hasOwnProperty.call(packs, key)
+    ? { id: key, ...packs[key] }
     : null;
 }
 
@@ -946,6 +978,25 @@ async function hardDeleteUserCore({ adminUid, targetUid, reason }) {
     // ignore if contractor doc missing
   }
 
+  // Clean up top-level references (bids, reviews) left by this user.
+  const cleanups = [
+    { collection: 'bids', field: 'contractorId' },
+    { collection: 'bids', field: 'customerId' },
+    { collection: 'reviews', field: 'reviewerUid' },
+  ];
+  for (const { collection, field } of cleanups) {
+    try {
+      const snap = await db.collection(collection).where(field, '==', safeTargetUid).get();
+      if (!snap.empty) {
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn(`[hardDeleteUserCore] Failed to clean ${collection}.${field}`, e);
+    }
+  }
+
   try {
     await admin.auth().deleteUser(safeTargetUid);
   } catch (err) {
@@ -1050,7 +1101,7 @@ async function createLeadPackCheckoutSessionCore({ uid, packId }) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
 
-  const pack = getLeadPack(packId);
+  const pack = await getLeadPack(packId);
   if (!pack) {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid packId');
   }
@@ -6320,7 +6371,7 @@ async function fulfillLeadPackFromCheckoutSession(session) {
   const packId = (session.metadata?.packId || '').toString().trim();
   const creditType = normalizeLeadCreditType(session.metadata?.creditType);
 
-  const pack = getLeadPack(packId);
+  const pack = await getLeadPack(packId);
   if (!contractorId || !pack) return;
 
   const db = admin.firestore();
@@ -8073,6 +8124,65 @@ exports.autoRefundExpiredEscrows = functions
     }
 
     console.log(`[autoRefundExpiredEscrows] Done. Refunded: ${refunded}, Failed: ${failed}`);
+    return null;
+  });
+
+
+// ============================================================================
+// AUTO-EXPIRE STALE OFFERED ESCROWS (runs every hour)
+// ============================================================================
+
+/**
+ * Scheduled function — runs every hour.
+ * Finds escrow bookings stuck in 'offered' status for more than 24 hours
+ * (customer never funded) and marks them as 'cancelled' so they stop
+ * cluttering the user's project page.
+ */
+exports.autoExpireStaleOffers = functions
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
+  .pubsub.schedule('every 1 hours')
+  .timeZone('UTC')
+  .onRun(async () => {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const snapshot = await admin.firestore()
+      .collection('escrow_bookings')
+      .where('status', '==', 'offered')
+      .where('createdAt', '<=', admin.firestore.Timestamp.fromDate(twentyFourHoursAgo))
+      .get();
+
+    if (snapshot.empty) {
+      console.log('[autoExpireStaleOffers] No stale offers found.');
+      return null;
+    }
+
+    const batch = admin.firestore().batch();
+    let count = 0;
+
+    for (const doc of snapshot.docs) {
+      batch.update(doc.ref, {
+        status: 'cancelled',
+        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancelReason: 'Offer expired — not accepted within 24 hours',
+      });
+
+      // Also reset the linked job_request so customer can re-request
+      const escrow = doc.data();
+      if (escrow.jobId) {
+        const jobRef = admin.firestore().collection('job_requests').doc(escrow.jobId);
+        batch.update(jobRef, {
+          status: 'open',
+          escrowId: admin.firestore.FieldValue.delete(),
+          escrowPrice: admin.firestore.FieldValue.delete(),
+          instantBook: admin.firestore.FieldValue.delete(),
+        });
+      }
+
+      count++;
+    }
+
+    await batch.commit();
+    console.log(`[autoExpireStaleOffers] Expired ${count} stale offer(s).`);
     return null;
   });
 

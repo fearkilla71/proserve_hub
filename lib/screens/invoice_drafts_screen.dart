@@ -18,6 +18,8 @@ class InvoiceDraftsScreen extends StatefulWidget {
 class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
   String _search = '';
   String _statusFilter = 'all';
+  final Set<String> _selected = {};
+  bool _selectMode = false;
 
   static const _statusOptions = [
     'all',
@@ -61,7 +63,36 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invoices'),
+        leading: _selectMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => setState(() {
+                  _selectMode = false;
+                  _selected.clear();
+                }),
+              )
+            : null,
+        title: _selectMode
+            ? Text('${_selected.length} selected')
+            : const Text('Invoices'),
+        actions: _selectMode
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Change status',
+                  onPressed: _selected.isEmpty
+                      ? null
+                      : () => _batchStatusSheet(context),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Delete selected',
+                  onPressed: _selected.isEmpty
+                      ? null
+                      : () => _batchDelete(context),
+                ),
+              ]
+            : null,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
           child: Column(
@@ -121,6 +152,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
             .doc(uid)
             .collection('invoice_drafts')
             .orderBy('updatedAt', descending: true)
+            .limit(50)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -272,12 +304,39 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () => _openDraft(context, doc),
-                    onLongPress: () => _showStatusSheet(context, doc),
+                    onTap: _selectMode
+                        ? () => setState(() {
+                            if (_selected.contains(doc.id)) {
+                              _selected.remove(doc.id);
+                              if (_selected.isEmpty) _selectMode = false;
+                            } else {
+                              _selected.add(doc.id);
+                            }
+                          })
+                        : () => _openDraft(context, doc),
+                    onLongPress: _selectMode
+                        ? null
+                        : () => setState(() {
+                            _selectMode = true;
+                            _selected.add(doc.id);
+                          }),
                     child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
+                          if (_selectMode) ...[
+                            Checkbox(
+                              value: _selected.contains(doc.id),
+                              onChanged: (v) => setState(() {
+                                if (v == true) {
+                                  _selected.add(doc.id);
+                                } else {
+                                  _selected.remove(doc.id);
+                                  if (_selected.isEmpty) _selectMode = false;
+                                }
+                              }),
+                            ),
+                          ],
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,17 +435,60 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
     );
   }
 
-  void _openDraft(BuildContext context, DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    final draftMap = data['draft'] as Map<String, dynamic>? ?? {};
-    final draft = InvoiceDraft.fromJson(draftMap);
-    context.push('/invoice-maker', extra: {'initialDraft': draft});
+  Future<void> _batchDelete(BuildContext context) async {
+    final count = _selected.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete $count invoice${count == 1 ? '' : 's'}?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final batch = FirebaseFirestore.instance.batch();
+    for (final id in _selected) {
+      batch.delete(
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('invoice_drafts')
+            .doc(id),
+      );
+    }
+    try {
+      await batch.commit();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted $count invoice${count == 1 ? '' : 's'}'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+    }
+    setState(() {
+      _selected.clear();
+      _selectMode = false;
+    });
   }
 
-  void _showStatusSheet(BuildContext context, DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    final current = (data['status'] ?? 'draft').toString().toLowerCase();
-
+  void _batchStatusSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -398,7 +500,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
-                  'Update Status',
+                  'Set status for ${_selected.length} invoice${_selected.length == 1 ? '' : 's'}',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -406,32 +508,47 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
               ),
               const Divider(height: 1),
               ..._statusOptions.where((s) => s != 'all').map((s) {
-                final isActive = s == current;
                 return ListTile(
-                  leading: Icon(
-                    isActive
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: _statusColor(s),
-                  ),
+                  leading: Icon(Icons.circle, color: _statusColor(s), size: 14),
                   title: Text(_statusLabel(s)),
                   onTap: () async {
                     Navigator.pop(ctx);
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                    if (uid == null) return;
+                    final batch = FirebaseFirestore.instance.batch();
+                    for (final id in _selected) {
+                      batch.update(
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(uid)
+                            .collection('invoice_drafts')
+                            .doc(id),
+                        {
+                          'status': s,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        },
+                      );
+                    }
                     try {
-                      await doc.reference.update({
-                        'status': s,
-                        'updatedAt': FieldValue.serverTimestamp(),
-                      });
-                      if (!context.mounted) return;
+                      await batch.commit();
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Status → ${_statusLabel(s)}')),
+                        SnackBar(
+                          content: Text(
+                            '${_selected.length} → ${_statusLabel(s)}',
+                          ),
+                        ),
                       );
                     } catch (e) {
-                      if (!context.mounted) return;
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Update failed: $e')),
                       );
                     }
+                    setState(() {
+                      _selected.clear();
+                      _selectMode = false;
+                    });
                   },
                 );
               }),
@@ -441,5 +558,12 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
         );
       },
     );
+  }
+
+  void _openDraft(BuildContext context, DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final draftMap = data['draft'] as Map<String, dynamic>? ?? {};
+    final draft = InvoiceDraft.fromJson(draftMap);
+    context.push('/invoice-maker', extra: {'initialDraft': draft});
   }
 }

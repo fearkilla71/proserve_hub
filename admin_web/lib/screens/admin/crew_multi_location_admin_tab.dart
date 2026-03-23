@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Crew & Multi-Location Insights — Utilisation per crew, location-based
@@ -44,10 +43,9 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
   }
 
   void _listen() {
-    _sub = FirebaseFirestore.instance
-        .collection('crews')
-        .snapshots()
-        .listen((snap) {
+    _sub = FirebaseFirestore.instance.collection('crews').snapshots().listen((
+      snap,
+    ) {
       final docs = snap.docs.map((d) {
         final data = d.data();
         data['id'] = d.id;
@@ -59,7 +57,8 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
       double sumUtil = 0;
 
       for (final c in docs) {
-        final m = (c['memberCount'] as num?)?.toInt() ??
+        final m =
+            (c['memberCount'] as num?)?.toInt() ??
             (c['members'] as List?)?.length ??
             0;
         members += m;
@@ -72,8 +71,7 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
         _totalCrews = docs.length;
         _totalMembers = members;
         _activeToday = active;
-        _avgUtilisation =
-            docs.isEmpty ? 0 : sumUtil / docs.length;
+        _avgUtilisation = docs.isEmpty ? 0 : sumUtil / docs.length;
         _loading = false;
       });
     });
@@ -83,16 +81,18 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
     if (_search.isEmpty) return _crews;
     final q = _search.toLowerCase();
     return _crews
-        .where((c) =>
-            (c['name'] ?? '').toString().toLowerCase().contains(q) ||
-            (c['location'] ?? '').toString().toLowerCase().contains(q) ||
-            (c['ownerName'] ?? '').toString().toLowerCase().contains(q))
+        .where(
+          (c) =>
+              (c['name'] ?? '').toString().toLowerCase().contains(q) ||
+              (c['location'] ?? '').toString().toLowerCase().contains(q) ||
+              (c['ownerName'] ?? '').toString().toLowerCase().contains(q),
+        )
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     final filtered = _filtered;
 
@@ -106,9 +106,11 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
               _kpi('Crews', '$_totalCrews', AdminColors.accent2),
               _kpi('Members', '$_totalMembers', AdminColors.accent),
               _kpi('Active Today', '$_activeToday', AdminColors.accent3),
-              _kpi('Avg Util',
-                  '${_avgUtilisation.toStringAsFixed(0)}%',
-                  AdminColors.warning),
+              _kpi(
+                'Avg Util',
+                '${_avgUtilisation.toStringAsFixed(0)}%',
+                AdminColors.warning,
+              ),
             ],
           ),
         ),
@@ -127,7 +129,8 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -141,12 +144,15 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No crews found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No crews found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final c = filtered[i];
                     final name = c['name'] ?? 'Unnamed Crew';
@@ -154,8 +160,8 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
                     final location = c['location'] ?? '';
                     final memberCount =
                         (c['memberCount'] as num?)?.toInt() ??
-                            (c['members'] as List?)?.length ??
-                            0;
+                        (c['members'] as List?)?.length ??
+                        0;
                     final util =
                         (c['utilisationPercent'] as num?)?.toDouble() ?? 0;
                     final jobsThisWeek =
@@ -178,27 +184,32 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
                             backgroundColor: isActive
                                 ? AdminColors.accent.withValues(alpha: 0.15)
                                 : AdminColors.muted.withValues(alpha: 0.15),
-                            child: Icon(Icons.groups,
-                                size: 16,
-                                color: isActive
-                                    ? AdminColors.accent
-                                    : AdminColors.muted),
+                            child: Icon(
+                              Icons.groups,
+                              size: 16,
+                              color: isActive
+                                  ? AdminColors.accent
+                                  : AdminColors.muted,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(name.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                Text(
+                                  name.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 Text(
                                   '${owner.toString().isNotEmpty ? '$owner · ' : ''}$memberCount members${location.toString().isNotEmpty ? ' · $location' : ''}',
                                   style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AdminColors.muted),
+                                    fontSize: 11,
+                                    color: AdminColors.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -206,32 +217,42 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('${util.toStringAsFixed(0)}%',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AdminColors.accent)),
-                              Text('$jobsThisWeek jobs/wk',
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AdminColors.muted)),
+                              Text(
+                                '${util.toStringAsFixed(0)}%',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminColors.accent,
+                                ),
+                              ),
+                              Text(
+                                '$jobsThisWeek jobs/wk',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: AdminColors.muted,
+                                ),
+                              ),
                             ],
                           ),
                           if (conflicts > 0) ...[
                             const SizedBox(width: 10),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
-                                color: AdminColors.error
-                                    .withValues(alpha: 0.15),
+                                color: AdminColors.error.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 '$conflicts conflicts',
                                 style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AdminColors.error),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminColors.error,
+                                ),
                               ),
                             ),
                           ],
@@ -257,15 +278,19 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

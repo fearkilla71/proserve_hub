@@ -675,7 +675,7 @@ class _StagePhotos extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: photos.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  separatorBuilder: (_, _) => const SizedBox(width: 6),
                   itemBuilder: (ctx, i) {
                     final url = photos[i].data()['url'] as String? ?? '';
                     return ClipRRect(
@@ -685,7 +685,7 @@ class _StagePhotos extends StatelessWidget {
                         width: 64,
                         height: 64,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, _, _) => Container(
                           width: 64,
                           height: 64,
                           color: Colors.grey.shade800,

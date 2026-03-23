@@ -101,8 +101,8 @@ class _ContractorSubscriptionScreenState
       _autoRefreshAttempts++;
       try {
         await StripeService().syncContractorProEntitlement();
-      } catch (_) {
-        // Best-effort: ignore and retry.
+      } catch (e) {
+        debugPrint('syncEntitlement retry #$_autoRefreshAttempts failed: $e');
       }
 
       final unlocked = await _fetchIsPro(uid);
@@ -189,9 +189,16 @@ class _ContractorSubscriptionScreenState
       } else if (purchase.status == PurchaseStatus.error) {
         if (!mounted) continue;
         final msg = purchase.error?.message ?? 'Purchase failed.';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _startStoreSubscription,
+            ),
+            duration: const Duration(seconds: 6),
+          ),
+        );
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
         await _subs.verifyAndActivateContractorPro(purchase);
@@ -227,6 +234,8 @@ class _ContractorSubscriptionScreenState
         ),
       );
     } catch (e, st) {
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously
       AppError.show(context, e, st, action: 'start Stripe checkout');
     } finally {
       if (mounted) setState(() => _isLoadingStripe = false);
@@ -345,9 +354,20 @@ class _ContractorSubscriptionScreenState
                   color: scheme.errorContainer,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: Text(
-                      _iapError!,
-                      style: TextStyle(color: scheme.onErrorContainer),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _iapError!,
+                            style: TextStyle(color: scheme.onErrorContainer),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: _loadProducts,
+                          child: const Text('Retry'),
+                        ),
+                      ],
                     ),
                   ),
                 ),

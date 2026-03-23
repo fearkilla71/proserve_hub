@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Quality Inspector Admin — QA submission queue, approval/rejection workflow,
@@ -53,37 +52,37 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
         .limit(300)
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      int pending = 0;
-      int approved = 0;
-      double sumScore = 0;
-      int scored = 0;
+          int pending = 0;
+          int approved = 0;
+          double sumScore = 0;
+          int scored = 0;
 
-      for (final s in docs) {
-        final st = s['status'] ?? 'pending';
-        if (st == 'pending') pending++;
-        if (st == 'approved') approved++;
-        final score = (s['qualityScore'] as num?)?.toDouble();
-        if (score != null) {
-          sumScore += score;
-          scored++;
-        }
-      }
+          for (final s in docs) {
+            final st = s['status'] ?? 'pending';
+            if (st == 'pending') pending++;
+            if (st == 'approved') approved++;
+            final score = (s['qualityScore'] as num?)?.toDouble();
+            if (score != null) {
+              sumScore += score;
+              scored++;
+            }
+          }
 
-      setState(() {
-        _submissions = docs;
-        _total = docs.length;
-        _pending = pending;
-        _approved = approved;
-        _avgScore = scored == 0 ? 0 : sumScore / scored;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _submissions = docs;
+            _total = docs.length;
+            _pending = pending;
+            _approved = approved;
+            _avgScore = scored == 0 ? 0 : sumScore / scored;
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -94,17 +93,20 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((s) =>
-              (s['contractorName'] ?? '').toString().toLowerCase().contains(q) ||
-              (s['jobId'] ?? '').toString().toLowerCase().contains(q) ||
-              (s['service'] ?? '').toString().toLowerCase().contains(q))
+          .where(
+            (s) =>
+                (s['contractorName'] ?? '').toString().toLowerCase().contains(
+                  q,
+                ) ||
+                (s['jobId'] ?? '').toString().toLowerCase().contains(q) ||
+                (s['service'] ?? '').toString().toLowerCase().contains(q),
+          )
           .toList();
     }
     return list;
   }
 
-  Future<void> _updateStatus(String id, String status,
-      {double? score}) async {
+  Future<void> _updateStatus(String id, String status, {double? score}) async {
     final data = <String, dynamic>{
       'status': status,
       'reviewedAt': FieldValue.serverTimestamp(),
@@ -118,7 +120,7 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     final filtered = _filtered;
 
@@ -132,8 +134,11 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
               _kpi('Submissions', '$_total', AdminColors.accent2),
               _kpi('Pending', '$_pending', AdminColors.warning),
               _kpi('Approved', '$_approved', AdminColors.accent),
-              _kpi('Avg Score',
-                  _avgScore.toStringAsFixed(1), AdminColors.accent3),
+              _kpi(
+                'Avg Score',
+                _avgScore.toStringAsFixed(1),
+                AdminColors.accent3,
+              ),
             ],
           ),
         ),
@@ -147,8 +152,10 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(s[0].toUpperCase() + s.substring(1),
-                        style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      s[0].toUpperCase() + s.substring(1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: _filter == s,
                     selectedColor: AdminColors.accent2.withValues(alpha: 0.15),
                     onSelected: (_) => setState(() => _filter = s),
@@ -163,7 +170,8 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -177,22 +185,23 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No submissions found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No submissions found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final s = filtered[i];
                     final contractor = s['contractorName'] ?? 'Unknown';
                     final service = s['service'] ?? '';
                     final status = s['status'] ?? 'pending';
                     final score = s['qualityScore'] as num?;
-                    final photos =
-                        (s['photoUrls'] as List?)?.length ?? 0;
-                    final ts =
-                        (s['submittedAt'] as Timestamp?)?.toDate();
+                    final photos = (s['photoUrls'] as List?)?.length ?? 0;
+                    final ts = (s['submittedAt'] as Timestamp?)?.toDate();
 
                     Color statusColor;
                     switch (status) {
@@ -219,35 +228,48 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.verified_user,
-                              size: 18, color: statusColor),
+                          Icon(
+                            Icons.verified_user,
+                            size: 18,
+                            color: statusColor,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(contractor.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                Text(
+                                  contractor.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 Row(
                                   children: [
                                     if (service.toString().isNotEmpty)
-                                      Text('$service · ',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AdminColors.muted)),
-                                    Text('$photos photos',
+                                      Text(
+                                        '$service · ',
                                         style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AdminColors.muted)),
+                                          fontSize: 11,
+                                          color: AdminColors.muted,
+                                        ),
+                                      ),
+                                    Text(
+                                      '$photos photos',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.muted,
+                                      ),
+                                    ),
                                     if (ts != null)
                                       Text(
-                                          ' · ${DateFormat.MMMd().format(ts)}',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AdminColors.muted)),
+                                        ' · ${DateFormat.MMMd().format(ts)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AdminColors.muted,
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -256,24 +278,30 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
                           if (score != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
-                                color:
-                                    AdminColors.accent3.withValues(alpha: 0.15),
+                                color: AdminColors.accent3.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 '${score.toStringAsFixed(1)}★',
                                 style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: AdminColors.accent3),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminColors.accent3,
+                                ),
                               ),
                             ),
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
@@ -281,25 +309,33 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
                             child: Text(
                               status,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: statusColor),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                              ),
                             ),
                           ),
-                          if (widget.canWrite &&
-                              status == 'pending') ...[
+                          if (widget.canWrite && status == 'pending') ...[
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.check,
-                                  size: 18, color: AdminColors.accent),
+                              icon: const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: AdminColors.accent,
+                              ),
                               tooltip: 'Approve',
                               onPressed: () => _updateStatus(
-                                  s['id'], 'approved',
-                                  score: 5.0),
+                                s['id'],
+                                'approved',
+                                score: 5.0,
+                              ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close,
-                                  size: 18, color: AdminColors.error),
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AdminColors.error,
+                              ),
                               tooltip: 'Reject',
                               onPressed: () =>
                                   _updateStatus(s['id'], 'rejected'),
@@ -327,15 +363,19 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

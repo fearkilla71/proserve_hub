@@ -596,11 +596,20 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
               children: [
                 _tierBadge('None', tierCounts['none'] ?? 0, AdminColors.muted),
                 _tierBadge(
-                    'Verified', tierCounts['verified'] ?? 0, AdminColors.accent),
-                _tierBadge('Trusted Pro', tierCounts['trusted_pro'] ?? 0,
-                    AdminColors.accent2),
-                _tierBadge('Elite Pro', tierCounts['elite_pro'] ?? 0,
-                    AdminColors.accent3),
+                  'Verified',
+                  tierCounts['verified'] ?? 0,
+                  AdminColors.accent,
+                ),
+                _tierBadge(
+                  'Trusted Pro',
+                  tierCounts['trusted_pro'] ?? 0,
+                  AdminColors.accent2,
+                ),
+                _tierBadge(
+                  'Elite Pro',
+                  tierCounts['elite_pro'] ?? 0,
+                  AdminColors.accent3,
+                ),
               ],
             ),
           ],
@@ -620,15 +629,20 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
         ),
         child: Column(
           children: [
-            Text('$count',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: TextStyle(fontSize: 10, color: color),
-                textAlign: TextAlign.center),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: color),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Promotions & Deals Admin — CRUD for `promotions` collection,
@@ -49,34 +48,34 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snap) {
-      final now = DateTime.now();
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final now = DateTime.now();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      int active = 0, expired = 0, redemptions = 0;
-      for (final p in docs) {
-        final isActive = p['active'] == true;
-        final expiresAt = (p['expiresAt'] as Timestamp?)?.toDate();
-        if (isActive && (expiresAt == null || expiresAt.isAfter(now))) {
-          active++;
-        } else {
-          expired++;
-        }
-        redemptions += (p['redemptionCount'] as int?) ?? 0;
-      }
+          int active = 0, expired = 0, redemptions = 0;
+          for (final p in docs) {
+            final isActive = p['active'] == true;
+            final expiresAt = (p['expiresAt'] as Timestamp?)?.toDate();
+            if (isActive && (expiresAt == null || expiresAt.isAfter(now))) {
+              active++;
+            } else {
+              expired++;
+            }
+            redemptions += (p['redemptionCount'] as int?) ?? 0;
+          }
 
-      setState(() {
-        _promos = docs;
-        _totalPromos = docs.length;
-        _activeCount = active;
-        _expiredCount = expired;
-        _totalRedemptions = redemptions;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _promos = docs;
+            _totalPromos = docs.length;
+            _activeCount = active;
+            _expiredCount = expired;
+            _totalRedemptions = redemptions;
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -99,7 +98,7 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     return Column(
       children: [
@@ -124,8 +123,7 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
                   ButtonSegment(value: 'expired', label: Text('Expired')),
                 ],
                 selected: {_filter},
-                onSelectionChanged: (v) =>
-                    setState(() => _filter = v.first),
+                onSelectionChanged: (v) => setState(() => _filter = v.first),
               ),
               const Spacer(),
               if (widget.canWrite)
@@ -142,22 +140,22 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
         Expanded(
           child: _filtered.isEmpty
               ? Center(
-                  child: Text('No promotions found',
-                      style: TextStyle(color: AdminColors.muted)),
+                  child: Text(
+                    'No promotions found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) =>
-                      _PromoCard(
-                        data: _filtered[i],
-                        canWrite: widget.canWrite,
-                        onToggle: () => _toggleActive(_filtered[i]),
-                        onEdit: () =>
-                            _showEditDialog(context, _filtered[i]),
-                        onDelete: () => _deletePromo(_filtered[i]['id']),
-                      ),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) => _PromoCard(
+                    data: _filtered[i],
+                    canWrite: widget.canWrite,
+                    onToggle: () => _toggleActive(_filtered[i]),
+                    onEdit: () => _showEditDialog(context, _filtered[i]),
+                    onDelete: () => _deletePromo(_filtered[i]['id']),
+                  ),
                 ),
         ),
       ],
@@ -181,11 +179,13 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
         content: const Text('This cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -206,12 +206,15 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
   }
 
   void _showPromoForm(BuildContext context, Map<String, dynamic>? promo) {
-    final titleCtrl =
-        TextEditingController(text: promo?['title'] as String? ?? '');
-    final descCtrl =
-        TextEditingController(text: promo?['description'] as String? ?? '');
+    final titleCtrl = TextEditingController(
+      text: promo?['title'] as String? ?? '',
+    );
+    final descCtrl = TextEditingController(
+      text: promo?['description'] as String? ?? '',
+    );
     final discountCtrl = TextEditingController(
-        text: (promo?['discountPercent'] ?? '').toString());
+      text: (promo?['discountPercent'] ?? '').toString(),
+    );
     final services = <String>[];
     if (promo?['services'] is List) {
       services.addAll((promo!['services'] as List).cast<String>());
@@ -222,110 +225,120 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
     showDialog(
       context: context,
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setLocal) {
-          return AlertDialog(
-            title: Text(promo == null ? 'New Promotion' : 'Edit Promotion'),
-            content: SizedBox(
-              width: 420,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleCtrl,
-                      decoration: const InputDecoration(
-                          labelText: 'Title', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: descCtrl,
-                      decoration: const InputDecoration(
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return AlertDialog(
+              title: Text(promo == null ? 'New Promotion' : 'Edit Promotion'),
+              content: SizedBox(
+                width: 420,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: titleCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: descCtrl,
+                        decoration: const InputDecoration(
                           labelText: 'Description',
-                          border: OutlineInputBorder()),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: discountCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: discountCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
                           labelText: 'Discount %',
-                          border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            expiresAt != null
-                                ? 'Expires: ${DateFormat.yMMMd().format(expiresAt!)}'
-                                : 'No expiry set',
-                            style: TextStyle(color: AdminColors.muted),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              expiresAt != null
+                                  ? 'Expires: ${DateFormat.yMMMd().format(expiresAt!)}'
+                                  : 'No expiry set',
+                              style: TextStyle(color: AdminColors.muted),
+                            ),
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: ctx,
-                              initialDate:
-                                  expiresAt ?? DateTime.now().add(const Duration(days: 30)),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime(2030),
-                            );
-                            if (picked != null) {
-                              setLocal(() => expiresAt = picked);
-                            }
-                          },
-                          child: const Text('Pick Date'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: const Text('Active'),
-                      value: active,
-                      onChanged: (v) => setLocal(() => active = v),
-                    ),
-                  ],
+                          TextButton(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate:
+                                    expiresAt ??
+                                    DateTime.now().add(
+                                      const Duration(days: 30),
+                                    ),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) {
+                                setLocal(() => expiresAt = picked);
+                              }
+                            },
+                            child: const Text('Pick Date'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: const Text('Active'),
+                        value: active,
+                        onChanged: (v) => setLocal(() => active = v),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
+              actions: [
+                TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel')),
-              FilledButton(
-                onPressed: () async {
-                  final data = {
-                    'title': titleCtrl.text.trim(),
-                    'description': descCtrl.text.trim(),
-                    'discountPercent':
-                        double.tryParse(discountCtrl.text.trim()) ?? 0,
-                    'active': active,
-                    'expiresAt': expiresAt != null
-                        ? Timestamp.fromDate(expiresAt!)
-                        : null,
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  };
-                  if (promo != null) {
-                    await FirebaseFirestore.instance
-                        .collection('promotions')
-                        .doc(promo['id'])
-                        .update(data);
-                  } else {
-                    data['createdAt'] = FieldValue.serverTimestamp();
-                    data['redemptionCount'] = 0;
-                    await FirebaseFirestore.instance
-                        .collection('promotions')
-                        .add(data);
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: Text(promo == null ? 'Create' : 'Save'),
-              ),
-            ],
-          );
-        });
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    final data = {
+                      'title': titleCtrl.text.trim(),
+                      'description': descCtrl.text.trim(),
+                      'discountPercent':
+                          double.tryParse(discountCtrl.text.trim()) ?? 0,
+                      'active': active,
+                      'expiresAt': expiresAt != null
+                          ? Timestamp.fromDate(expiresAt!)
+                          : null,
+                      'updatedAt': FieldValue.serverTimestamp(),
+                    };
+                    if (promo != null) {
+                      await FirebaseFirestore.instance
+                          .collection('promotions')
+                          .doc(promo['id'])
+                          .update(data);
+                    } else {
+                      data['createdAt'] = FieldValue.serverTimestamp();
+                      data['redemptionCount'] = 0;
+                      await FirebaseFirestore.instance
+                          .collection('promotions')
+                          .add(data);
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: Text(promo == null ? 'Create' : 'Save'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -369,15 +382,19 @@ class _KpiBar extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),
@@ -443,16 +460,23 @@ class _PromoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AdminColors.ink)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AdminColors.ink,
+                  ),
+                ),
                 if (desc.isNotEmpty)
-                  Text(desc,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12, color: AdminColors.muted)),
+                  Text(
+                    desc,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AdminColors.muted,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -464,23 +488,31 @@ class _PromoCard extends StatelessWidget {
               color: AdminColors.accent3.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text('$discount% off',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AdminColors.accent3)),
+            child: Text(
+              '$discount% off',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AdminColors.accent3,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
 
           // Redemptions
           Column(
             children: [
-              Text('$redemptions',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AdminColors.accent2)),
-              const Text('uses',
-                  style: TextStyle(fontSize: 10, color: AdminColors.muted)),
+              Text(
+                '$redemptions',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AdminColors.accent2,
+                ),
+              ),
+              const Text(
+                'uses',
+                style: TextStyle(fontSize: 10, color: AdminColors.muted),
+              ),
             ],
           ),
           const SizedBox(width: 12),
@@ -509,14 +541,20 @@ class _PromoCard extends StatelessWidget {
             ),
             IconButton(
               tooltip: 'Edit',
-              icon:
-                  const Icon(Icons.edit, color: AdminColors.accent2, size: 18),
+              icon: const Icon(
+                Icons.edit,
+                color: AdminColors.accent2,
+                size: 18,
+              ),
               onPressed: onEdit,
             ),
             IconButton(
               tooltip: 'Delete',
-              icon:
-                  const Icon(Icons.delete, color: AdminColors.error, size: 18),
+              icon: const Icon(
+                Icons.delete,
+                color: AdminColors.error,
+                size: 18,
+              ),
               onPressed: onDelete,
             ),
           ],

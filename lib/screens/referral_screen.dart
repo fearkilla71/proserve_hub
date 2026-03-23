@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../services/referral_service.dart';
 import '../theme/proserve_theme.dart';
+import '../widgets/skeleton_loader.dart';
 
 /// Screen for viewing/sharing a referral code and entering someone else's code.
 class ReferralScreen extends StatefulWidget {
@@ -168,9 +169,28 @@ class _ReferralScreenState extends State<ReferralScreen>
           ),
           const SizedBox(height: 8),
           if (_loadingCode)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: CircularProgressIndicator()),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      SkeletonLoader(
+                        width: 180,
+                        height: 32,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      const SizedBox(height: 12),
+                      SkeletonLoader(
+                        width: double.infinity,
+                        height: 48,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             )
           else if (_codeError != null)
             _errorCard(
@@ -219,7 +239,7 @@ class _ReferralScreenState extends State<ReferralScreen>
                                   );
                                 },
                           icon: const Icon(Icons.copy, size: 18),
-                          label: const Text('Copy'),
+                          label: const Text('Copy Code'),
                         ),
                         const SizedBox(width: 12),
                         FilledButton.icon(
@@ -228,7 +248,8 @@ class _ReferralScreenState extends State<ReferralScreen>
                               : () {
                                   Share.share(
                                     'Try ProServe Hub! Use my code $_myCode '
-                                    'to get \$${ReferralService.creditAmount.toStringAsFixed(0)} off your first job.',
+                                    'to get \$${ReferralService.creditAmount.toStringAsFixed(0)} off your first job.\n\n'
+                                    'https://proservehub.app/?ref=$_myCode',
                                   );
                                 },
                           icon: const Icon(Icons.share, size: 18),
@@ -236,6 +257,22 @@ class _ReferralScreenState extends State<ReferralScreen>
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    if (_myCode != null)
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(
+                              text: 'https://proservehub.app/?ref=$_myCode',
+                            ),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Link copied!')),
+                          );
+                        },
+                        icon: const Icon(Icons.link, size: 18),
+                        label: const Text('Copy Link'),
+                      ),
                   ],
                 ),
               ),
@@ -398,7 +435,22 @@ class _ReferralScreenState extends State<ReferralScreen>
 
   Widget _trackingTab(ColorScheme scheme) {
     if (_loadingCode) {
-      return const Center(child: CircularProgressIndicator());
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: List.generate(
+            3,
+            (_) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SkeletonLoader(
+                width: double.infinity,
+                height: 64,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      );
     }
     if (_codeError != null || _myCode == null) {
       return Center(
@@ -514,9 +566,21 @@ class _ReferralScreenState extends State<ReferralScreen>
                 );
               }
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    children: List.generate(
+                      2,
+                      (_) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SkeletonLoader(
+                          width: double.infinity,
+                          height: 56,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }
               final list = snap.data ?? [];
@@ -595,9 +659,21 @@ class _ReferralScreenState extends State<ReferralScreen>
                 );
               }
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    children: List.generate(
+                      2,
+                      (_) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SkeletonLoader(
+                          width: double.infinity,
+                          height: 56,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }
               final list = snap.data ?? [];

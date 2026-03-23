@@ -20,6 +20,31 @@ class QuotesScreen extends StatefulWidget {
 }
 
 class _QuotesScreenState extends State<QuotesScreen> {
+  final Map<String, Map<String, dynamic>?> _contractorCache = {};
+
+  Future<void> _preloadContractors(List<String> ids) async {
+    final toFetch = ids
+        .where((id) => !_contractorCache.containsKey(id))
+        .toSet()
+        .toList();
+    if (toFetch.isEmpty) return;
+    final db = FirebaseFirestore.instance;
+    for (var i = 0; i < toFetch.length; i += 10) {
+      final chunk = toFetch.sublist(i, (i + 10).clamp(0, toFetch.length));
+      final snap = await db
+          .collection('contractors')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        _contractorCache[doc.id] = doc.data();
+      }
+      // Mark missing ones as null so we don't re-fetch.
+      for (final id in chunk) {
+        _contractorCache.putIfAbsent(id, () => null);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,21 +110,37 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 720 ? 2 : 1;
+              // Batch-load all contractor data.
+              final contractorIds = quotes
+                  .map(
+                    (q) =>
+                        ((q.data() as Map<String, dynamic>)['contractorId']
+                            as String?) ??
+                        '',
+                  )
+                  .where((id) => id.isNotEmpty)
+                  .toSet()
+                  .toList();
+              return FutureBuilder<void>(
+                future: _preloadContractors(contractorIds),
+                builder: (context, _) {
+                  final crossAxisCount = constraints.maxWidth >= 720 ? 2 : 1;
 
-              return GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: crossAxisCount == 1 ? 1.25 : 1.35,
-                ),
-                itemCount: quotes.length,
-                itemBuilder: (context, index) {
-                  final quoteDoc = quotes[index];
-                  final quote = quoteDoc.data() as Map<String, dynamic>;
-                  return _buildQuoteCard(quoteDoc.id, quote);
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: crossAxisCount == 1 ? 1.25 : 1.35,
+                    ),
+                    itemCount: quotes.length,
+                    itemBuilder: (context, index) {
+                      final quoteDoc = quotes[index];
+                      final quote = quoteDoc.data() as Map<String, dynamic>;
+                      return _buildQuoteCard(quoteDoc.id, quote);
+                    },
+                  );
                 },
               );
             },
@@ -126,35 +167,32 @@ class _QuotesScreenState extends State<QuotesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Contractor Info
-            FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('contractors')
-                  .doc(contractorId)
-                  .get(),
-              builder: (context, contractorSnap) {
-                if (!contractorSnap.hasData) {
+            // Contractor Info (from cache)
+            Builder(
+              builder: (context) {
+                final contractor = _contractorCache[contractorId];
+                if (contractor == null) {
                   return const SizedBox(
                     height: 56,
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
-                final contractor =
-                    contractorSnap.data!.data() as Map<String, dynamic>?;
-                final name = contractor?['name'] ?? 'Unknown Contractor';
+                final name = contractor['name'] ?? 'Unknown Contractor';
                 final rating =
-                    (contractor?['averageRating'] as num?)?.toDouble() ??
-                    (contractor?['avgRating'] as num?)?.toDouble() ??
+                    (contractor['averageRating'] as num?)?.toDouble() ??
+                    (contractor['avgRating'] as num?)?.toDouble() ??
                     0.0;
                 final reviewCount =
-                    contractor?['reviewCount'] as int? ??
-                    contractor?['totalReviews'] as int? ??
+                    contractor['reviewCount'] as int? ??
+                    contractor['totalReviews'] as int? ??
                     0;
                 final completedJobs =
-                    (contractor?['completedJobs'] as num?)?.toInt() ?? 0;
+                    (contractor['completedJobs'] as num?)?.toInt() ??
+                    (contractor['totalJobsCompleted'] as num?)?.toInt() ??
+                    0;
                 final profileImageUrl =
-                    contractor?['profileImageUrl'] as String?;
+                    contractor['profileImageUrl'] as String?;
 
                 return Row(
                   children: [

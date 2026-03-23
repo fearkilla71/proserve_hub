@@ -120,7 +120,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       await _auth.ensureGoogleUserRole(user.uid, 'customer');
       if (mounted) router.go('/customer-portal');
     } catch (e, st) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       AppError.show(context, e, st, action: 'Google sign-up');
     } finally {
       if (mounted) setState(() => loading = false);

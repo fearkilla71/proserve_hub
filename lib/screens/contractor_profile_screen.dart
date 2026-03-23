@@ -72,14 +72,25 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
           (contractorData['logoUrl'] as String?)?.trim() ??
           (contractorData['businessLogoUrl'] as String?)?.trim() ??
           '';
-    } catch (_) {
-      // Keep form empty if load fails.
+    } catch (e) {
+      debugPrint('Profile load failed: $e');
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
     }
   }
+
+  static const _maxLogoBytes = 5 * 1024 * 1024; // 5 MB
+  static const _allowedLogoExts = {
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'gif',
+    'heic',
+    'heif',
+  };
 
   Future<({Uint8List bytes, String contentType, String ext})?>
   _pickLogoImage() async {
@@ -95,6 +106,28 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
     if (bytes == null || bytes.isEmpty) return null;
 
     final ext = (file.extension ?? 'jpg').toLowerCase();
+    if (!_allowedLogoExts.contains(ext)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unsupported image format. Use JPG, PNG, WebP, GIF, or HEIC.',
+            ),
+          ),
+        );
+      }
+      return null;
+    }
+
+    if (bytes.length > _maxLogoBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logo must be under 5 MB.')),
+        );
+      }
+      return null;
+    }
+
     final contentType = switch (ext) {
       'png' => 'image/png',
       'webp' => 'image/webp',

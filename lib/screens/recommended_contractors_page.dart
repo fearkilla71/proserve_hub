@@ -669,7 +669,10 @@ class _RecommendedContractorsPageState
                           ? 'Medium'
                           : 'Slow',
                     ),
-                    _infoChip(Icons.work, '${c['completedJobs'] ?? 0} jobs'),
+                    _infoChip(
+                      Icons.work,
+                      '${c['completedJobs'] ?? c['totalJobsCompleted'] ?? 0} jobs',
+                    ),
                   ],
                 ),
 
@@ -745,8 +748,9 @@ class ContractorProfilePage extends StatelessWidget {
               ? servicesRaw.map((e) => e.toString()).toList()
               : <String>[];
           final verified = data['verified'] == true;
-          final completedJobs = data['completedJobs'] ?? 0;
-          final ratingRaw = data['rating'];
+          final completedJobs =
+              data['completedJobs'] ?? data['totalJobsCompleted'] ?? 0;
+          final ratingRaw = data['rating'] ?? data['avgRating'];
           final rating = ratingRaw is num
               ? ratingRaw.toDouble()
               : double.tryParse(ratingRaw.toString()) ?? 0.0;

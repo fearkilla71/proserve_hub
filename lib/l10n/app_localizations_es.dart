@@ -198,4 +198,124 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get exteriorPainting => 'Pintura Exterior';
+
+  @override
+  String get aiPriceMatchGuarantee => 'AI Price Match Guarantee';
+
+  @override
+  String get aiPriceMatch => 'AI Price Match';
+
+  @override
+  String priceGuaranteeThreshold(String threshold) {
+    return 'If your final cost exceeds our AI estimate by more than $threshold, we\'ll credit the difference.';
+  }
+
+  @override
+  String get costBreakdown => 'Cost Breakdown';
+
+  @override
+  String get labor => 'Labor';
+
+  @override
+  String get materials => 'Materials';
+
+  @override
+  String get platformFee => 'Platform Fee';
+
+  @override
+  String get escrowProtection => 'Escrow Protection';
+
+  @override
+  String get maintenanceReminders => 'Maintenance Reminders';
+
+  @override
+  String get maintenanceDue => 'Maintenance Due';
+
+  @override
+  String get book => 'Book';
+
+  @override
+  String get seasonalDeals => 'Deals & Offers';
+
+  @override
+  String hoursLeft(int hours) {
+    return '${hours}h left';
+  }
+
+  @override
+  String off(int percent) {
+    return '$percent% OFF';
+  }
+
+  @override
+  String get neighborhoodActivity => 'In Your Neighborhood';
+
+  @override
+  String homesNearYou(int count) {
+    return '$count homes near you this month';
+  }
+
+  @override
+  String get savedProjects => 'Saved Projects';
+
+  @override
+  String get noProjectsYet => 'No projects yet';
+
+  @override
+  String get createBoard => 'Create Board';
+
+  @override
+  String get boardName => 'Board name';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get zeroInterest => '0% INTEREST';
+
+  @override
+  String get payInThree => 'Pay in 3';
+
+  @override
+  String get payInSix => 'Pay in 6';
+
+  @override
+  String perMonth(String amount) {
+    return '$amount/mo';
+  }
+
+  @override
+  String get choosePaymentPlan => 'Choose a payment plan';
+
+  @override
+  String get financingAvailable => 'Financing Available';
+
+  @override
+  String get topMatchedPros => 'Top Matched Pros';
+
+  @override
+  String prosInvited(int count) {
+    return '$count pros invited — quotes arriving soon';
+  }
+
+  @override
+  String get timeRemaining => 'Time remaining';
+
+  @override
+  String get verifiedPro => 'Verified';
+
+  @override
+  String get trustedPro => 'Trusted Pro';
+
+  @override
+  String get elitePro => 'Elite Pro';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get requestPhoto => 'Request Photo';
+
+  @override
+  String get photoRequested => 'Photo requested!';
 }

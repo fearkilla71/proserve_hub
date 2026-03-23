@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Sub-Contractor Marketplace Admin — Approval workflow for sub-partnerships,
@@ -16,8 +15,7 @@ class SubMarketplaceAdminTab extends StatefulWidget {
   const SubMarketplaceAdminTab({super.key, this.canWrite = false});
 
   @override
-  State<SubMarketplaceAdminTab> createState() =>
-      _SubMarketplaceAdminTabState();
+  State<SubMarketplaceAdminTab> createState() => _SubMarketplaceAdminTabState();
 }
 
 class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
@@ -52,33 +50,32 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      int pending = 0;
-      int active = 0;
-      double commissions = 0;
+          int pending = 0;
+          int active = 0;
+          double commissions = 0;
 
-      for (final p in docs) {
-        final st = p['status'] ?? 'pending';
-        if (st == 'pending') pending++;
-        if (st == 'active') active++;
-        commissions +=
-            (p['totalCommission'] as num?)?.toDouble() ?? 0;
-      }
+          for (final p in docs) {
+            final st = p['status'] ?? 'pending';
+            if (st == 'pending') pending++;
+            if (st == 'active') active++;
+            commissions += (p['totalCommission'] as num?)?.toDouble() ?? 0;
+          }
 
-      setState(() {
-        _partnerships = docs;
-        _total = docs.length;
-        _pending = pending;
-        _active = active;
-        _totalCommissions = commissions;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _partnerships = docs;
+            _total = docs.length;
+            _pending = pending;
+            _active = active;
+            _totalCommissions = commissions;
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -89,10 +86,12 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((p) =>
-              (p['primaryName'] ?? '').toString().toLowerCase().contains(q) ||
-              (p['subName'] ?? '').toString().toLowerCase().contains(q) ||
-              (p['service'] ?? '').toString().toLowerCase().contains(q))
+          .where(
+            (p) =>
+                (p['primaryName'] ?? '').toString().toLowerCase().contains(q) ||
+                (p['subName'] ?? '').toString().toLowerCase().contains(q) ||
+                (p['service'] ?? '').toString().toLowerCase().contains(q),
+          )
           .toList();
     }
     return list;
@@ -100,7 +99,7 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     final filtered = _filtered;
 
@@ -114,9 +113,11 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
               _kpi('Partnerships', '$_total', AdminColors.accent2),
               _kpi('Pending', '$_pending', AdminColors.warning),
               _kpi('Active', '$_active', AdminColors.accent),
-              _kpi('Commissions',
-                  '\$${NumberFormat.compact().format(_totalCommissions)}',
-                  AdminColors.accent3),
+              _kpi(
+                'Commissions',
+                '\$${NumberFormat.compact().format(_totalCommissions)}',
+                AdminColors.accent3,
+              ),
             ],
           ),
         ),
@@ -130,11 +131,12 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(s[0].toUpperCase() + s.substring(1),
-                        style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      s[0].toUpperCase() + s.substring(1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: _filter == s,
-                    selectedColor:
-                        AdminColors.accent.withValues(alpha: 0.15),
+                    selectedColor: AdminColors.accent.withValues(alpha: 0.15),
                     onSelected: (_) => setState(() => _filter = s),
                   ),
                 ),
@@ -147,7 +149,8 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -161,12 +164,15 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No partnerships found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No partnerships found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final p = filtered[i];
                     final primary = p['primaryName'] ?? 'Primary';
@@ -204,37 +210,44 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.handshake,
-                              size: 18, color: statusColor),
+                          Icon(Icons.handshake, size: 18, color: statusColor),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    '$primary → $sub',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                  '$primary → $sub',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 Row(
                                   children: [
                                     if (service.toString().isNotEmpty)
-                                      Text('$service · ',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AdminColors.muted)),
-                                    Text(
-                                        '${commission.toStringAsFixed(0)}% rate · \$${totalComm.toStringAsFixed(0)} earned',
+                                      Text(
+                                        '$service · ',
                                         style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AdminColors.muted)),
+                                          fontSize: 11,
+                                          color: AdminColors.muted,
+                                        ),
+                                      ),
+                                    Text(
+                                      '${commission.toStringAsFixed(0)}% rate · \$${totalComm.toStringAsFixed(0)} earned',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.muted,
+                                      ),
+                                    ),
                                     if (ts != null)
                                       Text(
-                                          ' · ${DateFormat.MMMd().format(ts)}',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AdminColors.muted)),
+                                        ' · ${DateFormat.MMMd().format(ts)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AdminColors.muted,
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -242,26 +255,30 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  statusColor.withValues(alpha: 0.15),
+                              color: statusColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               status,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: statusColor),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                              ),
                             ),
                           ),
-                          if (widget.canWrite &&
-                              status == 'pending') ...[
+                          if (widget.canWrite && status == 'pending') ...[
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.check,
-                                  size: 18, color: AdminColors.accent),
+                              icon: const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: AdminColors.accent,
+                              ),
                               tooltip: 'Approve',
                               onPressed: () async {
                                 await FirebaseFirestore.instance
@@ -271,8 +288,11 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
                               },
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close,
-                                  size: 18, color: AdminColors.error),
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AdminColors.error,
+                              ),
                               tooltip: 'Reject',
                               onPressed: () async {
                                 await FirebaseFirestore.instance
@@ -304,15 +324,19 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

@@ -139,7 +139,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
             (data['servicesOffered'] as List?)?.whereType<String>().toList() ??
             [];
         _totalJobsCompleted =
-            (data['totalJobsCompleted'] as num?)?.toInt() ?? 0;
+            (data['totalJobsCompleted'] as num?)?.toInt() ??
+            (data['completedJobs'] as num?)?.toInt() ??
+            0;
         _reviewCount =
             (data['reviewCount'] as num?)?.toInt() ??
             (data['totalReviews'] as num?)?.toInt() ??

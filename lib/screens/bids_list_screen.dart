@@ -30,6 +30,7 @@ class BidsListScreen extends StatelessWidget {
             // Required for common security rules patterns (only allow a
             // customer to query their own bids).
             .where('customerId', isEqualTo: uid)
+            .limit(50)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -201,7 +202,9 @@ class _BidCard extends StatelessWidget {
                               (data?['avgRating'] as num?)?.toDouble() ??
                               0.0;
                           final completedJobs =
-                              (data?['completedJobs'] as num?)?.toInt() ?? 0;
+                              (data?['completedJobs'] as num?)?.toInt() ??
+                              (data?['totalJobsCompleted'] as num?)?.toInt() ??
+                              0;
 
                           return Wrap(
                             spacing: 10,

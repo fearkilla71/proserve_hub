@@ -64,7 +64,33 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
   }
 
+  /// Valid status transitions to prevent invalid state changes.
+  static const _validTransitions = <String, Set<String>>{
+    'draft': {'sent'},
+    'sent': {'viewed', 'paid', 'overdue'},
+    'viewed': {'paid', 'overdue'},
+    'overdue': {'paid'},
+    'paid': {},
+  };
+
   Future<void> _updateInvoiceStatus(String newStatus) async {
+    // Validate transition.
+    final currentSnap = await _invoiceRef.get();
+    final currentStatus = (currentSnap.data()?['status'] as String?) ?? 'draft';
+    final allowed = _validTransitions[currentStatus] ?? <String>{};
+    if (!allowed.contains(newStatus)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Cannot change from "$currentStatus" to "$newStatus"',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       await _invoiceRef.update({
         'status': newStatus,

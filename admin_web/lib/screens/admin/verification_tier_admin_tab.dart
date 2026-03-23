@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Verification Tier Admin — Manage contractor tier overrides
@@ -32,8 +31,6 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
   int _trustedCount = 0;
   int _eliteCount = 0;
 
-  static const _tiers = ['none', 'verified', 'trusted_pro', 'elite_pro'];
-
   @override
   void initState() {
     super.initState();
@@ -52,35 +49,35 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
         .where('role', isEqualTo: 'contractor')
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['uid'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['uid'] = d.id;
+            return data;
+          }).toList();
 
-      int none = 0, verified = 0, trusted = 0, elite = 0;
-      for (final c in docs) {
-        switch (c['verificationTier'] ?? 'none') {
-          case 'verified':
-            verified++;
-          case 'trusted_pro':
-            trusted++;
-          case 'elite_pro':
-            elite++;
-          default:
-            none++;
-        }
-      }
+          int none = 0, verified = 0, trusted = 0, elite = 0;
+          for (final c in docs) {
+            switch (c['verificationTier'] ?? 'none') {
+              case 'verified':
+                verified++;
+              case 'trusted_pro':
+                trusted++;
+              case 'elite_pro':
+                elite++;
+              default:
+                none++;
+            }
+          }
 
-      setState(() {
-        _contractors = docs;
-        _noneCount = none;
-        _verifiedCount = verified;
-        _trustedCount = trusted;
-        _eliteCount = elite;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _contractors = docs;
+            _noneCount = none;
+            _verifiedCount = verified;
+            _trustedCount = trusted;
+            _eliteCount = elite;
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -103,7 +100,7 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     return Column(
       children: [
@@ -131,8 +128,7 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
                   ButtonSegment(value: 'all', label: Text('All')),
                   ButtonSegment(value: 'none', label: Text('None')),
                   ButtonSegment(value: 'verified', label: Text('Verified')),
-                  ButtonSegment(
-                      value: 'trusted_pro', label: Text('Trusted')),
+                  ButtonSegment(value: 'trusted_pro', label: Text('Trusted')),
                   ButtonSegment(value: 'elite_pro', label: Text('Elite')),
                 ],
                 selected: {_tierFilter},
@@ -159,19 +155,21 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
         Expanded(
           child: _filtered.isEmpty
               ? Center(
-                  child: Text('No contractors found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No contractors found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final c = _filtered[i];
                     return _TierRow(
                       data: c,
                       canWrite: widget.canWrite,
-                      onChangeTier: (newTier) =>
-                          _setTier(c['uid'], newTier),
+                      onChangeTier: (newTier) => _setTier(c['uid'], newTier),
                     );
                   },
                 ),
@@ -181,18 +179,15 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
   }
 
   Future<void> _setTier(String uid, String newTier) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .update({
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
       'verificationTier': newTier,
       'tierOverriddenByAdmin': true,
       'tierOverrideAt': FieldValue.serverTimestamp(),
     });
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tier updated to $newTier')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Tier updated to $newTier')));
     }
   }
 
@@ -208,15 +203,19 @@ class _VerificationTierAdminTabState extends State<VerificationTierAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),
@@ -271,11 +270,11 @@ class _TierRow extends StatelessWidget {
         children: [
           // Tier badge
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color:
-                  (_tierColors[tier] ?? AdminColors.muted).withValues(alpha: 0.15),
+              color: (_tierColors[tier] ?? AdminColors.muted).withValues(
+                alpha: 0.15,
+              ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -291,8 +290,11 @@ class _TierRow extends StatelessWidget {
             const SizedBox(width: 6),
             const Tooltip(
               message: 'Admin override',
-              child:
-                  Icon(Icons.admin_panel_settings, size: 14, color: AdminColors.warning),
+              child: Icon(
+                Icons.admin_panel_settings,
+                size: 14,
+                color: AdminColors.warning,
+              ),
             ),
           ],
           const SizedBox(width: 12),
@@ -302,13 +304,20 @@ class _TierRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AdminColors.ink)),
-                Text(email,
-                    style: const TextStyle(
-                        fontSize: 11, color: AdminColors.muted)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AdminColors.ink,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AdminColors.muted,
+                  ),
+                ),
               ],
             ),
           ),
@@ -326,10 +335,7 @@ class _TierRow extends StatelessWidget {
               icon: const Icon(Icons.swap_vert, size: 18),
               onSelected: onChangeTier,
               itemBuilder: (_) => _TierRow._tierLabels.entries
-                  .map((e) => PopupMenuItem(
-                        value: e.key,
-                        child: Text(e.value),
-                      ))
+                  .map((e) => PopupMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
             ),
         ],
@@ -340,14 +346,18 @@ class _TierRow extends StatelessWidget {
   Widget _stat(String label, String value) {
     return Column(
       children: [
-        Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: AdminColors.ink)),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 10, color: AdminColors.muted)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: AdminColors.ink,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AdminColors.muted),
+        ),
       ],
     );
   }

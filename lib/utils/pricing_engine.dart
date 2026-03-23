@@ -640,7 +640,6 @@ class PricingEngine {
       };
     }
 
-    final serviceKey = service.trim().toLowerCase();
     final zipKey = zip.trim();
 
     final pricingDoc = await _getPricingDoc(service: service);

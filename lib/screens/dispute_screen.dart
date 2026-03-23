@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 class DisputeScreen extends StatefulWidget {
@@ -18,6 +22,8 @@ class _DisputeScreenState extends State<DisputeScreen> {
   final _detailsController = TextEditingController();
   String _selectedCategory = 'Quality of Work';
   bool _isSubmitting = false;
+  final List<XFile> _evidenceFiles = [];
+  static const _maxEvidence = 5;
 
   final List<String> _evidenceChecklist = const [
     'Photos/videos of the work area',
@@ -34,6 +40,37 @@ class _DisputeScreenState extends State<DisputeScreen> {
     'Property Damage',
     'Other',
   ];
+
+  Future<void> _pickEvidence() async {
+    if (_evidenceFiles.length >= _maxEvidence) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 5 evidence files allowed')),
+      );
+      return;
+    }
+    final picker = ImagePicker();
+    final images = await picker.pickMultiImage(imageQuality: 80);
+    if (images.isNotEmpty && mounted) {
+      setState(() {
+        final remaining = _maxEvidence - _evidenceFiles.length;
+        _evidenceFiles.addAll(images.take(remaining));
+      });
+    }
+  }
+
+  Future<List<String>> _uploadEvidence(String disputeId, String uid) async {
+    final urls = <String>[];
+    for (int i = 0; i < _evidenceFiles.length; i++) {
+      final file = _evidenceFiles[i];
+      final bytes = await file.readAsBytes();
+      final path = 'dispute_evidence/$disputeId/${uid}_${i}_${file.name}';
+      final ref = FirebaseStorage.instance.ref(path);
+      await ref.putData(Uint8List.fromList(bytes));
+      final url = await ref.getDownloadURL();
+      urls.add(url);
+    }
+    return urls;
+  }
 
   Future<void> _submitDispute() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -97,6 +134,9 @@ class _DisputeScreenState extends State<DisputeScreen> {
         throw Exception('An active dispute already exists for this job');
       }
 
+      // Upload evidence files.
+      final evidenceUrls = await _uploadEvidence(widget.jobId, user.uid);
+
       // Create dispute
       await disputeRef.set({
         'jobId': widget.jobId,
@@ -110,6 +150,7 @@ class _DisputeScreenState extends State<DisputeScreen> {
         'status': 'open',
         'createdAt': FieldValue.serverTimestamp(),
         'messages': [],
+        if (evidenceUrls.isNotEmpty) 'evidenceUrls': evidenceUrls,
       });
 
       if (mounted) {
@@ -321,36 +362,104 @@ class _DisputeScreenState extends State<DisputeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Evidence checklist',
+                      'Evidence (photos)',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Having these ready helps us resolve disputes faster:',
+                      'Upload photos of the work area, receipts, or relevant screenshots (max $_maxEvidence):',
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 12),
+                    if (_evidenceFiles.isNotEmpty)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _evidenceFiles.asMap().entries.map((entry) {
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: FutureBuilder<Uint8List>(
+                                  future: entry.value.readAsBytes(),
+                                  builder: (ctx, snap) {
+                                    if (!snap.hasData) {
+                                      return const SizedBox(
+                                        width: 80,
+                                        height: 80,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return Image.memory(
+                                      snap.data!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () => setState(
+                                    () => _evidenceFiles.removeAt(entry.key),
+                                  ),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _evidenceFiles.length >= _maxEvidence
+                          ? null
+                          : _pickEvidence,
+                      icon: const Icon(Icons.add_a_photo),
+                      label: Text(
+                        'Add Photos (${_evidenceFiles.length}/$_maxEvidence)',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     ..._evidenceChecklist.map(
                       (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: 4),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
                               Icons.check_circle_outline,
-                              size: 18,
+                              size: 16,
                               color: Theme.of(context).colorScheme.primary,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 item,
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 13),
                               ),
                             ),
                           ],

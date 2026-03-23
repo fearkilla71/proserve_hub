@@ -31,7 +31,16 @@ class EscrowBookingsCard extends StatelessWidget {
         }
 
         final bookings = snapshot.data ?? [];
-        final active = bookings.where((b) => _isActive(b.status)).toList();
+        final now = DateTime.now();
+        final active = bookings.where((b) {
+          if (!_isActive(b.status)) return false;
+          // Hide "offered" bookings older than 24 hours — stale offers
+          if (b.status == EscrowStatus.offered &&
+              now.difference(b.createdAt).inHours >= 24) {
+            return false;
+          }
+          return true;
+        }).toList();
 
         if (active.isEmpty) return const SizedBox.shrink();
 

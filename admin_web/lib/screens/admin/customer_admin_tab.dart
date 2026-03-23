@@ -190,12 +190,7 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
               Icons.trending_up,
               Colors.teal,
             ),
-            _kpiCard(
-              'High Value',
-              '$highValue',
-              Icons.star,
-              Colors.purple,
-            ),
+            _kpiCard('High Value', '$highValue', Icons.star, Colors.purple),
             _kpiCard(
               'At Risk (90d)',
               '$atRisk',
@@ -270,19 +265,14 @@ class _CustomerAdminTabState extends State<CustomerAdminTab> {
         : 999;
 
     String healthLabel;
-    Color healthColor;
     if (daysSince > 90) {
       healthLabel = 'Churned';
-      healthColor = Colors.red;
     } else if (ltv > 1000 && bookings > 5) {
       healthLabel = 'High';
-      healthColor = Colors.green;
     } else if (ltv > 300 || bookings > 2) {
       healthLabel = 'Medium';
-      healthColor = Colors.blue;
     } else {
       healthLabel = 'Low';
-      healthColor = Colors.grey;
     }
 
     return Card(

@@ -803,8 +803,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         : const SizedBox.shrink();
 
                     final icon = selected ? item.selectedIcon : item.icon;
-                    final color =
-                        selected ? AdminColors.accent : AdminColors.muted;
+                    final color = selected
+                        ? AdminColors.accent
+                        : AdminColors.muted;
 
                     return Column(
                       mainAxisSize: MainAxisSize.min,
@@ -815,18 +816,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           preferBelow: false,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
-                            onTap: () =>
-                                setState(() => _selectedIndex = i),
+                            onTap: () => setState(() => _selectedIndex = i),
                             child: Container(
                               width: 56,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.symmetric(vertical: 6),
                               decoration: selected
                                   ? BoxDecoration(
-                                      color: AdminColors.accent
-                                          .withValues(alpha: 0.12),
-                                      borderRadius:
-                                          BorderRadius.circular(12),
+                                      color: AdminColors.accent.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
                                     )
                                   : null,
                               child: Column(
@@ -835,11 +834,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   badge != null
                                       ? Badge(
                                           label: Text('$badge'),
-                                          child: Icon(icon,
-                                              size: 22, color: color),
+                                          child: Icon(
+                                            icon,
+                                            size: 22,
+                                            color: color,
+                                          ),
                                         )
-                                      : Icon(icon,
-                                          size: 22, color: color),
+                                      : Icon(icon, size: 22, color: color),
                                   const SizedBox(height: 2),
                                   Text(
                                     item.label,
@@ -934,20 +935,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         )
                       : Icon(
                           selected ? item.selectedIcon : item.icon,
-                          color:
-                              selected ? AdminColors.accent : AdminColors.muted,
+                          color: selected
+                              ? AdminColors.accent
+                              : AdminColors.muted,
                         ),
                   title: Text(
                     item.label,
                     style: TextStyle(
                       color: selected ? AdminColors.accent : AdminColors.ink,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                   selected: selected,
-                  selectedTileColor:
-                      AdminColors.accent.withValues(alpha: 0.1),
+                  selectedTileColor: AdminColors.accent.withValues(alpha: 0.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -963,10 +963,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Divider(
-                          color: AdminColors.line,
-                          height: 12,
-                          indent: 16,
-                          endIndent: 16),
+                        color: AdminColors.line,
+                        height: 12,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
                       tile,
                     ],
                   );

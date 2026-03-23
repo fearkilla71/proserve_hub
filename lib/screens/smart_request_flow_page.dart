@@ -162,8 +162,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       _showError('Please add at least one photo of the project area.');
       return false;
     }
-    if (_zipController.text.trim().length < 5) {
-      _showError('Please enter a valid ZIP code.');
+    final zip = _zipController.text.trim();
+    if (zip.length != 5 || !RegExp(r'^\d{5}$').hasMatch(zip)) {
+      _showError('Please enter a valid 5-digit ZIP code.');
       return false;
     }
     if (_selectedServiceType == null) {
@@ -414,36 +415,65 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _back,
-        ),
-        title: Text('Step ${_currentStep + 1} of $_totalSteps'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (_currentStep + 1) / _totalSteps,
-            backgroundColor: scheme.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation(scheme.primary),
+    return PopScope(
+      canPop:
+          _currentStep == 0 &&
+          _photos.isEmpty &&
+          _zipController.text.trim().isEmpty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final leave = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Discard request?'),
+            content: const Text(
+              'You have unsaved progress. Are you sure you want to leave?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Stay'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        if ((leave ?? false) && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _back,
+          ),
+          title: Text('Step ${_currentStep + 1} of $_totalSteps'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(4),
+            child: LinearProgressIndicator(
+              value: (_currentStep + 1) / _totalSteps,
+              backgroundColor: scheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(scheme.primary),
+            ),
           ),
         ),
-      ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buildStep1(scheme),
-          _buildStep2(scheme),
-          _buildStep3(scheme),
-          _buildStep4(scheme),
-        ],
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildStep1(scheme),
+            _buildStep2(scheme),
+            _buildStep3(scheme),
+            _buildStep4(scheme),
+          ],
+        ),
       ),
     );
   }
-
-  // ──────────── Step 1: Snap & Describe ────────────
 
   Widget _buildStep1(ColorScheme scheme) {
     return ListView(

@@ -381,9 +381,12 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                         radius: 55,
                       ),
                       PieChartSectionData(
-                        value: _leadCreditRevenue > 0 ? _leadCreditRevenue : 0.01,
+                        value: _leadCreditRevenue > 0
+                            ? _leadCreditRevenue
+                            : 0.01,
                         color: Colors.cyan,
-                        title: 'Leads\n\$${_leadCreditRevenue.toStringAsFixed(0)}',
+                        title:
+                            'Leads\n\$${_leadCreditRevenue.toStringAsFixed(0)}',
                         titleStyle: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -392,9 +395,12 @@ class _RevenueAdminTabState extends State<RevenueAdminTab> {
                         radius: 55,
                       ),
                       PieChartSectionData(
-                        value: _marketplaceCommissions > 0 ? _marketplaceCommissions : 0.01,
+                        value: _marketplaceCommissions > 0
+                            ? _marketplaceCommissions
+                            : 0.01,
                         color: Colors.pink,
-                        title: 'Market\n\$${_marketplaceCommissions.toStringAsFixed(0)}',
+                        title:
+                            'Market\n\$${_marketplaceCommissions.toStringAsFixed(0)}',
                         titleStyle: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,

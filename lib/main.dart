@@ -22,6 +22,7 @@ import 'l10n/app_localizations.dart';
 import 'screens/landing_page.dart';
 import 'router/app_router.dart';
 import 'services/service_locator.dart';
+import 'services/loyalty_service.dart';
 import 'services/offline_sync_service.dart';
 import 'services/version_check_service.dart';
 import 'state/app_state.dart';
@@ -350,6 +351,9 @@ void main() async {
 
       // Initialize offline sync service.
       await OfflineSyncService.instance.init();
+
+      // Load remote-configurable loyalty point values.
+      unawaited(LoyaltyConfig.instance.init());
 
       // App Check can be surprisingly expensive / flaky on emulators.
       // - Release: activate before app work starts.

@@ -7,9 +7,7 @@ void main() {
 
   group('FinancingOptionCard', () {
     testWidgets('hidden when price is below threshold', (tester) async {
-      await tester.pumpWidget(
-        wrap(const FinancingOptionCard(totalPrice: 500)),
-      );
+      await tester.pumpWidget(wrap(const FinancingOptionCard(totalPrice: 500)));
       // Should render nothing for <$1000
       expect(find.byType(FinancingOptionCard), findsOneWidget);
       expect(find.text('Pay in 3'), findsNothing);

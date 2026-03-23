@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../models/escrow_booking.dart';
 import '../services/escrow_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/profanity_filter.dart';
+import '../widgets/skeleton_loader.dart';
 
 /// Post-job rating screen for price fairness feedback.
 ///
@@ -63,6 +65,13 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
 
   Future<void> _submitRating() async {
     if (_selectedRating == 0 || _submitting) return;
+    final comment = _commentCtrl.text.trim();
+    if (comment.isNotEmpty && ProfanityFilter.containsProfanity(comment)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please remove inappropriate language')),
+      );
+      return;
+    }
     HapticFeedback.mediumImpact();
     setState(() => _submitting = true);
 
@@ -133,7 +142,40 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
         centerTitle: true,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  const SizedBox(height: 48),
+                  SkeletonLoader(
+                    width: 200,
+                    height: 24,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      5,
+                      (_) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: SkeletonLoader(
+                          width: 52,
+                          height: 52,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SkeletonLoader(
+                    width: double.infinity,
+                    height: 80,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ],
+              ),
+            )
           : _submitted
           ? _buildThankYou(scheme)
           : _buildRatingForm(scheme),
@@ -302,12 +344,15 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
             children: List.generate(5, (i) {
               final starNum = i + 1;
               final selected = starNum <= _selectedRating;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() => _selectedRating = starNum);
-                },
-                child: AnimatedContainer(
+              return Semantics(
+                label: 'Rating $starNum of 5 stars',
+                selected: selected,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _selectedRating = starNum);
+                  },
+                  child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   padding: const EdgeInsets.all(8),
@@ -326,6 +371,7 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
                     selected ? Icons.star : Icons.star_border,
                     color: selected ? _ratingColor(starNum) : Colors.white30,
                     size: 36,
+                  ),
                   ),
                 ),
               );

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+
+import '../constants/service_types.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -26,17 +28,13 @@ class _ContractorSubcontractBoardScreenState
 
   // ── Search & filter state ──────────────────────────────────────────
   String _searchQuery = '';
+  String _searchQueryLower = '';
   String? _tradeFilter;
+  String? _tradeFilterLower;
   final _searchController = TextEditingController();
   bool _showSearch = false;
 
-  static const _tradeTypes = [
-    'Interior Painting',
-    'Exterior Painting',
-    'Pressure Washing',
-    'Cabinets',
-    'Drywall Repair',
-  ];
+  static const _tradeTypes = kPaintingServices;
 
   @override
   void dispose() {
@@ -46,24 +44,23 @@ class _ContractorSubcontractBoardScreenState
 
   bool _passesFilters(Map<String, dynamic> data) {
     // Text search
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
+    if (_searchQueryLower.isNotEmpty) {
       final title = (data['title'] as String? ?? '').toLowerCase();
       final trade = (data['trade'] as String? ?? '').toLowerCase();
       final location = (data['location'] as String? ?? '').toLowerCase();
       final desc = (data['description'] as String? ?? '').toLowerCase();
-      if (!title.contains(q) &&
-          !trade.contains(q) &&
-          !location.contains(q) &&
-          !desc.contains(q)) {
+      if (!title.contains(_searchQueryLower) &&
+          !trade.contains(_searchQueryLower) &&
+          !location.contains(_searchQueryLower) &&
+          !desc.contains(_searchQueryLower)) {
         return false;
       }
     }
 
     // Trade filter
-    if (_tradeFilter != null) {
+    if (_tradeFilterLower != null) {
       final trade = (data['trade'] as String? ?? '').toLowerCase();
-      if (trade != _tradeFilter!.toLowerCase()) return false;
+      if (trade != _tradeFilterLower) return false;
     }
 
     return true;
@@ -91,7 +88,10 @@ class _ContractorSubcontractBoardScreenState
                     hintText: 'Search jobs…',
                     border: InputBorder.none,
                   ),
-                  onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                  onChanged: (v) => setState(() {
+                    _searchQuery = v.trim();
+                    _searchQueryLower = _searchQuery.toLowerCase();
+                  }),
                 )
               : const Text('Subcontract jobs'),
           bottom: PreferredSize(
@@ -115,8 +115,10 @@ class _ContractorSubcontractBoardScreenState
                           child: InputChip(
                             label: Text(_tradeFilter!),
                             selected: true,
-                            onDeleted: () =>
-                                setState(() => _tradeFilter = null),
+                            onDeleted: () => setState(() {
+                              _tradeFilter = null;
+                              _tradeFilterLower = null;
+                            }),
                           ),
                         ),
                       for (final t in _tradeTypes)
@@ -129,8 +131,12 @@ class _ContractorSubcontractBoardScreenState
                             child: FilterChip(
                               label: Text(t),
                               selected: _tradeFilter == t,
-                              onSelected: (sel) =>
-                                  setState(() => _tradeFilter = sel ? t : null),
+                              onSelected: (sel) => setState(() {
+                                _tradeFilter = sel ? t : null;
+                                _tradeFilterLower = sel
+                                    ? t.toLowerCase()
+                                    : null;
+                              }),
                             ),
                           ),
                     ],
@@ -149,6 +155,7 @@ class _ContractorSubcontractBoardScreenState
                   if (!_showSearch) {
                     _searchController.clear();
                     _searchQuery = '';
+                    _searchQueryLower = '';
                   }
                 });
               },

@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../models/marketplace_models.dart';
+import '../utils/profanity_filter.dart';
 
 class SubmitReviewScreen extends StatefulWidget {
   final String jobId;
@@ -43,20 +44,32 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
     required double value,
     required ValueChanged<double> onChanged,
   }) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         SizedBox(width: 120, child: Text(label)),
-        Expanded(
-          child: Slider(
-            value: value,
-            min: 1,
-            max: 5,
-            divisions: 4,
-            label: value.toStringAsFixed(0),
-            onChanged: _isSubmitting ? null : onChanged,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(5, (i) {
+            final starValue = (i + 1).toDouble();
+            final filled = value >= starValue;
+            return Semantics(
+              label: '$label ${i + 1} of 5 stars',
+              selected: filled,
+              child: GestureDetector(
+                onTap: _isSubmitting ? null : () => onChanged(starValue),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Icon(
+                    filled ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: filled ? Colors.amber : scheme.outlineVariant,
+                    size: 32,
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
-        SizedBox(width: 28, child: Text(value.toStringAsFixed(0))),
       ],
     );
   }
@@ -299,6 +312,9 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
                   if (value.trim().length < 20) {
                     return 'Comment must be at least 20 characters';
                   }
+                  if (ProfanityFilter.containsProfanity(value)) {
+                    return 'Please remove inappropriate language';
+                  }
                   return null;
                 },
               ),
@@ -335,14 +351,17 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
                               width: 100,
                               height: 100,
                               fit: BoxFit.cover,
+                              semanticLabel: 'Review photo ${i + 1}',
                             ),
                           ),
                           Positioned(
                             top: 4,
                             right: 4,
-                            child: InkWell(
-                              onTap: () => _removePhoto(i),
-                              child: Container(
+                            child: Tooltip(
+                              message: 'Remove photo',
+                              child: InkWell(
+                                onTap: () => _removePhoto(i),
+                                child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   color: Colors.black54,
@@ -353,6 +372,7 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
                                   color: Colors.white,
                                   size: 16,
                                 ),
+                              ),
                               ),
                             ),
                           ),

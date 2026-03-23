@@ -52,14 +52,16 @@ void main() {
   group('VerificationTierCard', () {
     testWidgets('renders criteria for elite tier', (tester) async {
       await tester.pumpWidget(
-        wrap(const SingleChildScrollView(
-          child: VerificationTierCard(
-            currentTier: VerificationTier.elitePro,
-            completedJobs: 150,
-            avgRating: 4.9,
-            yearsActive: 5,
+        wrap(
+          const SingleChildScrollView(
+            child: VerificationTierCard(
+              currentTier: VerificationTier.elitePro,
+              completedJobs: 150,
+              avgRating: 4.9,
+              yearsActive: 5,
+            ),
           ),
-        )),
+        ),
       );
       expect(find.textContaining('100+'), findsOneWidget);
       expect(find.textContaining('4.7'), findsOneWidget);

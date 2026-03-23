@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
+import '../theme/semantic_colors.dart';
 
 class ContractorAnalyticsScreen extends StatefulWidget {
   const ContractorAnalyticsScreen({super.key});
@@ -85,8 +86,8 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
         for (final doc in expensesSnap.docs) {
           totalExpenses += (doc.data()['amount'] as num?)?.toDouble() ?? 0.0;
         }
-      } catch (_) {
-        // Expenses collection may not exist yet — that's fine.
+      } catch (e) {
+        debugPrint('Expenses fetch skipped: $e');
       }
 
       // Quotes sent (for conversion rate).
@@ -103,7 +104,9 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
         quotesAccepted = quotesSnap.docs
             .where((d) => d.data()['status'] == 'accepted')
             .length;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Quotes fetch skipped: $e');
+      }
 
       final filteredDocs = jobsSnapshot.docs;
 
@@ -374,6 +377,7 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
   }
 
   Widget _buildStatsGrid() {
+    final cs = Theme.of(context).colorScheme;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -386,21 +390,21 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
           'Total Jobs',
           _stats['totalJobs'].toString(),
           Icons.work,
-          Colors.blue,
+          cs.info,
           prevValue: _prevStats['totalJobs'],
         ),
         _buildStatCard(
           'Completed',
           _stats['completedJobs'].toString(),
           Icons.check_circle,
-          Colors.green,
+          cs.success,
           prevValue: _prevStats['completedJobs'],
         ),
         _buildStatCard(
           'Revenue',
           '\$${_stats['totalEarnings'].toStringAsFixed(0)}',
           Icons.attach_money,
-          Colors.orange,
+          cs.warning,
           prevValue: _prevStats['totalEarnings'],
           isCurrency: true,
         ),
@@ -408,32 +412,32 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
           'Expenses',
           '\$${_stats['totalExpenses'].toStringAsFixed(0)}',
           Icons.receipt_long,
-          Colors.red,
+          cs.danger,
         ),
         _buildStatCard(
           'Profit Margin',
           '${_stats['profitMargin'].toStringAsFixed(1)}%',
           Icons.trending_up,
-          _stats['profitMargin'] >= 30 ? Colors.green : Colors.orange,
+          _stats['profitMargin'] >= 30 ? cs.success : cs.warning,
         ),
         _buildStatCard(
           'Conversion Rate',
           '${_stats['conversionRate'].toStringAsFixed(1)}%',
           Icons.swap_horiz,
-          _stats['conversionRate'] >= 50 ? Colors.green : Colors.orange,
+          _stats['conversionRate'] >= 50 ? cs.success : cs.warning,
         ),
         _buildStatCard(
           'Completion Rate',
           '${_stats['completionRate'].toStringAsFixed(1)}%',
           Icons.task_alt,
-          Colors.purple,
+          cs.tertiary,
           prevValue: _prevStats['completionRate'],
         ),
         _buildStatCard(
           'Avg Rating',
           '${_stats['averageRating'].toStringAsFixed(1)} ⭐',
           Icons.star,
-          _stats['averageRating'] >= 4.5 ? Colors.green : Colors.orange,
+          _stats['averageRating'] >= 4.5 ? cs.success : cs.warning,
         ),
       ],
     );
@@ -466,10 +470,12 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
         final pctChange = ((curr - prev) / prev * 100);
         changeText =
             '${pctChange >= 0 ? '+' : ''}${pctChange.toStringAsFixed(0)}%';
-        changeColor = pctChange >= 0 ? Colors.green : Colors.red;
+        changeColor = pctChange >= 0
+            ? Theme.of(context).colorScheme.success
+            : Theme.of(context).colorScheme.danger;
       } else if (curr > 0) {
         changeText = 'New';
-        changeColor = Colors.green;
+        changeColor = Theme.of(context).colorScheme.success;
       }
     }
 
@@ -531,111 +537,129 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
     );
   }
 
-  Widget _buildEarningsChart() {
-    if (_earningsData.isEmpty) {
-      return Card(
-        child: Container(
-          height: 200,
-          alignment: Alignment.center,
-          child: Text(
-            'No earnings data available',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+  // ── Chart helpers ──────────────────────────────────────
+
+  Widget _emptyChartCard(String message) {
+    return Card(
+      child: Container(
+        height: 200,
+        alignment: Alignment.center,
+        child: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
+  Widget _chartCard({required Widget chart}) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 200,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 1,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    strokeWidth: 1,
+        child: SizedBox(height: 200, child: chart),
+      ),
+    );
+  }
+
+  FlGridData _chartGrid() {
+    return FlGridData(
+      show: true,
+      drawVerticalLine: false,
+      getDrawingHorizontalLine: (value) {
+        return FlLine(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          strokeWidth: 1,
+        );
+      },
+    );
+  }
+
+  FlTitlesData _chartTitles({
+    required SideTitles leftTitles,
+    required SideTitles bottomTitles,
+  }) {
+    return FlTitlesData(
+      leftTitles: AxisTitles(sideTitles: leftTitles),
+      bottomTitles: AxisTitles(sideTitles: bottomTitles),
+      rightTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+      topTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+    );
+  }
+
+  TextStyle _axisTitleStyle() {
+    return TextStyle(
+      fontSize: 10,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+  }
+
+  // ── Charts ────────────────────────────────────────────
+
+  Widget _buildEarningsChart() {
+    if (_earningsData.isEmpty) {
+      return _emptyChartCard('No earnings data available');
+    }
+
+    return _chartCard(
+      chart: LineChart(
+        LineChartData(
+          gridData: _chartGrid(),
+          titlesData: _chartTitles(
+            leftTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                return Text('\$${value.toInt()}', style: _axisTitleStyle());
+              },
+            ),
+            bottomTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < _earningsData.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _earningsData[index]['date'],
+                      style: _axisTitleStyle(),
+                    ),
                   );
-                },
-              ),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 40,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        '\$${value.toInt()}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
-                      if (index >= 0 && index < _earningsData.length) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            _earningsData[index]['date'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        );
-                      }
-                      return const Text('');
-                    },
-                  ),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: _earningsData
-                      .asMap()
-                      .entries
-                      .map(
-                        (entry) =>
-                            FlSpot(entry.key.toDouble(), entry.value['amount']),
-                      )
-                      .toList(),
-                  isCurved: true,
-                  color: Colors.orange,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: const FlDotData(show: true),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.orange.withValues(alpha: 0.2),
-                  ),
-                ),
-              ],
+                }
+                return const Text('');
+              },
             ),
           ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: _earningsData
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) =>
+                        FlSpot(entry.key.toDouble(), entry.value['amount']),
+                  )
+                  .toList(),
+              isCurved: true,
+              color: Theme.of(context).colorScheme.warning,
+              barWidth: 3,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: Theme.of(
+                  context,
+                ).colorScheme.warning.withValues(alpha: 0.2),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -643,115 +667,71 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
 
   Widget _buildJobsChart() {
     if (_jobsData.isEmpty) {
-      return Card(
-        child: Container(
-          height: 200,
-          alignment: Alignment.center,
-          child: Text(
-            'No jobs data available',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
+      return _emptyChartCard('No jobs data available');
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 200,
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              maxY:
-                  (_jobsData
-                              .map((e) => e['count'] as int)
-                              .reduce((a, b) => a > b ? a : b) +
-                          2)
-                      .toDouble(),
-              barTouchData: BarTouchData(enabled: true),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        value.toInt().toString(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
-                      if (index >= 0 && index < _jobsData.length) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            _jobsData[index]['date'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        );
-                      }
-                      return const Text('');
-                    },
-                  ),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    strokeWidth: 1,
-                  );
-                },
-              ),
-              borderData: FlBorderData(show: false),
-              barGroups: _jobsData
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) => BarChartGroupData(
-                      x: entry.key,
-                      barRods: [
-                        BarChartRodData(
-                          toY: entry.value['count'].toDouble(),
-                          color: Colors.blue,
-                          width: 16,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(4),
-                            topRight: Radius.circular(4),
-                          ),
-                        ),
-                      ],
+    return _chartCard(
+      chart: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY:
+              (_jobsData
+                          .map((e) => e['count'] as int)
+                          .reduce((a, b) => a > b ? a : b) +
+                      2)
+                  .toDouble(),
+          barTouchData: BarTouchData(enabled: true),
+          titlesData: _chartTitles(
+            leftTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: _axisTitleStyle(),
+                );
+              },
+            ),
+            bottomTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < _jobsData.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _jobsData[index]['date'],
+                      style: _axisTitleStyle(),
                     ),
-                  )
-                  .toList(),
+                  );
+                }
+                return const Text('');
+              },
             ),
           ),
+          gridData: _chartGrid(),
+          borderData: FlBorderData(show: false),
+          barGroups: _jobsData
+              .asMap()
+              .entries
+              .map(
+                (entry) => BarChartGroupData(
+                  x: entry.key,
+                  barRods: [
+                    BarChartRodData(
+                      toY: entry.value['count'].toDouble(),
+                      color: Theme.of(context).colorScheme.info,
+                      width: 16,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              .toList(),
         ),
       ),
     );
@@ -772,19 +752,23 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
             _buildPerformanceRow(
               'Average Rating',
               '${_stats['averageRating'].toStringAsFixed(1)} ⭐',
-              _stats['averageRating'] >= 4.5 ? Colors.green : Colors.orange,
+              _stats['averageRating'] >= 4.5
+                  ? Theme.of(context).colorScheme.success
+                  : Theme.of(context).colorScheme.warning,
             ),
             const Divider(height: 24),
             _buildPerformanceRow(
               'Total Reviews',
               _stats['totalReviews'].toString(),
-              Colors.blue,
+              Theme.of(context).colorScheme.info,
             ),
             const Divider(height: 24),
             _buildPerformanceRow(
               'Completion Rate',
               '${_stats['completionRate'].toStringAsFixed(1)}%',
-              _stats['completionRate'] >= 80 ? Colors.green : Colors.orange,
+              _stats['completionRate'] >= 80
+                  ? Theme.of(context).colorScheme.success
+                  : Theme.of(context).colorScheme.warning,
             ),
           ],
         ),
@@ -811,32 +795,38 @@ class _ContractorAnalyticsScreenState extends State<ContractorAnalyticsScreen> {
             _buildPerformanceRow(
               'Revenue',
               '\$${revenue.toStringAsFixed(2)}',
-              Colors.green,
+              Theme.of(context).colorScheme.success,
             ),
             const Divider(height: 24),
             _buildPerformanceRow(
               'Expenses',
               '- \$${expenses.toStringAsFixed(2)}',
-              Colors.red,
+              Theme.of(context).colorScheme.danger,
             ),
             const Divider(height: 24),
             _buildPerformanceRow(
               'Net Profit',
               '\$${profit.toStringAsFixed(2)}',
-              profit >= 0 ? Colors.green : Colors.red,
+              profit >= 0
+                  ? Theme.of(context).colorScheme.success
+                  : Theme.of(context).colorScheme.danger,
             ),
             const Divider(height: 24),
             _buildPerformanceRow(
               'Margin',
               '${_stats['profitMargin'].toStringAsFixed(1)}%',
-              _stats['profitMargin'] >= 30 ? Colors.green : Colors.orange,
+              _stats['profitMargin'] >= 30
+                  ? Theme.of(context).colorScheme.success
+                  : Theme.of(context).colorScheme.warning,
             ),
             if (_stats['conversionRate'] > 0) ...[
               const Divider(height: 24),
               _buildPerformanceRow(
                 'Quote → Job',
                 '${_stats['conversionRate'].toStringAsFixed(1)}%',
-                _stats['conversionRate'] >= 50 ? Colors.green : Colors.orange,
+                _stats['conversionRate'] >= 50
+                    ? Theme.of(context).colorScheme.success
+                    : Theme.of(context).colorScheme.warning,
               ),
             ],
           ],

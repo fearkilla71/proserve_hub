@@ -53,9 +53,9 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                   child: CachedNetworkImage(
                     imageUrl: widget.afterUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) =>
+                    placeholder: (_, _) =>
                         const Center(child: CircularProgressIndicator()),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       color: Colors.grey.shade800,
                       child: const Center(child: Icon(Icons.broken_image)),
                     ),
@@ -68,9 +68,9 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                     child: CachedNetworkImage(
                       imageUrl: widget.beforeUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) =>
+                      placeholder: (_, _) =>
                           const Center(child: CircularProgressIndicator()),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: Colors.grey.shade800,
                         child: const Center(child: Icon(Icons.broken_image)),
                       ),

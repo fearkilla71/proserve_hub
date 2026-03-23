@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
-import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
 /// Recurring Jobs Admin — Manage recurring job configurations, track recurring
@@ -51,34 +50,34 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snap) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            return data;
+          }).toList();
 
-      int active = 0;
-      int cancelled = 0;
-      double revenue = 0;
+          int active = 0;
+          int cancelled = 0;
+          double revenue = 0;
 
-      for (final r in docs) {
-        final st = r['status'] ?? 'active';
-        if (st == 'active') {
-          active++;
-          revenue += (r['pricePerOccurrence'] as num?)?.toDouble() ?? 0;
-        }
-        if (st == 'cancelled') cancelled++;
-      }
+          for (final r in docs) {
+            final st = r['status'] ?? 'active';
+            if (st == 'active') {
+              active++;
+              revenue += (r['pricePerOccurrence'] as num?)?.toDouble() ?? 0;
+            }
+            if (st == 'cancelled') cancelled++;
+          }
 
-      setState(() {
-        _configs = docs;
-        _total = docs.length;
-        _active = active;
-        _recurringRevenue = revenue;
-        _cancelled = cancelled;
-        _loading = false;
-      });
-    });
+          setState(() {
+            _configs = docs;
+            _total = docs.length;
+            _active = active;
+            _recurringRevenue = revenue;
+            _cancelled = cancelled;
+            _loading = false;
+          });
+        });
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -89,10 +88,16 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((r) =>
-              (r['service'] ?? '').toString().toLowerCase().contains(q) ||
-              (r['customerName'] ?? '').toString().toLowerCase().contains(q) ||
-              (r['contractorName'] ?? '').toString().toLowerCase().contains(q))
+          .where(
+            (r) =>
+                (r['service'] ?? '').toString().toLowerCase().contains(q) ||
+                (r['customerName'] ?? '').toString().toLowerCase().contains(
+                  q,
+                ) ||
+                (r['contractorName'] ?? '').toString().toLowerCase().contains(
+                  q,
+                ),
+          )
           .toList();
     }
     return list;
@@ -100,7 +105,7 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SkeletonLoader();
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     final filtered = _filtered;
 
@@ -113,9 +118,11 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
             children: [
               _kpi('Total', '$_total', AdminColors.accent2),
               _kpi('Active', '$_active', AdminColors.accent),
-              _kpi('Monthly Rev',
-                  '\$${NumberFormat.compact().format(_recurringRevenue)}',
-                  AdminColors.accent3),
+              _kpi(
+                'Monthly Rev',
+                '\$${NumberFormat.compact().format(_recurringRevenue)}',
+                AdminColors.accent3,
+              ),
               _kpi('Cancelled', '$_cancelled', AdminColors.error),
             ],
           ),
@@ -130,11 +137,12 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(s[0].toUpperCase() + s.substring(1),
-                        style: const TextStyle(fontSize: 12)),
+                    label: Text(
+                      s[0].toUpperCase() + s.substring(1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: _filter == s,
-                    selectedColor:
-                        AdminColors.accent.withValues(alpha: 0.15),
+                    selectedColor: AdminColors.accent.withValues(alpha: 0.15),
                     onSelected: (_) => setState(() => _filter = s),
                   ),
                 ),
@@ -147,7 +155,8 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onChanged: (v) => setState(() => _search = v),
                 ),
@@ -161,12 +170,15 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
         Expanded(
           child: filtered.isEmpty
               ? Center(
-                  child: Text('No recurring jobs found',
-                      style: TextStyle(color: AdminColors.muted)))
+                  child: Text(
+                    'No recurring jobs found',
+                    style: TextStyle(color: AdminColors.muted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final r = filtered[i];
                     final service = r['service'] ?? 'Unknown';
@@ -176,8 +188,7 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                     final freq = r['frequency'] ?? 'monthly';
                     final price =
                         (r['pricePerOccurrence'] as num?)?.toDouble() ?? 0;
-                    final nextRun =
-                        (r['nextRunAt'] as Timestamp?)?.toDate();
+                    final nextRun = (r['nextRunAt'] as Timestamp?)?.toDate();
 
                     Color statusColor;
                     switch (status) {
@@ -200,23 +211,25 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.replay,
-                              size: 18, color: statusColor),
+                          Icon(Icons.replay, size: 18, color: statusColor),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(service.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AdminColors.ink)),
+                                Text(
+                                  service.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AdminColors.ink,
+                                  ),
+                                ),
                                 Text(
                                   '${customer.toString().isNotEmpty ? '$customer → ' : ''}$contractor · $freq',
                                   style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AdminColors.muted),
+                                    fontSize: 11,
+                                    color: AdminColors.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -224,41 +237,50 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('\$${price.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AdminColors.ink)),
+                              Text(
+                                '\$${price.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminColors.ink,
+                                ),
+                              ),
                               if (nextRun != null)
                                 Text(
                                   'Next: ${DateFormat.MMMd().format(nextRun)}',
                                   style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AdminColors.muted),
+                                    fontSize: 10,
+                                    color: AdminColors.muted,
+                                  ),
                                 ),
                             ],
                           ),
                           const SizedBox(width: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  statusColor.withValues(alpha: 0.15),
+                              color: statusColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               status,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: statusColor),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                           if (widget.canWrite) ...[
                             const SizedBox(width: 8),
                             PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert,
-                                  size: 18, color: AdminColors.muted),
+                              icon: const Icon(
+                                Icons.more_vert,
+                                size: 18,
+                                color: AdminColors.muted,
+                              ),
                               onSelected: (val) async {
                                 await FirebaseFirestore.instance
                                     .collection('recurring_jobs')
@@ -268,16 +290,19 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
                               itemBuilder: (_) => [
                                 if (status == 'active')
                                   const PopupMenuItem(
-                                      value: 'paused',
-                                      child: Text('Pause')),
+                                    value: 'paused',
+                                    child: Text('Pause'),
+                                  ),
                                 if (status == 'paused')
                                   const PopupMenuItem(
-                                      value: 'active',
-                                      child: Text('Resume')),
+                                    value: 'active',
+                                    child: Text('Resume'),
+                                  ),
                                 if (status != 'cancelled')
                                   const PopupMenuItem(
-                                      value: 'cancelled',
-                                      child: Text('Cancel')),
+                                    value: 'cancelled',
+                                    child: Text('Cancel'),
+                                  ),
                               ],
                             ),
                           ],
@@ -303,15 +328,19 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AdminColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AdminColors.muted),
+            ),
           ],
         ),
       ),

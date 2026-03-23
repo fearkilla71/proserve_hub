@@ -115,19 +115,16 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
   }
 
   /// Escalate a dispute to senior admin
-  Future<void> _escalateDispute(
-    BuildContext context,
-    String disputeId,
-  ) async {
+  Future<void> _escalateDispute(BuildContext context, String disputeId) async {
     try {
       await FirebaseFirestore.instance
           .collection('disputes')
           .doc(disputeId)
           .update({
-        'status': 'escalated',
-        'escalatedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'status': 'escalated',
+            'escalatedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       // Write to mediation history
       await FirebaseFirestore.instance
@@ -135,27 +132,31 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
           .doc(disputeId)
           .collection('mediation_history')
           .add({
-        'action': 'escalated',
-        'note': 'Dispute escalated by admin for senior review',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'action': 'escalated',
+            'note': 'Dispute escalated by admin for senior review',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Dispute escalated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Dispute escalated')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   /// Issue a refund for the dispute's escrow booking
-  void _showRefundDialog(BuildContext context, String disputeId,
-      Map<String, dynamic> dispute) {
+  void _showRefundDialog(
+    BuildContext context,
+    String disputeId,
+    Map<String, dynamic> dispute,
+  ) {
     final amountCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
 
@@ -194,12 +195,10 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: AdminColors.error),
+            style: FilledButton.styleFrom(backgroundColor: AdminColors.error),
             onPressed: () async {
               Navigator.pop(dialogContext);
-              final amount =
-                  double.tryParse(amountCtrl.text.trim()) ?? 0;
+              final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
               if (amount <= 0) return;
 
               // Record refund
@@ -207,11 +206,11 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                   .collection('disputes')
                   .doc(disputeId)
                   .update({
-                'refundAmount': amount,
-                'refundReason': reasonCtrl.text.trim(),
-                'refundIssuedAt': FieldValue.serverTimestamp(),
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'refundAmount': amount,
+                    'refundReason': reasonCtrl.text.trim(),
+                    'refundIssuedAt': FieldValue.serverTimestamp(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               // Add to mediation history
               await FirebaseFirestore.instance
@@ -219,17 +218,19 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                   .doc(disputeId)
                   .collection('mediation_history')
                   .add({
-                'action': 'refund_issued',
-                'amount': amount,
-                'note': reasonCtrl.text.trim(),
-                'createdAt': FieldValue.serverTimestamp(),
-              });
+                    'action': 'refund_issued',
+                    'amount': amount,
+                    'note': reasonCtrl.text.trim(),
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(
-                          'Refund of \$${amount.toStringAsFixed(2)} issued')),
+                    content: Text(
+                      'Refund of \$${amount.toStringAsFixed(2)} issued',
+                    ),
+                  ),
                 );
               }
             },
@@ -270,10 +271,10 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                   .doc(disputeId)
                   .collection('mediation_history')
                   .add({
-                'action': 'note',
-                'note': noteCtrl.text.trim(),
-                'createdAt': FieldValue.serverTimestamp(),
-              });
+                    'action': 'note',
+                    'note': noteCtrl.text.trim(),
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
             },
             child: const Text('Save'),
           ),
@@ -511,8 +512,11 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.money_off,
-                                  size: 16, color: AdminColors.error),
+                              const Icon(
+                                Icons.money_off,
+                                size: 16,
+                                color: AdminColors.error,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Refund issued: \$${(dispute['refundAmount'] as num).toStringAsFixed(2)}',
@@ -528,9 +532,13 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: AdminColors.warning.withValues(alpha: 0.15),
+                              color: AdminColors.warning.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
@@ -596,14 +604,16 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               if (status != 'escalated')
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    icon: const Icon(Icons.arrow_upward,
-                                        size: 16),
+                                    icon: const Icon(
+                                      Icons.arrow_upward,
+                                      size: 16,
+                                    ),
                                     label: const Text('Escalate'),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: AdminColors.warning,
                                     ),
-                                    onPressed: () => _escalateDispute(
-                                        context, disputeId),
+                                    onPressed: () =>
+                                        _escalateDispute(context, disputeId),
                                   ),
                                 ),
                               if (status != 'escalated')
@@ -611,14 +621,16 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               if (dispute['refundAmount'] == null)
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    icon: const Icon(Icons.money_off,
-                                        size: 16),
+                                    icon: const Icon(Icons.money_off, size: 16),
                                     label: const Text('Issue Refund'),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: AdminColors.error,
                                     ),
                                     onPressed: () => _showRefundDialog(
-                                        context, disputeId, dispute),
+                                      context,
+                                      disputeId,
+                                      dispute,
+                                    ),
                                   ),
                                 ),
                               const SizedBox(width: 8),
@@ -659,15 +671,16 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               return const Text(
                                 'No mediation entries yet.',
                                 style: TextStyle(
-                                    fontSize: 12, fontStyle: FontStyle.italic),
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               );
                             }
                             final entries = histSnap.data!.docs;
                             return Column(
                               children: entries.map((doc) {
                                 final d = doc.data() as Map<String, dynamic>;
-                                final action =
-                                    d['action'] as String? ?? 'note';
+                                final action = d['action'] as String? ?? 'note';
                                 final note = d['note'] as String? ?? '';
                                 final ts = d['createdAt'] as Timestamp?;
                                 final amount = d['amount'] as num?;
@@ -689,14 +702,12 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                                 }
 
                                 return Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.only(bottom: 6),
                                   child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Icon(icon,
-                                          size: 16, color: iconColor),
+                                      Icon(icon, size: 16, color: iconColor),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Column(
@@ -707,8 +718,8 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                                               action == 'refund_issued'
                                                   ? 'Refund \$${amount?.toStringAsFixed(2) ?? ''}'
                                                   : action
-                                                      .replaceAll('_', ' ')
-                                                      .toUpperCase(),
+                                                        .replaceAll('_', ' ')
+                                                        .toUpperCase(),
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 12,
@@ -716,17 +727,21 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                                               ),
                                             ),
                                             if (note.isNotEmpty)
-                                              Text(note,
-                                                  style: const TextStyle(
-                                                      fontSize: 12)),
+                                              Text(
+                                                note,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
                                             if (ts != null)
                                               Text(
-                                                DateFormat('MMM d, y h:mm a')
-                                                    .format(ts.toDate()),
+                                                DateFormat(
+                                                  'MMM d, y h:mm a',
+                                                ).format(ts.toDate()),
                                                 style: const TextStyle(
-                                                    fontSize: 10,
-                                                    color:
-                                                        AdminColors.muted),
+                                                  fontSize: 10,
+                                                  color: AdminColors.muted,
+                                                ),
                                               ),
                                           ],
                                         ),

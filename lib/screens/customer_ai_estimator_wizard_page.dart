@@ -482,6 +482,8 @@ class _CustomerAiEstimatorWizardPageState
     } on FirebaseFunctionsException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message ?? e.code)));
     } catch (e, st) {
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously
       AppError.show(context, e, st, action: 'generate estimate');
     } finally {
       if (mounted) {
@@ -597,6 +599,8 @@ class _CustomerAiEstimatorWizardPageState
         SnackBar(content: Text('Uploaded ${uploaded.length} photo(s).')),
       );
     } catch (e, st) {
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously
       AppError.show(context, e, st, action: 'upload photos');
     } finally {
       if (mounted) {
@@ -704,6 +708,8 @@ class _CustomerAiEstimatorWizardPageState
 
       messenger.showSnackBar(const SnackBar(content: Text('Photo uploaded.')));
     } catch (e, st) {
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously
       AppError.show(context, e, st, action: 'upload photo');
     } finally {
       if (mounted) {
@@ -889,6 +895,8 @@ class _CustomerAiEstimatorWizardPageState
         await _generateRoughEstimate();
         return;
       }
+      if (!context.mounted) return;
+      // ignore: use_build_context_synchronously
       AppError.show(context, e, st, action: 'photo estimate');
     } finally {
       if (mounted) {
@@ -1579,51 +1587,82 @@ class _CustomerAiEstimatorWizardPageState
   Widget build(BuildContext context) {
     final progress = (_step + 1) / 4;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('AI Estimator')),
-      body: SafeArea(
-        child: _creatingDraft
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Column(
-                  children: [
-                    LinearProgressIndicator(value: progress),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: switch (_step) {
-                            0 => _serviceStep(context),
-                            1 => _detailsStep(context),
-                            2 => _photosStep(context),
-                            _ => _estimateStep(context),
-                          },
+    return PopScope(
+      canPop:
+          _step == 0 &&
+          _uploadedPaths.isEmpty &&
+          _zipController.text.trim().isEmpty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final leave = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Discard estimate?'),
+            content: const Text(
+              'You have unsaved progress. Are you sure you want to leave?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Stay'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        if ((leave ?? false) && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('AI Estimator')),
+        body: SafeArea(
+          child: _creatingDraft
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(value: progress),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: switch (_step) {
+                              0 => _serviceStep(context),
+                              1 => _detailsStep(context),
+                              2 => _photosStep(context),
+                              _ => _estimateStep(context),
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _step == 0 ? null : _back,
-                            child: const Text('Back'),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _step == 0 ? null : _back,
+                              child: const Text('Back'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _step == 3 ? null : _next,
-                            child: const Text('Next'),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: _step == 3 ? null : _next,
+                              child: const Text('Next'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }

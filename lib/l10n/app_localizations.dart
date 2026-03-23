@@ -477,6 +477,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exterior Painting'**
   String get exteriorPainting;
+
+  /// Price guarantee badge title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Price Match Guarantee'**
+  String get aiPriceMatchGuarantee;
+
+  /// Compact price guarantee badge label
+  ///
+  /// In en, this message translates to:
+  /// **'AI Price Match'**
+  String get aiPriceMatch;
+
+  /// No description provided for @priceGuaranteeThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'If your final cost exceeds our AI estimate by more than {threshold}, we\'ll credit the difference.'**
+  String priceGuaranteeThreshold(String threshold);
+
+  /// Cost breakdown chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Breakdown'**
+  String get costBreakdown;
+
+  /// Labor cost label
+  ///
+  /// In en, this message translates to:
+  /// **'Labor'**
+  String get labor;
+
+  /// Materials cost label
+  ///
+  /// In en, this message translates to:
+  /// **'Materials'**
+  String get materials;
+
+  /// Platform fee label
+  ///
+  /// In en, this message translates to:
+  /// **'Platform Fee'**
+  String get platformFee;
+
+  /// Escrow portion label
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Protection'**
+  String get escrowProtection;
+
+  /// Section title for maintenance reminders
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance Reminders'**
+  String get maintenanceReminders;
+
+  /// Badge text on due reminders
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance Due'**
+  String get maintenanceDue;
+
+  /// Book action button
+  ///
+  /// In en, this message translates to:
+  /// **'Book'**
+  String get book;
+
+  /// Seasonal deals section title
+  ///
+  /// In en, this message translates to:
+  /// **'Deals & Offers'**
+  String get seasonalDeals;
+
+  /// No description provided for @hoursLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h left'**
+  String hoursLeft(int hours);
+
+  /// No description provided for @off.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% OFF'**
+  String off(int percent);
+
+  /// Social proof section title
+  ///
+  /// In en, this message translates to:
+  /// **'In Your Neighborhood'**
+  String get neighborhoodActivity;
+
+  /// No description provided for @homesNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} homes near you this month'**
+  String homesNearYou(int count);
+
+  /// Saved project boards screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Projects'**
+  String get savedProjects;
+
+  /// Empty state for project boards
+  ///
+  /// In en, this message translates to:
+  /// **'No projects yet'**
+  String get noProjectsYet;
+
+  /// Create project board button
+  ///
+  /// In en, this message translates to:
+  /// **'Create Board'**
+  String get createBoard;
+
+  /// Board name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Board name'**
+  String get boardName;
+
+  /// Notes field label
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// Zero interest badge text
+  ///
+  /// In en, this message translates to:
+  /// **'0% INTEREST'**
+  String get zeroInterest;
+
+  /// 3-month payment plan label
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in 3'**
+  String get payInThree;
+
+  /// 6-month payment plan label
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in 6'**
+  String get payInSix;
+
+  /// No description provided for @perMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount}/mo'**
+  String perMonth(String amount);
+
+  /// Financing CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a payment plan'**
+  String get choosePaymentPlan;
+
+  /// Financing card header
+  ///
+  /// In en, this message translates to:
+  /// **'Financing Available'**
+  String get financingAvailable;
+
+  /// Multi-quote invite card title
+  ///
+  /// In en, this message translates to:
+  /// **'Top Matched Pros'**
+  String get topMatchedPros;
+
+  /// No description provided for @prosInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pros invited — quotes arriving soon'**
+  String prosInvited(int count);
+
+  /// Countdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining'**
+  String get timeRemaining;
+
+  /// Verified tier badge
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifiedPro;
+
+  /// Trusted Pro tier badge
+  ///
+  /// In en, this message translates to:
+  /// **'Trusted Pro'**
+  String get trustedPro;
+
+  /// Elite Pro tier badge
+  ///
+  /// In en, this message translates to:
+  /// **'Elite Pro'**
+  String get elitePro;
+
+  /// Add photo button in timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// Request photo button in timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Request Photo'**
+  String get requestPhoto;
+
+  /// Snackbar message after photo request
+  ///
+  /// In en, this message translates to:
+  /// **'Photo requested!'**
+  String get photoRequested;
 }
 
 class _AppLocalizationsDelegate
