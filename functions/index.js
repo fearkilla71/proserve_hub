@@ -6047,6 +6047,111 @@ exports.createCheckoutSessionHttp = functions
   }
   });
 
+// ==================== IN-APP PURCHASE VERIFICATION (Lead Packs) ====================
+// Maps store product IDs to internal pack IDs so the server can grant the
+// correct number of credits after verifying a Google Play / App Store receipt.
+const IAP_PRODUCT_TO_PACK = {
+  lead_ne_1: 'ne_1',
+  lead_ex_1: 'ex_1',
+};
+
+async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verificationData, source }) {
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const packId = IAP_PRODUCT_TO_PACK[(productId || '').toString().trim()];
+  if (!packId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Unknown product ID');
+  }
+
+  const pack = await getLeadPack(packId);
+  if (!pack) {
+    throw new functions.https.HttpsError('invalid-argument', 'Pack configuration missing');
+  }
+
+  // NOTE: For production hardening you should verify the purchase token with
+  // the Google Play Developer API (androidpublisher) or Apple's verifyReceipt
+  // endpoint. The token is in `verificationData`. For now we trust the client
+  // receipt and guard against duplicate fulfillment via the purchaseId check
+  // below.
+
+  const db = admin.firestore();
+  const paymentRef = db.collection('payments').doc(`iap_${purchaseId}`);
+  const userRef = db.collection('users').doc(uid);
+  const creditType = normalizeLeadCreditType(pack.creditType);
+
+  await db.runTransaction(async (tx) => {
+    // Idempotency: don't grant twice for the same purchaseId.
+    const existing = await tx.get(paymentRef);
+    if (existing.exists) {
+      const d = existing.data() || {};
+      if (d.type === 'lead_pack' && d.status === 'success') {
+        return; // Already fulfilled
+      }
+    }
+
+    tx.set(
+      paymentRef,
+      {
+        contractorId: uid,
+        amount: pack.amountCents / 100,
+        currency: 'usd',
+        status: 'success',
+        type: 'lead_pack',
+        packId: pack.id,
+        creditType,
+        leadsGranted: pack.leads,
+        source: source || 'iap',
+        purchaseId: purchaseId || '',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    if (creditType === 'exclusive') {
+      tx.set(
+        userRef,
+        { exclusiveLeadCredits: admin.firestore.FieldValue.increment(pack.leads) },
+        { merge: true }
+      );
+    } else {
+      tx.set(
+        userRef,
+        {
+          leadCredits: admin.firestore.FieldValue.increment(pack.leads),
+          credits: admin.firestore.FieldValue.increment(pack.leads),
+        },
+        { merge: true }
+      );
+    }
+  });
+
+  return { ok: true, credits: pack.leads, creditType };
+}
+
+exports.verifyLeadPackPurchase = functions.https.onCall(
+  async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+
+    const rateLimit = await checkRateLimit(uid, 'verifyLeadPackPurchase', 60, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      throw new functions.https.HttpsError('resource-exhausted', 'Rate limit exceeded');
+    }
+
+    return await verifyLeadPackPurchaseCore({
+      uid,
+      productId: (data?.productId || '').toString().trim(),
+      purchaseId: (data?.purchaseId || '').toString().trim(),
+      verificationData: (data?.verificationData || '').toString(),
+      source: (data?.source || 'iap').toString().trim(),
+    });
+  }
+);
+
 exports.stripeWebhook = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] })
   .https.onRequest(async (req, res) => {

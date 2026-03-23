@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/intl.dart';
+import 'package:proserve_hub/services/lead_iap_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
@@ -1243,6 +1245,54 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       );
 
       if (chosen == null || chosen.trim().isEmpty) return;
+
+      // Use native Google Play / App Store IAP on mobile for single-lead packs.
+      // Bulk packs (10, 20) go through Stripe.
+      if (LeadIapService.supported && LeadIapService.isIapPack(chosen)) {
+        try {
+          final iap = LeadIapService.instance;
+          // Show a brief loading indicator while the store processes.
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Opening store…'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+
+          // One-shot listener to notify user on purchase result.
+          void handleUpdate(PurchaseDetails p) {
+            if (!context.mounted) return;
+            if (p.status == PurchaseStatus.purchased ||
+                p.status == PurchaseStatus.restored) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Lead credits added!')),
+              );
+              iap.onPurchaseUpdate = null;
+            } else if (p.status == PurchaseStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(p.error?.message ?? 'Purchase failed')),
+              );
+              iap.onPurchaseUpdate = null;
+            } else if (p.status == PurchaseStatus.canceled) {
+              iap.onPurchaseUpdate = null;
+            }
+          }
+
+          iap.onPurchaseUpdate = handleUpdate;
+          await iap.buy(chosen);
+        } catch (e) {
+          if (!context.mounted) return;
+          final message = e.toString().replaceFirst('Exception: ', '').trim();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+        }
+        return;
+      }
+
+      // Stripe Checkout for web / desktop / bulk lead packs (10, 20).
       try {
         await StripeService().buyLeadPack(packId: chosen);
 
@@ -1323,8 +1373,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   final jobId = (invite.data()['jobId'] ?? '')
                                       .toString();
                                   final job = jobsMap[jobId];
-                                  if (job == null)
+                                  if (job == null) {
                                     return const SizedBox.shrink();
+                                  }
                                   final service = (job['service'] ?? 'Service')
                                       .toString();
                                   final location =

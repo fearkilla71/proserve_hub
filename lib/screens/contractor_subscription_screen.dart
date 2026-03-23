@@ -120,7 +120,9 @@ class _ContractorSubscriptionScreenState
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
   bool _iapAvailable = false;
-  ProductDetails? _monthlyProduct;
+
+  /// Store products keyed by store product ID.
+  Map<String, ProductDetails> _storeProducts = {};
   String? _iapError;
 
   @override
@@ -149,7 +151,7 @@ class _ContractorSubscriptionScreenState
   Future<void> _loadProducts() async {
     setState(() {
       _iapError = null;
-      _monthlyProduct = null;
+      _storeProducts = {};
     });
 
     try {
@@ -158,9 +160,9 @@ class _ContractorSubscriptionScreenState
       setState(() => _iapAvailable = available);
       if (!available) return;
 
-      final resp = await _subs.queryProducts({
-        SubscriptionService.contractorProMonthlyProductId,
-      });
+      final resp = await _subs.queryProducts(
+        SubscriptionService.allSubscriptionProductIds,
+      );
       if (!mounted) return;
       if (resp.error != null) {
         setState(() => _iapError = resp.error!.message);
@@ -169,11 +171,15 @@ class _ContractorSubscriptionScreenState
       if (resp.productDetails.isEmpty) {
         setState(
           () => _iapError =
-              'Subscription not configured in the store yet (missing product id: ${SubscriptionService.contractorProMonthlyProductId}).',
+              'No subscription products configured in the store yet.',
         );
         return;
       }
-      setState(() => _monthlyProduct = resp.productDetails.first);
+      final products = <String, ProductDetails>{};
+      for (final p in resp.productDetails) {
+        products[p.id] = p;
+      }
+      setState(() => _storeProducts = products);
     } catch (e) {
       if (!mounted) return;
       setState(() => _iapError = e.toString());
@@ -190,14 +196,7 @@ class _ContractorSubscriptionScreenState
         if (!mounted) continue;
         final msg = purchase.error?.message ?? 'Purchase failed.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _startStoreSubscription,
-            ),
-            duration: const Duration(seconds: 6),
-          ),
+          SnackBar(content: Text(msg), duration: const Duration(seconds: 6)),
         );
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
@@ -242,12 +241,17 @@ class _ContractorSubscriptionScreenState
     }
   }
 
-  Future<void> _startStoreSubscription() async {
+  Future<void> _startStoreSubscription({required String tierId}) async {
     if (_isLoadingIap) return;
-    final product = _monthlyProduct;
+    final storeProductId = SubscriptionService.tierToProductId[tierId];
+    final product = storeProductId != null
+        ? _storeProducts[storeProductId]
+        : null;
     if (product == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Store subscription not available yet.')),
+        SnackBar(
+          content: Text('Store subscription for $tierId not available yet.'),
+        ),
       );
       return;
     }
@@ -265,12 +269,6 @@ class _ContractorSubscriptionScreenState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final storePrice = _monthlyProduct?.price;
-    final storeLabel = _iapAvailable
-        ? (storePrice == null
-              ? 'Subscribe with Google Play'
-              : 'Subscribe with Google Play ($storePrice)')
-        : 'Google Play subscription unavailable';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Subscription Plans')),
@@ -464,25 +462,42 @@ class _ContractorSubscriptionScreenState
                           ),
                           if (_iapAvailable) ...[
                             const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: _isLoadingIap
-                                    ? null
-                                    : _startStoreSubscription,
-                                icon: _isLoadingIap
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.shopping_bag),
-                                label: Text(
-                                  _isLoadingIap ? 'Opening store…' : storeLabel,
-                                ),
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final storeProductId = SubscriptionService
+                                    .tierToProductId[tier.id];
+                                final product = storeProductId != null
+                                    ? _storeProducts[storeProductId]
+                                    : null;
+                                final storePrice = product?.price;
+                                final storeLabel = storePrice != null
+                                    ? 'Subscribe with Google Play ($storePrice)'
+                                    : 'Subscribe with Google Play';
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _isLoadingIap
+                                        ? null
+                                        : () => _startStoreSubscription(
+                                            tierId: tier.id,
+                                          ),
+                                    icon: _isLoadingIap
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.shopping_bag),
+                                    label: Text(
+                                      _isLoadingIap
+                                          ? 'Opening store…'
+                                          : storeLabel,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ],

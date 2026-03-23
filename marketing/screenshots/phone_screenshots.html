@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProServe Hub – Store Screenshots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --brand-green: #22e39b;
+    --brand-blue: #36b3ff;
+    --brand-purple: #8f5bff;
+    --brand-dark: #071022;
+    --brand-card: #0e1e3d;
+    --ink: #e6f1ff;
+    --muted: #9fb2d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: 'Inter', 'Manrope', system-ui, sans-serif;
+    color: #fff;
+    padding: 40px;
+  }
+  .controls {
+    position: sticky; top: 0; z-index: 999;
+    background: rgba(26,26,46,.95); backdrop-filter: blur(12px);
+    padding: 16px 24px; border-radius: 12px; margin-bottom: 40px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .controls button {
+    background: var(--brand-green); color: #071022;
+    border: none; padding: 12px 24px; border-radius: 8px;
+    font-weight: 700; font-size: 15px; cursor: pointer;
+    transition: transform .15s;
+  }
+  .controls button:hover { transform: scale(1.04); }
+  .controls span { color: var(--muted); font-size: 14px; }
+
+  .slides { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; }
+
+  /* ── Each slide is a store screenshot (1284×2778 scaled to fit) ── */
+  .slide {
+    width: 428px; height: 926px;          /* 1284/3 × 2778/3 for preview */
+    border-radius: 20px; overflow: hidden;
+    position: relative; flex-shrink: 0;
+    box-shadow: 0 20px 80px rgba(0,0,0,.5);
+  }
+  .slide .bg {
+    position: absolute; inset: 0; z-index: 0;
+  }
+
+  /* ── Headline area ── */
+  .slide .headline-area {
+    position: relative; z-index: 2;
+    padding: 56px 32px 24px;
+    text-align: center;
+  }
+  .slide .headline-area .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--brand-green);
+    margin-bottom: 16px;
+  }
+  .slide .headline-area h2 {
+    font-size: 30px; font-weight: 800;
+    line-height: 1.15; letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff 30%, var(--brand-green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slide .headline-area p {
+    font-size: 14px; color: var(--muted);
+    line-height: 1.5; max-width: 320px; margin: 0 auto;
+  }
+
+  /* ── Phone frame ── */
+  .phone {
+    position: relative; z-index: 2;
+    width: 280px; margin: 16px auto 0;
+    background: #111827;
+    border-radius: 36px;
+    border: 3px solid rgba(255,255,255,.12);
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .phone .notch {
+    width: 120px; height: 28px;
+    background: #111827;
+    border-radius: 0 0 16px 16px;
+    margin: 0 auto;
+    position: relative; z-index: 5;
+  }
+  .phone .screen {
+    background: var(--brand-dark);
+    min-height: 540px;
+    padding: 4px 0 0;
+    position: relative;
+  }
+
+  /* ── App bar in phone ── */
+  .app-bar {
+    background: linear-gradient(135deg, #0e1e3d 0%, #162544 100%);
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .app-bar .title { font-size: 16px; font-weight: 700; }
+  .app-bar .icons { display: flex; gap: 10px; }
+  .app-bar .icon-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(255,255,255,.1);
+  }
+
+  /* ── Mock UI cards ── */
+  .mock-card {
+    background: var(--brand-card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 14px;
+    margin: 8px 12px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--brand-green), var(--brand-blue));
+    border-radius: 14px 14px 0 0;
+  }
+  .mock-card .card-label {
+    font-size: 10px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  .mock-card .card-value {
+    font-size: 22px; font-weight: 800;
+    background: linear-gradient(135deg, #fff, var(--brand-green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .mock-card .card-sub {
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+  }
+
+  .mock-row {
+    display: flex; gap: 8px; margin: 8px 12px;
+  }
+  .mock-row .mini-card {
+    flex: 1;
+    background: var(--brand-card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .mock-row .mini-card .mc-icon {
+    width: 32px; height: 32px; border-radius: 10px;
+    margin: 0 auto 6px;
+  }
+  .mock-row .mini-card .mc-label {
+    font-size: 9px; color: var(--muted); font-weight: 600;
+  }
+  .mock-row .mini-card .mc-val {
+    font-size: 15px; font-weight: 700; margin-top: 2px;
+  }
+
+  /* ── Chat bubbles ── */
+  .chat-bubble {
+    max-width: 70%; padding: 10px 14px;
+    border-radius: 16px; margin: 6px 12px;
+    font-size: 12px; line-height: 1.45;
+  }
+  .chat-bubble.sent {
+    background: linear-gradient(135deg, #1a6dff, #36b3ff);
+    margin-left: auto; border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.received {
+    background: var(--brand-card);
+    border: 1px solid rgba(255,255,255,.08);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-time {
+    font-size: 9px; color: rgba(255,255,255,.35);
+    margin: 0 12px 4px; text-align: right;
+  }
+  .chat-time.left { text-align: left; }
+
+  /* ── Stars ── */
+  .stars { color: #fbbf24; font-size: 18px; letter-spacing: 2px; }
+  .stars-sm { color: #fbbf24; font-size: 14px; letter-spacing: 1px; }
+
+  /* ── Progress / bars ── */
+  .progress-bar {
+    height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,.08); overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--brand-green), var(--brand-blue));
+  }
+
+  /* ── Bid cards ── */
+  .bid-card {
+    background: var(--brand-card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 12px;
+    margin: 6px 12px;
+    padding: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .bid-card .bid-left .bid-name {
+    font-size: 13px; font-weight: 700;
+  }
+  .bid-card .bid-left .bid-meta {
+    font-size: 10px; color: var(--muted); margin-top: 2px;
+  }
+  .bid-card .bid-price {
+    font-size: 18px; font-weight: 800; color: var(--brand-green);
+  }
+  .bid-chip {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chip-pending { background: rgba(54,179,255,.15); color: #36b3ff; }
+  .chip-accepted { background: rgba(34,227,155,.15); color: #22e39b; }
+
+  /* ── Escrow visual ── */
+  .escrow-step {
+    display: flex; align-items: center; gap: 10px;
+    margin: 8px 12px; font-size: 12px;
+  }
+  .escrow-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .escrow-dot.done { background: var(--brand-green); color: #071022; }
+  .escrow-dot.active { background: var(--brand-blue); color: #fff; }
+  .escrow-dot.pending { background: rgba(255,255,255,.08); color: var(--muted); }
+  .escrow-line {
+    width: 2px; height: 18px;
+    background: rgba(255,255,255,.1);
+    margin: 0 12px 0 24px;
+  }
+  .escrow-line.done-line { background: var(--brand-green); }
+
+  /* ── Bottom nav mock ── */
+  .bottom-nav {
+    display: flex; justify-content: space-around; padding: 10px 0;
+    background: #0b1628;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+  .bottom-nav .nav-item {
+    text-align: center; flex: 1;
+  }
+  .nav-item .nav-dot {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(255,255,255,.06); margin: 0 auto 3px;
+  }
+  .nav-item .nav-dot.active-nav {
+    background: linear-gradient(135deg, var(--brand-green), var(--brand-blue));
+  }
+  .nav-item .nav-lbl {
+    font-size: 8px; color: var(--muted); font-weight: 600;
+  }
+  .nav-item .nav-lbl.active-lbl { color: var(--brand-green); }
+
+  /* ── Gradient overlays per slide ── */
+  .grad-1 { background: linear-gradient(160deg, #0d2137 0%, #071022 40%, #0b0e1e 100%); }
+  .grad-2 { background: linear-gradient(160deg, #0c1f30 0%, #091425 50%, #150d2a 100%); }
+  .grad-3 { background: linear-gradient(160deg, #0a1830 0%, #071022 45%, #0d1a0f 100%); }
+  .grad-4 { background: linear-gradient(160deg, #10162a 0%, #071022 50%, #1a0d27 100%); }
+  .grad-5 { background: linear-gradient(160deg, #0d1a2e 0%, #071022 45%, #0d2025 100%); }
+  .grad-6 { background: linear-gradient(160deg, #081622 0%, #071022 50%, #0b1a30 100%); }
+  .grad-7 { background: linear-gradient(160deg, #12102a 0%, #071022 45%, #0d1e18 100%); }
+  .grad-8 { background: linear-gradient(160deg, #0e1225 0%, #071022 50%, #1c0e1a 100%); }
+
+  /* ── Decorative orbs ── */
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(60px); opacity: .35;
+    pointer-events: none; z-index: 1;
+  }
+
+  /* ── Slide number label ── */
+  .slide-label {
+    position: absolute; bottom: 8px; right: 12px;
+    font-size: 10px; color: rgba(255,255,255,.2);
+    z-index: 3;
+  }
+
+  /* ── Review bars ── */
+  .review-bar-row {
+    display: flex; align-items: center; gap: 6px;
+    margin: 3px 0; font-size: 10px; color: var(--muted);
+  }
+  .review-bar-row .rb-stars { width: 16px; text-align: right; }
+  .review-bar-row .rb-bar {
+    flex: 1; height: 5px; background: rgba(255,255,255,.06);
+    border-radius: 3px; overflow: hidden;
+  }
+  .review-bar-row .rb-bar .rb-fill {
+    height: 100%; border-radius: 3px;
+    background: #fbbf24;
+  }
+  .review-bar-row .rb-count { width: 20px; }
+
+  /* contractor avatar circle */
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; flex-shrink: 0;
+  }
+
+  /* Photo proof grid */
+  .proof-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin: 8px 12px;
+  }
+  .proof-thumb {
+    aspect-ratio: 4/3; border-radius: 10px;
+    position: relative; overflow: hidden;
+  }
+  .proof-thumb .proof-time {
+    position: absolute; bottom: 4px; left: 6px;
+    font-size: 9px; font-weight: 600;
+    background: rgba(0,0,0,.6); padding: 2px 8px; border-radius: 8px;
+    color: #fff;
+  }
+  .proof-thumb .proof-check {
+    position: absolute; top: 6px; right: 6px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--brand-green); color: #071022;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900;
+  }
+
+  /* tab bar mock */
+  .tab-bar {
+    display: flex; margin: 8px 12px 4px; gap: 0;
+    border-bottom: 2px solid rgba(255,255,255,.06);
+  }
+  .tab-item {
+    padding: 8px 0; flex: 1; text-align: center;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+  }
+  .tab-item.active-tab {
+    color: var(--brand-green);
+    border-bottom-color: var(--brand-green);
+  }
+
+  /* Contractor list item */
+  .contractor-item {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--brand-card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 12px;
+    margin: 6px 12px; padding: 12px;
+  }
+  .contractor-item .ci-info { flex: 1; }
+  .contractor-item .ci-name { font-size: 13px; font-weight: 700; }
+  .contractor-item .ci-specialty { font-size: 10px; color: var(--muted); }
+  .contractor-item .ci-right { text-align: right; }
+  .contractor-item .ci-price { font-size: 11px; color: var(--brand-green); font-weight: 700; }
+
+  /* AI estimate card */
+  .estimate-breakdown {
+    margin: 4px 0;
+  }
+  .est-row {
+    display: flex; justify-content: space-between;
+    font-size: 11px; padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .est-row .est-label { color: var(--muted); }
+  .est-row .est-val { font-weight: 600; }
+  .est-row.est-total {
+    border-bottom: none; border-top: 1px solid rgba(255,255,255,.1);
+    margin-top: 4px; padding-top: 8px;
+    font-size: 13px;
+  }
+  .est-row.est-total .est-val { color: var(--brand-green); font-weight: 800; }
+
+  /* CTA button mock */
+  .cta-btn {
+    display: block; margin: 10px 12px;
+    background: linear-gradient(135deg, var(--brand-green), #1bc07e);
+    color: #071022; text-align: center;
+    padding: 12px; border-radius: 12px;
+    font-weight: 700; font-size: 14px;
+    box-shadow: 0 4px 20px rgba(34,227,155,.3);
+  }
+
+  /* Search bar mock */
+  .search-bar {
+    margin: 8px 12px; padding: 10px 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .search-bar .search-icon {
+    width: 16px; height: 16px;
+    border: 2px solid var(--muted); border-radius: 50%;
+    position: relative;
+  }
+
+  /* Notification badge */
+  .notif-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #ef4444; font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #111827;
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="exportAll()">⬇ Export All PNGs</button>
+  <span>8 marketing screenshots · 1284×2778 (scaled 1/3 for preview)</span>
+  <span id="status"></span>
+</div>
+
+<div class="slides">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 1 — DASHBOARD / HERO
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="01_dashboard">
+  <div class="bg grad-1">
+    <div class="orb" style="width:200px;height:200px;background:#22e39b;top:-40px;right:-60px;"></div>
+    <div class="orb" style="width:160px;height:160px;background:#36b3ff;bottom:100px;left:-50px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">🏠 Home Services Marketplace</div>
+    <h2>Your Home Projects,<br>Simplified</h2>
+    <p>Post a job, get bids, hire a contractor — all in one place.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Dashboard</span>
+        <div class="icons">
+          <div class="icon-dot" style="position:relative;">
+            <div class="notif-badge">3</div>
+          </div>
+          <div class="icon-dot"></div>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Active Projects</div>
+        <div class="card-value">4</div>
+        <div class="card-sub">2 in progress · 1 bid received · 1 completed</div>
+        <div style="margin-top:8px;">
+          <div class="progress-bar"><div class="fill" style="width:65%;"></div></div>
+        </div>
+      </div>
+      <div class="mock-row">
+        <div class="mini-card">
+          <div class="mc-icon" style="background:linear-gradient(135deg,#22e39b,#1bc07e);"></div>
+          <div class="mc-label">Saved</div>
+          <div class="mc-val">$2,400</div>
+        </div>
+        <div class="mini-card">
+          <div class="mc-icon" style="background:linear-gradient(135deg,#36b3ff,#1a6dff);"></div>
+          <div class="mc-label">In Escrow</div>
+          <div class="mc-val">$1,850</div>
+        </div>
+        <div class="mini-card">
+          <div class="mc-icon" style="background:linear-gradient(135deg,#8f5bff,#6d3fcc);"></div>
+          <div class="mc-label">Bids</div>
+          <div class="mc-val">7</div>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Recent Activity</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <div class="avatar" style="background:linear-gradient(135deg,#22e39b,#36b3ff);">M</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;">Mike's Painting Co.</div>
+            <div style="font-size:10px;color:var(--muted);">Submitted a bid · $1,200</div>
+          </div>
+          <div style="margin-left:auto;font-size:9px;color:var(--muted);">2m ago</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <div class="avatar" style="background:linear-gradient(135deg,#8f5bff,#36b3ff);">J</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;">J&R Electric</div>
+            <div style="font-size:10px;color:var(--muted);">Job completed ✓</div>
+          </div>
+          <div style="margin-left:auto;font-size:9px;color:var(--muted);">1h ago</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Jobs</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">1 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 2 — AI COST ESTIMATES
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="02_ai_estimates">
+  <div class="bg grad-2">
+    <div class="orb" style="width:220px;height:220px;background:#8f5bff;top:20px;left:-70px;"></div>
+    <div class="orb" style="width:180px;height:180px;background:#36b3ff;bottom:80px;right:-40px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">🤖 Powered by AI</div>
+    <h2>Instant Cost<br>Estimates</h2>
+    <p>Know exactly what to budget before the first contractor shows up.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">AI Estimate</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Interior Painting</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">3 bedrooms · 1,400 sq ft · Austin, TX</div>
+        <div class="estimate-breakdown">
+          <div class="est-row"><span class="est-label">Labor (2 painters × 3 days)</span><span class="est-val">$1,680</span></div>
+          <div class="est-row"><span class="est-label">Paint (Sherwin-Williams)</span><span class="est-val">$420</span></div>
+          <div class="est-row"><span class="est-label">Primer & Supplies</span><span class="est-val">$180</span></div>
+          <div class="est-row"><span class="est-label">Prep & Cleanup</span><span class="est-val">$220</span></div>
+          <div class="est-row est-total"><span class="est-label">Estimated Total</span><span class="est-val">$2,500</span></div>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Market Range</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+          <span style="font-size:11px;color:var(--muted);">$1,800</span>
+          <div style="flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.06);position:relative;">
+            <div style="position:absolute;left:30%;right:25%;height:100%;background:linear-gradient(90deg,var(--brand-green),var(--brand-blue));border-radius:4px;"></div>
+            <div style="position:absolute;left:48%;top:-3px;width:14px;height:14px;background:#fff;border-radius:50%;border:3px solid var(--brand-green);"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);">$4,200</span>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--brand-green);margin-top:6px;font-weight:600;">Your estimate is below average — great value!</div>
+      </div>
+      <div class="mock-card">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#8f5bff,#36b3ff);display:flex;align-items:center;justify-content:center;font-size:16px;">💡</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;">AI Tip</div>
+            <div style="font-size:10px;color:var(--muted);">Scheduling in spring can save 10-15% on labor costs.</div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-btn">Get Contractor Bids →</div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Estimate</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">2 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 3 — BROWSE CONTRACTORS
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="03_find_contractors">
+  <div class="bg grad-3">
+    <div class="orb" style="width:200px;height:200px;background:#22e39b;bottom:60px;left:-50px;"></div>
+    <div class="orb" style="width:170px;height:170px;background:#8f5bff;top:40px;right:-60px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">⭐ Verified Contractors</div>
+    <h2>Find the Right<br>Pro for the Job</h2>
+    <p>Browse rated contractors with verified reviews and reputation scores.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Contractors</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div class="search-bar">
+        <div class="search-icon"></div>
+        Search by trade or location...
+      </div>
+      <div class="contractor-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#22e39b,#1bc07e);">M</div>
+        <div class="ci-info">
+          <div class="ci-name">Mike's Painting Co.</div>
+          <div class="ci-specialty">Interior & Exterior Painting</div>
+          <div style="margin-top:3px;"><span class="stars-sm">★★★★★</span> <span style="font-size:10px;color:var(--muted);">4.9 (127)</span></div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-price">From $25/hr</div>
+          <div class="bid-chip chip-accepted" style="margin-top:4px;">Elite</div>
+        </div>
+      </div>
+      <div class="contractor-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#36b3ff,#1a6dff);">J</div>
+        <div class="ci-info">
+          <div class="ci-name">J&R Electric</div>
+          <div class="ci-specialty">Electrical · Licensed & Insured</div>
+          <div style="margin-top:3px;"><span class="stars-sm">★★★★★</span> <span style="font-size:10px;color:var(--muted);">4.8 (89)</span></div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-price">From $45/hr</div>
+          <div class="bid-chip chip-pending" style="margin-top:4px;">Pro</div>
+        </div>
+      </div>
+      <div class="contractor-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#8f5bff,#6d3fcc);">S</div>
+        <div class="ci-info">
+          <div class="ci-name">Summit Roofing</div>
+          <div class="ci-specialty">Roofing · Emergency Repairs</div>
+          <div style="margin-top:3px;"><span class="stars-sm">★★★★☆</span> <span style="font-size:10px;color:var(--muted);">4.6 (54)</span></div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-price">From $35/hr</div>
+        </div>
+      </div>
+      <div class="contractor-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">A</div>
+        <div class="ci-info">
+          <div class="ci-name">AllFix Plumbing</div>
+          <div class="ci-specialty">Plumbing · 24/7 Service</div>
+          <div style="margin-top:3px;"><span class="stars-sm">★★★★★</span> <span style="font-size:10px;color:var(--muted);">4.7 (203)</span></div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-price">From $40/hr</div>
+          <div class="bid-chip chip-accepted" style="margin-top:4px;">Elite</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Browse</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">3 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 4 — BIDDING SYSTEM
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="04_compare_bids">
+  <div class="bg grad-4">
+    <div class="orb" style="width:180px;height:180px;background:#36b3ff;top:-30px;left:50px;"></div>
+    <div class="orb" style="width:200px;height:200px;background:#22e39b;bottom:60px;right:-50px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">💰 Competitive Bidding</div>
+    <h2>Compare Bids<br>Side by Side</h2>
+    <p>Multiple contractors compete for your job so you get the best price.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Bids · Kitchen Remodel</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div style="margin:10px 12px 4px;font-size:11px;color:var(--muted);">3 bids received</div>
+      <div class="bid-card">
+        <div class="bid-left">
+          <div class="bid-name">Mike's Painting Co.</div>
+          <div class="bid-meta"><span class="stars-sm">★★★★★</span> · 5 day estimate</div>
+          <div class="bid-chip chip-pending" style="margin-top:4px;">Pending</div>
+        </div>
+        <div class="bid-price">$3,200</div>
+      </div>
+      <div class="bid-card" style="border-color: rgba(34,227,155,.3);">
+        <div class="bid-left">
+          <div class="bid-name">Premier Remodeling</div>
+          <div class="bid-meta"><span class="stars-sm">★★★★★</span> · 4 day estimate</div>
+          <div class="bid-chip chip-accepted" style="margin-top:4px;">Best Value</div>
+        </div>
+        <div class="bid-price">$2,850</div>
+      </div>
+      <div class="bid-card">
+        <div class="bid-left">
+          <div class="bid-name">CityTrade Services</div>
+          <div class="bid-meta"><span class="stars-sm">★★★★☆</span> · 7 day estimate</div>
+          <div class="bid-chip chip-pending" style="margin-top:4px;">Pending</div>
+        </div>
+        <div class="bid-price">$2,400</div>
+      </div>
+      <div class="mock-card" style="margin-top:8px;">
+        <div class="card-label">AI Recommendation</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <div style="font-size:24px;">🎯</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--brand-green);">Premier Remodeling</div>
+            <div style="font-size:10px;color:var(--muted);">Best balance of price, timeline & ratings</div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-btn">Accept Best Bid</div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Jobs</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">4 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 5 — REAL-TIME CHAT
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="05_messaging">
+  <div class="bg grad-5">
+    <div class="orb" style="width:200px;height:200px;background:#36b3ff;top:30px;right:-50px;"></div>
+    <div class="orb" style="width:160px;height:160px;background:#8f5bff;bottom:100px;left:-40px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">💬 In-App Messaging</div>
+    <h2>Chat Directly<br>With Your Pro</h2>
+    <p>Real-time messaging, photo sharing, and read receipts built in.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Mike's Painting · Chat</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div style="padding-top:8px;">
+        <div class="chat-bubble received">Hey! I checked out the kitchen and I can start Monday. I'll bring color swatches for you to pick from 🎨</div>
+        <div class="chat-time left">10:32 AM · Read ✓✓</div>
+        <div class="chat-bubble sent">That sounds great! We're leaning toward a warm grey. Can you do the ceiling too?</div>
+        <div class="chat-time">10:34 AM · Read ✓✓</div>
+        <div class="chat-bubble received">Absolutely! For the ceiling I'd recommend a flat finish — no extra charge. I'll add it to the scope 👍</div>
+        <div class="chat-time left">10:35 AM</div>
+        <div class="chat-bubble sent">Perfect, you're hired! I'll fund the escrow now.</div>
+        <div class="chat-time">10:36 AM · Sent ✓</div>
+        <div class="chat-bubble received">
+          <div style="display:flex;gap:6px;">
+            <div style="width:70px;height:52px;border-radius:8px;background:linear-gradient(135deg,#1a3a5c,#2a5080);"></div>
+            <div style="width:70px;height:52px;border-radius:8px;background:linear-gradient(135deg,#3a2a1c,#5a4a3a);"></div>
+          </div>
+          <div style="font-size:10px;margin-top:4px;">Here are the swatch options ☝️</div>
+        </div>
+        <div class="chat-time left">10:38 AM</div>
+      </div>
+      <div style="display:flex;gap:8px;margin:8px 12px;align-items:center;">
+        <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:10px 14px;font-size:11px;color:var(--muted);">Type a message...</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand-green),var(--brand-blue));display:flex;align-items:center;justify-content:center;font-size:14px;">➤</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">5 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 6 — SECURE ESCROW PAYMENTS
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="06_escrow_payments">
+  <div class="bg grad-6">
+    <div class="orb" style="width:200px;height:200px;background:#22e39b;top:-20px;left:-50px;"></div>
+    <div class="orb" style="width:180px;height:180px;background:#36b3ff;bottom:40px;right:-50px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">🔒 Escrow Protected</div>
+    <h2>Payments You<br>Can Trust</h2>
+    <p>Funds held safely in escrow until you approve the finished work.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Payment · Kitchen Paint</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Escrow Balance</div>
+        <div class="card-value">$2,850</div>
+        <div class="card-sub">Held securely via Stripe Connect</div>
+      </div>
+
+      <div style="margin:12px 12px 4px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Payment Timeline</div>
+
+      <div class="escrow-step">
+        <div class="escrow-dot done">✓</div>
+        <div><div style="font-size:12px;font-weight:600;">Job Posted</div><div style="font-size:10px;color:var(--muted);">Mar 15, 2026</div></div>
+      </div>
+      <div class="escrow-line done-line"></div>
+      <div class="escrow-step">
+        <div class="escrow-dot done">✓</div>
+        <div><div style="font-size:12px;font-weight:600;">Bid Accepted</div><div style="font-size:10px;color:var(--muted);">Mar 16, 2026</div></div>
+      </div>
+      <div class="escrow-line done-line"></div>
+      <div class="escrow-step">
+        <div class="escrow-dot done">✓</div>
+        <div><div style="font-size:12px;font-weight:600;">Escrow Funded</div><div style="font-size:10px;color:var(--muted);">Mar 16, 2026 · $2,850</div></div>
+      </div>
+      <div class="escrow-line done-line"></div>
+      <div class="escrow-step">
+        <div class="escrow-dot active">●</div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--brand-blue);">Work In Progress</div><div style="font-size:10px;color:var(--muted);">Day 2 of 4</div></div>
+      </div>
+      <div class="escrow-line"></div>
+      <div class="escrow-step">
+        <div class="escrow-dot pending">5</div>
+        <div><div style="font-size:12px;font-weight:500;color:var(--muted);">Approve & Release</div><div style="font-size:10px;color:var(--muted);">After work is complete</div></div>
+      </div>
+
+      <div class="mock-card" style="margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:22px;">🛡️</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;">Buyer Protection</div>
+            <div style="font-size:10px;color:var(--muted);">Full refund if work isn't completed to standard</div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Jobs</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Payments</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">6 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 7 — REVIEWS & REPUTATION
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="07_reviews_reputation">
+  <div class="bg grad-7">
+    <div class="orb" style="width:180px;height:180px;background:#fbbf24;top:20px;left:-40px;opacity:.25;"></div>
+    <div class="orb" style="width:200px;height:200px;background:#22e39b;bottom:40px;right:-60px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">⭐ Reputation Engine</div>
+    <h2>Reviews You<br>Can Rely On</h2>
+    <p>Multi-dimensional ratings with verified job completion badges.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Mike's Painting Co.</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div class="mock-card">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div>
+            <div style="font-size:36px;font-weight:900;line-height:1;">4.9</div>
+            <div class="stars" style="font-size:14px;">★★★★★</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">127 reviews</div>
+          </div>
+          <div style="flex:1;">
+            <div class="review-bar-row"><span class="rb-stars">5</span><div class="rb-bar"><div class="rb-fill" style="width:82%;"></div></div><span class="rb-count">104</span></div>
+            <div class="review-bar-row"><span class="rb-stars">4</span><div class="rb-bar"><div class="rb-fill" style="width:14%;"></div></div><span class="rb-count">18</span></div>
+            <div class="review-bar-row"><span class="rb-stars">3</span><div class="rb-bar"><div class="rb-fill" style="width:3%;"></div></div><span class="rb-count">4</span></div>
+            <div class="review-bar-row"><span class="rb-stars">2</span><div class="rb-bar"><div class="rb-fill" style="width:1%;"></div></div><span class="rb-count">1</span></div>
+            <div class="review-bar-row"><span class="rb-stars">1</span><div class="rb-bar"><div class="rb-fill" style="width:0%;"></div></div><span class="rb-count">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-row">
+        <div class="mini-card">
+          <div class="mc-val" style="color:var(--brand-green);">98%</div>
+          <div class="mc-label">Completion</div>
+        </div>
+        <div class="mini-card">
+          <div class="mc-val" style="color:var(--brand-blue);">< 15m</div>
+          <div class="mc-label">Response</div>
+        </div>
+        <div class="mini-card">
+          <div class="mc-val" style="color:var(--brand-purple);">34%</div>
+          <div class="mc-label">Repeat</div>
+        </div>
+      </div>
+      <div style="margin:8px 12px 4px;font-size:11px;font-weight:600;color:var(--muted);">Recent Reviews</div>
+      <div class="mock-card" style="padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:12px;font-weight:600;">Sarah K.</div>
+          <span class="stars-sm">★★★★★</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">"Incredible work on our master bedroom. Neat, fast, and the color matching was perfect. Highly recommend!"</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px;">Mar 18, 2026 · <span style="color:var(--brand-green);">Verified ✓</span></div>
+      </div>
+      <div class="mock-card" style="padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:12px;font-weight:600;">David R.</div>
+          <span class="stars-sm">★★★★★</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">"Third time hiring them — same great quality every time. Fair price and always on schedule."</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px;">Mar 12, 2026 · <span style="color:var(--brand-green);">Verified ✓</span></div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Browse</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">7 / 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 8 — JOB TRACKING / PROOF FEED
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-name="08_job_tracking">
+  <div class="bg grad-8">
+    <div class="orb" style="width:200px;height:200px;background:#8f5bff;top:10px;right:-40px;"></div>
+    <div class="orb" style="width:180px;height:180px;background:#22e39b;bottom:60px;left:-50px;"></div>
+  </div>
+  <div class="headline-area">
+    <div class="badge">📸 Photo Proof Feed</div>
+    <h2>Track Every Step<br>in Real Time</h2>
+    <p>Live photo updates from your contractor with timestamps and notes.</p>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="app-bar">
+        <span class="title">Kitchen Paint · Progress</span>
+        <div class="icons"><div class="icon-dot"></div></div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab-item">Details</div>
+        <div class="tab-item active-tab">Proof Feed</div>
+        <div class="tab-item">Timeline</div>
+      </div>
+      <div style="margin:8px 12px 4px;font-size:11px;color:var(--muted);">Today · Day 2 of 4</div>
+      <div class="proof-grid">
+        <div class="proof-thumb" style="background:linear-gradient(135deg,#1a3050,#2a4a70);">
+          <div class="proof-check">✓</div>
+          <div class="proof-time">9:15 AM</div>
+        </div>
+        <div class="proof-thumb" style="background:linear-gradient(135deg,#2a3f2a,#3a5a3a);">
+          <div class="proof-check">✓</div>
+          <div class="proof-time">11:30 AM</div>
+        </div>
+        <div class="proof-thumb" style="background:linear-gradient(135deg,#3a2a1c,#5a4a3a);">
+          <div class="proof-check">✓</div>
+          <div class="proof-time">2:15 PM</div>
+        </div>
+        <div class="proof-thumb" style="background:linear-gradient(135deg,#2a2a4a,#3a3a6a);">
+          <div class="proof-check">✓</div>
+          <div class="proof-time">4:45 PM</div>
+        </div>
+      </div>
+      <div class="mock-card" style="padding:10px 12px;">
+        <div style="font-size:11px;font-weight:600;">Mike's update</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">"First coat done on walls & trim. Drying overnight, second coat tomorrow morning. Looking great! 🎨"</div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span style="font-size:9px;color:rgba(255,255,255,.3);">4:50 PM</span>
+          <span style="font-size:9px;color:var(--brand-green);font-weight:600;">Day 2 complete ✓</span>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="card-label">Overall Progress</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span style="font-size:11px;font-weight:600;">50% Complete</span>
+          <span style="font-size:11px;color:var(--brand-green);">On Track</span>
+        </div>
+        <div class="progress-bar" style="margin-top:6px;"><div class="fill" style="width:50%;"></div></div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Home</div></div>
+        <div class="nav-item"><div class="nav-dot active-nav"></div><div class="nav-lbl active-lbl">Jobs</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Messages</div></div>
+        <div class="nav-item"><div class="nav-dot"></div><div class="nav-lbl">Profile</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-label">8 / 8</div>
+</div>
+
+</div><!-- /slides -->
+
+<script>
+async function exportAll() {
+  const status = document.getElementById('status');
+  const slides = document.querySelectorAll('.slide');
+  status.textContent = `Exporting 0 / ${slides.length}...`;
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
+    const name = slide.dataset.name || `slide_${i + 1}`;
+    status.textContent = `Exporting ${i + 1} / ${slides.length}...`;
+
+    const canvas = await html2canvas(slide, {
+      scale: 3,            // 428*3 = 1284,  926*3 = 2778
+      useCORS: true,
+      backgroundColor: null,
+      logging: false,
+    });
+
+    const link = document.createElement('a');
+    link.download = `${name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    // Small delay so browser doesn't choke on rapid downloads
+    await new Promise(r => setTimeout(r, 400));
+  }
+  status.textContent = 'Done! Check your Downloads folder.';
+}
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 ///
 /// Import this file instead of hardcoding service names in
 /// individual screens and widgets.
+library;
 
 /// Core painting & related trade services offered on the platform.
 const kPaintingServices = <String>[

@@ -12,6 +12,20 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 class SubscriptionService {
   static const String contractorProMonthlyProductId =
       'contractor_pro_monthly_11_99';
+  static const String contractorEnterpriseMonthlyProductId =
+      'contractor_enterprise_monthly_29_99';
+
+  /// All subscription product IDs that should be queried from the store.
+  static const Set<String> allSubscriptionProductIds = {
+    contractorProMonthlyProductId,
+    contractorEnterpriseMonthlyProductId,
+  };
+
+  /// Maps tier ID to store product ID.
+  static const Map<String, String> tierToProductId = {
+    'pro': contractorProMonthlyProductId,
+    'enterprise': contractorEnterpriseMonthlyProductId,
+  };
 
   static bool get supportsStoreIap {
     // `in_app_purchase` supports Android/iOS/macOS. It is not supported on

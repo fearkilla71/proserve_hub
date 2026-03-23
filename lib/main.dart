@@ -25,6 +25,7 @@ import 'services/service_locator.dart';
 import 'services/loyalty_service.dart';
 import 'services/offline_sync_service.dart';
 import 'services/version_check_service.dart';
+import 'services/lead_iap_service.dart';
 import 'state/app_state.dart';
 
 DateTime? _lastMouseTrackerAssertionLog;
@@ -427,6 +428,11 @@ void main() async {
             }
           } else if (supportsStripe) {
             debugPrint('Stripe init skipped (debug).');
+          }
+
+          // Initialize native in-app purchase for lead packs (mobile only).
+          if (LeadIapService.supported) {
+            await LeadIapService.instance.init();
           }
         }());
       });
