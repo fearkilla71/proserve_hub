@@ -5771,7 +5771,7 @@ async function verifyContractorSubscriptionPurchaseCore({ uid, productId, purcha
       const authClient = await auth.getClient();
       const androidPublisher = google.androidpublisher({ version: 'v3', auth: authClient });
 
-      const packageName = 'com.proservehub.app';
+      const packageName = 'com.verohue.proservehub';
       const subscriptionId = productId;
       const token = verificationData;
 
