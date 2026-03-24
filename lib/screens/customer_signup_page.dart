@@ -414,6 +414,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   }
 
   Widget _buildStepContent() {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     switch (_step) {
       case 0:
         return Column(
@@ -435,7 +436,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            if (Platform.isIOS || Platform.isMacOS) ...[
+            if (isApplePlatform) ...[
               const OrDivider(),
               _appleLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -651,6 +652,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     return Scaffold(
       backgroundColor: ProServeColors.bg,
       body: Stack(
@@ -784,7 +786,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          if (_step == 0) ...[
+                          if (_step == 0 && !isApplePlatform) ...[
                             const SizedBox(height: 8),
                             Row(
                               children: [

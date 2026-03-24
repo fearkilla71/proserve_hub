@@ -185,6 +185,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
   @override
   Widget build(BuildContext context) {
     final isApplePlatform = Platform.isIOS || Platform.isMacOS;
+    final showGoogleSignIn = !isApplePlatform;
     return Scaffold(
       appBar: AppBar(title: const Text('Customer Sign In')),
       body: Padding(
@@ -192,26 +193,29 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
         child: ListView(
           children: [
             // ── Social sign-in buttons first ──
-            OutlinedButton.icon(
-              onPressed: (loading || _googleLoading) ? null : _signInWithGoogle,
-              icon: _googleLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Image.network(
-                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                      width: 20,
-                      height: 20,
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.g_mobiledata, size: 24),
-                    ),
-              label: const Text('Continue with Google'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
+            if (showGoogleSignIn)
+              OutlinedButton.icon(
+                onPressed: (loading || _googleLoading)
+                    ? null
+                    : _signInWithGoogle,
+                icon: _googleLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Image.network(
+                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (_, _, _) =>
+                            const Icon(Icons.g_mobiledata, size: 24),
+                      ),
+                label: const Text('Continue with Google'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
               ),
-            ),
             if (isApplePlatform) ...[
               const SizedBox(height: 12),
               _appleLoading

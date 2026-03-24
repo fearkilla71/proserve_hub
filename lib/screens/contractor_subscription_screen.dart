@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -465,9 +466,12 @@ class _ContractorSubscriptionScreenState
                                     ? _storeProducts[storeProductId]
                                     : null;
                                 final storePrice = product?.price;
+                                final storeName = Platform.isIOS
+                                    ? 'Apple'
+                                    : 'Google Play';
                                 final storeLabel = storePrice != null
-                                    ? 'Subscribe with Google Play ($storePrice)'
-                                    : 'Subscribe with Google Play';
+                                    ? 'Subscribe with $storeName ($storePrice)'
+                                    : 'Subscribe with $storeName';
                                 return SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
@@ -503,7 +507,7 @@ class _ContractorSubscriptionScreenState
               }),
               const SizedBox(height: 8),
               Text(
-                'Tip: Google Play is best for mobile subscriptions. '
+                'Tip: ${Platform.isIOS ? 'Apple' : 'Google Play'} is best for mobile subscriptions. '
                 'Stripe is a flexible fallback and works outside the app store flow.',
                 style: Theme.of(
                   context,

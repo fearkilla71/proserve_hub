@@ -531,6 +531,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   }
 
   Widget _buildStepContent() {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     switch (_step) {
       case 0:
         return Column(
@@ -574,8 +575,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                 child: const Text('I verified, refresh status'),
               ),
             ],
-            if (!_awaitingEmailVerification &&
-                (Platform.isIOS || Platform.isMacOS)) ...[
+            if (!_awaitingEmailVerification && isApplePlatform) ...[
               const OrDivider(),
               _appleLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -977,6 +977,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     return Scaffold(
       backgroundColor: ProServeColors.bg,
       body: Stack(
@@ -1112,7 +1113,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
                             ],
                           ),
                           const SizedBox(height: 10),
-                          if (_step == 0) ...[
+                          if (_step == 0 && !isApplePlatform) ...[
                             const SizedBox(height: 8),
                             Row(
                               children: [
