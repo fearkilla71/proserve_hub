@@ -284,14 +284,9 @@ class _ContractorSubscriptionScreenState
           final currentTier = _tierFromUserDoc(data);
           final unlocked = _isProFromUserDoc(data);
 
-          if (!unlocked) {
-            // Only trigger once, not every rebuild
-            if (!_isAutoRefreshing) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _autoRefreshEntitlement();
-              });
-            }
-          }
+          // Auto-refresh is now only triggered after a purchase attempt
+          // (Stripe checkout return or IAP purchase), not on every build
+          // for free-tier users.
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
