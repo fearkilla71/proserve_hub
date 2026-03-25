@@ -46,43 +46,49 @@ class _BidIntelligenceAdminTabState extends State<BidIntelligenceAdminTab> {
 
   void _listen() {
     _sub = FirebaseFirestore.instance
-        .collectionGroup('bids')
+        .collection('bids')
         .orderBy('createdAt', descending: true)
         .limit(500)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            data['_path'] = d.reference.path;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              data['_path'] = d.reference.path;
+              return data;
+            }).toList();
 
-          double sumAmt = 0;
-          int accepted = 0;
-          double sumHours = 0;
-          int withTime = 0;
+            double sumAmt = 0;
+            int accepted = 0;
+            double sumHours = 0;
+            int withTime = 0;
 
-          for (final b in docs) {
-            sumAmt += (b['amount'] as num?)?.toDouble() ?? 0;
-            if (b['status'] == 'accepted') accepted++;
-            final created = (b['createdAt'] as Timestamp?)?.toDate();
-            final jobPosted = (b['jobPostedAt'] as Timestamp?)?.toDate();
-            if (created != null && jobPosted != null) {
-              sumHours += created.difference(jobPosted).inMinutes / 60.0;
-              withTime++;
+            for (final b in docs) {
+              sumAmt += (b['amount'] as num?)?.toDouble() ?? 0;
+              if (b['status'] == 'accepted') accepted++;
+              final created = (b['createdAt'] as Timestamp?)?.toDate();
+              final jobPosted = (b['jobPostedAt'] as Timestamp?)?.toDate();
+              if (created != null && jobPosted != null) {
+                sumHours += created.difference(jobPosted).inMinutes / 60.0;
+                withTime++;
+              }
             }
-          }
 
-          setState(() {
-            _bids = docs;
-            _totalBids = docs.length;
-            _avgAmount = docs.isEmpty ? 0 : sumAmt / docs.length;
-            _acceptRate = docs.isEmpty ? 0 : (accepted / docs.length) * 100;
-            _avgTimeToBid = withTime == 0 ? 0 : sumHours / withTime;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _bids = docs;
+              _totalBids = docs.length;
+              _avgAmount = docs.isEmpty ? 0 : sumAmt / docs.length;
+              _acceptRate = docs.isEmpty ? 0 : (accepted / docs.length) * 100;
+              _avgTimeToBid = withTime == 0 ? 0 : sumHours / withTime;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('bids listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

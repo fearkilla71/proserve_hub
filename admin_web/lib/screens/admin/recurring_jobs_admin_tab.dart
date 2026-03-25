@@ -49,35 +49,41 @@ class _RecurringJobsAdminTabState extends State<RecurringJobsAdminTab> {
         .collection('recurring_jobs')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int active = 0;
-          int cancelled = 0;
-          double revenue = 0;
+            int active = 0;
+            int cancelled = 0;
+            double revenue = 0;
 
-          for (final r in docs) {
-            final st = r['status'] ?? 'active';
-            if (st == 'active') {
-              active++;
-              revenue += (r['pricePerOccurrence'] as num?)?.toDouble() ?? 0;
+            for (final r in docs) {
+              final st = r['status'] ?? 'active';
+              if (st == 'active') {
+                active++;
+                revenue += (r['pricePerOccurrence'] as num?)?.toDouble() ?? 0;
+              }
+              if (st == 'cancelled') cancelled++;
             }
-            if (st == 'cancelled') cancelled++;
-          }
 
-          setState(() {
-            _configs = docs;
-            _total = docs.length;
-            _active = active;
-            _recurringRevenue = revenue;
-            _cancelled = cancelled;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _configs = docs;
+              _total = docs.length;
+              _active = active;
+              _recurringRevenue = revenue;
+              _cancelled = cancelled;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('recurring_jobs listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

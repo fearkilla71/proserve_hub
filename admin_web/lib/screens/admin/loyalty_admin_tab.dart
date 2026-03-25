@@ -54,56 +54,67 @@ class _LoyaltyAdminTabState extends State<LoyaltyAdminTab> {
         .orderBy('createdAt', descending: true)
         .limit(500)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int issued = 0, redeemed = 0;
-          for (final e in docs) {
-            final pts = (e['points'] as num?)?.toInt() ?? 0;
-            if (e['type'] == 'redeem') {
-              redeemed += pts;
-            } else {
-              issued += pts;
+            int issued = 0, redeemed = 0;
+            for (final e in docs) {
+              final pts = (e['points'] as num?)?.toInt() ?? 0;
+              if (e['type'] == 'redeem') {
+                redeemed += pts;
+              } else {
+                issued += pts;
+              }
             }
-          }
 
-          setState(() {
-            _events = docs;
-            _totalPointsIssued = issued;
-            _totalPointsRedeemed = redeemed;
-            _totalEvents = docs.length;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _events = docs;
+              _totalPointsIssued = issued;
+              _totalPointsRedeemed = redeemed;
+              _totalEvents = docs.length;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('loyalty_events listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
 
     _usersSub = FirebaseFirestore.instance
         .collection('users')
         .where('role', isEqualTo: 'customer')
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['uid'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['uid'] = d.id;
+              return data;
+            }).toList();
 
-          int active = 0;
-          for (final u in docs) {
-            if ((u['loyaltyPoints'] as num?)?.toInt() != null &&
-                (u['loyaltyPoints'] as num).toInt() > 0) {
-              active++;
+            int active = 0;
+            for (final u in docs) {
+              if ((u['loyaltyPoints'] as num?)?.toInt() != null &&
+                  (u['loyaltyPoints'] as num).toInt() > 0) {
+                active++;
+              }
             }
-          }
 
-          setState(() {
-            _users = docs;
-            _activeMembers = active;
-          });
-        });
+            setState(() {
+              _users = docs;
+              _activeMembers = active;
+            });
+          },
+          onError: (e) {
+            debugPrint('loyalty users listen error: $e');
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

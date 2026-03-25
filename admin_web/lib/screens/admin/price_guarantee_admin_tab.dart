@@ -48,44 +48,55 @@ class _PriceGuaranteeAdminTabState extends State<PriceGuaranteeAdminTab> {
     _rulesSub = FirebaseFirestore.instance
         .collection('pricing_rules')
         .snapshots()
-        .listen((snap) {
-          setState(() {
-            _rules = snap.docs.map((d) {
-              final data = d.data();
-              data['id'] = d.id;
-              return data;
-            }).toList();
-            _totalRules = _rules.length;
-            _loading = false;
-          });
-        });
+        .listen(
+          (snap) {
+            setState(() {
+              _rules = snap.docs.map((d) {
+                final data = d.data();
+                data['id'] = d.id;
+                return data;
+              }).toList();
+              _totalRules = _rules.length;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('pricing_rules listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
 
     _violationsSub = FirebaseFirestore.instance
         .collection('price_guarantee_violations')
         .orderBy('createdAt', descending: true)
         .limit(200)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          double refunded = 0;
-          int pending = 0;
-          for (final v in docs) {
-            refunded += (v['refundAmount'] as num?)?.toDouble() ?? 0;
-            if (v['status'] == 'pending') pending++;
-          }
+            double refunded = 0;
+            int pending = 0;
+            for (final v in docs) {
+              refunded += (v['refundAmount'] as num?)?.toDouble() ?? 0;
+              if (v['status'] == 'pending') pending++;
+            }
 
-          setState(() {
-            _violations = docs;
-            _totalViolations = docs.length;
-            _totalRefunded = refunded;
-            _pendingReview = pending;
-          });
-        });
+            setState(() {
+              _violations = docs;
+              _totalViolations = docs.length;
+              _totalRefunded = refunded;
+              _pendingReview = pending;
+            });
+          },
+          onError: (e) {
+            debugPrint('price_guarantee_violations listen error: $e');
+          },
+        );
   }
 
   @override

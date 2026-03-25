@@ -1308,5 +1308,96 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
     }
+
+    // ─── Phase 2 & Monitoring collections (admin-readable) ─────────────
+
+    // Loyalty events (earn / redeem point transactions)
+    match /loyalty_events/{eventId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Quality inspector submissions
+    match /quality_submissions/{submissionId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.contractorId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Maintenance-reminder campaigns
+    match /maintenance_campaigns/{campaignId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Recurring jobs
+    match /recurring_jobs/{configId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.contractorId == request.auth.uid
+      ));
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Sub-contractor partnerships (marketplace)
+    match /sub_partnerships/{partnershipId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.primaryId == request.auth.uid ||
+        resource.data.subId == request.auth.uid
+      ));
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Crews / multi-location
+    match /crews/{crewId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow create, update: if isAdmin() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Lead-credit transactions
+    match /lead_credit_transactions/{txnId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if false; // server-only
+    }
+
+    // Lead-credit packs (purchasable bundles)
+    match /lead_credit_packs/{packId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Price-guarantee violations
+    match /price_guarantee_violations/{docId} {
+      allow read: if isAdmin();
+      allow write: if false; // server-only
+    }
+
+    // --- Monitoring collections (written by Cloud Functions, read by admin) ---
+
+    match /payment_failures/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /function_health/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /function_errors/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /admin_alerts/{alertId} {
+      allow read: if isAdmin();
+      allow update: if isAdmin();
+      allow create, delete: if false;
+    }
+
+    match /error_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
   }
 }

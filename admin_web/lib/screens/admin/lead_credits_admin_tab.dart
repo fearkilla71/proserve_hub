@@ -53,48 +53,59 @@ class _LeadCreditsAdminTabState extends State<LeadCreditsAdminTab> {
         .orderBy('createdAt', descending: true)
         .limit(500)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
-
-          double revenue = 0;
-          int circ = 0;
-          for (final t in docs) {
-            final type = t['type'] ?? '';
-            final amount = (t['credits'] as num?)?.toInt() ?? 0;
-            if (type == 'purchase') {
-              revenue += (t['pricePaid'] as num?)?.toDouble() ?? 0;
-              circ += amount;
-            } else if (type == 'spend') {
-              circ -= amount;
-            }
-          }
-
-          setState(() {
-            _transactions = docs;
-            _totalTxns = docs.length;
-            _totalRevenue = revenue;
-            _creditsInCirculation = circ;
-            _loading = false;
-          });
-        });
-
-    _packSub = FirebaseFirestore.instance
-        .collection('lead_credit_packs')
-        .snapshots()
-        .listen((snap) {
-          setState(() {
-            _packs = snap.docs.map((d) {
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
               final data = d.data();
               data['id'] = d.id;
               return data;
             }).toList();
-            _activePacks = _packs.where((p) => p['active'] == true).length;
-          });
-        });
+
+            double revenue = 0;
+            int circ = 0;
+            for (final t in docs) {
+              final type = t['type'] ?? '';
+              final amount = (t['credits'] as num?)?.toInt() ?? 0;
+              if (type == 'purchase') {
+                revenue += (t['pricePaid'] as num?)?.toDouble() ?? 0;
+                circ += amount;
+              } else if (type == 'spend') {
+                circ -= amount;
+              }
+            }
+
+            setState(() {
+              _transactions = docs;
+              _totalTxns = docs.length;
+              _totalRevenue = revenue;
+              _creditsInCirculation = circ;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('lead_credit_transactions listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
+
+    _packSub = FirebaseFirestore.instance
+        .collection('lead_credit_packs')
+        .snapshots()
+        .listen(
+          (snap) {
+            setState(() {
+              _packs = snap.docs.map((d) {
+                final data = d.data();
+                data['id'] = d.id;
+                return data;
+              }).toList();
+              _activePacks = _packs.where((p) => p['active'] == true).length;
+            });
+          },
+          onError: (e) {
+            debugPrint('lead_credit_packs listen error: $e');
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

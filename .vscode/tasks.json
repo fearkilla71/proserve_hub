@@ -72,6 +72,82 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "build admin web",
+			"type": "shell",
+			"command": "cd c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web && flutter build web --release --base-href /admin/",
+			"isBackground": false
+		},
+		{
+			"label": "build admin web",
+			"type": "shell",
+			"command": "cd c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web && flutter build web --release --base-href /admin/",
+			"isBackground": false
+		},
+		{
+			"label": "build and deploy admin",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"cd c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web; flutter build web --release --base-href /admin/; Copy-Item -Path 'c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web\\build\\web\\*' -Destination 'c:\\Users\\Carvic\\Documents\\proserve_hub\\public\\admin\\' -Recurse -Force; cd c:\\Users\\Carvic\\Documents\\proserve_hub; firebase deploy --only hosting --project proserve-hub-ada0e"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rebuild-deploy-admin",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"cd c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web; flutter build web --release --base-href /admin/; Copy-Item -Path '.\\build\\web\\*' -Destination '..\\public\\admin\\' -Recurse -Force; cd ..; firebase deploy --only hosting --project proserve-hub-ada0e"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "build-deploy-admin-v2",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\Carvic\\Documents\\proserve_hub\\admin_web'; flutter build web --release --base-href '/admin/'; Copy-Item -Path '.\\build\\web\\*' -Destination '..\\public\\admin\\' -Recurse -Force; Set-Location '..'; firebase deploy --only hosting --project proserve-hub-ada0e"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy-firestore-rules",
+			"type": "shell",
+			"command": "firebase deploy --only firestore:rules --project proserve-hub-ada0e",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "deploy-rules-build-deploy",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"firebase deploy --only firestore:rules --project proserve-hub-ada0e; cd admin_web; flutter build web --release --base-href '/admin/'; Copy-Item -Path '.\\build\\web\\*' -Destination '..\\public\\admin\\' -Recurse -Force; cd ..; firebase deploy --only hosting --project proserve-hub-ada0e"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "full-admin-deploy",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Host '=== Step 1: Deploy Firestore Rules ==='; firebase deploy --only firestore:rules --project proserve-hub-ada0e; Write-Host '=== Step 2: Build Admin Web ==='; Set-Location admin_web; flutter build web --release --base-href '/admin/'; Write-Host '=== Step 3: Copy to public ==='; Copy-Item -Path '.\\build\\web\\*' -Destination '..\\public\\admin\\' -Recurse -Force; Write-Host '=== Step 4: Deploy Hosting ==='; Set-Location ..; firebase deploy --only hosting --project proserve-hub-ada0e; Write-Host '=== DONE ==='"
+			],
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

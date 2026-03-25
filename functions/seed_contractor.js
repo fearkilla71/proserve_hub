@@ -14,7 +14,7 @@
  */
 
 const admin = require('firebase-admin');
-admin.initializeApp();
+admin.initializeApp({ projectId: 'proserve-hub-ada0e' });
 
 const db = admin.firestore();
 

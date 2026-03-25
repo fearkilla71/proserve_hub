@@ -47,35 +47,41 @@ class _PromotionsAdminTabState extends State<PromotionsAdminTab> {
         .collection('promotions')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .listen((snap) {
-          final now = DateTime.now();
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final now = DateTime.now();
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int active = 0, expired = 0, redemptions = 0;
-          for (final p in docs) {
-            final isActive = p['active'] == true;
-            final expiresAt = (p['expiresAt'] as Timestamp?)?.toDate();
-            if (isActive && (expiresAt == null || expiresAt.isAfter(now))) {
-              active++;
-            } else {
-              expired++;
+            int active = 0, expired = 0, redemptions = 0;
+            for (final p in docs) {
+              final isActive = p['active'] == true;
+              final expiresAt = (p['expiresAt'] as Timestamp?)?.toDate();
+              if (isActive && (expiresAt == null || expiresAt.isAfter(now))) {
+                active++;
+              } else {
+                expired++;
+              }
+              redemptions += (p['redemptionCount'] as int?) ?? 0;
             }
-            redemptions += (p['redemptionCount'] as int?) ?? 0;
-          }
 
-          setState(() {
-            _promos = docs;
-            _totalPromos = docs.length;
-            _activeCount = active;
-            _expiredCount = expired;
-            _totalRedemptions = redemptions;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _promos = docs;
+              _totalPromos = docs.length;
+              _activeCount = active;
+              _expiredCount = expired;
+              _totalRedemptions = redemptions;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('promotions listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

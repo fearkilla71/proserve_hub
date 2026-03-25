@@ -1040,16 +1040,18 @@ class _ContractorCardState extends State<_ContractorCard> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
+                        Flexible(
                           child: Text(
                             displayName,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (featured)
+                        if (featured) ...[
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -1068,6 +1070,7 @@ class _ContractorCardState extends State<_ContractorCard> {
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                     if (contractor['reputation'] is Map<String, dynamic>) ...[

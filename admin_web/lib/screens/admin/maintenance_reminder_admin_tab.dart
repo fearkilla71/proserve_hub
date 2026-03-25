@@ -51,31 +51,37 @@ class _MaintenanceReminderAdminTabState
         .collection('maintenance_campaigns')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int active = 0;
-          int sent = 0;
-          int converted = 0;
-          for (final c in docs) {
-            if (c['status'] == 'active') active++;
-            sent += (c['remindersSent'] as num?)?.toInt() ?? 0;
-            converted += (c['conversions'] as num?)?.toInt() ?? 0;
-          }
+            int active = 0;
+            int sent = 0;
+            int converted = 0;
+            for (final c in docs) {
+              if (c['status'] == 'active') active++;
+              sent += (c['remindersSent'] as num?)?.toInt() ?? 0;
+              converted += (c['conversions'] as num?)?.toInt() ?? 0;
+            }
 
-          setState(() {
-            _campaigns = docs;
-            _total = docs.length;
-            _active = active;
-            _totalSent = sent;
-            _totalConverted = converted;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _campaigns = docs;
+              _total = docs.length;
+              _active = active;
+              _totalSent = sent;
+              _totalConverted = converted;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('maintenance_campaigns listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

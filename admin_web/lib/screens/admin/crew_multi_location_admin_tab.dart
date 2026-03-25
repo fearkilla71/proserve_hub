@@ -43,38 +43,45 @@ class _CrewMultiLocationAdminTabState extends State<CrewMultiLocationAdminTab> {
   }
 
   void _listen() {
-    _sub = FirebaseFirestore.instance.collection('crews').snapshots().listen((
-      snap,
-    ) {
-      final docs = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return data;
-      }).toList();
+    _sub = FirebaseFirestore.instance
+        .collection('crews')
+        .snapshots()
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-      int members = 0;
-      int active = 0;
-      double sumUtil = 0;
+            int members = 0;
+            int active = 0;
+            double sumUtil = 0;
 
-      for (final c in docs) {
-        final m =
-            (c['memberCount'] as num?)?.toInt() ??
-            (c['members'] as List?)?.length ??
-            0;
-        members += m;
-        if (c['activeToday'] == true) active++;
-        sumUtil += (c['utilisationPercent'] as num?)?.toDouble() ?? 0;
-      }
+            for (final c in docs) {
+              final m =
+                  (c['memberCount'] as num?)?.toInt() ??
+                  (c['members'] as List?)?.length ??
+                  0;
+              members += m;
+              if (c['activeToday'] == true) active++;
+              sumUtil += (c['utilisationPercent'] as num?)?.toDouble() ?? 0;
+            }
 
-      setState(() {
-        _crews = docs;
-        _totalCrews = docs.length;
-        _totalMembers = members;
-        _activeToday = active;
-        _avgUtilisation = docs.isEmpty ? 0 : sumUtil / docs.length;
-        _loading = false;
-      });
-    });
+            setState(() {
+              _crews = docs;
+              _totalCrews = docs.length;
+              _totalMembers = members;
+              _activeToday = active;
+              _avgUtilisation = docs.isEmpty ? 0 : sumUtil / docs.length;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('crews listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

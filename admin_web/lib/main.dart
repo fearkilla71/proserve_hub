@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 import 'firebase_options.dart';
@@ -33,6 +34,12 @@ import 'screens/admin/subscription_admin_tab.dart';
 import 'screens/admin/system_health_tab.dart';
 import 'screens/admin/verification_admin_tab.dart';
 import 'screens/admin/verification_tier_admin_tab.dart';
+import 'screens/admin/admin_alerts_tab.dart';
+import 'screens/admin/cloud_function_health_admin_tab.dart';
+import 'screens/admin/contractor_earnings_admin_tab.dart';
+import 'screens/admin/error_logs_admin_tab.dart';
+import 'screens/admin/lead_conversion_admin_tab.dart';
+import 'screens/admin/payment_failures_admin_tab.dart';
 import 'theme/admin_theme.dart';
 
 void _hideElement(String id) {
@@ -48,6 +55,14 @@ void _showError(String msg) {
   }
 }
 
+/// Remove the global JS error listeners added by index.html during boot.
+void _removeBootErrorHandlers() {
+  _jsRemoveBootErrorHandlers();
+}
+
+@JS('window._removeBootErrorHandlers')
+external void _jsRemoveBootErrorHandlers();
+
 Future<void> main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +72,10 @@ Future<void> main() async {
 
     // Hide loading indicator
     _hideElement('loading');
+
+    // Remove boot-time error handlers so Firestore/network errors
+    // don't show a red bar — Flutter handles errors from here.
+    _removeBootErrorHandlers();
 
     runApp(const AdminWebApp());
   } catch (e, st) {
@@ -641,6 +660,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
       selectedIcon: Icons.monetization_on,
       label: 'Lead Credits',
     ),
+    // ── Monitoring tabs ──
+    _NavDestination(
+      icon: Icons.bug_report_outlined,
+      selectedIcon: Icons.bug_report,
+      label: 'Errors',
+    ),
+    _NavDestination(
+      icon: Icons.credit_card_off_outlined,
+      selectedIcon: Icons.credit_card_off,
+      label: 'Pay Fails',
+    ),
+    _NavDestination(
+      icon: Icons.cloud_outlined,
+      selectedIcon: Icons.cloud,
+      label: 'Functions',
+    ),
+    _NavDestination(
+      icon: Icons.trending_up_outlined,
+      selectedIcon: Icons.trending_up,
+      label: 'Leads',
+    ),
+    _NavDestination(
+      icon: Icons.notifications_active_outlined,
+      selectedIcon: Icons.notifications_active,
+      label: 'Alerts',
+    ),
+    _NavDestination(
+      icon: Icons.account_balance_wallet_outlined,
+      selectedIcon: Icons.account_balance_wallet,
+      label: 'Earnings',
+    ),
   ];
 
   Widget _buildBody() {
@@ -697,6 +747,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return const CrewMultiLocationAdminTab();
       case 24:
         return LeadCreditsAdminTab(canWrite: cw);
+      // ── Monitoring tabs ──
+      case 25:
+        return const ErrorLogsAdminTab();
+      case 26:
+        return const PaymentFailuresAdminTab();
+      case 27:
+        return const CloudFunctionHealthAdminTab();
+      case 28:
+        return const LeadConversionAdminTab();
+      case 29:
+        return const AdminAlertsTab();
+      case 30:
+        return const ContractorEarningsAdminTab();
       default:
         return const SizedBox.shrink();
     }

@@ -51,38 +51,44 @@ class _QualityInspectorAdminTabState extends State<QualityInspectorAdminTab> {
         .orderBy('submittedAt', descending: true)
         .limit(300)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int pending = 0;
-          int approved = 0;
-          double sumScore = 0;
-          int scored = 0;
+            int pending = 0;
+            int approved = 0;
+            double sumScore = 0;
+            int scored = 0;
 
-          for (final s in docs) {
-            final st = s['status'] ?? 'pending';
-            if (st == 'pending') pending++;
-            if (st == 'approved') approved++;
-            final score = (s['qualityScore'] as num?)?.toDouble();
-            if (score != null) {
-              sumScore += score;
-              scored++;
+            for (final s in docs) {
+              final st = s['status'] ?? 'pending';
+              if (st == 'pending') pending++;
+              if (st == 'approved') approved++;
+              final score = (s['qualityScore'] as num?)?.toDouble();
+              if (score != null) {
+                sumScore += score;
+                scored++;
+              }
             }
-          }
 
-          setState(() {
-            _submissions = docs;
-            _total = docs.length;
-            _pending = pending;
-            _approved = approved;
-            _avgScore = scored == 0 ? 0 : sumScore / scored;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _submissions = docs;
+              _total = docs.length;
+              _pending = pending;
+              _approved = approved;
+              _avgScore = scored == 0 ? 0 : sumScore / scored;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('quality_submissions listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

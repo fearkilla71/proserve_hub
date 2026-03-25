@@ -26,8 +26,9 @@ const ALLOWED_ORIGINS = [
   'https://proserve-hub-ada0e.web.app',
   'https://proserve-hub-ada0e.firebaseapp.com',
   'https://proservehub.netlify.app',
-  'http://localhost:5000',
-  'http://localhost:3000',
+  ...(process.env.FUNCTIONS_EMULATOR === 'true'
+    ? ['http://localhost:5000', 'http://localhost:3000']
+    : []),
 ];
 
 /**

@@ -85,15 +85,24 @@
       }
     }
 
-    // Global error handler to show Dart/Flutter init errors
-    window.addEventListener('error', function(e) {
+    // Global error handler — only active during Flutter bootstrap.
+    // Once the app loads, Flutter's own error handling takes over.
+    function _showBootError(msg) {
       var el = document.getElementById('app-error');
-      if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + (e.message || e); }
-    });
-    window.addEventListener('unhandledrejection', function(e) {
+      if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + (msg || 'Unknown'); }
+    }
+    function _onErr(e) { _showBootError(e.message || e); }
+    function _onRej(e) { _showBootError(e.reason || e); }
+    window.addEventListener('error', _onErr);
+    window.addEventListener('unhandledrejection', _onRej);
+
+    // Remove the global error handlers once Flutter is ready
+    window._removeBootErrorHandlers = function() {
+      window.removeEventListener('error', _onErr);
+      window.removeEventListener('unhandledrejection', _onRej);
       var el = document.getElementById('app-error');
-      if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + (e.reason || e); }
-    });
+      if (el) { el.style.display = 'none'; }
+    };
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

@@ -49,33 +49,39 @@ class _SubMarketplaceAdminTabState extends State<SubMarketplaceAdminTab> {
         .collection('sub_partnerships')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .listen((snap) {
-          final docs = snap.docs.map((d) {
-            final data = d.data();
-            data['id'] = d.id;
-            return data;
-          }).toList();
+        .listen(
+          (snap) {
+            final docs = snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList();
 
-          int pending = 0;
-          int active = 0;
-          double commissions = 0;
+            int pending = 0;
+            int active = 0;
+            double commissions = 0;
 
-          for (final p in docs) {
-            final st = p['status'] ?? 'pending';
-            if (st == 'pending') pending++;
-            if (st == 'active') active++;
-            commissions += (p['totalCommission'] as num?)?.toDouble() ?? 0;
-          }
+            for (final p in docs) {
+              final st = p['status'] ?? 'pending';
+              if (st == 'pending') pending++;
+              if (st == 'active') active++;
+              commissions += (p['totalCommission'] as num?)?.toDouble() ?? 0;
+            }
 
-          setState(() {
-            _partnerships = docs;
-            _total = docs.length;
-            _pending = pending;
-            _active = active;
-            _totalCommissions = commissions;
-            _loading = false;
-          });
-        });
+            setState(() {
+              _partnerships = docs;
+              _total = docs.length;
+              _pending = pending;
+              _active = active;
+              _totalCommissions = commissions;
+              _loading = false;
+            });
+          },
+          onError: (e) {
+            debugPrint('sub_partnerships listen error: $e');
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   List<Map<String, dynamic>> get _filtered {

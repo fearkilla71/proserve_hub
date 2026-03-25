@@ -37,7 +37,7 @@ class LeadIapService {
 
   final _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
-  Map<String, ProductDetails> _products = {};
+  final Map<String, ProductDetails> _products = {};
   bool _initialised = false;
 
   /// Callers can set this to react when a purchase completes / fails.
