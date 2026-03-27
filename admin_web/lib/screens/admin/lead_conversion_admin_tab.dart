@@ -332,7 +332,7 @@ class _TopConverters extends StatelessWidget {
               return ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 itemCount: docs.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, i) {
                   final d = docs[i].data();
                   final type = d['type'] as String? ?? '';
