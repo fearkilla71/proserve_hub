@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
 import '../services/stripe_service.dart';
@@ -20,6 +21,11 @@ class ContractorSubscriptionScreen extends StatefulWidget {
 class _ContractorSubscriptionScreenState
     extends State<ContractorSubscriptionScreen>
     with WidgetsBindingObserver {
+  static final Uri _privacyPolicyUri = Uri.parse(
+    'https://proservehub.app/privacy',
+  );
+  static final Uri _termsOfUseUri = Uri.parse('https://proservehub.app/terms');
+
   bool _isLoadingStripe = false;
   bool _isLoadingIap = false;
   bool _pendingAutoRefreshAfterStripe = false;
@@ -267,6 +273,10 @@ class _ContractorSubscriptionScreenState
     }
   }
 
+  Future<void> _openLegalLink(Uri uri) async {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -430,6 +440,14 @@ class _ContractorSubscriptionScreenState
                                 color: scheme.primary,
                               ),
                         ),
+                        if (tier.id != 'basic') ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Auto-renewing monthly subscription. Cancel anytime in your ${Platform.isIOS ? 'Apple ID Settings' : 'Google Play subscriptions'} settings.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         ...tier.features.map((f) => _BenefitRow(text: f)),
                         if (isUpgrade && tier.id != 'basic') ...[
@@ -512,6 +530,45 @@ class _ContractorSubscriptionScreenState
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Subscription information',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pro and Enterprise plans are monthly auto-renewable subscriptions. Payment is charged to your ${Platform.isIOS ? 'Apple account' : 'Google Play account'} at confirmation of purchase and renews automatically unless canceled at least 24 hours before the end of the current period.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          TextButton(
+                            onPressed: () => _openLegalLink(_privacyPolicyUri),
+                            child: const Text('Privacy Policy'),
+                          ),
+                          TextButton(
+                            onPressed: () => _openLegalLink(_termsOfUseUri),
+                            child: const Text('Terms of Use'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               if (_iapAvailable)

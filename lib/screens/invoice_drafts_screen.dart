@@ -437,6 +437,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
 
   Future<void> _batchDelete(BuildContext context) async {
     final count = _selected.length;
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -471,16 +472,14 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
     try {
       await batch.commit();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Deleted $count invoice${count == 1 ? '' : 's'}'),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
     setState(() {
       _selected.clear();
@@ -513,6 +512,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
                   title: Text(_statusLabel(s)),
                   onTap: () async {
                     Navigator.pop(ctx);
+                    final messenger = ScaffoldMessenger.of(context);
                     final uid = FirebaseAuth.instance.currentUser?.uid;
                     if (uid == null) return;
                     final batch = FirebaseFirestore.instance.batch();
@@ -532,7 +532,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
                     try {
                       await batch.commit();
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text(
                             '${_selected.length} → ${_statusLabel(s)}',
@@ -541,7 +541,7 @@ class _InvoiceDraftsScreenState extends State<InvoiceDraftsScreen> {
                       );
                     } catch (e) {
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Update failed: $e')),
                       );
                     }
