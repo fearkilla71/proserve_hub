@@ -44,7 +44,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDUY2-ys3k4-hB7pgJyjpJsLQCDPTmIrN0',
-    appId: '1:841248185002:android:d6aa63d9a0a982f2b48ed3',
+    appId: '1:841248185002:android:2c6b79c5e5d38229b48ed3',
     messagingSenderId: '841248185002',
     projectId: 'proserve-hub-ada0e',
     storageBucket: 'proserve-hub-ada0e.firebasestorage.app',
