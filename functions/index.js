@@ -20,6 +20,7 @@ const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
 const STRIPE_CONNECT_RETURN_URL = defineSecret('STRIPE_CONNECT_RETURN_URL');
 const STRIPE_CONNECT_REFRESH_URL = defineSecret('STRIPE_CONNECT_REFRESH_URL');
 const STRIPE_CONTRACTOR_PRO_PRICE_ID = defineSecret('STRIPE_CONTRACTOR_PRO_PRICE_ID');
+const APP_STORE_SHARED_SECRET = defineSecret('APP_STORE_SHARED_SECRET');
 
 // -------------------- SECURITY: CORS & AUTH HELPERS --------------------
 const ALLOWED_ORIGINS = [
@@ -89,19 +90,130 @@ function wrapHttpEndpoint(handler) {
 }
 
 /**
- * Check if uid is a ProServe admin (role stored in users doc).
+ * Check if uid is a ProServe admin.
+ * Admin authority must come from the locked admins collection or custom claims,
+ * never from the user-editable users/{uid} profile document.
  */
 async function isAdminUser(uid) {
   if (!uid) return false;
   const db = admin.firestore();
-  const [userSnap, adminSnap] = await Promise.all([
-    db.collection('users').doc(uid).get(),
+  const [adminSnap, userRecord] = await Promise.all([
     db.collection('admins').doc(uid).get(),
+    admin.auth().getUser(uid).catch(() => null),
   ]);
   if (adminSnap.exists) return true;
-  const data = userSnap.data() || {};
-  return data.role === 'admin';
+  const claims = userRecord?.customClaims || {};
+  return claims.admin === true || claims.superAdmin === true || claims.role === 'admin';
 }
+
+function cleanString(value, max = 300) {
+  return (value || '').toString().trim().slice(0, max);
+}
+
+function cleanStringList(value, maxItems = 25, maxLength = 80) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => cleanString(item, maxLength))
+    .filter(Boolean)
+    .slice(0, maxItems);
+}
+
+function cleanPositiveInt(value, fallback, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function hasOwn(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj || {}, key);
+}
+
+/**
+ * Backend-owned role/profile bootstrap. Firestore rules intentionally block
+ * clients from writing role, credits, approval, subscription, and admin fields.
+ */
+exports.completeUserProfile = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const role = cleanString(data?.role, 30).toLowerCase();
+  if (!['customer', 'contractor'].includes(role)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid role');
+  }
+
+  const db = admin.firestore();
+  const userRef = db.collection('users').doc(uid);
+  const contractorRef = db.collection('contractors').doc(uid);
+  const authUser = await admin.auth().getUser(uid).catch(() => null);
+  const email = cleanString(data?.email || authUser?.email || '', 320);
+  const name = cleanString(data?.name || authUser?.displayName || email, 160);
+  const phone = cleanString(data?.phone, 40);
+  const company = cleanString(data?.company, 160);
+  const services = cleanStringList(data?.services);
+  const zip = cleanString(data?.zip, 20);
+  const radius = cleanPositiveInt(data?.radius, 25, 1, 250);
+
+  await db.runTransaction(async (tx) => {
+    const [userSnap, contractorSnap] = await Promise.all([
+      tx.get(userRef),
+      role === 'contractor' ? tx.get(contractorRef) : Promise.resolve(null),
+    ]);
+    const existing = userSnap.exists ? userSnap.data() || {} : {};
+    const existingContractor = contractorSnap?.exists ? contractorSnap.data() || {} : {};
+    const existingRole = cleanString(existing.role, 30).toLowerCase();
+    if (existingRole && existingRole !== role) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Account role is already set'
+      );
+    }
+
+    const userPayload = {
+      role,
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+      ...(phone ? { phone } : {}),
+      ...(role === 'contractor' ? {
+        ...(hasOwn(data, 'company') ? { company } : {}),
+        ...(hasOwn(data, 'services') ? { services } : {}),
+        ...(hasOwn(data, 'zip') ? { zip } : {}),
+        ...(hasOwn(data, 'radius') ? { radius } : {}),
+        approved: existing.approved === true,
+        featured: existing.featured === true,
+        credits: Number(existing.credits || 0),
+      } : {}),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...(userSnap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
+    };
+
+    tx.set(userRef, userPayload, { merge: true });
+
+    if (role === 'contractor') {
+      tx.set(contractorRef, {
+        name: (hasOwn(data, 'company') || hasOwn(data, 'name'))
+          ? (company || name)
+          : (existingContractor.name || company || name),
+        services: hasOwn(data, 'services') ? services : (existingContractor.services || []),
+        zip: hasOwn(data, 'zip') ? zip : (existingContractor.zip || ''),
+        radius: hasOwn(data, 'radius') ? radius : Number(existingContractor.radius || 25),
+        rating: Number(existingContractor.rating || 0),
+        completedJobs: Number(existingContractor.completedJobs || 0),
+        reviewCount: Number(existingContractor.reviewCount || 0),
+        available: existingContractor.available !== false,
+        availabilityWindow: existingContractor.availabilityWindow || 'next_week',
+        avgResponseMinutes: Number(existingContractor.avgResponseMinutes || 60),
+        verified: existingContractor.verified === true,
+        stripeAccountId: cleanString(existingContractor.stripeAccountId, 120),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...(contractorSnap?.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
+      }, { merge: true });
+    }
+  });
+
+  return { ok: true, role };
+});
 
 // -------------------- ESTIMATOR TUNING --------------------
 // Keep these conservative; pricing_rules/* can still be customized.
@@ -5736,123 +5848,299 @@ exports.syncContractorProEntitlementHttp = functions
  * For full App Store receipt validation, add the Apple shared secret as a
  * Firebase secret and call Apple's verifyReceipt endpoint.
  */
+// -------------------- APPLE APP STORE RECEIPT VERIFICATION --------------------
+
+/**
+ * Call Apple's verifyReceipt endpoint.
+ * Try production first; if status 21007, retry with sandbox.
+ */
+async function verifyAppStoreReceipt(receiptData, sharedSecret) {
+  const payload = JSON.stringify({
+    'receipt-data': receiptData,
+    'password': sharedSecret,
+    'exclude-old-transactions': true,
+  });
+
+  let result = await callAppleVerifyEndpoint(
+    'https://buy.itunes.apple.com/verifyReceipt',
+    payload
+  );
+
+  // Status 21007 = sandbox receipt sent to production endpoint — retry sandbox
+  if (result && result.status === 21007) {
+    result = await callAppleVerifyEndpoint(
+      'https://sandbox.buy.itunes.apple.com/verifyReceipt',
+      payload
+    );
+  }
+
+  return result;
+}
+
+async function callAppleVerifyEndpoint(url, payload) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+  });
+  if (!resp.ok) {
+    throw new Error(`Apple verifyReceipt returned HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+function contractorSubscriptionTier(productId) {
+  return (productId || '').toString().includes('enterprise') ? 'enterprise' : 'pro';
+}
+
+function isActiveSubscriptionStatus(status) {
+  const normalized = (status || '').toString().trim().toLowerCase();
+  return ['active', 'trialing', 'purchased', 'renewed'].includes(normalized);
+}
+
+async function applyContractorSubscriptionState(userRef, {
+  active,
+  status,
+  tier,
+  source,
+  productId,
+  purchaseId,
+  purchaseToken,
+  expiresAtMillis,
+}) {
+  const payload = {
+    subscriptionTier: active ? tier : null,
+    contractorPro: !!active,
+    isPro: !!active,
+    pricingToolsPro: !!active,
+    proSubscriptionStatus: status || (active ? 'active' : 'inactive'),
+    iapSource: source || null,
+    iapProductId: productId || null,
+    iapPurchaseId: purchaseId || null,
+    iapPurchaseToken: purchaseToken || null,
+    iapExpiresAtMillis: expiresAtMillis || null,
+    proSubscriptionUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (active) {
+    payload.iapActivatedAt = admin.firestore.FieldValue.serverTimestamp();
+  }
+
+  await userRef.set(payload, { merge: true });
+}
+
+async function getAndroidPublisherClient() {
+  const { google } = require('googleapis');
+  const auth = new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+  });
+  const authClient = await auth.getClient();
+  return google.androidpublisher({ version: 'v3', auth: authClient });
+}
+
+async function verifyGoogleSubscriptionToken({ productId, purchaseToken }) {
+  const androidPublisher = await getAndroidPublisherClient();
+  const resp = await androidPublisher.purchases.subscriptions.get({
+    packageName: 'com.verohue.proservehub',
+    subscriptionId: productId,
+    token: purchaseToken,
+  });
+
+  const data = resp.data || {};
+  const expiryMs = parseInt(data.expiryTimeMillis || '0', 10);
+  const paymentState = parseInt(data.paymentState || '-1', 10);
+  const active = expiryMs > Date.now() && (paymentState === 1 || paymentState === 2);
+  return {
+    active,
+    status: active ? 'active' : (data.cancelReason !== undefined ? 'cancelled' : 'inactive'),
+    expiryMs,
+    paymentState,
+    orderId: data.orderId || null,
+    raw: data,
+  };
+}
+
 async function verifyContractorSubscriptionPurchaseCore({ uid, productId, purchaseId, verificationData, verificationSource, transactionDate }) {
   const db = admin.firestore();
+  const source = (verificationSource || '').toString().trim();
 
   if (!productId || !verificationData) {
     throw new functions.https.HttpsError('invalid-argument', 'Missing productId or verificationData');
   }
 
   // ---------- 1. Record the purchase receipt for audit ----------
+  const crypto = require('crypto');
+  const verificationHash = crypto
+    .createHash('sha256')
+    .update(verificationData)
+    .digest('hex');
   const receiptRef = db.collection('iap_receipts').doc();
   await receiptRef.set({
     uid,
     productId,
     purchaseId: purchaseId || null,
-    verificationSource: verificationSource || 'unknown',
-    verificationData, // raw token / receipt
+    verificationSource: source || 'unknown',
+    verificationHash,
+    verificationLength: verificationData.length,
     transactionDate: transactionDate || null,
     verified: false,
+    status: 'received',
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   // ---------- 2. Attempt server-side verification ----------
   let verified = false;
+  let status = 'unverified';
+  let message = 'The subscription could not be verified yet.';
+  let tier = null;
+  let expiresAtMillis = null;
+  let purchaseToken = null;
 
-  if (verificationSource === 'google_play') {
+  if (source === 'google_play') {
     try {
-      // Use Application Default Credentials (the Firebase service account)
-      // which has access to the Google Play Developer API if you've linked
-      // the GCP project to your Play Console and granted the service account
-      // the "Service Account User" + "androidpublisher" permissions.
-      const { google } = require('googleapis');
-      const auth = new google.auth.GoogleAuth({
-        scopes: ['https://www.googleapis.com/auth/androidpublisher'],
-      });
-      const authClient = await auth.getClient();
-      const androidPublisher = google.androidpublisher({ version: 'v3', auth: authClient });
-
-      const packageName = 'com.verohue.proservehub';
       const subscriptionId = productId;
       const token = verificationData;
-
-      const resp = await androidPublisher.purchases.subscriptions.get({
-        packageName,
-        subscriptionId,
-        token,
-      });
-
-      // paymentState: 0 = pending, 1 = received, 2 = free trial, 3 = deferred
-      // expiryTimeMillis present and in the future = active
-      const data = resp.data || {};
-      const expiryMs = parseInt(data.expiryTimeMillis || '0', 10);
-      const paymentState = parseInt(data.paymentState || '-1', 10);
-      const cancelReason = data.cancelReason; // undefined = not cancelled
-
-      if (expiryMs > Date.now() && (paymentState === 1 || paymentState === 2)) {
-        verified = true;
-      }
+      const googleResult = await verifyGoogleSubscriptionToken({ productId: subscriptionId, purchaseToken: token });
+      verified = googleResult.active;
+      status = googleResult.status || (verified ? 'active' : 'inactive');
+      message = verified
+        ? 'Subscription verified.'
+        : 'Google Play did not report an active subscription.';
+      expiresAtMillis = googleResult.expiryMs || null;
+      purchaseToken = token;
 
       // Record the Google verification result
       await receiptRef.update({
         verified,
+        status,
         googlePlayData: {
-          expiryTimeMillis: data.expiryTimeMillis || null,
-          paymentState: data.paymentState || null,
-          cancelReason: cancelReason !== undefined ? cancelReason : null,
-          orderId: data.orderId || null,
+          expiryTimeMillis: googleResult.expiryMs || null,
+          paymentState: googleResult.paymentState,
+          orderId: googleResult.orderId,
         },
       });
 
-      console.log(`Google Play verification for uid=${uid}: verified=${verified}, expiry=${data.expiryTimeMillis}`);
+      console.log(`Google Play verification for uid=${uid}: verified=${verified}, expiry=${googleResult.expiryMs}`);
     } catch (err) {
       // Google Play API verification failed — do NOT auto-approve.
       console.error('Google Play verification failed:', err.message);
       verified = false;
+      status = 'verification_failed';
+      message = 'Google Play could not verify this subscription. Please try again.';
       await receiptRef.update({
         verified: false,
+        status,
         verificationNote: 'REJECTED: Google Play API verification failed. Receipt stored for manual review.',
         verificationError: (err.message || '').toString().slice(0, 500),
       });
     }
-  } else if (verificationSource === 'app_store') {
-    // App Store server validation not yet implemented — reject until it is.
-    verified = false;
-    await receiptRef.update({
-      verified: false,
-      verificationNote: 'REJECTED: App Store server validation not yet implemented. Receipt stored for manual review.',
-    });
-    console.warn(`App Store purchase REJECTED for uid=${uid}, productId=${productId} — server validation not implemented`);
+  } else if (source === 'app_store') {
+    try {
+      let sharedSecret;
+      try {
+        sharedSecret = APP_STORE_SHARED_SECRET.value();
+      } catch (_) {
+        sharedSecret = process.env.APP_STORE_SHARED_SECRET || '';
+      }
+
+      if (!sharedSecret) {
+        throw new Error('APP_STORE_SHARED_SECRET not configured');
+      }
+
+      const appleResult = await verifyAppStoreReceipt(verificationData, sharedSecret);
+
+      if (appleResult.status !== 0) {
+        throw new Error(`Apple verifyReceipt returned status ${appleResult.status}`);
+      }
+
+      // Search latest_receipt_info for the matching subscription
+      const latestReceipts = appleResult.latest_receipt_info || [];
+      const matchingSub = latestReceipts
+        .filter(r => r.product_id === productId)
+        .sort((a, b) => parseInt(b.expires_date_ms || '0', 10) - parseInt(a.expires_date_ms || '0', 10))[0];
+
+      if (matchingSub) {
+        const expiresMs = parseInt(matchingSub.expires_date_ms || '0', 10);
+        expiresAtMillis = Number.isFinite(expiresMs) ? expiresMs : null;
+        if (expiresMs > Date.now()) {
+          verified = true;
+        }
+      }
+      status = verified ? 'active' : 'inactive';
+      message = verified
+        ? 'Subscription verified.'
+        : matchingSub
+          ? 'Apple reported this subscription as expired or inactive.'
+          : 'Apple receipt did not include the selected subscription product.';
+
+      await receiptRef.update({
+        verified,
+        status,
+        appleData: {
+          receiptStatus: appleResult.status,
+          environment: appleResult.environment || null,
+          productId: matchingSub ? matchingSub.product_id : null,
+          expiresDateMs: matchingSub ? matchingSub.expires_date_ms : null,
+          originalTransactionId: matchingSub ? matchingSub.original_transaction_id : null,
+          transactionId: matchingSub ? matchingSub.transaction_id : null,
+        },
+      });
+
+      console.log(`App Store verification for uid=${uid}: verified=${verified}, product=${matchingSub?.product_id}, expires=${matchingSub?.expires_date_ms}`);
+    } catch (err) {
+      console.error('App Store verification failed:', err.message);
+      verified = false;
+      status = 'verification_failed';
+      message = (err.message || '').includes('APP_STORE_SHARED_SECRET')
+        ? 'App Store subscription verification is not configured yet.'
+        : 'Apple could not verify this subscription. Please try again.';
+      await receiptRef.update({
+        verified: false,
+        status,
+        verificationNote: 'REJECTED: App Store server verification failed. Receipt stored for manual review.',
+        verificationError: (err.message || '').toString().slice(0, 500),
+      });
+    }
   } else {
     // Unknown source — reject
     verified = false;
+    status = 'unsupported_source';
+    message = 'Unsupported store receipt source.';
     await receiptRef.update({
       verified: false,
+      status,
       verificationNote: `REJECTED: Unknown verification source "${verificationSource}". Receipt stored for manual review.`,
     });
   }
 
   // ---------- 3. Grant Pro entitlement ----------
   if (verified) {
-    const tier = productId.includes('enterprise') ? 'enterprise' : 'pro';
-    await db.collection('users').doc(uid).set({
-      subscriptionTier: tier,
-      contractorPro: true,
-      isPro: true,
-      pricingToolsPro: true,
-      iapProductId: productId,
-      iapPurchaseId: purchaseId || null,
-      iapSource: verificationSource || 'unknown',
-      iapActivatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    tier = contractorSubscriptionTier(productId);
+    await applyContractorSubscriptionState(db.collection('users').doc(uid), {
+      active: true,
+      status,
+      tier,
+      source: source || 'unknown',
+      productId,
+      purchaseId: purchaseId || null,
+      purchaseToken,
+      expiresAtMillis,
+    });
 
-    console.log(`Contractor Pro (${tier}) activated for uid=${uid} via ${verificationSource}`);
+    console.log(`Contractor Pro (${tier}) activated for uid=${uid} via ${source}`);
   }
 
-  return { verified, tier: verified ? (productId.includes('enterprise') ? 'enterprise' : 'pro') : null };
+  return {
+    verified,
+    tier,
+    status,
+    message,
+    expiresAtMillis,
+  };
 }
 
 exports.verifyContractorSubscriptionPurchase = functions
+  .runWith({ secrets: [APP_STORE_SHARED_SECRET] })
   .https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
@@ -5888,6 +6176,7 @@ exports.verifyContractorSubscriptionPurchase = functions
 
 // Desktop-safe HTTP version
 exports.verifyContractorSubscriptionPurchaseHttp = functions
+  .runWith({ secrets: [APP_STORE_SHARED_SECRET] })
   .https.onRequest(wrapHttpEndpoint(async (req, uid) => {
     return await verifyContractorSubscriptionPurchaseCore({
       uid,
@@ -6061,6 +6350,20 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
 
+  const normalizedSource = (source || '').toString().trim();
+  const normalizedPurchaseId = (purchaseId || '').toString().trim();
+  const normalizedVerificationData = (verificationData || '').toString();
+
+  if (!['google_play', 'app_store'].includes(normalizedSource)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Unsupported purchase source');
+  }
+  if (!normalizedPurchaseId) {
+    throw new functions.https.HttpsError('invalid-argument', 'purchaseId is required');
+  }
+  if (!normalizedVerificationData) {
+    throw new functions.https.HttpsError('invalid-argument', 'verificationData is required');
+  }
+
   const packId = IAP_PRODUCT_TO_PACK[(productId || '').toString().trim()];
   if (!packId) {
     throw new functions.https.HttpsError('invalid-argument', 'Unknown product ID');
@@ -6071,14 +6374,68 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
     throw new functions.https.HttpsError('invalid-argument', 'Pack configuration missing');
   }
 
-  // NOTE: For production hardening you should verify the purchase token with
-  // the Google Play Developer API (androidpublisher) or Apple's verifyReceipt
-  // endpoint. The token is in `verificationData`. For now we trust the client
-  // receipt and guard against duplicate fulfillment via the purchaseId check
-  // below.
+  // ---------- Server-side receipt verification ----------
+  if (normalizedSource === 'google_play') {
+    try {
+      const { google } = require('googleapis');
+      const auth = new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+      });
+      const authClient = await auth.getClient();
+      const androidPublisher = google.androidpublisher({ version: 'v3', auth: authClient });
+
+      const resp = await androidPublisher.purchases.products.get({
+        packageName: 'com.verohue.proservehub',
+        productId,
+        token: normalizedVerificationData,
+      });
+
+      const data = resp.data || {};
+      // purchaseState: 0 = purchased, 1 = canceled, 2 = pending
+      if (parseInt(data.purchaseState || '-1', 10) !== 0) {
+        throw new functions.https.HttpsError('failed-precondition', 'Google Play purchase not in purchased state');
+      }
+
+      console.log(`Google Play lead pack verified for uid=${uid}, product=${productId}`);
+    } catch (err) {
+      console.error('Google Play lead pack verification failed:', err.message);
+      throw new functions.https.HttpsError('failed-precondition', 'Purchase verification failed');
+    }
+  } else if (normalizedSource === 'app_store') {
+    try {
+      let sharedSecret;
+      try {
+        sharedSecret = APP_STORE_SHARED_SECRET.value();
+      } catch (_) {
+        sharedSecret = process.env.APP_STORE_SHARED_SECRET || '';
+      }
+
+      if (!sharedSecret) {
+        throw new Error('APP_STORE_SHARED_SECRET not configured');
+      }
+
+      const appleResult = await verifyAppStoreReceipt(normalizedVerificationData, sharedSecret);
+
+      if (appleResult.status !== 0) {
+        throw new Error(`Apple verifyReceipt returned status ${appleResult.status}`);
+      }
+
+      // For consumables, check in_app array for a matching product
+      const inApp = appleResult.receipt?.in_app || [];
+      const match = inApp.find(r => r.product_id === productId);
+      if (!match) {
+        throw new Error(`Product ${productId} not found in Apple receipt`);
+      }
+
+      console.log(`App Store lead pack verified for uid=${uid}, product=${productId}`);
+    } catch (err) {
+      console.error('App Store lead pack verification failed:', err.message);
+      throw new functions.https.HttpsError('failed-precondition', 'Purchase verification failed');
+    }
+  }
 
   const db = admin.firestore();
-  const paymentRef = db.collection('payments').doc(`iap_${purchaseId}`);
+  const paymentRef = db.collection('payments').doc(`iap_${normalizedSource}_${normalizedPurchaseId}`);
   const userRef = db.collection('users').doc(uid);
   const creditType = normalizeLeadCreditType(pack.creditType);
 
@@ -6103,8 +6460,8 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
         packId: pack.id,
         creditType,
         leadsGranted: pack.leads,
-        source: source || 'iap',
-        purchaseId: purchaseId || '',
+        source: normalizedSource,
+        purchaseId: normalizedPurchaseId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -6131,7 +6488,9 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
   return { ok: true, credits: pack.leads, creditType };
 }
 
-exports.verifyLeadPackPurchase = functions.https.onCall(
+exports.verifyLeadPackPurchase = functions
+  .runWith({ secrets: [APP_STORE_SHARED_SECRET] })
+  .https.onCall(
   async (data, context) => {
     const uid = context.auth?.uid;
     if (!uid) {
@@ -6152,6 +6511,140 @@ exports.verifyLeadPackPurchase = functions.https.onCall(
     });
   }
 );
+
+async function findUserByGooglePurchaseToken(purchaseToken) {
+  if (!purchaseToken) return null;
+  const snap = await admin.firestore()
+    .collection('users')
+    .where('iapPurchaseToken', '==', purchaseToken)
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0];
+}
+
+async function handleGooglePlayRtdnMessage(messageJson) {
+  const packageName = (messageJson.packageName || '').toString();
+  if (packageName && packageName !== 'com.verohue.proservehub') {
+    console.warn('[googlePlayRtdn] Ignoring package', packageName);
+    return;
+  }
+
+  const sub = messageJson.subscriptionNotification;
+  if (sub?.purchaseToken && sub?.subscriptionId) {
+    const userDoc = await findUserByGooglePurchaseToken(sub.purchaseToken);
+    if (!userDoc) {
+      console.warn('[googlePlayRtdn] No user for subscription token', {
+        subscriptionId: sub.subscriptionId,
+        notificationType: sub.notificationType || null,
+      });
+      return;
+    }
+
+    const result = await verifyGoogleSubscriptionToken({
+      productId: sub.subscriptionId,
+      purchaseToken: sub.purchaseToken,
+    });
+    await applyContractorSubscriptionState(userDoc.ref, {
+      active: result.active,
+      status: result.status,
+      tier: contractorSubscriptionTier(sub.subscriptionId),
+      source: 'google_play',
+      productId: sub.subscriptionId,
+      purchaseToken: sub.purchaseToken,
+      expiresAtMillis: result.expiryMs || null,
+    });
+    return;
+  }
+
+  const voided = messageJson.voidedPurchaseNotification;
+  if (voided?.purchaseToken) {
+    const userDoc = await findUserByGooglePurchaseToken(voided.purchaseToken);
+    if (userDoc) {
+      await applyContractorSubscriptionState(userDoc.ref, {
+        active: false,
+        status: 'voided',
+        source: 'google_play',
+        purchaseToken: voided.purchaseToken,
+      });
+    }
+
+    const payments = await admin.firestore()
+      .collection('payments')
+      .where('purchaseId', '==', voided.purchaseToken)
+      .limit(10)
+      .get();
+    await Promise.all(payments.docs.map((doc) => doc.ref.set({
+      status: 'voided',
+      voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+      voidedReason: voided.refundType || null,
+    }, { merge: true })));
+    return;
+  }
+
+  const oneTime = messageJson.oneTimeProductNotification;
+  if (oneTime?.purchaseToken) {
+    const payments = await admin.firestore()
+      .collection('payments')
+      .where('purchaseId', '==', oneTime.purchaseToken)
+      .limit(10)
+      .get();
+    await Promise.all(payments.docs.map((doc) => doc.ref.set({
+      googlePlayNotificationType: oneTime.notificationType || null,
+      googlePlayProductId: oneTime.sku || null,
+      googlePlayNotifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true })));
+  }
+}
+
+exports.googlePlayBillingRtdn = functions.pubsub
+  .topic('play-billing-rtdn')
+  .onPublish(async (message) => {
+    const raw = message.json || JSON.parse(Buffer.from(message.data || '', 'base64').toString('utf8'));
+    await handleGooglePlayRtdnMessage(raw);
+  });
+
+exports.reconcileGooglePlaySubscriptions = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async () => {
+    const snap = await admin.firestore()
+      .collection('users')
+      .where('iapSource', '==', 'google_play')
+      .where('iapPurchaseToken', '>', '')
+      .limit(500)
+      .get();
+
+    let checked = 0;
+    let updated = 0;
+    for (const doc of snap.docs) {
+      const data = doc.data() || {};
+      const productId = (data.iapProductId || '').toString();
+      const purchaseToken = (data.iapPurchaseToken || '').toString();
+      if (!productId || !purchaseToken) continue;
+      checked += 1;
+      try {
+        const result = await verifyGoogleSubscriptionToken({ productId, purchaseToken });
+        await applyContractorSubscriptionState(doc.ref, {
+          active: result.active,
+          status: result.status,
+          tier: contractorSubscriptionTier(productId),
+          source: 'google_play',
+          productId,
+          purchaseToken,
+          expiresAtMillis: result.expiryMs || null,
+        });
+        updated += 1;
+      } catch (err) {
+        console.error('[reconcileGooglePlaySubscriptions] failed', {
+          uid: doc.id,
+          productId,
+          error: err.message,
+        });
+      }
+    }
+
+    console.log('[reconcileGooglePlaySubscriptions] complete', { checked, updated });
+    return null;
+  });
 
 exports.stripeWebhook = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] })
@@ -6183,28 +6676,16 @@ exports.stripeWebhook = functions
 
     const sessionType = (session.metadata?.type || '').toString().trim();
 
-    // Contractor subscription purchase.
-    // Supports both our custom checkout sessions (metadata.contractorId) and
-    // Stripe Payment Links/Buy Buttons by matching the checkout email to a
-    // Firebase Auth user.
+    // Contractor subscription purchase. Entitlements require an owner-bound
+    // session created by our backend; never grant by customer email alone.
     if (sessionType === 'contractor_subscription' || session.mode === 'subscription') {
       const db = admin.firestore();
 
-      let contractorId = (session.metadata?.contractorId || '').toString().trim();
-      if (!contractorId) {
-        const email =
-          (session.customer_details?.email || session.customer_email || '')
-            .toString()
-            .trim();
-        if (email) {
-          try {
-            const user = await admin.auth().getUserByEmail(email);
-            contractorId = user?.uid || '';
-          } catch (_) {
-            contractorId = '';
-          }
-        }
-      }
+      const contractorId = (
+        session.metadata?.contractorId ||
+        session.client_reference_id ||
+        ''
+      ).toString().trim();
 
       if (contractorId) {
         const userRef = db.collection('users').doc(contractorId);
@@ -6257,6 +6738,10 @@ exports.stripeWebhook = functions
             );
           });
         }
+      } else {
+        console.warn('[stripeWebhook] Ignored subscription checkout without contractorId/client_reference_id', {
+          sessionId: session.id,
+        });
       }
 
       res.json({ received: true });

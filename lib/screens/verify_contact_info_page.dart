@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -282,9 +283,9 @@ class _VerifyContactInfoPageState extends State<VerifyContactInfoPage>
             .get();
         if (contractorSnap.exists) {
           try {
-            await _db.collection('users').doc(user.uid).set({
-              'role': 'contractor',
-            }, SetOptions(merge: true));
+            await FirebaseFunctions.instance
+                .httpsCallable('completeUserProfile')
+                .call(<String, dynamic>{'role': 'contractor'});
           } catch (_) {
             // Best-effort.
           }

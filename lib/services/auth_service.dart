@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,30 @@ import 'zip_lookup_service.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+
+  Future<void> _completeUserProfile({
+    required String role,
+    String? email,
+    String? name,
+    String? phone,
+    String? company,
+    List<String>? services,
+    String? zip,
+    int? radius,
+  }) async {
+    final callable = _functions.httpsCallable('completeUserProfile');
+    await callable.call(<String, dynamic>{
+      'role': role,
+      if (email != null) 'email': email,
+      if (name != null) 'name': name,
+      if (phone != null) 'phone': phone,
+      if (company != null) 'company': company,
+      if (services != null) 'services': services,
+      if (zip != null) 'zip': zip,
+      if (radius != null) 'radius': radius,
+    });
+  }
 
   Future<void> _sendEmailVerificationBestEffort(User user) async {
     try {
@@ -40,9 +65,7 @@ class AuthService {
       if (contractorSnap.exists) {
         // Backfill so RootGate and other flows can route consistently.
         try {
-          await _db.collection('users').doc(uid).set({
-            'role': 'contractor',
-          }, SetOptions(merge: true));
+          await _completeUserProfile(role: 'contractor');
         } catch (_) {
           // Best-effort.
         }
@@ -109,42 +132,21 @@ class AuthService {
       final lat = loc?['lat'];
       final lng = loc?['lng'];
 
-      final batch = _db.batch();
+      await _completeUserProfile(
+        role: 'contractor',
+        email: email,
+        name: name,
+        phone: phone,
+        company: company,
+        services: services,
+        zip: zip,
+        radius: radius,
+      );
 
-      batch.set(_db.collection('users').doc(user.uid), {
-        'role': 'contractor',
-        'name': name,
-        'email': email,
-        'company': company,
-        'services': services,
-        'zip': zip,
-        'radius': radius,
-        'phone': phone,
-        'approved': false,
-        'featured': false,
-        'credits': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      batch.set(_db.collection('contractors').doc(user.uid), {
-        'name': company.trim().isEmpty ? name : company,
-        'services': services,
-        'zip': zip,
-        'radius': radius,
+      await _db.collection('contractors').doc(user.uid).set({
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
-        'rating': 0.0,
-        'completedJobs': 0,
-        'reviewCount': 0,
-        'available': true,
-        'availabilityWindow': 'next_week',
-        'avgResponseMinutes': 60,
-        'verified': false,
-        'stripeAccountId': '',
-        'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-
-      await batch.commit();
 
       return user;
     } on FirebaseAuthException catch (e, st) {
@@ -174,14 +176,7 @@ class AuthService {
 
       await _sendEmailVerificationBestEffort(user);
 
-      await _db.collection('users').doc(user.uid).set({
-        'role': 'contractor',
-        'email': email,
-        'approved': false,
-        'featured': false,
-        'credits': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _completeUserProfile(role: 'contractor', email: email);
 
       return user;
     } on FirebaseAuthException catch (e, st) {
@@ -207,15 +202,15 @@ class AuthService {
   }) async {
     final uid = user.uid;
 
-    await _db.collection('users').doc(uid).set({
-      'role': 'contractor',
-      'name': name,
-      'company': company,
-      'services': services,
-      'zip': zip,
-      'radius': radius,
-      'phone': phone,
-    }, SetOptions(merge: true));
+    await _completeUserProfile(
+      role: 'contractor',
+      name: name,
+      company: company,
+      services: services,
+      zip: zip,
+      radius: radius,
+      phone: phone,
+    );
 
     final zipKey = zip.trim();
     final loc =
@@ -231,15 +226,9 @@ class AuthService {
       'radius': radius,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
-      'rating': 0.0,
-      'completedJobs': 0,
-      'reviewCount': 0,
       'available': true,
       'availabilityWindow': 'next_week',
       'avgResponseMinutes': 60,
-      'verified': false,
-      'stripeAccountId': '',
-      'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -260,13 +249,12 @@ class AuthService {
 
       await _sendEmailVerificationBestEffort(user);
 
-      await _db.collection('users').doc(user.uid).set({
-        'role': 'customer',
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await _completeUserProfile(
+        role: 'customer',
+        email: email,
+        name: name,
+        phone: phone,
+      );
 
       return user;
     } on FirebaseAuthException catch (e, st) {
@@ -318,34 +306,11 @@ class AuthService {
 
     if (!snapshot.exists) {
       // First-time Apple sign-in: create user doc.
-      await userDoc.set({
-        'role': role,
-        'name': displayName.isNotEmpty ? displayName : (user.email ?? ''),
-        'email': user.email ?? appleCredential.email ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-        if (role == 'contractor') 'approved': false,
-        if (role == 'contractor') 'featured': false,
-        if (role == 'contractor') 'credits': 0,
-      });
-
-      // For contractors, also create the contractors collection doc.
-      if (role == 'contractor') {
-        await _db.collection('contractors').doc(user.uid).set({
-          'name': displayName.isNotEmpty ? displayName : (user.email ?? ''),
-          'services': <String>[],
-          'zip': '',
-          'radius': 25,
-          'rating': 0.0,
-          'completedJobs': 0,
-          'reviewCount': 0,
-          'available': true,
-          'availabilityWindow': 'next_week',
-          'avgResponseMinutes': 60,
-          'verified': false,
-          'stripeAccountId': '',
-          'createdAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
+      await _completeUserProfile(
+        role: role,
+        name: displayName.isNotEmpty ? displayName : (user.email ?? ''),
+        email: user.email ?? appleCredential.email ?? '',
+      );
     }
 
     // Update display name if Apple provided one and it's not set yet.
@@ -437,7 +402,7 @@ class AuthService {
     final snap = await docRef.get();
     final existingRole = snap.data()?['role'] as String?;
     if (existingRole != null && existingRole.isNotEmpty) return;
-    await docRef.set({'role': role}, SetOptions(merge: true));
+    await _completeUserProfile(role: role);
   }
 
   Future<void> signOut() async {

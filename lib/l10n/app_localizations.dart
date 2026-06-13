@@ -7,7 +7,6 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
-import 'app_localizations_fr.dart';
 
 // ignore_for_file: type=lint
 
@@ -97,7 +96,6 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
-    Locale('fr'),
   ];
 
   /// The application title
@@ -693,6 +691,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Photo requested!'**
   String get photoRequested;
+
+  /// Language option that follows the device locale
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get languageSystemDefault;
+
+  /// Language picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get selectLanguage;
+
+  /// Customer profile screen app bar title
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get you;
+
+  /// Fallback customer display name
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get customer;
+
+  /// Profile action to set a password
+  ///
+  /// In en, this message translates to:
+  /// **'Set password'**
+  String get setPassword;
+
+  /// Profile notification settings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationSettings;
+
+  /// Profile notification settings explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Get alerts when pros send you cost estimates or messages.'**
+  String get notificationSettingsDescription;
+
+  /// Button to request push notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Push Notifications'**
+  String get allowPushNotifications;
+
+  /// Busy button label
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get working;
+
+  /// Profile support action
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Support'**
+  String get contactSupport;
+
+  /// Help document title
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get help;
+
+  /// Privacy policy document title
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// California privacy notice title
+  ///
+  /// In en, this message translates to:
+  /// **'CA Notice at Collection'**
+  String get caNoticeAtCollection;
+
+  /// Terms of use document title
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get termsOfUse;
+
+  /// Technical support document title
+  ///
+  /// In en, this message translates to:
+  /// **'Report a technical problem'**
+  String get reportTechnicalProblem;
+
+  /// Privacy opt-out document title
+  ///
+  /// In en, this message translates to:
+  /// **'Do not sell or share my info'**
+  String get doNotSellOrShareMyInfo;
+
+  /// Account deactivation document title
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate account'**
+  String get deactivateAccount;
+
+  /// Account data deletion document title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account data'**
+  String get deleteAccountData;
+
+  /// Error when password reset email cannot be sent
+  ///
+  /// In en, this message translates to:
+  /// **'No email found for this account.'**
+  String get noEmailFound;
+
+  /// No description provided for @passwordResetEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset email sent to {email}'**
+  String passwordResetEmailSent(String email);
+
+  /// No description provided for @failedToSendEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send email: {error}'**
+  String failedToSendEmail(String error);
+
+  /// Snackbar after notifications are enabled
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications enabled.'**
+  String get notificationsEnabled;
+
+  /// Snackbar when notification permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications permission not granted.'**
+  String get notificationsPermissionNotGranted;
+
+  /// No description provided for @failedToEnableNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to enable notifications: {error}'**
+  String failedToEnableNotifications(String error);
+
+  /// Snackbar after sign out
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out.'**
+  String get signedOut;
+
+  /// No description provided for @signOutFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out failed: {error}'**
+  String signOutFailed(String error);
+
+  /// Version placeholder while app version is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Version …'**
+  String get versionLoading;
+
+  /// Subscription screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription Plans'**
+  String get subscriptionPlansTitle;
+
+  /// Current subscription plan label
+  ///
+  /// In en, this message translates to:
+  /// **'Current Plan'**
+  String get subscriptionCurrentPlan;
+
+  /// Subscription entitlement refresh status
+  ///
+  /// In en, this message translates to:
+  /// **'Updating status…'**
+  String get subscriptionUpdatingStatus;
+
+  /// Basic subscription tier name
+  ///
+  /// In en, this message translates to:
+  /// **'Basic'**
+  String get subscriptionTierBasic;
+
+  /// Pro subscription tier name
+  ///
+  /// In en, this message translates to:
+  /// **'Pro'**
+  String get subscriptionTierPro;
+
+  /// Enterprise subscription tier name
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise'**
+  String get subscriptionTierEnterprise;
+
+  /// Free subscription price
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get subscriptionPriceFree;
+
+  /// Recommended subscription badge
+  ///
+  /// In en, this message translates to:
+  /// **'POPULAR'**
+  String get subscriptionPopular;
+
+  /// Current subscription badge
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT'**
+  String get subscriptionCurrent;
+
+  /// No description provided for @subscriptionFeatureJobFeedAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Job feed access'**
+  String get subscriptionFeatureJobFeedAccess;
+
+  /// No description provided for @subscriptionFeatureAcceptCustomerBids.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept customer bids'**
+  String get subscriptionFeatureAcceptCustomerBids;
+
+  /// No description provided for @subscriptionFeatureCommunityFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Community feed'**
+  String get subscriptionFeatureCommunityFeed;
+
+  /// No description provided for @subscriptionFeatureEverythingBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in Basic'**
+  String get subscriptionFeatureEverythingBasic;
+
+  /// No description provided for @subscriptionFeaturePricingCalculator.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing Calculator'**
+  String get subscriptionFeaturePricingCalculator;
+
+  /// No description provided for @subscriptionFeatureCostEstimator.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Estimator'**
+  String get subscriptionFeatureCostEstimator;
+
+  /// No description provided for @subscriptionFeatureAiInvoiceMaker.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Invoice Maker'**
+  String get subscriptionFeatureAiInvoiceMaker;
+
+  /// No description provided for @subscriptionFeatureRenderTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Render Tool'**
+  String get subscriptionFeatureRenderTool;
+
+  /// No description provided for @subscriptionFeatureEverythingPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in Pro'**
+  String get subscriptionFeatureEverythingPro;
+
+  /// No description provided for @subscriptionFeatureProfitLossDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & Loss Dashboard'**
+  String get subscriptionFeatureProfitLossDashboard;
+
+  /// No description provided for @subscriptionFeaturePriorityJobFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority job feed (30 min early)'**
+  String get subscriptionFeaturePriorityJobFeed;
+
+  /// No description provided for @subscriptionFeatureUnlimitedAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited AI estimates & renders'**
+  String get subscriptionFeatureUnlimitedAi;
+
+  /// No description provided for @subscriptionFeatureInvoicePaymentCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice payment collection'**
+  String get subscriptionFeatureInvoicePaymentCollection;
+
+  /// No description provided for @subscriptionFeatureSubcontractorBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Subcontractor board'**
+  String get subscriptionFeatureSubcontractorBoard;
+
+  /// No description provided for @subscriptionFeatureCrewRoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew roster & scheduling'**
+  String get subscriptionFeatureCrewRoster;
+
+  /// No description provided for @subscriptionManagedSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-renewing monthly subscription. Cancel anytime in your {settingsName} settings.'**
+  String subscriptionManagedSettings(String settingsName);
+
+  /// No description provided for @subscriptionOpeningCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening checkout...'**
+  String get subscriptionOpeningCheckout;
+
+  /// No description provided for @subscriptionUpgradeWithCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade with Card'**
+  String get subscriptionUpgradeWithCard;
+
+  /// No description provided for @subscriptionOpeningStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening store...'**
+  String get subscriptionOpeningStore;
+
+  /// No description provided for @subscriptionSubscribeWithStorePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe with {storeName} ({price})'**
+  String subscriptionSubscribeWithStorePrice(String storeName, String price);
+
+  /// No description provided for @subscriptionSubscribeWithStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe with {storeName}'**
+  String subscriptionSubscribeWithStore(String storeName);
+
+  /// No description provided for @subscriptionStoreUnavailableShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{storeName} subscription unavailable'**
+  String subscriptionStoreUnavailableShort(String storeName);
+
+  /// No description provided for @subscriptionIosManagementCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions are purchased with Apple In-App Purchase and managed in Apple ID Settings.'**
+  String get subscriptionIosManagementCopy;
+
+  /// No description provided for @subscriptionAndroidManagementCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Google Play is best for mobile subscriptions. Stripe is a flexible fallback and works outside the app store flow.'**
+  String get subscriptionAndroidManagementCopy;
+
+  /// No description provided for @subscriptionInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription information'**
+  String get subscriptionInformation;
+
+  /// No description provided for @subscriptionAutoRenewInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro and Enterprise plans are monthly auto-renewable subscriptions. Payment is charged to your {accountName} at confirmation of purchase and renews automatically unless canceled at least 24 hours before the end of the current period.'**
+  String subscriptionAutoRenewInfo(String accountName);
+
+  /// No description provided for @subscriptionRestorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get subscriptionRestorePurchases;
+
+  /// No description provided for @subscriptionRestoreComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore complete. Checking subscription status.'**
+  String get subscriptionRestoreComplete;
+
+  /// No description provided for @subscriptionRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed: {error}'**
+  String subscriptionRestoreFailed(String error);
+
+  /// No description provided for @subscriptionPurchasePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase is pending confirmation.'**
+  String get subscriptionPurchasePending;
+
+  /// No description provided for @subscriptionPurchaseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase failed.'**
+  String get subscriptionPurchaseFailed;
+
+  /// No description provided for @subscriptionPurchaseCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase canceled.'**
+  String get subscriptionPurchaseCanceled;
+
+  /// No description provided for @subscriptionEnterpriseActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise subscription activated.'**
+  String get subscriptionEnterpriseActivated;
+
+  /// No description provided for @subscriptionProActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro subscription activated.'**
+  String get subscriptionProActivated;
+
+  /// No description provided for @subscriptionVerificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription verification failed: {error}'**
+  String subscriptionVerificationFailed(String error);
+
+  /// No description provided for @subscriptionCheckoutBrowserReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete checkout in the browser, then return to the app. We will update your status automatically.'**
+  String get subscriptionCheckoutBrowserReturn;
+
+  /// No description provided for @subscriptionStoreTierUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Store subscription for {tierName} is not available yet.'**
+  String subscriptionStoreTierUnavailable(String tierName);
+
+  /// No description provided for @subscriptionStoreUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{storeName} subscriptions are unavailable right now. Please try again from a signed-in store account.'**
+  String subscriptionStoreUnavailable(String storeName);
+
+  /// No description provided for @subscriptionProductLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load subscription products: {error}'**
+  String subscriptionProductLoadFailed(String error);
+
+  /// No description provided for @subscriptionMissingProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing subscription products in App Store Connect: {productIds}.'**
+  String subscriptionMissingProducts(String productIds);
+
+  /// No description provided for @subscriptionNoProductsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscription products are available for this Apple sandbox account yet.'**
+  String get subscriptionNoProductsAvailable;
+
+  /// Retry button label
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate
@@ -706,7 +1172,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'es', 'fr'].contains(locale.languageCode);
+      <String>['en', 'es'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -719,8 +1185,6 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
-    case 'fr':
-      return AppLocalizationsFr();
   }
 
   throw FlutterError(

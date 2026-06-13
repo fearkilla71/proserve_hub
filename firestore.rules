@@ -168,29 +168,74 @@ service cloud.firestore {
     }
 
     // --- USERS ---
+    function protectedUserFields() {
+      return [
+        'role',
+        'admin',
+        'adminRole',
+        'approved',
+        'featured',
+        'credits',
+        'leadCredits',
+        'exclusiveLeadCredits',
+        'stripeAccountId',
+        'stripeAccountCreatedAt',
+        'stripePayoutsEnabled',
+        'stripeChargesEnabled',
+        'stripeDetailsSubmitted',
+        'stripeCustomerId',
+        'stripeSubscriptionId',
+        'subscriptionTier',
+        'subscriptionStatus',
+        'proSubscriptionStatus',
+        'contractorPro',
+        'isPro',
+        'pricingToolsPro',
+        'iapProductId',
+        'iapPurchaseId',
+        'iapSource',
+        'iapActivatedAt',
+        'proSubscribedAt',
+        'avgRating',
+        'reviewCount',
+        'averageRating',
+        'totalReviews',
+        'reputationScore',
+        'verificationTier',
+        'verified',
+        'verifiedAt'
+      ];
+    }
+
+    function isSafeUserCreate(uid) {
+      return isSignedIn()
+        && request.auth.uid == uid
+        && !request.resource.data.keys().hasAny(protectedUserFields())
+        && (
+          !('uid' in request.resource.data)
+          || request.resource.data.uid == uid
+        );
+    }
+
+    function isSafeUserUpdate(uid) {
+      return isSignedIn()
+        && request.auth.uid == uid
+        && exists(/databases/$(database)/documents/users/$(uid))
+        && !request.resource.data.diff(resource.data).addedKeys().hasAny(protectedUserFields())
+        && !request.resource.data.diff(resource.data).changedKeys().hasAny(protectedUserFields())
+        && !request.resource.data.diff(resource.data).removedKeys().hasAny(protectedUserFields())
+        && (
+          !('uid' in request.resource.data)
+          || request.resource.data.uid == uid
+        );
+    }
+
     match /users/{uid} {
-      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSafeUserCreate(uid);
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
-      allow update: if isAdmin() || (
-        isSignedIn() && request.auth.uid == uid
-        // Users can update their own profile fields, but cannot change
-        // privileges, credits, or payout connectivity.
-        && !request.resource.data.diff(resource.data).changedKeys().hasAny([
-          'role',
-          'approved',
-          'featured',
-          'credits',
-          'stripeAccountId',
-          'stripeAccountCreatedAt',
-          'stripePayoutsEnabled',
-          'stripeDetailsSubmitted',
-          // Ratings are server-aggregated.
-          'avgRating',
-          'reviewCount',
-          'averageRating',
-          'totalReviews'
-        ])
-      );
+      allow update: if resource != null
+        && exists(/databases/$(database)/documents/users/$(uid))
+        && (isAdmin() || isSafeUserUpdate(uid));
       allow delete: if isAdmin();
     }
 

@@ -200,122 +200,403 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exteriorPainting => 'Pintura Exterior';
 
   @override
-  String get aiPriceMatchGuarantee => 'AI Price Match Guarantee';
+  String get aiPriceMatchGuarantee => 'Garantía de Igualación de Precio con IA';
 
   @override
-  String get aiPriceMatch => 'AI Price Match';
+  String get aiPriceMatch => 'Igualación de Precio con IA';
 
   @override
   String priceGuaranteeThreshold(String threshold) {
-    return 'If your final cost exceeds our AI estimate by more than $threshold, we\'ll credit the difference.';
+    return 'Si tu costo final supera nuestra estimación de IA por más de $threshold, te acreditaremos la diferencia.';
   }
 
   @override
-  String get costBreakdown => 'Cost Breakdown';
+  String get costBreakdown => 'Desglose de Costos';
 
   @override
-  String get labor => 'Labor';
+  String get labor => 'Mano de obra';
 
   @override
-  String get materials => 'Materials';
+  String get materials => 'Materiales';
 
   @override
-  String get platformFee => 'Platform Fee';
+  String get platformFee => 'Tarifa de la plataforma';
 
   @override
-  String get escrowProtection => 'Escrow Protection';
+  String get escrowProtection => 'Protección de depósito';
 
   @override
-  String get maintenanceReminders => 'Maintenance Reminders';
+  String get maintenanceReminders => 'Recordatorios de mantenimiento';
 
   @override
-  String get maintenanceDue => 'Maintenance Due';
+  String get maintenanceDue => 'Mantenimiento pendiente';
 
   @override
-  String get book => 'Book';
+  String get book => 'Reservar';
 
   @override
-  String get seasonalDeals => 'Deals & Offers';
+  String get seasonalDeals => 'Ofertas y promociones';
 
   @override
   String hoursLeft(int hours) {
-    return '${hours}h left';
+    return 'Quedan $hours h';
   }
 
   @override
   String off(int percent) {
-    return '$percent% OFF';
+    return '$percent% DE DESCUENTO';
   }
 
   @override
-  String get neighborhoodActivity => 'In Your Neighborhood';
+  String get neighborhoodActivity => 'En tu vecindario';
 
   @override
   String homesNearYou(int count) {
-    return '$count homes near you this month';
+    return '$count hogares cerca de ti este mes';
   }
 
   @override
-  String get savedProjects => 'Saved Projects';
+  String get savedProjects => 'Proyectos guardados';
 
   @override
-  String get noProjectsYet => 'No projects yet';
+  String get noProjectsYet => 'Aún no hay proyectos';
 
   @override
-  String get createBoard => 'Create Board';
+  String get createBoard => 'Crear tablero';
 
   @override
-  String get boardName => 'Board name';
+  String get boardName => 'Nombre del tablero';
 
   @override
-  String get notes => 'Notes';
+  String get notes => 'Notas';
 
   @override
-  String get zeroInterest => '0% INTEREST';
+  String get zeroInterest => '0% DE INTERÉS';
 
   @override
-  String get payInThree => 'Pay in 3';
+  String get payInThree => 'Paga en 3';
 
   @override
-  String get payInSix => 'Pay in 6';
+  String get payInSix => 'Paga en 6';
 
   @override
   String perMonth(String amount) {
-    return '$amount/mo';
+    return '$amount/mes';
   }
 
   @override
-  String get choosePaymentPlan => 'Choose a payment plan';
+  String get choosePaymentPlan => 'Elige un plan de pago';
 
   @override
-  String get financingAvailable => 'Financing Available';
+  String get financingAvailable => 'Financiamiento disponible';
 
   @override
-  String get topMatchedPros => 'Top Matched Pros';
+  String get topMatchedPros => 'Profesionales más compatibles';
 
   @override
   String prosInvited(int count) {
-    return '$count pros invited — quotes arriving soon';
+    return '$count profesionales invitados; las cotizaciones llegarán pronto';
   }
 
   @override
-  String get timeRemaining => 'Time remaining';
+  String get timeRemaining => 'Tiempo restante';
 
   @override
-  String get verifiedPro => 'Verified';
+  String get verifiedPro => 'Verificado';
 
   @override
-  String get trustedPro => 'Trusted Pro';
+  String get trustedPro => 'Profesional de confianza';
 
   @override
-  String get elitePro => 'Elite Pro';
+  String get elitePro => 'Profesional élite';
 
   @override
-  String get addPhoto => 'Add Photo';
+  String get addPhoto => 'Agregar foto';
 
   @override
-  String get requestPhoto => 'Request Photo';
+  String get requestPhoto => 'Solicitar foto';
 
   @override
-  String get photoRequested => 'Photo requested!';
+  String get photoRequested => '¡Foto solicitada!';
+
+  @override
+  String get languageSystemDefault => 'Predeterminado del sistema';
+
+  @override
+  String get selectLanguage => 'Seleccionar idioma';
+
+  @override
+  String get you => 'Tú';
+
+  @override
+  String get customer => 'Cliente';
+
+  @override
+  String get setPassword => 'Configurar contraseña';
+
+  @override
+  String get notificationSettings => 'Configuración de notificaciones';
+
+  @override
+  String get notificationSettingsDescription =>
+      'Recibe alertas cuando los profesionales te envíen estimaciones de costo o mensajes.';
+
+  @override
+  String get allowPushNotifications => 'Permitir notificaciones push';
+
+  @override
+  String get working => 'Trabajando…';
+
+  @override
+  String get contactSupport => 'Contactar soporte';
+
+  @override
+  String get help => 'Ayuda';
+
+  @override
+  String get privacyPolicy => 'Política de privacidad';
+
+  @override
+  String get caNoticeAtCollection => 'Aviso de California al recopilar datos';
+
+  @override
+  String get termsOfUse => 'Términos de uso';
+
+  @override
+  String get reportTechnicalProblem => 'Reportar un problema técnico';
+
+  @override
+  String get doNotSellOrShareMyInfo => 'No vender ni compartir mi información';
+
+  @override
+  String get deactivateAccount => 'Desactivar cuenta';
+
+  @override
+  String get deleteAccountData => 'Eliminar los datos de mi cuenta';
+
+  @override
+  String get noEmailFound =>
+      'No se encontró un correo electrónico para esta cuenta.';
+
+  @override
+  String passwordResetEmailSent(String email) {
+    return 'Correo para restablecer la contraseña enviado a $email';
+  }
+
+  @override
+  String failedToSendEmail(String error) {
+    return 'No se pudo enviar el correo: $error';
+  }
+
+  @override
+  String get notificationsEnabled => 'Notificaciones activadas.';
+
+  @override
+  String get notificationsPermissionNotGranted =>
+      'No se concedió el permiso de notificaciones.';
+
+  @override
+  String failedToEnableNotifications(String error) {
+    return 'No se pudieron activar las notificaciones: $error';
+  }
+
+  @override
+  String get signedOut => 'Sesión cerrada.';
+
+  @override
+  String signOutFailed(String error) {
+    return 'No se pudo cerrar sesión: $error';
+  }
+
+  @override
+  String get versionLoading => 'Versión …';
+
+  @override
+  String get subscriptionPlansTitle => 'Planes de suscripción';
+
+  @override
+  String get subscriptionCurrentPlan => 'Plan actual';
+
+  @override
+  String get subscriptionUpdatingStatus => 'Actualizando estado…';
+
+  @override
+  String get subscriptionTierBasic => 'Básico';
+
+  @override
+  String get subscriptionTierPro => 'Pro';
+
+  @override
+  String get subscriptionTierEnterprise => 'Enterprise';
+
+  @override
+  String get subscriptionPriceFree => 'Gratis';
+
+  @override
+  String get subscriptionPopular => 'POPULAR';
+
+  @override
+  String get subscriptionCurrent => 'ACTUAL';
+
+  @override
+  String get subscriptionFeatureJobFeedAccess =>
+      'Acceso al listado de trabajos';
+
+  @override
+  String get subscriptionFeatureAcceptCustomerBids =>
+      'Aceptar ofertas de clientes';
+
+  @override
+  String get subscriptionFeatureCommunityFeed => 'Feed de la comunidad';
+
+  @override
+  String get subscriptionFeatureEverythingBasic => 'Todo lo de Básico';
+
+  @override
+  String get subscriptionFeaturePricingCalculator => 'Calculadora de precios';
+
+  @override
+  String get subscriptionFeatureCostEstimator => 'Estimador de costos';
+
+  @override
+  String get subscriptionFeatureAiInvoiceMaker => 'Creador de facturas con IA';
+
+  @override
+  String get subscriptionFeatureRenderTool => 'Herramienta de renders';
+
+  @override
+  String get subscriptionFeatureEverythingPro => 'Todo lo de Pro';
+
+  @override
+  String get subscriptionFeatureProfitLossDashboard =>
+      'Panel de pérdidas y ganancias';
+
+  @override
+  String get subscriptionFeaturePriorityJobFeed =>
+      'Trabajos prioritarios (30 min antes)';
+
+  @override
+  String get subscriptionFeatureUnlimitedAi =>
+      'Estimaciones y renders de IA ilimitados';
+
+  @override
+  String get subscriptionFeatureInvoicePaymentCollection =>
+      'Cobro de pagos de facturas';
+
+  @override
+  String get subscriptionFeatureSubcontractorBoard =>
+      'Tablero de subcontratistas';
+
+  @override
+  String get subscriptionFeatureCrewRoster => 'Equipo y programación';
+
+  @override
+  String subscriptionManagedSettings(String settingsName) {
+    return 'Suscripción mensual con renovación automática. Puedes cancelar cuando quieras en la configuración de $settingsName.';
+  }
+
+  @override
+  String get subscriptionOpeningCheckout => 'Abriendo pago...';
+
+  @override
+  String get subscriptionUpgradeWithCard => 'Mejorar con tarjeta';
+
+  @override
+  String get subscriptionOpeningStore => 'Abriendo tienda...';
+
+  @override
+  String subscriptionSubscribeWithStorePrice(String storeName, String price) {
+    return 'Suscribirse con $storeName ($price)';
+  }
+
+  @override
+  String subscriptionSubscribeWithStore(String storeName) {
+    return 'Suscribirse con $storeName';
+  }
+
+  @override
+  String subscriptionStoreUnavailableShort(String storeName) {
+    return 'Suscripción de $storeName no disponible';
+  }
+
+  @override
+  String get subscriptionIosManagementCopy =>
+      'Las suscripciones se compran con compras dentro de la app de Apple y se administran en la configuración de Apple ID.';
+
+  @override
+  String get subscriptionAndroidManagementCopy =>
+      'Consejo: Google Play es la mejor opción para suscripciones móviles. Stripe es una alternativa flexible y funciona fuera del flujo de la tienda.';
+
+  @override
+  String get subscriptionInformation => 'Información de la suscripción';
+
+  @override
+  String subscriptionAutoRenewInfo(String accountName) {
+    return 'Los planes Pro y Enterprise son suscripciones mensuales con renovación automática. El pago se carga a tu cuenta de $accountName al confirmar la compra y se renueva automáticamente a menos que canceles al menos 24 horas antes de que termine el período actual.';
+  }
+
+  @override
+  String get subscriptionRestorePurchases => 'Restaurar compras';
+
+  @override
+  String get subscriptionRestoreComplete =>
+      'Restauración completa. Revisando el estado de la suscripción.';
+
+  @override
+  String subscriptionRestoreFailed(String error) {
+    return 'No se pudo restaurar: $error';
+  }
+
+  @override
+  String get subscriptionPurchasePending =>
+      'La compra está pendiente de confirmación.';
+
+  @override
+  String get subscriptionPurchaseFailed => 'La compra falló.';
+
+  @override
+  String get subscriptionPurchaseCanceled => 'Compra cancelada.';
+
+  @override
+  String get subscriptionEnterpriseActivated =>
+      'Suscripción Enterprise activada.';
+
+  @override
+  String get subscriptionProActivated => 'Suscripción Pro activada.';
+
+  @override
+  String subscriptionVerificationFailed(String error) {
+    return 'Falló la verificación de la suscripción: $error';
+  }
+
+  @override
+  String get subscriptionCheckoutBrowserReturn =>
+      'Completa el pago en el navegador y vuelve a la app. Actualizaremos tu estado automáticamente.';
+
+  @override
+  String subscriptionStoreTierUnavailable(String tierName) {
+    return 'La suscripción de tienda para $tierName aún no está disponible.';
+  }
+
+  @override
+  String subscriptionStoreUnavailable(String storeName) {
+    return 'Las suscripciones de $storeName no están disponibles ahora. Inténtalo otra vez con una cuenta de tienda conectada.';
+  }
+
+  @override
+  String subscriptionProductLoadFailed(String error) {
+    return 'No se pudieron cargar los productos de suscripción: $error';
+  }
+
+  @override
+  String subscriptionMissingProducts(String productIds) {
+    return 'Faltan productos de suscripción en App Store Connect: $productIds.';
+  }
+
+  @override
+  String get subscriptionNoProductsAvailable =>
+      'Aún no hay productos de suscripción disponibles para esta cuenta sandbox de Apple.';
+
+  @override
+  String get retry => 'Reintentar';
 }

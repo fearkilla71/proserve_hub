@@ -1,11 +1,13 @@
+import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:flutter/material.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:async';
 
+import '../l10n/app_localizations.dart';
 import '../services/stripe_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_error_handler.dart';
@@ -32,41 +34,66 @@ class _ContractorSubscriptionScreenState
   bool _isAutoRefreshing = false;
   int _autoRefreshAttempts = 0;
 
+  bool get _isIos => Platform.isIOS;
+
+  String _storeName() => Platform.isIOS ? 'Apple' : 'Google Play';
+
+  String _tierName(AppLocalizations l10n, String tierId) {
+    switch (tierId) {
+      case 'pro':
+        return l10n.subscriptionTierPro;
+      case 'enterprise':
+        return l10n.subscriptionTierEnterprise;
+      default:
+        return l10n.subscriptionTierBasic;
+    }
+  }
+
+  String _tierPrice(AppLocalizations l10n, String tierId) {
+    switch (tierId) {
+      case 'pro':
+        return r'$11.99/mo';
+      case 'enterprise':
+        return r'$29.99/mo';
+      default:
+        return l10n.subscriptionPriceFree;
+    }
+  }
+
+  List<String> _tierFeatures(AppLocalizations l10n, String tierId) {
+    switch (tierId) {
+      case 'pro':
+        return [
+          l10n.subscriptionFeatureEverythingBasic,
+          l10n.subscriptionFeaturePricingCalculator,
+          l10n.subscriptionFeatureCostEstimator,
+          l10n.subscriptionFeatureAiInvoiceMaker,
+          l10n.subscriptionFeatureRenderTool,
+        ];
+      case 'enterprise':
+        return [
+          l10n.subscriptionFeatureEverythingPro,
+          l10n.subscriptionFeatureProfitLossDashboard,
+          l10n.subscriptionFeaturePriorityJobFeed,
+          l10n.subscriptionFeatureUnlimitedAi,
+          l10n.subscriptionFeatureInvoicePaymentCollection,
+          l10n.subscriptionFeatureSubcontractorBoard,
+          l10n.subscriptionFeatureCrewRoster,
+        ];
+      default:
+        return [
+          l10n.subscriptionFeatureJobFeedAccess,
+          l10n.subscriptionFeatureAcceptCustomerBids,
+          l10n.subscriptionFeatureCommunityFeed,
+        ];
+    }
+  }
+
   /// Subscription tiers — ordered from least to most features.
   static const _tiers = <_SubscriptionTier>[
-    _SubscriptionTier(
-      id: 'basic',
-      name: 'Basic',
-      price: r'Free',
-      features: ['Job feed access', 'Accept customer bids', 'Community feed'],
-    ),
-    _SubscriptionTier(
-      id: 'pro',
-      name: 'Pro',
-      price: r'$11.99/mo',
-      features: [
-        'Everything in Basic',
-        'Pricing Calculator',
-        'Cost Estimator',
-        'AI Invoice Maker',
-        'Render Tool',
-      ],
-      recommended: true,
-    ),
-    _SubscriptionTier(
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: r'$29.99/mo',
-      features: [
-        'Everything in Pro',
-        'Profit & Loss Dashboard',
-        'Priority job feed (30 min early)',
-        'Unlimited AI estimates & renders',
-        'Invoice payment collection',
-        'Subcontractor board',
-        'Crew roster & scheduling',
-      ],
-    ),
+    _SubscriptionTier(id: 'basic'),
+    _SubscriptionTier(id: 'pro', recommended: true),
+    _SubscriptionTier(id: 'enterprise'),
   ];
 
   /// Returns the user's current tier from Firestore.
@@ -96,7 +123,7 @@ class _ContractorSubscriptionScreenState
     return _isProFromUserDoc(snap.data());
   }
 
-  Future<void> _autoRefreshEntitlement() async {
+  Future<void> _autoRefreshEntitlement({bool syncStripe = true}) async {
     if (_isAutoRefreshing) return;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -106,10 +133,12 @@ class _ContractorSubscriptionScreenState
 
     while (mounted && _autoRefreshAttempts < 6) {
       _autoRefreshAttempts++;
-      try {
-        await StripeService().syncContractorProEntitlement();
-      } catch (e) {
-        debugPrint('syncEntitlement retry #$_autoRefreshAttempts failed: $e');
+      if (syncStripe) {
+        try {
+          await StripeService().syncContractorProEntitlement();
+        } catch (e) {
+          debugPrint('syncEntitlement retry #$_autoRefreshAttempts failed: $e');
+        }
       }
 
       final unlocked = await _fetchIsPro(uid);
@@ -165,21 +194,39 @@ class _ContractorSubscriptionScreenState
       final available = await _subs.isAvailable();
       if (!mounted) return;
       setState(() => _iapAvailable = available);
-      if (!available) return;
+      if (!available) {
+        final l10n = AppLocalizations.of(context)!;
+        final storeName = _storeName();
+        setState(
+          () => _iapError = l10n.subscriptionStoreUnavailable(storeName),
+        );
+        return;
+      }
 
       final resp = await _subs.queryProducts(
         SubscriptionService.allSubscriptionProductIds,
       );
       if (!mounted) return;
       if (resp.error != null) {
-        setState(() => _iapError = resp.error!.message);
+        final l10n = AppLocalizations.of(context)!;
+        setState(
+          () => _iapError = l10n.subscriptionProductLoadFailed(
+            resp.error!.message,
+          ),
+        );
         return;
       }
-      if (resp.productDetails.isEmpty) {
+      if (resp.notFoundIDs.isNotEmpty) {
+        final l10n = AppLocalizations.of(context)!;
         setState(
-          () => _iapError =
-              'No subscription products configured in the store yet.',
+          () => _iapError = l10n.subscriptionMissingProducts(
+            resp.notFoundIDs.join(', '),
+          ),
         );
+      }
+      if (resp.productDetails.isEmpty) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() => _iapError = l10n.subscriptionNoProductsAvailable);
         return;
       }
       final products = <String, ProductDetails>{};
@@ -195,25 +242,49 @@ class _ContractorSubscriptionScreenState
 
   Future<void> _onPurchases(List<PurchaseDetails> purchases) async {
     if (purchases.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
 
     for (final purchase in purchases) {
       if (purchase.status == PurchaseStatus.pending) {
-        // UI already shows loading state; keep going.
+        if (!mounted) continue;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.subscriptionPurchasePending)),
+        );
       } else if (purchase.status == PurchaseStatus.error) {
         if (!mounted) continue;
-        final msg = purchase.error?.message ?? 'Purchase failed.';
+        final msg = purchase.error?.message ?? l10n.subscriptionPurchaseFailed;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), duration: const Duration(seconds: 6)),
         );
-      } else if (purchase.status == PurchaseStatus.purchased ||
-          purchase.status == PurchaseStatus.restored) {
-        await _subs.verifyAndActivateContractorPro(purchase);
+      } else if (purchase.status == PurchaseStatus.canceled) {
         if (!mounted) continue;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Purchase received. Activation may take a moment.'),
-          ),
+          SnackBar(content: Text(l10n.subscriptionPurchaseCanceled)),
         );
+      } else if (purchase.status == PurchaseStatus.purchased ||
+          purchase.status == PurchaseStatus.restored) {
+        try {
+          final result = await _subs.verifyAndActivateContractorPro(purchase);
+          if (!mounted) continue;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                result.tier == 'enterprise'
+                    ? l10n.subscriptionEnterpriseActivated
+                    : l10n.subscriptionProActivated,
+              ),
+            ),
+          );
+          await _autoRefreshEntitlement(syncStripe: false);
+        } catch (e) {
+          if (!mounted) continue;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.subscriptionVerificationFailed(e.toString())),
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        }
       }
 
       await _subs.completeIfNeeded(purchase);
@@ -223,22 +294,20 @@ class _ContractorSubscriptionScreenState
   }
 
   Future<void> _startStripeCheckout(String tierId) async {
+    if (_isIos) return;
     if (_isLoadingStripe) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    final checkoutReturnMessage = AppLocalizations.of(
+      context,
+    )!.subscriptionCheckoutBrowserReturn;
     setState(() => _isLoadingStripe = true);
 
     try {
       await StripeService().payForContractorSubscription(tier: tierId);
       _pendingAutoRefreshAfterStripe = true;
       _autoRefreshEntitlement();
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Complete checkout in the browser, then return to the app. We will update your status automatically.',
-          ),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(checkoutReturnMessage)));
     } catch (e, st) {
       if (!context.mounted) return;
       // ignore: use_build_context_synchronously
@@ -255,9 +324,12 @@ class _ContractorSubscriptionScreenState
         ? _storeProducts[storeProductId]
         : null;
     if (product == null) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Store subscription for $tierId not available yet.'),
+          content: Text(
+            l10n.subscriptionStoreTierUnavailable(_tierName(l10n, tierId)),
+          ),
         ),
       );
       return;
@@ -279,10 +351,11 @@ class _ContractorSubscriptionScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Subscription Plans')),
+      appBar: AppBar(title: Text(l10n.subscriptionPlansTitle)),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseAuth.instance.currentUser == null
             ? null
@@ -313,16 +386,13 @@ class _ContractorSubscriptionScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              'Current Plan',
+                              l10n.subscriptionCurrentPlan,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                           ),
                           Chip(
-                            label: Text(
-                              currentTier[0].toUpperCase() +
-                                  currentTier.substring(1),
-                            ),
+                            label: Text(_tierName(l10n, currentTier)),
                             visualDensity: VisualDensity.compact,
                           ),
                         ],
@@ -339,7 +409,7 @@ class _ContractorSubscriptionScreenState
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Updating status…',
+                                l10n.subscriptionUpdatingStatus,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: scheme.onSurfaceVariant),
                               ),
@@ -369,7 +439,7 @@ class _ContractorSubscriptionScreenState
                         const SizedBox(width: 8),
                         TextButton(
                           onPressed: _loadProducts,
-                          child: const Text('Retry'),
+                          child: Text(l10n.retry),
                         ),
                       ],
                     ),
@@ -400,7 +470,7 @@ class _ContractorSubscriptionScreenState
                           children: [
                             Expanded(
                               child: Text(
-                                tier.name,
+                                _tierName(l10n, tier.id),
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w900),
                               ),
@@ -416,7 +486,7 @@ class _ContractorSubscriptionScreenState
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  'POPULAR',
+                                  l10n.subscriptionPopular,
                                   style: TextStyle(
                                     color: scheme.onPrimary,
                                     fontWeight: FontWeight.bold,
@@ -426,14 +496,14 @@ class _ContractorSubscriptionScreenState
                               ),
                             if (isActive)
                               Chip(
-                                label: const Text('CURRENT'),
+                                label: Text(l10n.subscriptionCurrent),
                                 visualDensity: VisualDensity.compact,
                               ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tier.price,
+                          _tierPrice(l10n, tier.id),
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w900,
@@ -443,80 +513,95 @@ class _ContractorSubscriptionScreenState
                         if (tier.id != 'basic') ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Auto-renewing monthly subscription. Cancel anytime in your ${Platform.isIOS ? 'Apple ID Settings' : 'Google Play subscriptions'} settings.',
+                            l10n.subscriptionManagedSettings(
+                              Platform.isIOS
+                                  ? 'Apple ID Settings'
+                                  : 'Google Play subscriptions',
+                            ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: scheme.onSurfaceVariant),
                           ),
                         ],
                         const SizedBox(height: 12),
-                        ...tier.features.map((f) => _BenefitRow(text: f)),
+                        ..._tierFeatures(
+                          l10n,
+                          tier.id,
+                        ).map((f) => _BenefitRow(text: f)),
                         if (isUpgrade && tier.id != 'basic') ...[
                           const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _isLoadingStripe
-                                  ? null
-                                  : () => _startStripeCheckout(tier.id),
-                              icon: _isLoadingStripe
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.credit_card),
-                              label: Text(
-                                _isLoadingStripe
-                                    ? 'Opening checkout…'
-                                    : 'Upgrade with Card',
+                          if (!_isIos) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _isLoadingStripe
+                                    ? null
+                                    : () => _startStripeCheckout(tier.id),
+                                icon: _isLoadingStripe
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.credit_card),
+                                label: Text(
+                                  _isLoadingStripe
+                                      ? l10n.subscriptionOpeningCheckout
+                                      : l10n.subscriptionUpgradeWithCard,
+                                ),
                               ),
                             ),
-                          ),
-                          if (_iapAvailable) ...[
                             const SizedBox(height: 8),
-                            Builder(
-                              builder: (context) {
-                                final storeProductId = SubscriptionService
-                                    .tierToProductId[tier.id];
-                                final product = storeProductId != null
-                                    ? _storeProducts[storeProductId]
-                                    : null;
-                                final storePrice = product?.price;
-                                final storeName = Platform.isIOS
-                                    ? 'Apple'
-                                    : 'Google Play';
-                                final storeLabel = storePrice != null
-                                    ? 'Subscribe with $storeName ($storePrice)'
-                                    : 'Subscribe with $storeName';
-                                return SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: _isLoadingIap
-                                        ? null
-                                        : () => _startStoreSubscription(
-                                            tierId: tier.id,
-                                          ),
-                                    icon: _isLoadingIap
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Icon(Icons.shopping_bag),
-                                    label: Text(
-                                      _isLoadingIap
-                                          ? 'Opening store…'
-                                          : storeLabel,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
                           ],
+                          Builder(
+                            builder: (context) {
+                              final storeProductId =
+                                  SubscriptionService.tierToProductId[tier.id];
+                              final product = storeProductId != null
+                                  ? _storeProducts[storeProductId]
+                                  : null;
+                              final storePrice = product?.price;
+                              final storeName = _storeName();
+                              final storeLabel = storePrice != null
+                                  ? l10n.subscriptionSubscribeWithStorePrice(
+                                      storeName,
+                                      storePrice,
+                                    )
+                                  : l10n.subscriptionSubscribeWithStore(
+                                      storeName,
+                                    );
+                              final canBuy = _iapAvailable && product != null;
+                              return SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _isLoadingIap || !canBuy
+                                      ? null
+                                      : () => _startStoreSubscription(
+                                          tierId: tier.id,
+                                        ),
+                                  icon: _isLoadingIap
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.shopping_bag),
+                                  label: Text(
+                                    _isLoadingIap
+                                        ? l10n.subscriptionOpeningStore
+                                        : canBuy
+                                        ? storeLabel
+                                        : l10n.subscriptionStoreUnavailableShort(
+                                            storeName,
+                                          ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ],
                     ),
@@ -525,8 +610,9 @@ class _ContractorSubscriptionScreenState
               }),
               const SizedBox(height: 8),
               Text(
-                'Tip: ${Platform.isIOS ? 'Apple' : 'Google Play'} is best for mobile subscriptions. '
-                'Stripe is a flexible fallback and works outside the app store flow.',
+                Platform.isIOS
+                    ? l10n.subscriptionIosManagementCopy
+                    : l10n.subscriptionAndroidManagementCopy,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -539,14 +625,18 @@ class _ContractorSubscriptionScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Subscription information',
+                        l10n.subscriptionInformation,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Pro and Enterprise plans are monthly auto-renewable subscriptions. Payment is charged to your ${Platform.isIOS ? 'Apple account' : 'Google Play account'} at confirmation of purchase and renews automatically unless canceled at least 24 hours before the end of the current period.',
+                        l10n.subscriptionAutoRenewInfo(
+                          Platform.isIOS
+                              ? 'Apple account'
+                              : 'Google Play account',
+                        ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -558,11 +648,11 @@ class _ContractorSubscriptionScreenState
                         children: [
                           TextButton(
                             onPressed: () => _openLegalLink(_privacyPolicyUri),
-                            child: const Text('Privacy Policy'),
+                            child: Text(l10n.privacyPolicy),
                           ),
                           TextButton(
                             onPressed: () => _openLegalLink(_termsOfUseUri),
-                            child: const Text('Terms of Use'),
+                            child: Text(l10n.termsOfUse),
                           ),
                         ],
                       ),
@@ -581,24 +671,26 @@ class _ContractorSubscriptionScreenState
                             await _subs.restorePurchases();
                             if (!mounted) return;
                             ScaffoldMessenger.of(this.context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Restore complete. Subscription status will update shortly.',
-                                ),
+                              SnackBar(
+                                content: Text(l10n.subscriptionRestoreComplete),
                               ),
                             );
-                            _autoRefreshEntitlement();
+                            await _autoRefreshEntitlement(syncStripe: false);
                           } catch (e) {
                             if (!mounted) return;
                             ScaffoldMessenger.of(this.context).showSnackBar(
-                              SnackBar(content: Text('Restore failed: $e')),
+                              SnackBar(
+                                content: Text(
+                                  l10n.subscriptionRestoreFailed(e.toString()),
+                                ),
+                              ),
                             );
                           } finally {
                             if (mounted) setState(() => _isLoadingIap = false);
                           }
                         },
                   icon: const Icon(Icons.restore),
-                  label: const Text('Restore Purchases'),
+                  label: Text(l10n.subscriptionRestorePurchases),
                 ),
             ],
           );
@@ -621,18 +713,9 @@ class _ContractorSubscriptionScreenState
 
 class _SubscriptionTier {
   final String id;
-  final String name;
-  final String price;
-  final List<String> features;
   final bool recommended;
 
-  const _SubscriptionTier({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.features,
-    this.recommended = false,
-  });
+  const _SubscriptionTier({required this.id, this.recommended = false});
 }
 
 class _BenefitRow extends StatelessWidget {

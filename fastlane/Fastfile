@@ -1,5 +1,7 @@
 default_platform(:ios)
 
+require "shellwords"
+
 platform :ios do
   desc "Run release preflight checks"
   lane :preflight do
@@ -28,7 +30,12 @@ platform :ios do
       in_house: false
     )
 
-    ipa_path = options[:ipa] || "build/ios/ipa/Runner.ipa"
+    ipa_path = options[:ipa]
+    if ipa_path.nil?
+      ipa_candidates = Dir["build/ios/ipa/*.ipa"].sort
+      UI.user_error!("Could not find an IPA under build/ios/ipa") if ipa_candidates.empty?
+      ipa_path = ipa_candidates.first
+    end
     changelog = options[:changelog] || ENV["IOS_CHANGELOG"] || "Automated upload"
 
     pilot(

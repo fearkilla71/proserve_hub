@@ -171,7 +171,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         'phone': _phoneController.text.trim(),
         'address': _addressController.text.trim(),
         'zip': _zipController.text.trim(),
-        'role': _role,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 

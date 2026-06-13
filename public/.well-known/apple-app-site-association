@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "JH3YP84A79.com.verohue.proservehub",
+        "paths": [
+          "/connect/*",
+          "/stripe_*",
+          "/home*",
+          "/"
+        ]
+      }
+    ]
+  }
+}

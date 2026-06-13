@@ -488,7 +488,7 @@ class _ProServeHubAppState extends State<ProServeHubApp> {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [Locale('en'), Locale('es'), Locale('fr')],
+        supportedLocales: const [Locale('en'), Locale('es')],
       ),
     );
   }
@@ -570,10 +570,9 @@ class _UnknownRoleScreenState extends State<_UnknownRoleScreen> {
           .doc(widget.uid)
           .get();
       if (snap.exists) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.uid)
-            .set({'role': 'contractor'}, SetOptions(merge: true));
+        await FirebaseFunctions.instance
+            .httpsCallable('completeUserProfile')
+            .call(<String, dynamic>{'role': 'contractor'});
         // AppState will pick up the Firestore change automatically.
       }
     } catch (_) {

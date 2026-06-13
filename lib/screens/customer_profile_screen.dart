@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
 import '../services/version_check_service.dart';
@@ -64,15 +65,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     super.dispose();
   }
 
-  String _languageLabel(Locale? locale) {
-    if (locale == null) return 'System default';
+  String _languageLabel(BuildContext context, Locale? locale) {
+    final l10n = AppLocalizations.of(context)!;
+    if (locale == null) return l10n.languageSystemDefault;
     switch (locale.languageCode) {
       case 'en':
         return 'English';
       case 'es':
         return 'Español';
-      case 'fr':
-        return 'Français';
       default:
         return locale.languageCode;
     }
@@ -80,6 +80,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   void _showLanguagePicker(BuildContext context) {
     final appState = AppState.read(context);
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       builder: (ctx) {
@@ -87,15 +88,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Select Language',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  l10n.selectLanguage,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               ListTile(
-                title: const Text('System default'),
+                title: Text(l10n.languageSystemDefault),
                 trailing: appState.locale == null
                     ? const Icon(Icons.check, color: Colors.green)
                     : null,
@@ -124,16 +128,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   Navigator.pop(ctx);
                 },
               ),
-              ListTile(
-                title: const Text('Français'),
-                trailing: appState.locale?.languageCode == 'fr'
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : null,
-                onTap: () {
-                  appState.setLocale(const Locale('fr'));
-                  Navigator.pop(ctx);
-                },
-              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -151,13 +145,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   Future<void> _setPassword() async {
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final user = FirebaseAuth.instance.currentUser;
     final email = (user?.email ?? '').trim();
     if (user == null || email.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('No email found for this account.')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.noEmailFound)));
       return;
     }
 
@@ -165,11 +158,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       messenger.showSnackBar(
-        SnackBar(content: Text('Password reset email sent to $email')),
+        SnackBar(content: Text(l10n.passwordResetEmailSent(email))),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to send email: $e')),
+        SnackBar(content: Text(l10n.failedToSendEmail(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _working = false);
@@ -177,6 +170,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   Future<void> _allowPushNotifications() async {
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
 
     setState(() => _working = true);
@@ -187,14 +181,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         SnackBar(
           content: Text(
             ok
-                ? 'Notifications enabled.'
-                : 'Notifications permission not granted.',
+                ? l10n.notificationsEnabled
+                : l10n.notificationsPermissionNotGranted,
           ),
         ),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to enable notifications: $e')),
+        SnackBar(content: Text(l10n.failedToEnableNotifications(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _working = false);
@@ -202,15 +196,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   Future<void> _signOut() async {
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _working = true);
     try {
       await AuthService().signOut();
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('Signed out.')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.signedOut)));
       Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.signOutFailed(e.toString()))),
+      );
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -218,8 +215,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('You')),
+      appBar: AppBar(title: Text(l10n.you)),
       body: _loading
           ? const ProfileSkeleton()
           : ListView(
@@ -239,7 +237,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    (_name.isNotEmpty ? _name : 'Customer'),
+                    (_name.isNotEmpty ? _name : l10n.customer),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -252,18 +250,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
                 const SizedBox(height: 24),
                 ListTile(
-                  title: const Text('Set password'),
+                  title: Text(l10n.setPassword),
                   onTap: _working ? null : _setPassword,
                 ),
                 const Divider(height: 1),
                 const SizedBox(height: 16),
                 Text(
-                  'Notification settings',
+                  l10n.notificationSettings,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Get alerts when pros send you cost estimates or messages.',
+                  l10n.notificationSettingsDescription,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 12),
@@ -272,7 +270,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   child: OutlinedButton(
                     onPressed: _working ? null : _allowPushNotifications,
                     child: Text(
-                      _working ? 'Working…' : 'Allow Push Notifications',
+                      _working ? l10n.working : l10n.allowPushNotifications,
                     ),
                   ),
                 ),
@@ -280,83 +278,85 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.language),
-                  title: const Text('Language'),
-                  subtitle: Text(_languageLabel(AppState.of(context).locale)),
+                  title: Text(l10n.language),
+                  subtitle: Text(
+                    _languageLabel(context, AppState.of(context).locale),
+                  ),
                   onTap: () => _showLanguagePicker(context),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.email_outlined),
-                  title: const Text('Contact Support'),
+                  title: Text(l10n.contactSupport),
                   subtitle: const Text('support@proservehub.app'),
                   onTap: () =>
                       launchUrl(Uri.parse('mailto:support@proservehub.app')),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Help'),
+                  title: Text(l10n.help),
                   onTap: () =>
-                      _openDoc(title: 'Help', body: LegalDocuments.help()),
+                      _openDoc(title: l10n.help, body: LegalDocuments.help()),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Privacy Policy'),
+                  title: Text(l10n.privacyPolicy),
                   onTap: () => _openDoc(
-                    title: 'Privacy Policy',
+                    title: l10n.privacyPolicy,
                     body: LegalDocuments.privacyPolicy(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('CA Notice at Collection'),
+                  title: Text(l10n.caNoticeAtCollection),
                   onTap: () => _openDoc(
-                    title: 'CA Notice at Collection',
+                    title: l10n.caNoticeAtCollection,
                     body: LegalDocuments.caNoticeAtCollection(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Terms of Use'),
+                  title: Text(l10n.termsOfUse),
                   onTap: () => _openDoc(
-                    title: 'Terms of Use',
+                    title: l10n.termsOfUse,
                     body: LegalDocuments.termsOfUse(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Report a technical problem'),
+                  title: Text(l10n.reportTechnicalProblem),
                   onTap: () => _openDoc(
-                    title: 'Report a technical problem',
+                    title: l10n.reportTechnicalProblem,
                     body: LegalDocuments.reportTechnicalProblem(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Do not sell or share my info'),
+                  title: Text(l10n.doNotSellOrShareMyInfo),
                   onTap: () => _openDoc(
-                    title: 'Do not sell or share my info',
+                    title: l10n.doNotSellOrShareMyInfo,
                     body: LegalDocuments.doNotSellOrShare(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Deactivate account'),
+                  title: Text(l10n.deactivateAccount),
                   onTap: () => _openDoc(
-                    title: 'Deactivate account',
+                    title: l10n.deactivateAccount,
                     body: LegalDocuments.deactivateAccount(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Delete my account data'),
+                  title: Text(l10n.deleteAccountData),
                   onTap: () => _openDoc(
-                    title: 'Delete my account data',
+                    title: l10n.deleteAccountData,
                     body: LegalDocuments.deleteAccountData(),
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Sign out'),
+                  title: Text(l10n.signOut),
                   onTap: _working ? null : _signOut,
                 ),
                 const SizedBox(height: 20),
@@ -364,7 +364,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   child: FutureBuilder<String>(
                     future: VersionCheckService.currentVersionLabel(),
                     builder: (context, snap) => Text(
-                      snap.data ?? 'Version …',
+                      snap.data ?? l10n.versionLoading,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).hintColor,
                       ),

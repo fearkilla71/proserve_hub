@@ -4,6 +4,37 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+class SubscriptionVerificationResult {
+  const SubscriptionVerificationResult({
+    required this.verified,
+    this.tier,
+    this.status,
+    this.message,
+  });
+
+  final bool verified;
+  final String? tier;
+  final String? status;
+  final String? message;
+
+  factory SubscriptionVerificationResult.fromData(dynamic data) {
+    if (data is! Map) {
+      return const SubscriptionVerificationResult(
+        verified: false,
+        status: 'bad_response',
+        message: 'The store response could not be verified.',
+      );
+    }
+
+    return SubscriptionVerificationResult(
+      verified: data['verified'] == true,
+      tier: data['tier']?.toString(),
+      status: data['status']?.toString(),
+      message: data['message']?.toString(),
+    );
+  }
+}
+
 /// Minimal subscription helper.
 ///
 /// Notes:
@@ -81,31 +112,36 @@ class SubscriptionService {
     await InAppPurchase.instance.restorePurchases();
   }
 
-  Future<void> verifyAndActivateContractorPro(PurchaseDetails purchase) async {
-    // Best-effort server verification (recommended for real entitlements).
-    // This expects you to implement a Cloud Function to validate the receipt
-    // and grant access (e.g., mark users/{uid}.isPro = true).
+  Future<SubscriptionVerificationResult> verifyAndActivateContractorPro(
+    PurchaseDetails purchase,
+  ) async {
     final useCallable =
         kIsWeb ||
         defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
 
-    if (!useCallable) return;
-
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'verifyContractorSubscriptionPurchase',
-      );
-      await callable.call(<String, dynamic>{
-        'productId': purchase.productID,
-        'purchaseId': purchase.purchaseID,
-        'verificationData': purchase.verificationData.serverVerificationData,
-        'verificationSource': purchase.verificationData.source,
-        'transactionDate': purchase.transactionDate,
-      });
-    } catch (_) {
-      // Ignore by default; UI will show a generic "activation pending".
+    if (!useCallable) {
+      throw Exception('Store subscription verification is not supported here.');
     }
+
+    final callable = FirebaseFunctions.instance.httpsCallable(
+      'verifyContractorSubscriptionPurchase',
+    );
+    final response = await callable.call(<String, dynamic>{
+      'productId': purchase.productID,
+      'purchaseId': purchase.purchaseID,
+      'verificationData': purchase.verificationData.serverVerificationData,
+      'verificationSource': purchase.verificationData.source,
+      'transactionDate': purchase.transactionDate,
+    });
+    final result = SubscriptionVerificationResult.fromData(response.data);
+    if (!result.verified) {
+      throw Exception(
+        result.message ??
+            'The store purchase was received, but the subscription could not be verified yet.',
+      );
+    }
+    return result;
   }
 }

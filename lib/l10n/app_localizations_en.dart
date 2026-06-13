@@ -319,4 +319,280 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get photoRequested => 'Photo requested!';
+
+  @override
+  String get languageSystemDefault => 'System default';
+
+  @override
+  String get selectLanguage => 'Select Language';
+
+  @override
+  String get you => 'You';
+
+  @override
+  String get customer => 'Customer';
+
+  @override
+  String get setPassword => 'Set password';
+
+  @override
+  String get notificationSettings => 'Notification settings';
+
+  @override
+  String get notificationSettingsDescription =>
+      'Get alerts when pros send you cost estimates or messages.';
+
+  @override
+  String get allowPushNotifications => 'Allow Push Notifications';
+
+  @override
+  String get working => 'Working…';
+
+  @override
+  String get contactSupport => 'Contact Support';
+
+  @override
+  String get help => 'Help';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get caNoticeAtCollection => 'CA Notice at Collection';
+
+  @override
+  String get termsOfUse => 'Terms of Use';
+
+  @override
+  String get reportTechnicalProblem => 'Report a technical problem';
+
+  @override
+  String get doNotSellOrShareMyInfo => 'Do not sell or share my info';
+
+  @override
+  String get deactivateAccount => 'Deactivate account';
+
+  @override
+  String get deleteAccountData => 'Delete my account data';
+
+  @override
+  String get noEmailFound => 'No email found for this account.';
+
+  @override
+  String passwordResetEmailSent(String email) {
+    return 'Password reset email sent to $email';
+  }
+
+  @override
+  String failedToSendEmail(String error) {
+    return 'Failed to send email: $error';
+  }
+
+  @override
+  String get notificationsEnabled => 'Notifications enabled.';
+
+  @override
+  String get notificationsPermissionNotGranted =>
+      'Notifications permission not granted.';
+
+  @override
+  String failedToEnableNotifications(String error) {
+    return 'Failed to enable notifications: $error';
+  }
+
+  @override
+  String get signedOut => 'Signed out.';
+
+  @override
+  String signOutFailed(String error) {
+    return 'Sign out failed: $error';
+  }
+
+  @override
+  String get versionLoading => 'Version …';
+
+  @override
+  String get subscriptionPlansTitle => 'Subscription Plans';
+
+  @override
+  String get subscriptionCurrentPlan => 'Current Plan';
+
+  @override
+  String get subscriptionUpdatingStatus => 'Updating status…';
+
+  @override
+  String get subscriptionTierBasic => 'Basic';
+
+  @override
+  String get subscriptionTierPro => 'Pro';
+
+  @override
+  String get subscriptionTierEnterprise => 'Enterprise';
+
+  @override
+  String get subscriptionPriceFree => 'Free';
+
+  @override
+  String get subscriptionPopular => 'POPULAR';
+
+  @override
+  String get subscriptionCurrent => 'CURRENT';
+
+  @override
+  String get subscriptionFeatureJobFeedAccess => 'Job feed access';
+
+  @override
+  String get subscriptionFeatureAcceptCustomerBids => 'Accept customer bids';
+
+  @override
+  String get subscriptionFeatureCommunityFeed => 'Community feed';
+
+  @override
+  String get subscriptionFeatureEverythingBasic => 'Everything in Basic';
+
+  @override
+  String get subscriptionFeaturePricingCalculator => 'Pricing Calculator';
+
+  @override
+  String get subscriptionFeatureCostEstimator => 'Cost Estimator';
+
+  @override
+  String get subscriptionFeatureAiInvoiceMaker => 'AI Invoice Maker';
+
+  @override
+  String get subscriptionFeatureRenderTool => 'Render Tool';
+
+  @override
+  String get subscriptionFeatureEverythingPro => 'Everything in Pro';
+
+  @override
+  String get subscriptionFeatureProfitLossDashboard =>
+      'Profit & Loss Dashboard';
+
+  @override
+  String get subscriptionFeaturePriorityJobFeed =>
+      'Priority job feed (30 min early)';
+
+  @override
+  String get subscriptionFeatureUnlimitedAi =>
+      'Unlimited AI estimates & renders';
+
+  @override
+  String get subscriptionFeatureInvoicePaymentCollection =>
+      'Invoice payment collection';
+
+  @override
+  String get subscriptionFeatureSubcontractorBoard => 'Subcontractor board';
+
+  @override
+  String get subscriptionFeatureCrewRoster => 'Crew roster & scheduling';
+
+  @override
+  String subscriptionManagedSettings(String settingsName) {
+    return 'Auto-renewing monthly subscription. Cancel anytime in your $settingsName settings.';
+  }
+
+  @override
+  String get subscriptionOpeningCheckout => 'Opening checkout...';
+
+  @override
+  String get subscriptionUpgradeWithCard => 'Upgrade with Card';
+
+  @override
+  String get subscriptionOpeningStore => 'Opening store...';
+
+  @override
+  String subscriptionSubscribeWithStorePrice(String storeName, String price) {
+    return 'Subscribe with $storeName ($price)';
+  }
+
+  @override
+  String subscriptionSubscribeWithStore(String storeName) {
+    return 'Subscribe with $storeName';
+  }
+
+  @override
+  String subscriptionStoreUnavailableShort(String storeName) {
+    return '$storeName subscription unavailable';
+  }
+
+  @override
+  String get subscriptionIosManagementCopy =>
+      'Subscriptions are purchased with Apple In-App Purchase and managed in Apple ID Settings.';
+
+  @override
+  String get subscriptionAndroidManagementCopy =>
+      'Tip: Google Play is best for mobile subscriptions. Stripe is a flexible fallback and works outside the app store flow.';
+
+  @override
+  String get subscriptionInformation => 'Subscription information';
+
+  @override
+  String subscriptionAutoRenewInfo(String accountName) {
+    return 'Pro and Enterprise plans are monthly auto-renewable subscriptions. Payment is charged to your $accountName at confirmation of purchase and renews automatically unless canceled at least 24 hours before the end of the current period.';
+  }
+
+  @override
+  String get subscriptionRestorePurchases => 'Restore Purchases';
+
+  @override
+  String get subscriptionRestoreComplete =>
+      'Restore complete. Checking subscription status.';
+
+  @override
+  String subscriptionRestoreFailed(String error) {
+    return 'Restore failed: $error';
+  }
+
+  @override
+  String get subscriptionPurchasePending => 'Purchase is pending confirmation.';
+
+  @override
+  String get subscriptionPurchaseFailed => 'Purchase failed.';
+
+  @override
+  String get subscriptionPurchaseCanceled => 'Purchase canceled.';
+
+  @override
+  String get subscriptionEnterpriseActivated =>
+      'Enterprise subscription activated.';
+
+  @override
+  String get subscriptionProActivated => 'Pro subscription activated.';
+
+  @override
+  String subscriptionVerificationFailed(String error) {
+    return 'Subscription verification failed: $error';
+  }
+
+  @override
+  String get subscriptionCheckoutBrowserReturn =>
+      'Complete checkout in the browser, then return to the app. We will update your status automatically.';
+
+  @override
+  String subscriptionStoreTierUnavailable(String tierName) {
+    return 'Store subscription for $tierName is not available yet.';
+  }
+
+  @override
+  String subscriptionStoreUnavailable(String storeName) {
+    return '$storeName subscriptions are unavailable right now. Please try again from a signed-in store account.';
+  }
+
+  @override
+  String subscriptionProductLoadFailed(String error) {
+    return 'Could not load subscription products: $error';
+  }
+
+  @override
+  String subscriptionMissingProducts(String productIds) {
+    return 'Missing subscription products in App Store Connect: $productIds.';
+  }
+
+  @override
+  String get subscriptionNoProductsAvailable =>
+      'No subscription products are available for this Apple sandbox account yet.';
+
+  @override
+  String get retry => 'Retry';
 }
