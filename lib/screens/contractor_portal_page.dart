@@ -770,7 +770,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   title: Text(service),
                   subtitle: Text(subtitleParts.join('\n')),
                   onTap: () {
-                    context.push('/job/${doc.id}', extra: {'jobData': data});
+                    context.push('/job-command/${doc.id}');
                   },
                 ),
               );

@@ -648,8 +648,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   icon: const Icon(Icons.work_outline),
                   onPressed: () {
-                    // Navigate to job details
-                    context.push('/job/${widget.jobId}');
+                    context.push('/job-command/${widget.jobId}');
                   },
                   tooltip: 'View job',
                 ),

@@ -166,7 +166,16 @@ class _JobStatusScreenState extends State<JobStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Job Status')),
+      appBar: AppBar(
+        title: const Text('Job Status'),
+        actions: [
+          IconButton(
+            tooltip: 'Command Center',
+            icon: const Icon(Icons.dashboard_customize_outlined),
+            onPressed: () => context.push('/job-command/${widget.jobId}'),
+          ),
+        ],
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('job_requests')

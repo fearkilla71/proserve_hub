@@ -9,6 +9,7 @@ import '../models/invoice_models.dart';
 import '../main.dart' show RootGate;
 import '../screens/recommended_contractors_page.dart';
 import '../screens/job_detail_page.dart';
+import '../screens/job_command_center_screen.dart';
 import '../screens/favorite_contractors_screen.dart';
 import '../screens/referral_screen.dart';
 import '../screens/instant_book_screen.dart';
@@ -112,6 +113,7 @@ abstract final class AppRoutes {
   static const recommended = '/recommended/:jobId';
   static const contractorProfile = '/contractor/:contractorId';
   static const jobDetail = '/job/:jobId';
+  static const jobCommand = '/job-command/:jobId';
   static const favorites = '/favorites';
   static const referral = '/referral';
   static const instantBook = '/instant-book/:contractorId';
@@ -353,6 +355,13 @@ GoRouter createRouter() {
             jobId: id,
             jobData: extra?['jobData'] as Map<String, dynamic>?,
           );
+        },
+      ),
+      GoRoute(
+        path: '/job-command/:jobId',
+        builder: (context, state) {
+          final jobId = state.pathParameters['jobId']!;
+          return JobCommandCenterScreen(jobId: jobId);
         },
       ),
       GoRoute(

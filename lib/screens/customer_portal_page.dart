@@ -1793,7 +1793,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               if (isEscrow && escrowId.isNotEmpty) {
                 context.push('/escrow-status/$escrowId');
               } else {
-                context.push('/job/$docId', extra: {'jobData': data});
+                context.push('/job-command/$docId');
               }
             },
             child: Padding(

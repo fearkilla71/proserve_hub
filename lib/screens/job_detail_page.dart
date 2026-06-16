@@ -257,6 +257,11 @@ class JobDetailPage extends StatelessWidget {
             title: const Text('Job Details'),
             actions: [
               IconButton(
+                tooltip: 'Command Center',
+                icon: const Icon(Icons.dashboard_customize_outlined),
+                onPressed: () => context.push('/job-command/$jobId'),
+              ),
+              IconButton(
                 tooltip: 'Actions',
                 icon: const Icon(Icons.more_vert),
                 onPressed: showActionsSheet,

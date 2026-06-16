@@ -57,7 +57,7 @@ class PersistentJobStateBar extends StatelessWidget {
             subtitle: 'Work is underway.',
             actionLabel: 'Open job',
             onPressed: () {
-              context.push('/job/$jobId');
+              context.push('/job-command/$jobId');
             },
           );
         }
@@ -84,7 +84,7 @@ class PersistentJobStateBar extends StatelessWidget {
                   subtitle: 'Leave a review to close this out.',
                   actionLabel: 'Review',
                   onPressed: () {
-                    context.push('/job/$jobId');
+                    context.push('/job-command/$jobId');
                   },
                 );
               },
@@ -96,7 +96,7 @@ class PersistentJobStateBar extends StatelessWidget {
             subtitle: 'Customer review pending.',
             actionLabel: 'Open job',
             onPressed: () {
-              context.push('/job/$jobId');
+              context.push('/job-command/$jobId');
             },
           );
         }
