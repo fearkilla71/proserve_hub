@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/client_model.dart';
 import '../services/client_directory_service.dart';
 import '../utils/app_error_handler.dart';
+import '../l10n/app_localizations.dart';
 
 /// Full-screen Client Directory — contractors can add, edit, search,
 /// and delete saved clients.
@@ -22,10 +23,11 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      return const Scaffold(
-        body: Center(child: Text('Sign in to view clients.')),
+      return Scaffold(
+        body: Center(child: Text(l10n.clientDirectorySignInRequired)),
       );
     }
 
@@ -33,14 +35,18 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.pickMode ? 'Select Client' : 'Client Directory'),
+        title: Text(
+          widget.pickMode
+              ? l10n.clientDirectorySelect
+              : l10n.clientDirectoryTitle,
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search clients…',
+                hintText: l10n.clientDirectorySearchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest.withValues(
@@ -59,7 +65,7 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.person_add),
-        label: const Text('Add Client'),
+        label: Text(l10n.clientDirectoryAddClient),
         onPressed: () => _showClientEditor(context),
       ),
       body: StreamBuilder<List<SavedClient>>(
@@ -89,14 +95,16 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                   Icon(Icons.people_outline, size: 64, color: scheme.outline),
                   const SizedBox(height: 12),
                   Text(
-                    all.isEmpty ? 'No clients yet' : 'No matches',
+                    all.isEmpty
+                        ? l10n.clientDirectoryNoClients
+                        : l10n.clientDirectoryNoMatches,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     all.isEmpty
-                        ? 'Tap + to add your first client'
-                        : 'Try a different search',
+                        ? l10n.clientDirectoryNoClientsSubtitle
+                        : l10n.clientDirectoryNoMatchesSubtitle,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -134,6 +142,7 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
     BuildContext context, {
     SavedClient? existing,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     final name = TextEditingController(text: existing?.name ?? '');
     final email = TextEditingController(text: existing?.email ?? '');
     final phone = TextEditingController(text: existing?.phone ?? '');
@@ -164,7 +173,9 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      existing == null ? 'New Client' : 'Edit Client',
+                      existing == null
+                          ? l10n.clientDirectoryNewClient
+                          : l10n.clientDirectoryEditClient,
                       style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -175,27 +186,27 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                 TextField(
                   controller: name,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Client name *',
-                    prefixIcon: Icon(Icons.person),
+                  decoration: InputDecoration(
+                    labelText: l10n.clientDirectoryNameLabel,
+                    prefixIcon: const Icon(Icons.person),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: email,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: phone,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    prefixIcon: Icon(Icons.phone_outlined),
+                  decoration: InputDecoration(
+                    labelText: l10n.phone,
+                    prefixIcon: const Icon(Icons.phone_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -203,9 +214,9 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                   controller: address,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Address',
-                    prefixIcon: Icon(Icons.location_on_outlined),
+                  decoration: InputDecoration(
+                    labelText: l10n.address,
+                    prefixIcon: const Icon(Icons.location_on_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -213,9 +224,9 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                   controller: notes,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    prefixIcon: Icon(Icons.notes),
+                  decoration: InputDecoration(
+                    labelText: l10n.clientDirectoryNotesLabel,
+                    prefixIcon: const Icon(Icons.notes),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -223,11 +234,17 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     icon: const Icon(Icons.save),
-                    label: Text(existing == null ? 'Save Client' : 'Update'),
+                    label: Text(
+                      existing == null
+                          ? l10n.clientDirectorySaveClient
+                          : l10n.update,
+                    ),
                     onPressed: () {
                       if (name.text.trim().isEmpty) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(content: Text('Name is required')),
+                          SnackBar(
+                            content: Text(l10n.clientDirectoryNameRequired),
+                          ),
                         );
                         return;
                       }
@@ -272,22 +289,23 @@ class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext context, SavedClient client) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Client?'),
-        content: Text('Remove "${client.name}" from your directory?'),
+        title: Text(l10n.clientDirectoryDeleteTitle),
+        content: Text(l10n.clientDirectoryDeleteMessage(client.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

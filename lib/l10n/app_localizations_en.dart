@@ -842,6 +842,175 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolMetricOwnerSummary => 'Owner summary';
 
   @override
+  String get email => 'Email';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get update => 'Update';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get item => 'Item';
+
+  @override
+  String get copyToClipboard => 'Copy to Clipboard';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get clientDirectoryTitle => 'Client Directory';
+
+  @override
+  String get clientDirectorySelect => 'Select Client';
+
+  @override
+  String get clientDirectorySignInRequired => 'Sign in to view clients.';
+
+  @override
+  String get clientDirectorySearchHint => 'Search clients...';
+
+  @override
+  String get clientDirectoryAddClient => 'Add Client';
+
+  @override
+  String get clientDirectoryNoClients => 'No clients yet';
+
+  @override
+  String get clientDirectoryNoMatches => 'No matches';
+
+  @override
+  String get clientDirectoryNoClientsSubtitle =>
+      'Tap + to add your first client';
+
+  @override
+  String get clientDirectoryNoMatchesSubtitle => 'Try a different search';
+
+  @override
+  String get clientDirectoryNewClient => 'New Client';
+
+  @override
+  String get clientDirectoryEditClient => 'Edit Client';
+
+  @override
+  String get clientDirectoryNameLabel => 'Client name *';
+
+  @override
+  String get clientDirectoryNotesLabel => 'Notes';
+
+  @override
+  String get clientDirectorySaveClient => 'Save Client';
+
+  @override
+  String get clientDirectoryNameRequired => 'Name is required';
+
+  @override
+  String get clientDirectoryDeleteTitle => 'Delete Client?';
+
+  @override
+  String clientDirectoryDeleteMessage(String clientName) {
+    return 'Remove \"$clientName\" from your directory?';
+  }
+
+  @override
+  String get bidAnalyzerAnalyzeTab => 'Analyze';
+
+  @override
+  String get bidAnalyzerPasteRequired =>
+      'Paste a competitor bid or RFP text first';
+
+  @override
+  String get bidAnalyzerJobLabel => 'Job / Project Label (optional)';
+
+  @override
+  String get bidAnalyzerJobHint => 'e.g. 5000 sqft Exterior - Smith Residence';
+
+  @override
+  String get bidAnalyzerInputTitle => 'Competitor Bid / RFP Text';
+
+  @override
+  String get bidAnalyzerPasteClipboard => 'Paste from clipboard';
+
+  @override
+  String get bidAnalyzerInputSubtitle =>
+      'Paste the full bid document, email, or line-item breakdown';
+
+  @override
+  String get bidAnalyzerInputHint =>
+      'Paste competitor bid text here...\n\nExample:\n- Interior paint (3 BR): \$2,400\n- Trim & baseboards: \$800\n- Ceiling: \$600\n- Prep & primer: \$500';
+
+  @override
+  String bidAnalyzerCharacters(int count) {
+    return '$count characters';
+  }
+
+  @override
+  String get bidAnalyzerAnalyzing => 'Analyzing...';
+
+  @override
+  String get bidAnalyzerSummaryTitle => 'Analysis Summary';
+
+  @override
+  String get bidAnalyzerTheirTotal => 'Their Total';
+
+  @override
+  String get bidAnalyzerYourPrice => 'Your Price';
+
+  @override
+  String bidAnalyzerLineItems(int count) {
+    return 'Line Items ($count)';
+  }
+
+  @override
+  String get bidAnalyzerTheirs => 'Theirs';
+
+  @override
+  String get bidAnalyzerYours => 'Yours';
+
+  @override
+  String get bidAnalyzerCounterBidTitle => 'Suggested Counter-Bid';
+
+  @override
+  String get bidAnalyzerCounterBidLabel => 'Counter-Bid Suggestion:';
+
+  @override
+  String get bidAnalyzerNoAnalyses => 'No analyses yet';
+
+  @override
+  String get bidAnalyzerFallbackTitle => 'Bid Analysis';
+
+  @override
+  String bidAnalyzerHistoryItems(String count) {
+    return '$count items';
+  }
+
+  @override
+  String bidAnalyzerLocalSummary(int count, String totalText) {
+    return 'Local analysis extracted $count line items$totalText. Deploy the analyzeBid Cloud Function for AI-powered comparison against your pricing engine and counter-bid suggestions.';
+  }
+
+  @override
+  String bidAnalyzerLocalSummaryTotal(String total) {
+    return ' (total: $total)';
+  }
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

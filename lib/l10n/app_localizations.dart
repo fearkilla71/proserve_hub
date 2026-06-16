@@ -1616,6 +1616,312 @@ abstract class AppLocalizations {
   /// **'Owner summary'**
   String get toolMetricOwnerSummary;
 
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get address;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get update;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @item.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get item;
+
+  /// No description provided for @copyToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to Clipboard'**
+  String get copyToClipboard;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copiedToClipboard;
+
+  /// No description provided for @clientDirectoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Directory'**
+  String get clientDirectoryTitle;
+
+  /// No description provided for @clientDirectorySelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Client'**
+  String get clientDirectorySelect;
+
+  /// No description provided for @clientDirectorySignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view clients.'**
+  String get clientDirectorySignInRequired;
+
+  /// No description provided for @clientDirectorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search clients...'**
+  String get clientDirectorySearchHint;
+
+  /// No description provided for @clientDirectoryAddClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Client'**
+  String get clientDirectoryAddClient;
+
+  /// No description provided for @clientDirectoryNoClients.
+  ///
+  /// In en, this message translates to:
+  /// **'No clients yet'**
+  String get clientDirectoryNoClients;
+
+  /// No description provided for @clientDirectoryNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get clientDirectoryNoMatches;
+
+  /// No description provided for @clientDirectoryNoClientsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add your first client'**
+  String get clientDirectoryNoClientsSubtitle;
+
+  /// No description provided for @clientDirectoryNoMatchesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search'**
+  String get clientDirectoryNoMatchesSubtitle;
+
+  /// No description provided for @clientDirectoryNewClient.
+  ///
+  /// In en, this message translates to:
+  /// **'New Client'**
+  String get clientDirectoryNewClient;
+
+  /// No description provided for @clientDirectoryEditClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Client'**
+  String get clientDirectoryEditClient;
+
+  /// No description provided for @clientDirectoryNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client name *'**
+  String get clientDirectoryNameLabel;
+
+  /// No description provided for @clientDirectoryNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get clientDirectoryNotesLabel;
+
+  /// No description provided for @clientDirectorySaveClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Client'**
+  String get clientDirectorySaveClient;
+
+  /// No description provided for @clientDirectoryNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get clientDirectoryNameRequired;
+
+  /// No description provided for @clientDirectoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Client?'**
+  String get clientDirectoryDeleteTitle;
+
+  /// No description provided for @clientDirectoryDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{clientName}\" from your directory?'**
+  String clientDirectoryDeleteMessage(String clientName);
+
+  /// No description provided for @bidAnalyzerAnalyzeTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get bidAnalyzerAnalyzeTab;
+
+  /// No description provided for @bidAnalyzerPasteRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a competitor bid or RFP text first'**
+  String get bidAnalyzerPasteRequired;
+
+  /// No description provided for @bidAnalyzerJobLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Job / Project Label (optional)'**
+  String get bidAnalyzerJobLabel;
+
+  /// No description provided for @bidAnalyzerJobHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 5000 sqft Exterior - Smith Residence'**
+  String get bidAnalyzerJobHint;
+
+  /// No description provided for @bidAnalyzerInputTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Competitor Bid / RFP Text'**
+  String get bidAnalyzerInputTitle;
+
+  /// No description provided for @bidAnalyzerPasteClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste from clipboard'**
+  String get bidAnalyzerPasteClipboard;
+
+  /// No description provided for @bidAnalyzerInputSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the full bid document, email, or line-item breakdown'**
+  String get bidAnalyzerInputSubtitle;
+
+  /// No description provided for @bidAnalyzerInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste competitor bid text here...\n\nExample:\n- Interior paint (3 BR): \$2,400\n- Trim & baseboards: \$800\n- Ceiling: \$600\n- Prep & primer: \$500'**
+  String get bidAnalyzerInputHint;
+
+  /// No description provided for @bidAnalyzerCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters'**
+  String bidAnalyzerCharacters(int count);
+
+  /// No description provided for @bidAnalyzerAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing...'**
+  String get bidAnalyzerAnalyzing;
+
+  /// No description provided for @bidAnalyzerSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis Summary'**
+  String get bidAnalyzerSummaryTitle;
+
+  /// No description provided for @bidAnalyzerTheirTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Their Total'**
+  String get bidAnalyzerTheirTotal;
+
+  /// No description provided for @bidAnalyzerYourPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Price'**
+  String get bidAnalyzerYourPrice;
+
+  /// No description provided for @bidAnalyzerLineItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Line Items ({count})'**
+  String bidAnalyzerLineItems(int count);
+
+  /// No description provided for @bidAnalyzerTheirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Theirs'**
+  String get bidAnalyzerTheirs;
+
+  /// No description provided for @bidAnalyzerYours.
+  ///
+  /// In en, this message translates to:
+  /// **'Yours'**
+  String get bidAnalyzerYours;
+
+  /// No description provided for @bidAnalyzerCounterBidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested Counter-Bid'**
+  String get bidAnalyzerCounterBidTitle;
+
+  /// No description provided for @bidAnalyzerCounterBidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter-Bid Suggestion:'**
+  String get bidAnalyzerCounterBidLabel;
+
+  /// No description provided for @bidAnalyzerNoAnalyses.
+  ///
+  /// In en, this message translates to:
+  /// **'No analyses yet'**
+  String get bidAnalyzerNoAnalyses;
+
+  /// No description provided for @bidAnalyzerFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid Analysis'**
+  String get bidAnalyzerFallbackTitle;
+
+  /// No description provided for @bidAnalyzerHistoryItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String bidAnalyzerHistoryItems(String count);
+
+  /// No description provided for @bidAnalyzerLocalSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Local analysis extracted {count} line items{totalText}. Deploy the analyzeBid Cloud Function for AI-powered comparison against your pricing engine and counter-bid suggestions.'**
+  String bidAnalyzerLocalSummary(int count, String totalText);
+
+  /// No description provided for @bidAnalyzerLocalSummaryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **' (total: {total})'**
+  String bidAnalyzerLocalSummaryTotal(String total);
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:

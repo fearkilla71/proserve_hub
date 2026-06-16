@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/ai_usage_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
@@ -68,12 +69,11 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
 
   Future<void> _analyzeBid() async {
     final text = _inputCtrl.text.trim();
+    final l10n = AppLocalizations.of(context)!;
     if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Paste a competitor bid or RFP text first'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.bidAnalyzerPasteRequired)));
       return;
     }
 
@@ -188,11 +188,14 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
       _lineItems = items;
       _theirTotal = total > 0 ? total : null;
       _yourTotal = null;
-      _summary =
-          'Local analysis extracted ${items.length} line items '
-          '${total > 0 ? '(total: \$${total.toStringAsFixed(0)})' : ''}. '
-          'Deploy the analyzeBid Cloud Function for AI-powered comparison '
-          'against your pricing engine and counter-bid suggestions.';
+      _summary = AppLocalizations.of(context)!.bidAnalyzerLocalSummary(
+        items.length,
+        total > 0
+            ? AppLocalizations.of(
+                context,
+              )!.bidAnalyzerLocalSummaryTotal('\$${total.toStringAsFixed(0)}')
+            : '',
+      );
       _counterBidSuggestion = null;
       _analyzing = false;
     });
@@ -248,15 +251,19 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('AI Bid Analyzer'),
-          bottom: const TabBar(
+          title: Text(l10n.toolBidAnalyzerTitle),
+          bottom: TabBar(
             tabs: [
-              Tab(icon: Icon(Icons.analytics_outlined), text: 'Analyze'),
-              Tab(icon: Icon(Icons.history), text: 'History'),
+              Tab(
+                icon: const Icon(Icons.analytics_outlined),
+                text: l10n.bidAnalyzerAnalyzeTab,
+              ),
+              Tab(icon: const Icon(Icons.history), text: l10n.history),
             ],
           ),
         ),
@@ -269,6 +276,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
 
   Widget _buildAnalyzeTab() {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -276,10 +284,10 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
         // Job label
         TextField(
           controller: _jobLabelCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Job / Project Label (optional)',
-            hintText: 'e.g. 5000 sqft Exterior – Smith Residence',
-            prefixIcon: Icon(Icons.label_outline),
+          decoration: InputDecoration(
+            labelText: l10n.bidAnalyzerJobLabel,
+            hintText: l10n.bidAnalyzerJobHint,
+            prefixIcon: const Icon(Icons.label_outline),
           ),
         ),
         const SizedBox(height: 16),
@@ -295,41 +303,35 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Competitor Bid / RFP Text',
+                        l10n.bidAnalyzerInputTitle,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.content_paste),
-                      tooltip: 'Paste from clipboard',
+                      tooltip: l10n.bidAnalyzerPasteClipboard,
                       onPressed: _pasteFromClipboard,
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Paste the full bid document, email, or line-item breakdown',
+                  l10n.bidAnalyzerInputSubtitle,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _inputCtrl,
                   maxLines: 8,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'Paste competitor bid text here…\n\n'
-                        'Example:\n'
-                        '- Interior paint (3 BR): \$2,400\n'
-                        '- Trim & baseboards: \$800\n'
-                        '- Ceiling: \$600\n'
-                        '- Prep & primer: \$500',
+                  decoration: InputDecoration(
+                    hintText: l10n.bidAnalyzerInputHint,
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${_inputCtrl.text.length} characters',
+                  l10n.bidAnalyzerCharacters(_inputCtrl.text.length),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -352,7 +354,11 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                     ),
                   )
                 : const Icon(Icons.auto_awesome),
-            label: Text(_analyzing ? 'Analyzing…' : 'Analyze Bid'),
+            label: Text(
+              _analyzing
+                  ? l10n.bidAnalyzerAnalyzing
+                  : l10n.toolActionAnalyzeBid,
+            ),
             onPressed: _analyzing ? null : _analyzeBid,
           ),
         ),
@@ -383,6 +389,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
   }
 
   Widget _buildSummaryCard(ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: cs.primaryContainer,
       child: Padding(
@@ -396,7 +403,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Analysis Summary',
+                    l10n.bidAnalyzerSummaryTitle,
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       color: cs.onPrimaryContainer,
@@ -414,7 +421,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                     if (_theirTotal != null)
                       Expanded(
                         child: _totalChip(
-                          'Their Total',
+                          l10n.bidAnalyzerTheirTotal,
                           '\$${_theirTotal!.toStringAsFixed(0)}',
                           Colors.red,
                         ),
@@ -424,7 +431,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                     if (_yourTotal != null)
                       Expanded(
                         child: _totalChip(
-                          'Your Price',
+                          l10n.bidAnalyzerYourPrice,
                           '\$${_yourTotal!.toStringAsFixed(0)}',
                           Colors.green,
                         ),
@@ -464,6 +471,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
   }
 
   Widget _buildLineItemsTable(ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -471,7 +479,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Line Items (${_lineItems.length})',
+              l10n.bidAnalyzerLineItems(_lineItems.length),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -483,7 +491,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    'Description',
+                    l10n.description,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
@@ -494,7 +502,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Theirs',
+                    l10n.bidAnalyzerTheirs,
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -506,7 +514,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Yours',
+                    l10n.bidAnalyzerYours,
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -545,7 +553,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                     Expanded(
                       flex: 4,
                       child: Text(
-                        item['description']?.toString() ?? 'Item',
+                        item['description']?.toString() ?? l10n.item,
                         style: const TextStyle(fontSize: 13),
                       ),
                     ),
@@ -584,6 +592,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
   }
 
   Widget _buildCounterBidCard(ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: Colors.green.withValues(alpha: 0.08),
       child: Padding(
@@ -597,7 +606,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Suggested Counter-Bid',
+                    l10n.bidAnalyzerCounterBidTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -612,13 +621,13 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.copy),
-                label: const Text('Copy to Clipboard'),
+                label: Text(l10n.copyToClipboard),
                 onPressed: () {
                   Clipboard.setData(
                     ClipboardData(text: _counterBidSuggestion!),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Copied to clipboard ✓')),
+                    SnackBar(content: Text(l10n.copiedToClipboard)),
                   );
                 },
               ),
@@ -633,6 +642,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
 
   Widget _buildHistoryTab() {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     if (_loadingHistory) {
       return const Center(child: CircularProgressIndicator());
@@ -645,7 +655,10 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
           children: [
             Icon(Icons.history, size: 64, color: cs.outline),
             const SizedBox(height: 12),
-            Text('No analyses yet', style: TextStyle(color: cs.outline)),
+            Text(
+              l10n.bidAnalyzerNoAnalyses,
+              style: TextStyle(color: cs.outline),
+            ),
           ],
         ),
       );
@@ -669,12 +682,12 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             title: Text(
               a['jobLabel']?.toString().isNotEmpty == true
                   ? a['jobLabel'].toString()
-                  : 'Bid Analysis',
+                  : l10n.bidAnalyzerFallbackTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              '${a['lineItemCount'] ?? '?'} items'
+              '${l10n.bidAnalyzerHistoryItems('${a['lineItemCount'] ?? '?'}')}'
               '${theirTotal != null ? ' · \$${theirTotal.toStringAsFixed(0)}' : ''}',
             ),
             trailing: ts != null
@@ -691,6 +704,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
   }
 
   void _showHistoryDetail(Map<String, dynamic> analysis) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -706,7 +720,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             Text(
               analysis['jobLabel']?.toString().isNotEmpty == true
                   ? analysis['jobLabel'].toString()
-                  : 'Bid Analysis',
+                  : l10n.bidAnalyzerFallbackTitle,
               style: Theme.of(
                 ctx,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -717,7 +731,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             if (analysis['counterBid'] != null) ...[
               const SizedBox(height: 16),
               Text(
-                'Counter-Bid Suggestion:',
+                l10n.bidAnalyzerCounterBidLabel,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),

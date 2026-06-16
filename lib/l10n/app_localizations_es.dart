@@ -846,6 +846,176 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toolMetricOwnerSummary => 'Resumen del dueño';
 
   @override
+  String get email => 'Correo electrónico';
+
+  @override
+  String get phone => 'Teléfono';
+
+  @override
+  String get address => 'Dirección';
+
+  @override
+  String get update => 'Actualizar';
+
+  @override
+  String get cancel => 'Cancelar';
+
+  @override
+  String get delete => 'Eliminar';
+
+  @override
+  String get history => 'Historial';
+
+  @override
+  String get description => 'Descripción';
+
+  @override
+  String get item => 'Partida';
+
+  @override
+  String get copyToClipboard => 'Copiar al portapapeles';
+
+  @override
+  String get copiedToClipboard => 'Copiado al portapapeles';
+
+  @override
+  String get clientDirectoryTitle => 'Directorio de clientes';
+
+  @override
+  String get clientDirectorySelect => 'Seleccionar cliente';
+
+  @override
+  String get clientDirectorySignInRequired =>
+      'Inicia sesión para ver clientes.';
+
+  @override
+  String get clientDirectorySearchHint => 'Buscar clientes...';
+
+  @override
+  String get clientDirectoryAddClient => 'Agregar cliente';
+
+  @override
+  String get clientDirectoryNoClients => 'Aún no hay clientes';
+
+  @override
+  String get clientDirectoryNoMatches => 'Sin resultados';
+
+  @override
+  String get clientDirectoryNoClientsSubtitle =>
+      'Toca + para agregar tu primer cliente';
+
+  @override
+  String get clientDirectoryNoMatchesSubtitle => 'Intenta otra búsqueda';
+
+  @override
+  String get clientDirectoryNewClient => 'Nuevo cliente';
+
+  @override
+  String get clientDirectoryEditClient => 'Editar cliente';
+
+  @override
+  String get clientDirectoryNameLabel => 'Nombre del cliente *';
+
+  @override
+  String get clientDirectoryNotesLabel => 'Notas';
+
+  @override
+  String get clientDirectorySaveClient => 'Guardar cliente';
+
+  @override
+  String get clientDirectoryNameRequired => 'El nombre es obligatorio';
+
+  @override
+  String get clientDirectoryDeleteTitle => '¿Eliminar cliente?';
+
+  @override
+  String clientDirectoryDeleteMessage(String clientName) {
+    return '¿Quitar a \"$clientName\" de tu directorio?';
+  }
+
+  @override
+  String get bidAnalyzerAnalyzeTab => 'Analizar';
+
+  @override
+  String get bidAnalyzerPasteRequired =>
+      'Pega primero una cotización de competidor o texto de RFP';
+
+  @override
+  String get bidAnalyzerJobLabel => 'Etiqueta del trabajo/proyecto (opcional)';
+
+  @override
+  String get bidAnalyzerJobHint => 'Ej. Exterior 5000 pies² - Casa Smith';
+
+  @override
+  String get bidAnalyzerInputTitle => 'Cotización competidora / texto de RFP';
+
+  @override
+  String get bidAnalyzerPasteClipboard => 'Pegar del portapapeles';
+
+  @override
+  String get bidAnalyzerInputSubtitle =>
+      'Pega el documento completo, correo o desglose por partidas';
+
+  @override
+  String get bidAnalyzerInputHint =>
+      'Pega aquí el texto de la cotización competidora...\n\nEjemplo:\n- Pintura interior (3 hab.): \$2,400\n- Molduras y zócalos: \$800\n- Techo: \$600\n- Preparación y primer: \$500';
+
+  @override
+  String bidAnalyzerCharacters(int count) {
+    return '$count caracteres';
+  }
+
+  @override
+  String get bidAnalyzerAnalyzing => 'Analizando...';
+
+  @override
+  String get bidAnalyzerSummaryTitle => 'Resumen del análisis';
+
+  @override
+  String get bidAnalyzerTheirTotal => 'Total de ellos';
+
+  @override
+  String get bidAnalyzerYourPrice => 'Tu precio';
+
+  @override
+  String bidAnalyzerLineItems(int count) {
+    return 'Partidas ($count)';
+  }
+
+  @override
+  String get bidAnalyzerTheirs => 'Ellos';
+
+  @override
+  String get bidAnalyzerYours => 'Tú';
+
+  @override
+  String get bidAnalyzerCounterBidTitle => 'Contraoferta sugerida';
+
+  @override
+  String get bidAnalyzerCounterBidLabel => 'Sugerencia de contraoferta:';
+
+  @override
+  String get bidAnalyzerNoAnalyses => 'Aún no hay análisis';
+
+  @override
+  String get bidAnalyzerFallbackTitle => 'Análisis de cotización';
+
+  @override
+  String bidAnalyzerHistoryItems(String count) {
+    return '$count partidas';
+  }
+
+  @override
+  String bidAnalyzerLocalSummary(int count, String totalText) {
+    return 'El análisis local extrajo $count partidas$totalText. Despliega la Cloud Function analyzeBid para comparación con IA contra tu motor de precios y sugerencias de contraoferta.';
+  }
+
+  @override
+  String bidAnalyzerLocalSummaryTotal(String total) {
+    return ' (total: $total)';
+  }
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override
