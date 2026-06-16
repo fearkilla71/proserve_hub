@@ -240,10 +240,16 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final contentBottomPadding = 96.0 + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
-          SafeArea(child: child),
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: contentBottomPadding),
+              child: child,
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,
@@ -289,153 +295,69 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildHomeHero(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0E2A1E), Color(0xFF0A1E38)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: ProServeColors.accent.withValues(alpha: 0.15),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: ProServeColors.accent.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Orb top-right
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ProServeColors.accent2.withValues(alpha: 0.1),
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: scheme.primaryContainer.withValues(alpha: 0.72),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'BOOK A PRO IN MINUTES',
+              style: GoogleFonts.bebasNeue(
+                fontSize: 26,
+                letterSpacing: 1.2,
+                color: scheme.onPrimaryContainer,
               ),
             ),
-          ),
-          // Orb bottom-left
-          Positioned(
-            left: -20,
-            bottom: -30,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ProServeColors.accent.withValues(alpha: 0.08),
+            const SizedBox(height: 6),
+            Text(
+              'Tell us what you need, compare quotes, and track the job here.',
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                color: scheme.onPrimaryContainer.withValues(alpha: 0.82),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 12),
+            const Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Text(
-                  'BOOK A PRO IN MINUTES',
-                  style: GoogleFonts.bebasNeue(
-                    fontSize: 26,
-                    letterSpacing: 1.5,
-                    color: ProServeColors.ink,
+                _HeroPill(label: 'Verified pros'),
+                _HeroPill(label: 'Upfront pricing'),
+                _HeroPill(label: 'Project tracking'),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => context.push('/smart-request'),
+                    child: const Text('Start a request'),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Tell us what you need, compare quotes, and track the job here.',
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    color: ProServeColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: const [
-                    _HeroPill(label: 'Verified pros'),
-                    _HeroPill(label: 'Upfront pricing'),
-                    _HeroPill(label: 'Project tracking'),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: ProServeColors.ctaGradient,
-                          borderRadius: BorderRadius.circular(999),
-                          boxShadow: [
-                            BoxShadow(
-                              color: ProServeColors.accent.withValues(
-                                alpha: 0.3,
-                              ),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: FilledButton(
-                          onPressed: () {
-                            context.push('/smart-request');
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                          ),
-                          child: const Text('Start a request'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() => _tabIndex = 1);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: ProServeColors.ink,
-                          side: BorderSide(color: ProServeColors.lineStrong),
-                          backgroundColor: ProServeColors.card.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                        child: const Text('Browse pros'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      context.push('/instant-quote');
-                    },
-                    icon: const Icon(Icons.camera_alt, size: 18),
-                    label: const Text('Snap for Instant Quote'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ProServeColors.accent,
-                      side: BorderSide(
-                        color: ProServeColors.accent.withValues(alpha: 0.5),
-                      ),
-                    ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => _tabIndex = 1),
+                    child: const Text('Browse pros'),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/instant-quote'),
+                icon: const Icon(Icons.camera_alt, size: 18),
+                label: const Text('Snap for Instant Quote'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -518,7 +440,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             : (fallback.isNotEmpty ? fallback : 'there');
 
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
           children: [
             Row(
               children: [
@@ -754,7 +676,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     final scheme = Theme.of(context).colorScheme;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
       children: [
         // ── Header ──
         Text(
@@ -1241,7 +1163,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 _buildHomeTab(context: context, user: user),
                 _buildSearchTab(context),
                 ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
                     Text(
                       'Project',
@@ -1909,19 +1831,20 @@ class _HeroPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: ProServeColors.accent.withValues(alpha: 0.1),
+        color: scheme.surface.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.2)),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Text(
         label,
         style: GoogleFonts.manrope(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: ProServeColors.accent,
+          color: scheme.onPrimaryContainer,
         ),
       ),
     );

@@ -59,7 +59,7 @@ class ContractorToolsHub extends StatelessWidget {
     final sections = _sections(l10n);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
       children: [
         PageHeader(
           title: l10n.toolsTitle,
@@ -538,23 +538,11 @@ class _ToolCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            tool.title,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                        Chip(
-                          label: Text(unlocked ? accessLabel : lockedLabel),
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ],
+                    Text(
+                      tool.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(tool.subtitle),
@@ -564,6 +552,12 @@ class _ToolCard extends StatelessWidget {
                       runSpacing: 8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        Chip(
+                          label: Text(unlocked ? accessLabel : lockedLabel),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
                         if (tool.metric != null)
                           Chip(
                             label: Text(tool.metric!),

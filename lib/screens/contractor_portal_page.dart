@@ -443,7 +443,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             .snapshots();
 
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
           children: [
             Row(
               children: [
@@ -863,7 +863,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       return const Center(child: Text('Sign in required'));
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
       children: [
         const PageHeader(
           title: 'Jobs',
@@ -951,7 +951,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 _buildHomeTab(context: context, user: user),
                 _buildSearchTab(context),
                 ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
                     const PageHeader(
                       title: 'Plan',
