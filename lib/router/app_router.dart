@@ -447,7 +447,11 @@ GoRouter createRouter() {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final draft = extra?['initialDraft'] as InvoiceDraft?;
-          return InvoiceMakerScreen(initialDraft: draft);
+          return InvoiceMakerScreen(
+            initialDraft: draft,
+            sourceJobId: extra?['sourceJobId'] as String?,
+            sourceJobData: extra?['sourceJobData'] as Map<String, dynamic>?,
+          );
         },
       ),
       GoRoute(
@@ -502,6 +506,8 @@ GoRouter createRouter() {
           final extra = state.extra as Map<String, dynamic>?;
           return RenderToolScreen(
             initialPhotoPath: extra?['initialPhotoPath'] as String?,
+            sourceJobId: extra?['sourceJobId'] as String?,
+            sourceJobData: extra?['sourceJobData'] as Map<String, dynamic>?,
           );
         },
       ),
@@ -516,6 +522,8 @@ GoRouter createRouter() {
           return PricingCalculatorScreen(
             initialEstimate: extra?['initialEstimate'] as Map<String, dynamic>?,
             estimateDocId: extra?['estimateDocId'] as String?,
+            sourceJobId: extra?['sourceJobId'] as String?,
+            sourceJobData: extra?['sourceJobData'] as Map<String, dynamic>?,
           );
         },
       ),
@@ -830,7 +838,13 @@ GoRouter createRouter() {
       ),
       GoRoute(
         path: '/saved-estimates',
-        builder: (context, state) => const SavedEstimatesScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return SavedEstimatesScreen(
+            sourceJobId: extra?['sourceJobId'] as String?,
+            sourceJobData: extra?['sourceJobData'] as Map<String, dynamic>?,
+          );
+        },
       ),
       GoRoute(
         path: '/project-boards',

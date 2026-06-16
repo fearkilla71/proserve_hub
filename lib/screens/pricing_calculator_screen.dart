@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_models.dart';
+import '../widgets/linked_job_context_card.dart';
 
 class PricingCalculatorScreen extends StatefulWidget {
   /// If non-null, pre-fills the form with a saved estimate for editing.
@@ -13,10 +14,15 @@ class PricingCalculatorScreen extends StatefulWidget {
   /// Firestore document id when reopening a saved estimate.
   final String? estimateDocId;
 
+  final String? sourceJobId;
+  final Map<String, dynamic>? sourceJobData;
+
   const PricingCalculatorScreen({
     super.key,
     this.initialEstimate,
     this.estimateDocId,
+    this.sourceJobId,
+    this.sourceJobData,
   });
 
   @override
@@ -98,6 +104,10 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
       _markupMid = (est['markupMid'] as num?)?.toDouble() ?? 20;
       _markupHigh = (est['markupHigh'] as num?)?.toDouble() ?? 30;
     } else {
+      final jobService = _jobText(const ['service', 'title', 'jobTitle']);
+      if (jobService.isNotEmpty) {
+        _selectedService = _normalizeService(jobService);
+      }
       _hourlyRate = _builtInRates[_selectedService] ?? 75.0;
     }
 
@@ -187,6 +197,8 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
       'markupLow': _markupLow,
       'markupMid': _markupMid,
       'markupHigh': _markupHigh,
+      if (_effectiveSourceJobId != null) 'sourceJobId': _effectiveSourceJobId,
+      if (_effectiveSourceJobId != null) 'jobId': _effectiveSourceJobId,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -310,7 +322,48 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
       items: items,
     );
 
-    context.push('/invoice-maker', extra: {'initialDraft': draft});
+    context.push(
+      '/invoice-maker',
+      extra: {
+        'initialDraft': draft,
+        if (_effectiveSourceJobId != null) 'sourceJobId': _effectiveSourceJobId,
+        if (widget.sourceJobData != null) 'sourceJobData': widget.sourceJobData,
+      },
+    );
+  }
+
+  String? get _effectiveSourceJobId {
+    final direct = widget.sourceJobId?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    final fromEstimate = widget.initialEstimate?['sourceJobId']
+        ?.toString()
+        .trim();
+    if (fromEstimate != null && fromEstimate.isNotEmpty) return fromEstimate;
+    final legacy = widget.initialEstimate?['jobId']?.toString().trim();
+    if (legacy != null && legacy.isNotEmpty) return legacy;
+    return null;
+  }
+
+  String _jobText(List<String> keys) {
+    final data = widget.sourceJobData;
+    if (data == null) return '';
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  static String _normalizeService(String value) {
+    final lower = value.toLowerCase();
+    if (lower.contains('cabinet')) return 'Cabinet Painting';
+    if (lower.contains('exterior')) return 'Exterior Painting';
+    if (lower.contains('drywall')) return 'Drywall Repair';
+    if (lower.contains('pressure') || lower.contains('wash')) {
+      return 'Pressure Washing';
+    }
+    if (lower.contains('paint')) return 'Painting';
+    return _capitalize(value);
   }
 
   // ── Markup editor ───────────────────────────────────────────────────────
@@ -472,6 +525,13 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            LinkedJobContextCard(
+              jobId: _effectiveSourceJobId,
+              jobData: widget.sourceJobData,
+              title: 'Pricing this job',
+            ),
+            if (_effectiveSourceJobId != null || widget.sourceJobData != null)
+              const SizedBox(height: 16),
             // Info Card
             Card(
               color: scheme.primaryContainer,

@@ -5,10 +5,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../widgets/linked_job_context_card.dart';
+
 /// Contractor-side saved estimates list — reads from
 /// `contractors/{uid}/saved_estimates` written by the Pricing Calculator.
 class SavedEstimatesScreen extends StatefulWidget {
-  const SavedEstimatesScreen({super.key});
+  const SavedEstimatesScreen({super.key, this.sourceJobId, this.sourceJobData});
+
+  final String? sourceJobId;
+  final Map<String, dynamic>? sourceJobData;
 
   @override
   State<SavedEstimatesScreen> createState() => _SavedEstimatesScreenState();
@@ -56,7 +61,7 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'newEstimate',
-        onPressed: () => context.push('/pricing-calculator'),
+        onPressed: () => context.push('/pricing-calculator', extra: _toolExtra),
         tooltip: 'New Estimate',
         child: const Icon(Icons.add),
       ),
@@ -85,46 +90,82 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
                       .toLowerCase();
                   return service.contains(_search) || client.contains(_search);
                 }).toList();
+          final visibleDocs = _sourceJobId == null
+              ? docs
+              : docs.where((d) {
+                  final data = d.data();
+                  return data['sourceJobId'] == _sourceJobId ||
+                      data['jobId'] == _sourceJobId;
+                }).toList();
 
-          if (docs.isEmpty) {
+          if (visibleDocs.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calculate_outlined,
-                    size: 64,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _search.isEmpty
-                        ? 'No estimates yet'
-                        : 'No matching estimates',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinkedJobContextCard(
+                      jobId: _sourceJobId,
+                      jobData: widget.sourceJobData,
+                      title: 'Estimates for this job',
                     ),
-                  ),
-                  if (_search.isEmpty) ...[
-                    const SizedBox(height: 8),
-                    FilledButton.icon(
-                      onPressed: () => context.push('/pricing-calculator'),
-                      icon: const Icon(Icons.calculate),
-                      label: const Text('Create Estimate'),
+                    if (_sourceJobId != null || widget.sourceJobData != null)
+                      const SizedBox(height: 14),
+                    Icon(
+                      Icons.calculate_outlined,
+                      size: 64,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _search.isEmpty
+                          ? 'No estimates yet'
+                          : 'No matching estimates',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (_search.isEmpty) ...[
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                        onPressed: () => context.push(
+                          '/pricing-calculator',
+                          extra: _toolExtra,
+                        ),
+                        icon: const Icon(Icons.calculate),
+                        label: const Text('Create Estimate'),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             );
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
+            itemCount:
+                visibleDocs.length +
+                (_sourceJobId != null || widget.sourceJobData != null ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
-              final data = docs[i].data();
-              final docId = docs[i].id;
+              if ((_sourceJobId != null || widget.sourceJobData != null) &&
+                  i == 0) {
+                return LinkedJobContextCard(
+                  jobId: _sourceJobId,
+                  jobData: widget.sourceJobData,
+                  title: 'Estimates for this job',
+                );
+              }
+
+              final docIndex =
+                  i -
+                  (_sourceJobId != null || widget.sourceJobData != null
+                      ? 1
+                      : 0);
+              final data = visibleDocs[docIndex].data();
+              final docId = visibleDocs[docIndex].id;
               final service = data['service'] as String? ?? 'Unknown';
               final totalCost = (data['totalCost'] as num?)?.toDouble() ?? 0.0;
               final clientName = data['clientName'] as String? ?? '';
@@ -429,6 +470,9 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
                         extra: {
                           'initialEstimate': data,
                           'estimateDocId': docId,
+                          if (_sourceJobId != null) 'sourceJobId': _sourceJobId,
+                          if (widget.sourceJobData != null)
+                            'sourceJobData': widget.sourceJobData,
                         },
                       );
                     },
@@ -471,6 +515,16 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
       },
     );
   }
+
+  String? get _sourceJobId {
+    final id = widget.sourceJobId?.trim();
+    return id == null || id.isEmpty ? null : id;
+  }
+
+  Map<String, dynamic> get _toolExtra => {
+    if (_sourceJobId != null) 'sourceJobId': _sourceJobId,
+    if (widget.sourceJobData != null) 'sourceJobData': widget.sourceJobData,
+  };
 
   Widget _detailRow(BuildContext context, String label, String value) {
     return Padding(

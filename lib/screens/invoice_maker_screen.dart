@@ -16,12 +16,20 @@ import '../services/invoice_pdf_builder.dart';
 import '../services/ai_usage_service.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/contractor_portal_helpers.dart';
+import '../widgets/linked_job_context_card.dart';
 import '../services/stripe_service.dart';
 
 class InvoiceMakerScreen extends StatefulWidget {
   final InvoiceDraft? initialDraft;
+  final String? sourceJobId;
+  final Map<String, dynamic>? sourceJobData;
 
-  const InvoiceMakerScreen({super.key, this.initialDraft});
+  const InvoiceMakerScreen({
+    super.key,
+    this.initialDraft,
+    this.sourceJobId,
+    this.sourceJobData,
+  });
 
   @override
   State<InvoiceMakerScreen> createState() => _InvoiceMakerScreenState();
@@ -65,6 +73,16 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
   void initState() {
     super.initState();
     _draft = widget.initialDraft ?? InvoiceDraft.empty();
+    if (widget.initialDraft == null && widget.sourceJobData != null) {
+      _draft = _draft.copyWith(
+        jobTitle: _jobText(const ['service', 'title', 'jobTitle']),
+        jobDescription: _jobText(const ['description', 'scope']),
+        clientName: _jobText(const ['clientName', 'customerName']),
+        clientEmail: _jobText(const ['clientEmail', 'customerEmail']),
+        clientPhone: _jobText(const ['clientPhone', 'customerPhone']),
+        clientAddress: _jobText(const ['location', 'address']),
+      );
+    }
     _syncControllersFromDraft();
 
     _initialFingerprint = _draftFingerprint(_draft);
@@ -116,6 +134,22 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
       paymentTerms: _paymentTerms.text,
       notes: _notes.text,
     );
+  }
+
+  String? get _effectiveSourceJobId {
+    final direct = widget.sourceJobId?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    return null;
+  }
+
+  String _jobText(List<String> keys) {
+    final data = widget.sourceJobData;
+    if (data == null) return '';
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return '';
   }
 
   void _requestPop() {
@@ -1156,6 +1190,8 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
         'status': _invoiceStatus,
         'updatedAt': FieldValue.serverTimestamp(),
         'draft': _draft.toJson(),
+        if (_effectiveSourceJobId != null) 'sourceJobId': _effectiveSourceJobId,
+        if (_effectiveSourceJobId != null) 'jobId': _effectiveSourceJobId,
         if (_photoUrls.isNotEmpty) 'photoUrls': _photoUrls,
         if (_milestones.isNotEmpty)
           'milestones': _milestones
@@ -1411,6 +1447,13 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             children: [
+              LinkedJobContextCard(
+                jobId: _effectiveSourceJobId,
+                jobData: widget.sourceJobData,
+                title: 'Invoice for this job',
+              ),
+              if (_effectiveSourceJobId != null || widget.sourceJobData != null)
+                const SizedBox(height: 12),
               AnimatedStateSwitcher(
                 stateKey: 'invoice_state_$stateKey',
                 child: _loading

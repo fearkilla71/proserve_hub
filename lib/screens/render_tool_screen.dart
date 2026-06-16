@@ -16,12 +16,20 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/ai_usage_service.dart';
+import '../widgets/linked_job_context_card.dart';
 
 class RenderToolScreen extends StatefulWidget {
   /// Optional file path to auto-load a photo when opened from another screen.
   final String? initialPhotoPath;
+  final String? sourceJobId;
+  final Map<String, dynamic>? sourceJobData;
 
-  const RenderToolScreen({super.key, this.initialPhotoPath});
+  const RenderToolScreen({
+    super.key,
+    this.initialPhotoPath,
+    this.sourceJobId,
+    this.sourceJobData,
+  });
 
   @override
   State<RenderToolScreen> createState() => _RenderToolScreenState();
@@ -157,6 +165,8 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
       await col.add({
         'imageUrl': downloadUrl,
         'storagePath': storagePath,
+        if (_effectiveSourceJobId != null) 'sourceJobId': _effectiveSourceJobId,
+        if (_effectiveSourceJobId != null) 'jobId': _effectiveSourceJobId,
         'wallColor': _toHexRgb(item.wallColor),
         'cabinetColor': _toHexRgb(item.cabinetColor),
         'wallsEnabled': item.wallsEnabled,
@@ -170,6 +180,12 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
     } finally {
       if (mounted) setState(() => _persistingRender = false);
     }
+  }
+
+  String? get _effectiveSourceJobId {
+    final direct = widget.sourceJobId?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    return null;
   }
 
   Future<void> _loadInitialPhoto(String path) async {
@@ -890,6 +906,18 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (_effectiveSourceJobId != null || widget.sourceJobData != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: LinkedJobContextCard(
+                  jobId: _effectiveSourceJobId,
+                  jobData: widget.sourceJobData,
+                  title: 'Render for this job',
+                  compact: true,
+                ),
+              ),
+            if (_effectiveSourceJobId != null || widget.sourceJobData != null)
+              const SizedBox(height: 2),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
               child: Align(

@@ -88,6 +88,50 @@ class JobCommandCenterScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              if (state.isContractor) ...[
+                const SizedBox(height: 12),
+                _CommandSection(
+                  title: 'Tools for this job',
+                  children: [
+                    _CommandTile(
+                      icon: Icons.calculate_outlined,
+                      title: 'Price this job',
+                      subtitle: 'Open the calculator with this job attached.',
+                      onTap: () => context.push(
+                        '/pricing-calculator',
+                        extra: state.toolExtra,
+                      ),
+                    ),
+                    _CommandTile(
+                      icon: Icons.folder_copy_outlined,
+                      title: 'Saved estimates',
+                      subtitle:
+                          'View estimates connected to this job or create one.',
+                      onTap: () => context.push(
+                        '/saved-estimates',
+                        extra: state.toolExtra,
+                      ),
+                    ),
+                    _CommandTile(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'AI invoice maker',
+                      subtitle:
+                          'Draft an invoice with this client and job context.',
+                      onTap: () => context.push(
+                        '/invoice-maker',
+                        extra: state.toolExtra,
+                      ),
+                    ),
+                    _CommandTile(
+                      icon: Icons.imagesearch_roller_outlined,
+                      title: 'Create render',
+                      subtitle: 'Attach render concepts back to this job.',
+                      onTap: () =>
+                          context.push('/render-tool', extra: state.toolExtra),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 12),
               _CommandSection(
                 title: 'Communicate & document',
@@ -270,6 +314,11 @@ class _JobCommandState {
   bool get canCancel =>
       isRequester && status != 'completed' && status != 'cancelled';
   double get price => (data['price'] as num?)?.toDouble() ?? 0;
+
+  Map<String, dynamic> get toolExtra => {
+    'sourceJobId': jobId,
+    'sourceJobData': data,
+  };
 
   DateTime get scheduledDate {
     final raw = data['preferredDate'] ?? data['scheduledDate'];
