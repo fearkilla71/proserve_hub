@@ -239,6 +239,35 @@ describe('Firestore user security rules', () => {
     )));
   });
 
+  it('allows requester completion approval but blocks requester payment fields', async () => {
+    await seed(['job_requests', 'jobToComplete'], {
+      requesterUid: 'customerA',
+      claimed: true,
+      claimedBy: 'contractorA',
+      service: 'Interior Painting',
+      status: 'completion_requested',
+      createdAt: new Date(),
+    });
+
+    await assertSucceeds(updateDoc(doc(db('customerA'), 'job_requests/jobToComplete'), {
+      status: 'completed',
+      completionApproved: new Date(),
+      statusHistory: [{
+        status: 'completed',
+        timestamp: new Date(),
+        updatedBy: 'customerA',
+        approved: true,
+      }],
+    }));
+
+    await assertFails(updateDoc(doc(db('customerA'), 'job_requests/jobToComplete'), {
+      completedAt: new Date(),
+    }));
+    await assertFails(updateDoc(doc(db('customerA'), 'job_requests/jobToComplete'), {
+      paymentIntentId: 'pi_spoofed',
+    }));
+  });
+
   it('allows owners to manage user-owned contractor tool artifacts', async () => {
     const ownerPaths = [
       'users/contractorA/render_history/renderA',

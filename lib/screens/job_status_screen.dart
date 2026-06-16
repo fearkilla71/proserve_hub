@@ -70,11 +70,11 @@ class _JobStatusScreenState extends State<JobStatusScreen> {
           .collection('job_requests')
           .doc(widget.jobId)
           .update({
-            'status': 'completion_approved',
+            'status': 'completed',
             'completionApproved': FieldValue.serverTimestamp(),
             'statusHistory': FieldValue.arrayUnion([
               {
-                'status': 'completion_approved',
+                'status': 'completed',
                 'timestamp': FieldValue.serverTimestamp(),
                 'updatedBy': FirebaseAuth.instance.currentUser!.uid,
                 'approved': true,

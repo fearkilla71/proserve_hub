@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
@@ -108,39 +109,35 @@ class _QuotesScreenState extends State<QuotesScreen> {
             );
           }
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              // Batch-load all contractor data.
-              final contractorIds = quotes
-                  .map(
-                    (q) =>
-                        ((q.data() as Map<String, dynamic>)['contractorId']
-                            as String?) ??
-                        '',
-                  )
-                  .where((id) => id.isNotEmpty)
-                  .toSet()
-                  .toList();
-              return FutureBuilder<void>(
-                future: _preloadContractors(contractorIds),
-                builder: (context, _) {
-                  final crossAxisCount = constraints.maxWidth >= 720 ? 2 : 1;
+          final contractorIds = quotes
+              .map(
+                (q) =>
+                    ((q.data() as Map<String, dynamic>)['contractorId']
+                        as String?) ??
+                    '',
+              )
+              .where((id) => id.isNotEmpty)
+              .toSet()
+              .toList();
+          return FutureBuilder<void>(
+            future: _preloadContractors(contractorIds),
+            builder: (context, _) {
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                itemCount: quotes.length + 1,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildDecisionHeader(
+                      quotes
+                          .map((doc) => doc.data() as Map<String, dynamic>)
+                          .toList(),
+                    );
+                  }
 
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: crossAxisCount == 1 ? 1.25 : 1.35,
-                    ),
-                    itemCount: quotes.length,
-                    itemBuilder: (context, index) {
-                      final quoteDoc = quotes[index];
-                      final quote = quoteDoc.data() as Map<String, dynamic>;
-                      return _buildQuoteCard(quoteDoc.id, quote);
-                    },
-                  );
+                  final quoteDoc = quotes[index - 1];
+                  final quote = quoteDoc.data() as Map<String, dynamic>;
+                  return _buildQuoteCard(quoteDoc.id, quote);
                 },
               );
             },
@@ -150,11 +147,107 @@ class _QuotesScreenState extends State<QuotesScreen> {
     );
   }
 
+  Widget _buildDecisionHeader(List<Map<String, dynamic>> quotes) {
+    final scheme = Theme.of(context).colorScheme;
+    final pending = quotes
+        .where((q) => (q['status'] as String? ?? 'pending') == 'pending')
+        .length;
+    final accepted = quotes.any((q) => q['status'] == 'accepted');
+    final prices =
+        quotes
+            .map((q) => (q['price'] as num?)?.toDouble())
+            .whereType<double>()
+            .toList()
+          ..sort();
+    final low = prices.isEmpty ? 0.0 : prices.first;
+    final high = prices.isEmpty ? 0.0 : prices.last;
+
+    return Card(
+      color: accepted
+          ? Colors.green.withValues(alpha: 0.08)
+          : scheme.primaryContainer.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  accepted
+                      ? Icons.check_circle_outline
+                      : Icons.compare_arrows_outlined,
+                  color: accepted ? Colors.green : scheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    accepted ? 'Quote accepted' : 'Choose the right pro',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              accepted
+                  ? 'Your job is assigned. Open the Job Command Center to chat, track status, escrow, photos, invoice, and review.'
+                  : 'Compare price, reviews, completed jobs, notes, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.',
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _metricChip('${quotes.length}', 'quotes'),
+                if (!accepted) _metricChip('$pending', 'pending'),
+                if (prices.isNotEmpty)
+                  _metricChip(
+                    '\$${low.toStringAsFixed(0)}-\$${high.toStringAsFixed(0)}',
+                    'range',
+                  ),
+                const Chip(
+                  avatar: Icon(Icons.shield_outlined, size: 18),
+                  label: Text('Escrow after approval'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+            if (accepted) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.dashboard_customize_outlined),
+                  label: const Text('Open Job Command Center'),
+                  onPressed: () =>
+                      context.pushReplacement('/job-command/${widget.jobId}'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _metricChip(String value, String label) {
+    return Chip(
+      label: Text('$value $label'),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
   Widget _buildQuoteCard(String quoteId, Map<String, dynamic> quote) {
     final contractorId = quote['contractorId'] as String;
     final price = (quote['price'] as num).toDouble();
     final estimatedDuration = quote['estimatedDuration'] as String?;
     final notes = quote['notes'] as String?;
+    final sowUrl = quote['sowUrl'] as String?;
+    final revisionNumber = (quote['revisionNumber'] as num?)?.toInt() ?? 0;
+    final expiresAt = quote['expiresAt'] as Timestamp?;
     final pricingMode = (quote['pricingMode'] as String?)?.trim() ?? 'manual';
     final adjustmentExplanation =
         (quote['aiAdjustmentExplanation'] as String?)?.trim() ?? '';
@@ -290,6 +383,39 @@ class _QuotesScreenState extends State<QuotesScreen> {
               ),
             ],
 
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (revisionNumber > 0)
+                  Chip(
+                    avatar: const Icon(Icons.edit_note, size: 16),
+                    label: Text('Revision $revisionNumber'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                if (expiresAt != null)
+                  Chip(
+                    avatar: const Icon(Icons.timer_outlined, size: 16),
+                    label: Text(
+                      'Expires ${DateFormat.MMMd().format(expiresAt.toDate())}',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                if (sowUrl != null && sowUrl.trim().isNotEmpty)
+                  const Chip(
+                    avatar: Icon(Icons.attach_file, size: 16),
+                    label: Text('Scope attached'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                const Chip(
+                  avatar: Icon(Icons.lock_outline, size: 16),
+                  label: Text('Protected payment path'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+
             if (pricingMode == 'ai_adjust' &&
                 adjustmentExplanation.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -318,13 +444,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
             ],
 
             if (submittedAt != null) ...[
-              const Spacer(),
+              const SizedBox(height: 12),
               Text(
                 'Submitted ${DateFormat.yMMMd().add_jm().format(submittedAt.toDate())}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ] else ...[
-              const Spacer(),
+              const SizedBox(height: 12),
             ],
 
             if (status == 'pending') ...[
@@ -345,6 +471,16 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     ),
                   ),
                 ],
+              ),
+            ] else if (status == 'accepted') ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.dashboard_customize_outlined),
+                  label: const Text('Continue Job'),
+                  onPressed: () => context.push('/job-command/${widget.jobId}'),
+                ),
               ),
             ],
           ],
@@ -387,7 +523,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
       context: context,
       title: 'Accept Quote',
       message:
-          'Accept this quote for \$${price.toStringAsFixed(0)}? The contractor will be assigned to your job.',
+          'Accept this quote for \$${price.toStringAsFixed(0)}? The contractor will be assigned and your next steps will move to the Job Command Center.',
       confirmText: 'Accept',
     );
 
@@ -434,9 +570,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
             });
       },
       loadingMessage: 'Accepting quote...',
-      successMessage: 'Quote accepted! Job assigned.',
+      successMessage: 'Quote accepted. Job assigned.',
       onSuccess: () {
-        if (mounted) Navigator.pop(context);
+        if (mounted) context.pushReplacement('/job-command/${widget.jobId}');
       },
     );
   }
