@@ -1861,33 +1861,36 @@ class _DateOrValueBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.black12),
+          border: Border.all(color: scheme.outlineVariant),
           borderRadius: BorderRadius.circular(10),
-          color: Colors.white,
+          color: scheme.surfaceContainerHighest,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),

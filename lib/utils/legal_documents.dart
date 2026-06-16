@@ -5,15 +5,18 @@ String _todayYmd() {
 }
 
 class LegalDocuments {
+  static const String _supportEmail = 'support@proservehub.app';
+
   static String help() {
     return '''Help
 
 If you need help with ProServe Hub:
 
-- For app issues: use “Report a technical problem”
-- For account issues: use “Set password” to reset your password
+- For app issues: email $_supportEmail with the device type, account email, and what happened.
+- For account issues: use “Set password” to reset your password or email $_supportEmail.
+- For payment, lead, or escrow issues: include the job, invoice, or payment reference shown in the app.
 
-Note: This help text is a starter template. Replace the contact details and support process with your real support workflow.
+We review support requests in the order received and prioritize account access, active jobs, payment, lead-credit, and safety issues.
 
 Last updated: ${_todayYmd()}
 ''';
@@ -54,7 +57,7 @@ Security
 We use reasonable safeguards to protect data, but no system is 100% secure.
 
 Contact
-Add your support contact here (email or phone).
+Email $_supportEmail.
 
 Disclaimer
 This is a general template and may not be sufficient for your jurisdiction or business model. Have a qualified attorney review before publishing.
@@ -96,7 +99,7 @@ The app is provided “as is” without warranties of any kind.
 To the maximum extent permitted by law, we are not liable for indirect or consequential damages.
 
 Contact
-Add your support contact here.
+Email $_supportEmail.
 
 Disclaimer
 This is a general template and may not be sufficient for your jurisdiction or business model. Have a qualified attorney review before publishing.
@@ -139,11 +142,9 @@ Last updated: ${_todayYmd()}
 If you want to opt out of “sale” or “sharing” of personal information (as defined by some privacy laws), you can submit a request here.
 
 How to request
-- In this version of the app, this is a placeholder policy page.
-- Replace this section with your real opt-out request process.
-
-Recommended next step
-Add a support email and instruct users to email: “Opt-out request” with their account email.
+- Email $_supportEmail with the subject “Opt-out request”.
+- Include the email address on your ProServe Hub account.
+- We will confirm receipt and process eligible requests under applicable law.
 
 Disclaimer
 This is a general template and may not be sufficient for your jurisdiction or business model. Have a qualified attorney review before publishing.
@@ -162,7 +163,7 @@ To report an issue, include:
 - Screenshots (if possible)
 - The time it happened
 
-In this version of the app, add your support email here so users know where to send reports.
+Send reports to $_supportEmail.
 
 Tip: Your app already saves a local error log file. If you can access it, attach it to your report.
 ''';
@@ -175,11 +176,11 @@ Last updated: ${_todayYmd()}
 
 Deactivating your account disables access to the app.
 
-In this version of the app, this is a placeholder page.
-Replace this with your real deactivation flow and explain:
-- What happens to active jobs
-- Whether messages remain accessible
-- How long data is retained
+Before requesting deactivation:
+- Complete, cancel, or resolve any active jobs.
+- Save copies of invoices, proposals, contracts, or job summaries you need.
+
+To request deactivation, email $_supportEmail with the subject “Deactivate account” from the email address on your account. We may retain records that are required for payments, disputes, fraud prevention, accounting, legal compliance, or platform safety.
 
 Disclaimer
 This is a general template and may not be sufficient for your jurisdiction or business model. Have a qualified attorney review before publishing.
@@ -193,11 +194,9 @@ Last updated: ${_todayYmd()}
 
 You can request deletion of your account data.
 
-In this version of the app, this is a placeholder page.
-Replace this with your real deletion request flow and explain:
-- What data is deleted
-- What data is retained (and why)
-- Typical timelines
+To request deletion, email $_supportEmail with the subject “Delete my account data” from the email address on your account. We will review the request and delete eligible account data. Some records may be retained when needed for active jobs, payments, disputes, security, fraud prevention, accounting, legal compliance, or tax obligations.
+
+Deletion may affect access to job history, messages, invoices, proposals, contracts, reviews, portfolios, saved clients, lead credits, and subscription-related records.
 
 Disclaimer
 This is a general template and may not be sufficient for your jurisdiction or business model. Have a qualified attorney review before publishing.

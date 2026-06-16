@@ -601,19 +601,22 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'Simple', label: Text('Simple')),
-                ButtonSegment(value: 'Standard', label: Text('Standard')),
-                ButtonSegment(value: 'Complex', label: Text('Complex')),
-                ButtonSegment(value: 'Expert', label: Text('Expert')),
-              ],
-              selected: {_complexity},
-              onSelectionChanged: (Set<String> selection) {
-                setState(() {
-                  _complexity = selection.first;
-                });
-              },
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'Simple', label: Text('Simple')),
+                  ButtonSegment(value: 'Standard', label: Text('Standard')),
+                  ButtonSegment(value: 'Complex', label: Text('Complex')),
+                  ButtonSegment(value: 'Expert', label: Text('Expert')),
+                ],
+                selected: {_complexity},
+                onSelectionChanged: (Set<String> selection) {
+                  setState(() {
+                    _complexity = selection.first;
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 4),
             Text(

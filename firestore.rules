@@ -84,7 +84,7 @@ service cloud.firestore {
           // If lead is exclusive, ONLY the exclusive owner can see contact.
           (isExclusive && j.leadUnlockedBy == request.auth.uid)
           // Otherwise any paying contractor can see contact.
-          || (!isExclusive && (j.paidBy is list && j.paidBy.hasAny([request.auth.uid])))
+          || (!isExclusive && (('paidBy' in j) && j.paidBy.hasAny([request.auth.uid])))
         )
       );
     }
@@ -463,11 +463,13 @@ service cloud.firestore {
         isAdmin() 
         || resource.data.requesterUid == request.auth.uid  // Customer's own job
         || resource.data.claimedBy == request.auth.uid     // Contractor's claimed job
-        || (resource.data.paidBy is list && resource.data.paidBy.hasAny([request.auth.uid]))
+        || (('paidBy' in resource.data) && resource.data.paidBy.hasAny([request.auth.uid]))
         || (
           isContractor()
           && resource.data.claimed != true
-          // Contractors must have credits (or be invited) to view the open job feed.
+          // Contractors must have credits (or be invited) to view open lead metadata.
+          // Contact/payment fields are not stored on this public document; those stay
+          // behind job_requests/{jobId}/private/contact and server-controlled fields.
           && (hasLeadCredits() || isInvitedToBid(jobId))
           // Exclusive leads: once unlocked by someone else, it should not appear in the feed.
           && (

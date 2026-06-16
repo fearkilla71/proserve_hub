@@ -219,10 +219,16 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final contentBottomPadding = 96.0 + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
-          SafeArea(child: child),
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: contentBottomPadding),
+              child: child,
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,

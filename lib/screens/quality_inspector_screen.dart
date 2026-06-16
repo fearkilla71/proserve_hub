@@ -171,11 +171,10 @@ class _QualityInspectorScreenState extends State<QualityInspectorScreen> {
   void _generateLocalInspection() {
     final defects = <Map<String, dynamic>>[
       {
-        'type': 'Sample Defect',
-        'severity': 'Low',
+        'type': 'Inspection unavailable',
+        'severity': 'Info',
         'description':
-            'Cloud AI unavailable — this is a placeholder inspection. '
-            'Deploy the inspectQuality Cloud Function for real defect detection.',
+            'AI quality inspection is unavailable right now. Try again later or review the uploaded photos manually.',
         'location': 'N/A',
       },
     ];
@@ -184,10 +183,8 @@ class _QualityInspectorScreenState extends State<QualityInspectorScreen> {
       _defects = defects;
       _overallScore = 'N/A';
       _summary =
-          'Local fallback inspection. Deploy the inspectQuality Cloud Function '
-          'to get AI-powered defect detection with roller marks, cut-line bleed, '
-          'missed spots, and coverage analysis.';
-      _passed = true;
+          'Inspection could not be completed because the AI service is unavailable.';
+      _passed = false;
       _analyzing = false;
     });
   }

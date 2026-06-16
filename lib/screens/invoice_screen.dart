@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_item.dart';
 
@@ -460,6 +461,44 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     return DateFormat('MMM d, y').format(DateTime.now());
   }
 
+  Future<void> _shareInvoice() async {
+    try {
+      final data = await _loadInvoiceData();
+      final job = data['job'] as Map<String, dynamic>;
+      final customer = data['customer'] as Map<String, dynamic>?;
+      final contractor = data['contractor'] as Map<String, dynamic>?;
+      final service = (job['service'] ?? 'Service').toString();
+      final amount = (job['price'] as num?)?.toDouble() ?? 0;
+      final customerName = (customer?['displayName'] ?? customer?['name'] ?? '')
+          .toString()
+          .trim();
+      final contractorName =
+          (contractor?['businessName'] ??
+                  contractor?['displayName'] ??
+                  contractor?['name'] ??
+                  'ProServe Hub')
+              .toString()
+              .trim();
+
+      final buffer = StringBuffer()
+        ..writeln('Invoice from $contractorName')
+        ..writeln('Job: $service')
+        ..writeln('Invoice ID: ${widget.jobId}')
+        ..writeln('Amount: ${_formatMoney(amount)}');
+      if (customerName.isNotEmpty) {
+        buffer.writeln('Customer: $customerName');
+      }
+      buffer.writeln('Status: ${(job['status'] ?? 'draft').toString()}');
+
+      await Share.share(buffer.toString().trim(), subject: 'Invoice $service');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to share invoice: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -469,11 +508,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Share Invoice',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Invoice sharing coming soon!')),
-              );
-            },
+            onPressed: _shareInvoice,
           ),
         ],
       ),

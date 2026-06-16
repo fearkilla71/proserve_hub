@@ -144,10 +144,23 @@ class ServiceSelectPage extends StatelessWidget {
       return;
     }
 
-    // Fallback for services not yet supported
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Service "$type" is coming soon!')));
+    final label = _labelForType(type);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$label is not available in this build yet. Choose another service or contact support.',
+        ),
+      ),
+    );
+  }
+
+  String _labelForType(String type) {
+    return _aiChatServices[type] ??
+        type
+            .split('_')
+            .where((part) => part.trim().isNotEmpty)
+            .map((part) => part[0].toUpperCase() + part.substring(1))
+            .join(' ');
   }
 
   @override
