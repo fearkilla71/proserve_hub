@@ -268,8 +268,71 @@ describe('Firestore user security rules', () => {
     }));
   });
 
-  it('allows owners to manage user-owned contractor tool artifacts', async () => {
-    const ownerPaths = [
+  it('enforces pro entitlement for invoice, render, and estimate tools', async () => {
+    await seed(['users', 'contractorA'], {
+      uid: 'contractorA',
+      role: 'contractor',
+      subscriptionTier: 'pro',
+      contractorPro: true,
+      pricingToolsPro: true,
+    });
+    await seed(['users', 'contractorB'], {
+      uid: 'contractorB',
+      role: 'contractor',
+      subscriptionTier: 'basic',
+      contractorPro: false,
+      pricingToolsPro: false,
+    });
+
+    const proPaths = [
+      'users/contractorA/invoice_drafts/draftA',
+      'users/contractorA/invoices/invoiceA',
+      'users/contractorA/invoices/invoiceA/payments/paymentA',
+      'users/contractorA/render_history/renderA',
+      'contractors/contractorA/saved_estimates/estimateA',
+      'contractors/contractorA/cost_estimates/costA',
+    ];
+
+    for (const pathName of proPaths) {
+      await assertSucceeds(setDoc(doc(db('contractorA'), pathName), {
+        ownerId: 'contractorA',
+        contractorId: 'contractorA',
+        title: 'Pro tool artifact',
+        createdAt: new Date(),
+      }));
+      await assertSucceeds(getDoc(doc(db('contractorA'), pathName)));
+      await assertFails(getDoc(doc(db('contractorB'), pathName)));
+    }
+
+    await assertFails(setDoc(doc(db('contractorB'), 'users/contractorB/render_history/renderB'), {
+      ownerId: 'contractorB',
+      title: 'Blocked basic render',
+      createdAt: new Date(),
+    }));
+    await assertFails(setDoc(doc(db('contractorB'), 'contractors/contractorB/saved_estimates/estimateB'), {
+      contractorId: 'contractorB',
+      title: 'Blocked basic estimate',
+      createdAt: new Date(),
+    }));
+  });
+
+  it('enforces enterprise entitlement for enterprise contractor tools', async () => {
+    await seed(['users', 'contractorA'], {
+      uid: 'contractorA',
+      role: 'contractor',
+      subscriptionTier: 'enterprise',
+      contractorPro: true,
+      pricingToolsPro: true,
+    });
+    await seed(['users', 'contractorB'], {
+      uid: 'contractorB',
+      role: 'contractor',
+      subscriptionTier: 'pro',
+      contractorPro: true,
+      pricingToolsPro: true,
+    });
+
+    const enterprisePaths = [
       'users/contractorA/render_history/renderA',
       'users/contractorA/quality_reports/reportA',
       'users/contractorA/bid_analyses/analysisA',
@@ -279,38 +342,25 @@ describe('Firestore user security rules', () => {
       'users/contractorA/crews/crewA',
     ];
 
-    for (const pathName of ownerPaths) {
+    for (const pathName of enterprisePaths) {
       await assertSucceeds(setDoc(doc(db('contractorA'), pathName), {
         ownerId: 'contractorA',
-        title: 'Tool artifact',
+        title: 'Enterprise tool artifact',
         createdAt: new Date(),
       }));
       await assertSucceeds(getDoc(doc(db('contractorA'), pathName)));
       await assertFails(getDoc(doc(db('contractorB'), pathName)));
     }
-  });
 
-  it('allows contractors to manage their own saved and cost estimates', async () => {
-    const savedEstimate = 'contractors/contractorA/saved_estimates/estimateA';
-    const costEstimate = 'contractors/contractorA/cost_estimates/costA';
-
-    await assertSucceeds(setDoc(doc(db('contractorA'), savedEstimate), {
-      contractorId: 'contractorA',
-      clientName: 'Client',
-      total: 1200,
+    await assertFails(setDoc(doc(db('contractorB'), 'users/contractorB/bid_analyses/analysisB'), {
+      ownerId: 'contractorB',
+      title: 'Blocked pro bid analysis',
+      createdAt: new Date(),
     }));
-    await assertSucceeds(setDoc(doc(db('contractorA'), costEstimate), {
-      contractorId: 'contractorA',
-      serviceType: 'Interior Painting',
-      total: 900,
-    }));
-
-    await assertSucceeds(getDoc(doc(db('contractorA'), savedEstimate)));
-    await assertSucceeds(getDoc(doc(db('contractorA'), costEstimate)));
-    await assertFails(getDoc(doc(db('contractorB'), savedEstimate)));
-    await assertFails(setDoc(doc(db('contractorB'), costEstimate), {
-      contractorId: 'contractorB',
-      total: 1,
+    await assertFails(setDoc(doc(db('contractorB'), 'users/contractorB/schedules/scheduleB'), {
+      ownerId: 'contractorB',
+      title: 'Blocked pro schedule',
+      createdAt: new Date(),
     }));
   });
 

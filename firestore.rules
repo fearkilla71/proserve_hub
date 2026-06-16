@@ -110,6 +110,32 @@ service cloud.firestore {
       return isSignedIn() && myCredits() > 0;
     }
 
+    function hasProToolEntitlement(uid) {
+      let u = userDoc(uid);
+      return isAdmin() || (
+        isSignedIn()
+        && request.auth.uid == uid
+        && isContractor()
+        && (
+          ('pricingToolsPro' in u && u.pricingToolsPro == true)
+          || ('contractorPro' in u && u.contractorPro == true)
+          || ('isPro' in u && u.isPro == true)
+          || ('subscriptionTier' in u && u.subscriptionTier == 'pro')
+          || ('subscriptionTier' in u && u.subscriptionTier == 'enterprise')
+        )
+      );
+    }
+
+    function hasEnterpriseToolEntitlement(uid) {
+      let u = userDoc(uid);
+      return isAdmin() || (
+        isSignedIn()
+        && request.auth.uid == uid
+        && isContractor()
+        && ('subscriptionTier' in u && u.subscriptionTier == 'enterprise')
+      );
+    }
+
     function isSubMarketplacePoster(listingId) {
       return isSignedIn()
         && exists(/databases/$(database)/documents/sub_marketplace/$(listingId))
@@ -248,46 +274,46 @@ service cloud.firestore {
     // --- INVOICE MAKER (user-owned) ---
     // Drafts live in a per-user subcollection.
     match /users/{uid}/invoice_drafts/{draftId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasProToolEntitlement(uid);
     }
 
     // Finalized invoices are also stored per-user.
     match /users/{uid}/invoices/{invoiceId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasProToolEntitlement(uid);
     }
 
     // Payments are a subcollection under each invoice.
     match /users/{uid}/invoices/{invoiceId}/payments/{paymentId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasProToolEntitlement(uid);
     }
 
     // Contractor tool artifacts that belong to a single signed-in user.
     match /users/{uid}/render_history/{renderId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasProToolEntitlement(uid);
     }
 
     match /users/{uid}/quality_reports/{reportId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     match /users/{uid}/bid_analyses/{analysisId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     match /users/{uid}/locations/{locationId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     match /users/{uid}/job_pipeline/{jobId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     match /users/{uid}/schedules/{scheduleId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     match /users/{uid}/crews/{crewId} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if hasEnterpriseToolEntitlement(uid);
     }
 
     // Trusted pros (customer's curated contractor shortlist).
@@ -392,11 +418,11 @@ service cloud.firestore {
       }
 
       match /saved_estimates/{estimateId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
+        allow read, write: if hasProToolEntitlement(uid);
       }
 
       match /cost_estimates/{estimateId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
+        allow read, write: if hasProToolEntitlement(uid);
       }
     }
 
