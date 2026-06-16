@@ -8388,11 +8388,20 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
     throw new functions.https.HttpsError('permission-denied', 'Not authorized for this escrow');
   }
 
-  // Only released status triggers payout
-  if (escrow.status !== 'released') {
+  // Client marks payoutPending before calling this function. Admin retry can
+  // also come from payoutFailed. Keep released accepted for idempotent retries.
+  const releasableStatuses = ['released', 'payoutPending', 'payoutFailed'];
+  if (!releasableStatuses.includes(escrow.status)) {
     throw new functions.https.HttpsError(
       'failed-precondition',
-      'Escrow must be in released status before funds transfer'
+      `Escrow must be ready for payout before funds transfer. Current status: "${escrow.status}"`
+    );
+  }
+
+  if (!escrow.customerConfirmedAt || !escrow.contractorConfirmedAt) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Both customer and contractor must confirm completion before payout'
     );
   }
 
@@ -8453,6 +8462,8 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
     });
 
     await escrowRef.update({
+      status: 'released',
+      releasedAt: admin.firestore.FieldValue.serverTimestamp(),
       stripeTransferId: transfer.id,
       payoutStatus: 'transferred',
       payoutAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -8461,8 +8472,10 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
     return { ok: true, transferId: transfer.id };
   } catch (err) {
     await escrowRef.update({
+      status: 'payoutFailed',
       payoutStatus: 'failed',
       payoutError: (err.message || 'Transfer failed').toString(),
+      payoutFailedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     throw toStripeHttpsError(err, 'Contractor payout failed');
   }
@@ -8514,9 +8527,11 @@ async function refundEscrowCore({ escrowId, uid }) {
 
   const escrow = escrowSnap.data();
 
-  // Only the customer who paid can request a refund
-  if (escrow.customerId !== uid) {
-    throw new functions.https.HttpsError('permission-denied', 'Only the customer can request a refund');
+  // The paying customer can request a refund. Admins can refund stuck/disputed
+  // escrows from operations.
+  const uidIsAdmin = await isAdminUser(uid);
+  if (escrow.customerId !== uid && !uidIsAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Only the customer or an admin can request a refund');
   }
 
   const refundableStatuses = ['funded', 'customerConfirmed', 'contractorConfirmed'];

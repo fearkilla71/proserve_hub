@@ -76,6 +76,7 @@ import '../screens/pressure_washing_request_flow_page.dart';
 import '../screens/cabinet_request_flow_page.dart';
 import '../screens/landing_page.dart';
 import '../screens/account_profile_screen.dart';
+import '../screens/admin/admin_operations_screen.dart';
 import '../screens/ai_price_offer_screen.dart';
 import '../screens/escrow_status_screen.dart';
 import '../screens/escrow_rating_screen.dart';
@@ -114,6 +115,7 @@ abstract final class AppRoutes {
   static const contractorProfile = '/contractor/:contractorId';
   static const jobDetail = '/job/:jobId';
   static const jobCommand = '/job-command/:jobId';
+  static const adminOps = '/admin-ops';
   static const favorites = '/favorites';
   static const referral = '/referral';
   static const instantBook = '/instant-book/:contractorId';
@@ -363,6 +365,10 @@ GoRouter createRouter() {
           final jobId = state.pathParameters['jobId']!;
           return JobCommandCenterScreen(jobId: jobId);
         },
+      ),
+      GoRoute(
+        path: '/admin-ops',
+        builder: (context, state) => const AdminOperationsScreen(),
       ),
       GoRoute(
         path: '/favorites',

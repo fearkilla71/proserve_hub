@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../widgets/address_autocomplete_field.dart';
@@ -54,6 +55,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   bool _loading = true;
   bool _saving = false;
   bool _locating = false;
+  bool _isAdmin = false;
   String _role = 'customer';
 
   final List<_ThemePreset> _themePresets = const [
@@ -98,12 +100,17 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
           .get();
       final userData = userSnap.data() ?? <String, dynamic>{};
       final role = (userData['role'] ?? '').toString().trim().toLowerCase();
+      final adminSnap = await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(user.uid)
+          .get();
 
       _nameController.text = (userData['name'] ?? '').toString();
       _phoneController.text = (userData['phone'] ?? '').toString();
       _addressController.text = (userData['address'] ?? '').toString();
       _zipController.text = (userData['zip'] ?? '').toString();
       _role = role.isEmpty ? _role : role;
+      _isAdmin = adminSnap.exists;
 
       if (_role == 'contractor') {
         final contractorSnap = await FirebaseFirestore.instance
@@ -543,6 +550,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       appBar: AppBar(
         title: const Text('Complete Profile'),
         actions: [
+          if (_isAdmin)
+            IconButton(
+              tooltip: 'Admin Operations',
+              onPressed: () => context.push('/admin-ops'),
+              icon: const Icon(Icons.admin_panel_settings_outlined),
+            ),
           IconButton(
             tooltip: 'Save',
             onPressed: (_loading || _saving) ? null : _save,

@@ -310,6 +310,8 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     final scheme = Theme.of(context).colorScheme;
     final isReleased = booking.status == EscrowStatus.released;
     final isCancelled = booking.status == EscrowStatus.cancelled;
+    final isPayoutPending = booking.status == EscrowStatus.payoutPending;
+    final isPayoutFailed = booking.status == EscrowStatus.payoutFailed;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -327,7 +329,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         const SizedBox(height: 16),
 
         // ── How it works ──
-        if (!isReleased && !isCancelled) ...[
+        if (!isReleased && !isCancelled && !isPayoutFailed) ...[
           _howItWorksCard(scheme),
           const SizedBox(height: 16),
         ],
@@ -339,10 +341,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           _waitingForContractorCard(scheme),
         ] else if (booking.status == EscrowStatus.contractorConfirmed) ...[
           _customerConfirmButton(booking, scheme),
+        ] else if (isPayoutPending) ...[
+          _payoutPendingCard(booking, scheme),
+        ] else if (isPayoutFailed) ...[
+          _payoutFailedCard(booking, scheme),
         ] else if (isReleased) ...[
           _completedCard(booking, scheme),
         ] else if (isCancelled) ...[
-          _cancelledCard(scheme),
+          _cancelledCard(booking, scheme),
         ],
       ],
     );
@@ -362,6 +368,12 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     } else if (isCancelled) {
       statusColor = scheme.error;
       statusIcon = Icons.cancel;
+    } else if (booking.status == EscrowStatus.payoutFailed) {
+      statusColor = scheme.error;
+      statusIcon = Icons.warning_amber_rounded;
+    } else if (booking.status == EscrowStatus.payoutPending) {
+      statusColor = ProServeColors.warning;
+      statusIcon = Icons.pending_actions_outlined;
     } else {
       statusColor = scheme.primary;
       statusIcon = Icons.hourglass_top;
@@ -441,6 +453,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               _currencyFmt.format(booking.contractorPayout),
               bold: true,
             ),
+            if ((booking.payoutStatus ?? '').isNotEmpty)
+              _summaryRow('Payout Status', booking.payoutStatus!),
+            if ((booking.refundStatus ?? '').isNotEmpty)
+              _summaryRow('Refund Status', booking.refundStatus!),
+            if ((booking.stripeTransferId ?? '').isNotEmpty)
+              _summaryRow('Stripe Transfer', booking.stripeTransferId!),
+            if ((booking.stripeRefundId ?? '').isNotEmpty)
+              _summaryRow('Stripe Refund', booking.stripeRefundId!),
           ],
         ),
       ),
@@ -907,7 +927,78 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     );
   }
 
-  Widget _cancelledCard(ColorScheme scheme) {
+  Widget _payoutPendingCard(EscrowBooking booking, ColorScheme scheme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.pending_actions_outlined,
+              size: 40,
+              color: ProServeColors.warning,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Payout Processing',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: ProServeColors.warning,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_currencyFmt.format(booking.contractorPayout)} is being prepared for contractor payout. This usually updates automatically after Stripe confirms the transfer.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _payoutFailedCard(EscrowBooking booking, ColorScheme scheme) {
+    return Card(
+      color: scheme.errorContainer.withValues(alpha: 0.32),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Icon(Icons.warning_amber_rounded, size: 40, color: scheme.error),
+            const SizedBox(height: 10),
+            Text(
+              'Payout Needs Admin Review',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: scheme.error,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'The job is complete, but the contractor payout did not finish automatically. Support can review this escrow and retry or resolve the payout.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onErrorContainer),
+            ),
+            if ((booking.payoutError ?? '').isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                booking.payoutError!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.error),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cancelledCard(EscrowBooking booking, ColorScheme scheme) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -927,7 +1018,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Your payment has been refunded.',
+            (booking.refundStatus ?? '').isNotEmpty
+                ? 'Refund status: ${booking.refundStatus}'
+                : 'Your payment has been refunded.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),

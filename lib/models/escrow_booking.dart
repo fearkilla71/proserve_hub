@@ -60,6 +60,11 @@ class EscrowBooking {
   final DateTime? contractorConfirmedAt;
   final DateTime? releasedAt;
   final String? stripePaymentIntentId;
+  final String? stripeTransferId;
+  final String? stripeRefundId;
+  final String? payoutStatus;
+  final String? payoutError;
+  final String? refundStatus;
   final Map<String, double> priceBreakdown; // low, recommended, premium
 
   // ── Price Lock ──
@@ -100,6 +105,11 @@ class EscrowBooking {
     this.contractorConfirmedAt,
     this.releasedAt,
     this.stripePaymentIntentId,
+    this.stripeTransferId,
+    this.stripeRefundId,
+    this.payoutStatus,
+    this.payoutError,
+    this.refundStatus,
     this.priceBreakdown = const {},
     this.priceLockExpiry,
     this.estimatedMarketPrice,
@@ -134,6 +144,11 @@ class EscrowBooking {
           ?.toDate(),
       releasedAt: (d['releasedAt'] as Timestamp?)?.toDate(),
       stripePaymentIntentId: d['stripePaymentIntentId'] as String?,
+      stripeTransferId: d['stripeTransferId'] as String?,
+      stripeRefundId: d['stripeRefundId'] as String?,
+      payoutStatus: d['payoutStatus'] as String?,
+      payoutError: d['payoutError'] as String?,
+      refundStatus: d['refundStatus'] as String?,
       priceBreakdown: _parseBreakdown(d['priceBreakdown']),
       priceLockExpiry: (d['priceLockExpiry'] as Timestamp?)?.toDate(),
       estimatedMarketPrice: (d['estimatedMarketPrice'] as num?)?.toDouble(),
@@ -177,6 +192,11 @@ class EscrowBooking {
     if (releasedAt != null) 'releasedAt': Timestamp.fromDate(releasedAt!),
     if (stripePaymentIntentId != null)
       'stripePaymentIntentId': stripePaymentIntentId,
+    if (stripeTransferId != null) 'stripeTransferId': stripeTransferId,
+    if (stripeRefundId != null) 'stripeRefundId': stripeRefundId,
+    if (payoutStatus != null) 'payoutStatus': payoutStatus,
+    if (payoutError != null) 'payoutError': payoutError,
+    if (refundStatus != null) 'refundStatus': refundStatus,
     if (priceLockExpiry != null)
       'priceLockExpiry': Timestamp.fromDate(priceLockExpiry!),
     if (estimatedMarketPrice != null)

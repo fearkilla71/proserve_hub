@@ -324,4 +324,36 @@ describe('Firestore user security rules', () => {
       status: 'rejected',
     }));
   });
+
+  it('allows admins to inspect payment operations and review escrow records', async () => {
+    await seed(['admins', 'adminA'], { role: 'operator' });
+    await seed(['escrow_bookings', 'escrowA'], {
+      customerId: 'customerA',
+      contractorId: 'contractorA',
+      jobId: 'jobA',
+      service: 'Interior Painting',
+      status: 'payoutFailed',
+      payoutStatus: 'failed',
+      payoutError: 'Missing connected account',
+      aiPrice: 1000,
+      contractorPayout: 950,
+      createdAt: new Date(),
+    });
+    await seed(['payments', 'paymentA'], {
+      contractorId: 'contractorA',
+      status: 'failed',
+      amount: 100,
+      type: 'escrow_payment',
+      createdAt: new Date(),
+    });
+
+    await assertSucceeds(getDoc(doc(db('adminA'), 'escrow_bookings/escrowA')));
+    await assertSucceeds(updateDoc(doc(db('adminA'), 'escrow_bookings/escrowA'), {
+      adminReviewedAt: new Date(),
+    }));
+    await assertSucceeds(getDoc(doc(db('adminA'), 'payments/paymentA')));
+    await assertFails(updateDoc(doc(db('adminA'), 'payments/paymentA'), {
+      status: 'reviewed',
+    }));
+  });
 });
