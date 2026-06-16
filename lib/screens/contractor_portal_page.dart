@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'contractor_login_page.dart';
 import 'community_feed_screen.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/fcm_service.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/page_header.dart';
@@ -86,6 +87,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       context: context,
       showDragHandle: true,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -94,14 +96,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Contractor Pro required',
+                  l10n.contractorPortalProRequiredTitle,
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Unlock the Pricing Calculator, Cost Estimator, and Render Tool with Contractor Pro.',
+                  l10n.contractorPortalProRequiredBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -110,14 +112,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Not now'),
+                        child: Text(l10n.notNow),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Subscribe'),
+                        child: Text(l10n.subscribe),
                       ),
                     ),
                   ],
@@ -159,6 +161,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       context: context,
       showDragHandle: true,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -167,15 +170,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Enterprise plan required',
+                  l10n.contractorPortalEnterpriseRequiredTitle,
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The Subcontractor Board is available on the Enterprise plan. '
-                  'Upgrade to post and browse subcontract jobs.',
+                  l10n.contractorPortalEnterpriseBoardBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -184,14 +186,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Not now'),
+                        child: Text(l10n.notNow),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Upgrade'),
+                        child: Text(l10n.upgrade),
                       ),
                     ),
                   ],
@@ -235,6 +237,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       context: context,
       showDragHandle: true,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -243,16 +246,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Enterprise plan required',
+                  l10n.contractorPortalEnterpriseRequiredTitle,
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Upgrade to Enterprise for multi-location operations, '
-                  'subcontractor marketplace workflows, bid analysis, '
-                  'crew scheduling, and quality reports.',
+                  l10n.contractorPortalEnterpriseToolsBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -261,14 +262,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Not now'),
+                        child: Text(l10n.notNow),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Upgrade'),
+                        child: Text(l10n.upgrade),
                       ),
                     ),
                   ],
@@ -295,6 +296,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   }
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final contentBottomPadding = 96.0 + bottomInset;
     return Scaffold(
@@ -319,31 +321,31 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (i) => setState(() => _tabIndex = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.home,
           ),
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Jobs',
+            icon: const Icon(Icons.search_outlined),
+            selectedIcon: const Icon(Icons.search),
+            label: l10n.jobs,
           ),
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Plan',
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: l10n.plan,
           ),
           NavigationDestination(
-            icon: Icon(Icons.build_outlined),
-            selectedIcon: Icon(Icons.build),
-            label: 'Tools',
+            icon: const Icon(Icons.build_outlined),
+            selectedIcon: const Icon(Icons.build),
+            label: l10n.tools,
           ),
           NavigationDestination(
-            icon: Icon(Icons.forum_outlined),
-            selectedIcon: Icon(Icons.forum),
-            label: 'Community',
+            icon: const Icon(Icons.forum_outlined),
+            selectedIcon: const Icon(Icons.forum),
+            label: l10n.community,
           ),
         ],
       ),
@@ -425,6 +427,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   }
 
   Widget _buildHomeTab({required BuildContext context, required User user}) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -436,7 +439,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
         final fallback = (user.email ?? '').split('@').first.trim();
         final name = rawName.isNotEmpty
             ? rawName
-            : (fallback.isNotEmpty ? fallback : 'there');
+            : (fallback.isNotEmpty
+                  ? fallback
+                  : l10n.contractorPortalWelcomeFallback);
         final contractorStream = FirebaseFirestore.instance
             .collection('contractors')
             .doc(user.uid)
@@ -449,7 +454,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
               children: [
                 Expanded(
                   child: Text(
-                    'Welcome, $name',
+                    l10n.welcome(name),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -458,14 +463,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Notifications',
+                  tooltip: l10n.notifications,
                   onPressed: () {
                     context.push('/notifications');
                   },
                   icon: const Icon(Icons.notifications_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Help',
+                  tooltip: l10n.help,
                   onPressed: () {
                     context.push('/contractor-profile-settings');
                   },
@@ -489,7 +494,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             const EscrowBookingsCard(isCustomer: false),
             const SizedBox(height: 20),
             Text(
-              'Quick actions',
+              l10n.quickActions,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -500,8 +505,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Browse jobs',
-                    subtitle: 'Find new leads',
+                    title: l10n.contractorPortalBrowseJobs,
+                    subtitle: l10n.contractorPortalFindNewLeads,
                     icon: Icons.work_outline,
                     onTap: () {
                       context.push('/job-feed');
@@ -512,8 +517,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Messages',
-                    subtitle: 'Reply faster',
+                    title: l10n.messages,
+                    subtitle: l10n.contractorPortalReplyFaster,
                     icon: Icons.chat_bubble_outline,
                     onTap: () {
                       context.push('/conversations');
@@ -528,8 +533,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Portfolio',
-                    subtitle: 'Showcase your work',
+                    title: l10n.contractorPortalPortfolio,
+                    subtitle: l10n.contractorPortalShowcaseYourWork,
                     icon: Icons.photo_library_outlined,
                     onTap: () {
                       context.push(
@@ -543,8 +548,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Payments',
-                    subtitle: 'Track earnings',
+                    title: l10n.contractorPortalPayments,
+                    subtitle: l10n.contractorPortalTrackEarnings,
                     icon: Icons.payments_outlined,
                     onTap: () {
                       context.push('/payment-history');
@@ -559,8 +564,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Subcontract jobs',
-                    subtitle: 'View posted work',
+                    title: l10n.contractorPortalSubcontractJobs,
+                    subtitle: l10n.contractorPortalViewPostedWork,
                     icon: Icons.handshake_outlined,
                     onTap: () => _openEnterpriseFeature(
                       open: () => context.push('/subcontract-board'),
@@ -571,8 +576,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Post a job',
-                    subtitle: 'Share overflow work',
+                    title: l10n.contractorPortalPostJob,
+                    subtitle: l10n.contractorPortalShareOverflowWork,
                     icon: Icons.add_circle_outline,
                     onTap: () => _openEnterpriseFeature(
                       open: () => context.push('/contractor-post-job'),
@@ -587,8 +592,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Crew roster',
-                    subtitle: 'Manage your team',
+                    title: l10n.contractorPortalCrewRoster,
+                    subtitle: l10n.contractorPortalManageTeam,
                     icon: Icons.groups_outlined,
                     onTap: () => _openEnterpriseFeature(
                       open: () => context.push('/crew-roster'),
@@ -599,8 +604,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Leaderboard',
-                    subtitle: 'XP rankings',
+                    title: l10n.contractorPortalLeaderboard,
+                    subtitle: l10n.contractorPortalXpRankings,
                     icon: Icons.emoji_events_outlined,
                     onTap: () => context.push('/leaderboard'),
                   ),
@@ -613,8 +618,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Profit & Loss',
-                    subtitle: 'Financial dashboard',
+                    title: l10n.contractorPortalProfitLoss,
+                    subtitle: l10n.contractorPortalFinancialDashboard,
                     icon: Icons.analytics_outlined,
                     onTap: () => _openEnterpriseFeature(
                       open: () => context.push('/pnl-dashboard'),
@@ -625,8 +630,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'AI Support',
-                    subtitle: 'Get instant help 24/7',
+                    title: l10n.contractorPortalAiSupport,
+                    subtitle: l10n.contractorPortalInstantHelp,
                     icon: Icons.support_agent,
                     onTap: () => context.push('/ai-support-chat'),
                   ),
@@ -643,14 +648,14 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   /// merged list. Streams are created once in [initState] so they are never
   /// recreated on rebuild, which prevents the flash/flicker issue.
   Widget _buildClaimedJobsList(String uid) {
+    final l10n = AppLocalizations.of(context)!;
     if (_claimedStream == null || _paidStream == null) {
-      return const AnimatedStateSwitcher(
+      return AnimatedStateSwitcher(
         stateKey: 'claimed_empty',
         child: EmptyStateCard(
           icon: Icons.work_outline,
-          title: 'No claimed jobs yet',
-          subtitle:
-              'Browse leads and purchase one to start a conversation with the customer.',
+          title: l10n.contractorPortalNoClaimedJobs,
+          subtitle: l10n.contractorPortalNoClaimedJobsSubtitle,
         ),
       );
     }
@@ -663,12 +668,12 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       builder: (context, snap) {
         if (snap.hasError) {
           debugPrint('[Jobs] combined stream error: ${snap.error}');
-          return const AnimatedStateSwitcher(
+          return AnimatedStateSwitcher(
             stateKey: 'claimed_error',
             child: EmptyStateCard(
               icon: Icons.error_outline,
-              title: 'Couldn\'t load jobs',
-              subtitle: 'Check your connection and try again.',
+              title: l10n.contractorPortalCouldNotLoadJobs,
+              subtitle: l10n.checkConnectionTryAgain,
             ),
           );
         }
@@ -695,13 +700,12 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
 
         final docs = snap.data!;
         if (docs.isEmpty) {
-          return const AnimatedStateSwitcher(
+          return AnimatedStateSwitcher(
             stateKey: 'claimed_empty',
             child: EmptyStateCard(
               icon: Icons.work_outline,
-              title: 'No claimed jobs yet',
-              subtitle:
-                  'Browse leads and purchase one to start a conversation with the customer.',
+              title: l10n.contractorPortalNoClaimedJobs,
+              subtitle: l10n.contractorPortalNoClaimedJobsSubtitle,
             ),
           );
         }
@@ -711,18 +715,18 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           child: Column(
             children: docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              final service = (data['service'] ?? 'Service').toString();
-              final location = (data['location'] ?? 'Unknown').toString();
+              final service = (data['service'] ?? l10n.service).toString();
+              final location = (data['location'] ?? l10n.unknown).toString();
               final claimedAt = formatTimestamp(data['claimedAt']);
               final createdAt = formatTimestamp(data['createdAt']);
 
               final subtitleParts = <String>[];
-              subtitleParts.add('Location: $location');
+              subtitleParts.add(l10n.contractorPortalLocationLabel(location));
               if (claimedAt.isNotEmpty) {
-                subtitleParts.add('Claimed: $claimedAt');
+                subtitleParts.add(l10n.contractorPortalClaimedLabel(claimedAt));
               }
               if (claimedAt.isEmpty && createdAt.isNotEmpty) {
-                subtitleParts.add('Created: $createdAt');
+                subtitleParts.add(l10n.contractorPortalCreatedLabel(createdAt));
               }
 
               final isEscrow =
@@ -756,7 +760,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                'Escrow',
+                                l10n.escrow,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -858,19 +862,23 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   }
 
   Widget _buildSearchTab(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Center(child: Text('Sign in required'));
+      return Center(child: Text(l10n.signInRequired));
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
       children: [
-        const PageHeader(
-          title: 'Jobs',
-          subtitle: 'Browse and purchase customer project leads',
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 12),
+        PageHeader(
+          title: l10n.jobs,
+          subtitle: l10n.contractorPortalJobsSubtitle,
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
         ),
-        Text('My Claimed Jobs', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          l10n.contractorPortalMyClaimedJobs,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 10),
         _buildClaimedJobsList(user.uid),
         const SizedBox(height: 12),
@@ -880,7 +888,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             onPressed: () {
               context.push('/job-feed');
             },
-            child: const Text('Browse jobs'),
+            child: Text(l10n.contractorPortalBrowseJobs),
           ),
         ),
       ],
@@ -888,9 +896,10 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   }
 
   Widget _buildToolsTab(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Center(child: Text('Sign in required'));
+      return Center(child: Text(l10n.signInRequired));
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -917,6 +926,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -933,7 +943,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           child: _tabScaffold(
             fab: _tabIndex == 0
                 ? FloatingActionButton(
-                    tooltip: 'Inbox',
+                    tooltip: l10n.messages,
                     onPressed: () {
                       context.push('/conversations');
                     },
@@ -953,11 +963,10 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
-                    const PageHeader(
-                      title: 'Plan',
-                      subtitle:
-                          'Manage your account, credits, and subscription',
-                      padding: EdgeInsets.fromLTRB(0, 0, 0, 12),
+                    PageHeader(
+                      title: l10n.plan,
+                      subtitle: l10n.contractorPortalPlanSubtitle,
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
                     ),
                     ProfileCompletionCard(
                       onTapComplete: () {
@@ -980,13 +989,12 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                             stateKey: 'plan_user_error',
                             child: EmptyStateCard(
                               icon: Icons.error_outline,
-                              title: 'Couldn\'t load account info',
-                              subtitle:
-                                  'Pull to refresh or try again in a moment.',
+                              title: l10n.contractorPortalCouldNotLoadAccount,
+                              subtitle: l10n.pullToRefreshTryAgain,
                               action: OutlinedButton.icon(
                                 onPressed: () => setState(() {}),
                                 icon: const Icon(Icons.refresh),
-                                label: const Text('Retry'),
+                                label: Text(l10n.retry),
                               ),
                             ),
                           );
@@ -1044,17 +1052,17 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                             data?['stripeDetailsSubmitted'] == true;
 
                         final statusText = approved
-                            ? 'Approved'
-                            : 'Pending Admin Approval';
+                            ? l10n.approved
+                            : l10n.pendingAdminApproval;
                         final statusTone = approved
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.tertiary;
 
                         final payoutsLabel = payoutsEnabled
-                            ? 'Payouts connected'
+                            ? l10n.payoutsConnected
                             : (detailsSubmitted
-                                  ? 'Payouts pending'
-                                  : 'Payouts setup');
+                                  ? l10n.payoutsPending
+                                  : l10n.payoutsSetup);
 
                         return AnimatedStateSwitcher(
                           stateKey: 'plan_user_loaded',
@@ -1071,7 +1079,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              'Account overview',
+                                              l10n.accountOverview,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .titleMedium
@@ -1111,20 +1119,22 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                           ),
                                           contractorStatusPill(
                                             context: context,
-                                            label:
-                                                'Non-exclusive credits: $nonExclusiveCredits',
+                                            label: l10n.nonExclusiveCredits(
+                                              nonExclusiveCredits,
+                                            ),
                                             icon: Icons.local_offer_outlined,
                                           ),
                                           contractorStatusPill(
                                             context: context,
-                                            label:
-                                                'Exclusive credits: $exclusiveCredits',
+                                            label: l10n.exclusiveCredits(
+                                              exclusiveCredits,
+                                            ),
                                             icon: Icons.lock_outline,
                                           ),
                                           if (stripeAccountId.isEmpty)
                                             contractorStatusPill(
                                               context: context,
-                                              label: 'Payouts not connected',
+                                              label: l10n.payoutsNotConnected,
                                               icon: Icons.link_off,
                                             ),
                                         ],
@@ -1140,9 +1150,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.account_circle_outlined,
-                                      title: 'Edit profile',
-                                      subtitle:
-                                          'Update your public contractor info',
+                                      title: l10n.editProfile,
+                                      subtitle: l10n.updatePublicContractorInfo,
                                       onTap: () {
                                         context.push('/customer-profile');
                                       },
@@ -1151,9 +1160,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.verified_outlined,
-                                      title: 'Get verified',
-                                      subtitle:
-                                          'Improve trust and win more work',
+                                      title: l10n.getVerified,
+                                      subtitle: l10n.improveTrustWinMoreWork,
                                       onTap: () {
                                         context.push('/verification');
                                       },
@@ -1162,8 +1170,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.analytics_outlined,
-                                      title: 'Analytics',
-                                      subtitle: 'Track performance and growth',
+                                      title: l10n.analytics,
+                                      subtitle:
+                                          l10n.contractorPortalTrackPerformance,
                                       onTap: () {
                                         context.push('/contractor-analytics');
                                       },
@@ -1172,8 +1181,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.calendar_month_outlined,
-                                      title: 'Availability',
-                                      subtitle: 'Keep your schedule up to date',
+                                      title: l10n.availability,
+                                      subtitle: l10n.keepScheduleUpToDate,
                                       onTap: () {
                                         context.push('/availability-calendar');
                                       },
@@ -1182,8 +1191,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.map_outlined,
-                                      title: 'Service area',
-                                      subtitle: 'Control where you get leads',
+                                      title: l10n.serviceArea,
+                                      subtitle: l10n.controlWhereYouGetLeads,
                                       onTap: () {
                                         context.push('/service-area');
                                       },
@@ -1192,8 +1201,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.photo_library_outlined,
-                                      title: 'Portfolio',
-                                      subtitle: 'Showcase your best work',
+                                      title: l10n.contractorPortalPortfolio,
+                                      subtitle: l10n.showcaseBestWork,
                                       onTap: () {
                                         context.push(
                                           '/portfolio/${user.uid}',
@@ -1205,8 +1214,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.business_outlined,
-                                      title: 'Business profile',
-                                      subtitle: 'Manage company details',
+                                      title: l10n.businessProfile,
+                                      subtitle: l10n.manageCompanyDetails,
                                       onTap: () {
                                         context.push('/business-profile');
                                       },
@@ -1215,9 +1224,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                                     contractorActionTile(
                                       context: context,
                                       icon: Icons.question_answer_outlined,
-                                      title: 'Q&A',
-                                      subtitle:
-                                          'Answer common customer questions',
+                                      title: l10n.qAndA,
+                                      subtitle: l10n.answerCustomerQuestions,
                                       onTap: () {
                                         context.push(
                                           '/qanda/${user.uid}',

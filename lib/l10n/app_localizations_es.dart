@@ -1016,6 +1016,233 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get notNow => 'Ahora no';
+
+  @override
+  String get upgrade => 'Mejorar';
+
+  @override
+  String get signInRequired => 'Inicio de sesión requerido';
+
+  @override
+  String get checkConnectionTryAgain =>
+      'Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get pullToRefreshTryAgain =>
+      'Desliza para actualizar o inténtalo de nuevo en un momento.';
+
+  @override
+  String get service => 'Servicio';
+
+  @override
+  String get unknown => 'Desconocido';
+
+  @override
+  String get escrow => 'Escrow';
+
+  @override
+  String get approved => 'Aprobado';
+
+  @override
+  String get pendingAdminApproval => 'Pendiente de aprobación del admin';
+
+  @override
+  String get payoutsConnected => 'Cobros conectados';
+
+  @override
+  String get payoutsPending => 'Cobros pendientes';
+
+  @override
+  String get payoutsSetup => 'Configurar cobros';
+
+  @override
+  String get payoutsNotConnected => 'Cobros no conectados';
+
+  @override
+  String get accountOverview => 'Resumen de cuenta';
+
+  @override
+  String nonExclusiveCredits(int count) {
+    return 'Créditos no exclusivos: $count';
+  }
+
+  @override
+  String exclusiveCredits(int count) {
+    return 'Créditos exclusivos: $count';
+  }
+
+  @override
+  String get editProfile => 'Editar perfil';
+
+  @override
+  String get updatePublicContractorInfo =>
+      'Actualiza tu información pública de contratista';
+
+  @override
+  String get getVerified => 'Verificarme';
+
+  @override
+  String get improveTrustWinMoreWork =>
+      'Mejora la confianza y gana más trabajos';
+
+  @override
+  String get analytics => 'Analíticas';
+
+  @override
+  String get availability => 'Disponibilidad';
+
+  @override
+  String get serviceArea => 'Área de servicio';
+
+  @override
+  String get businessProfile => 'Perfil del negocio';
+
+  @override
+  String get qAndA => 'Preguntas y respuestas';
+
+  @override
+  String get contractorPortalWelcomeFallback => 'ahí';
+
+  @override
+  String get contractorPortalProRequiredTitle => 'Contractor Pro requerido';
+
+  @override
+  String get contractorPortalProRequiredBody =>
+      'Desbloquea la Calculadora de precios, el Estimador de costos y la Herramienta de renders con Contractor Pro.';
+
+  @override
+  String get contractorPortalEnterpriseRequiredTitle =>
+      'Plan Enterprise requerido';
+
+  @override
+  String get contractorPortalEnterpriseBoardBody =>
+      'El tablero de subcontratistas está disponible en el plan Enterprise. Mejora tu plan para publicar y buscar trabajos subcontratados.';
+
+  @override
+  String get contractorPortalEnterpriseToolsBody =>
+      'Mejora a Enterprise para operaciones multiubicación, mercado de subcontratistas, análisis de cotizaciones, programación de equipos e informes de calidad.';
+
+  @override
+  String get contractorPortalBrowseJobs => 'Buscar trabajos';
+
+  @override
+  String get contractorPortalFindNewLeads => 'Encuentra nuevos leads';
+
+  @override
+  String get contractorPortalReplyFaster => 'Responde más rápido';
+
+  @override
+  String get contractorPortalPortfolio => 'Portafolio';
+
+  @override
+  String get contractorPortalShowcaseYourWork => 'Muestra tu trabajo';
+
+  @override
+  String get contractorPortalPayments => 'Pagos';
+
+  @override
+  String get contractorPortalTrackEarnings => 'Controla tus ingresos';
+
+  @override
+  String get contractorPortalSubcontractJobs => 'Trabajos subcontratados';
+
+  @override
+  String get contractorPortalViewPostedWork => 'Ver trabajos publicados';
+
+  @override
+  String get contractorPortalPostJob => 'Publicar trabajo';
+
+  @override
+  String get contractorPortalShareOverflowWork => 'Comparte trabajo sobrante';
+
+  @override
+  String get contractorPortalCrewRoster => 'Equipo';
+
+  @override
+  String get contractorPortalManageTeam => 'Administra tu equipo';
+
+  @override
+  String get contractorPortalLeaderboard => 'Clasificación';
+
+  @override
+  String get contractorPortalXpRankings => 'Ranking de XP';
+
+  @override
+  String get contractorPortalProfitLoss => 'Pérdidas y ganancias';
+
+  @override
+  String get contractorPortalFinancialDashboard => 'Panel financiero';
+
+  @override
+  String get contractorPortalAiSupport => 'Soporte con IA';
+
+  @override
+  String get contractorPortalInstantHelp => 'Ayuda instantánea 24/7';
+
+  @override
+  String get contractorPortalNoClaimedJobs =>
+      'Aún no tienes trabajos reclamados';
+
+  @override
+  String get contractorPortalNoClaimedJobsSubtitle =>
+      'Busca leads y compra uno para iniciar una conversación con el cliente.';
+
+  @override
+  String get contractorPortalCouldNotLoadJobs =>
+      'No se pudieron cargar los trabajos';
+
+  @override
+  String contractorPortalLocationLabel(String location) {
+    return 'Ubicación: $location';
+  }
+
+  @override
+  String contractorPortalClaimedLabel(String date) {
+    return 'Reclamado: $date';
+  }
+
+  @override
+  String contractorPortalCreatedLabel(String date) {
+    return 'Creado: $date';
+  }
+
+  @override
+  String get contractorPortalJobsSubtitle =>
+      'Busca y compra leads de proyectos de clientes';
+
+  @override
+  String get contractorPortalMyClaimedJobs => 'Mis trabajos reclamados';
+
+  @override
+  String get contractorPortalPlanSubtitle =>
+      'Administra tu cuenta, créditos y suscripción';
+
+  @override
+  String get contractorPortalCouldNotLoadAccount =>
+      'No se pudo cargar la información de la cuenta';
+
+  @override
+  String get contractorPortalTrackPerformance =>
+      'Mide rendimiento y crecimiento';
+
+  @override
+  String get keepScheduleUpToDate => 'Mantén tu calendario actualizado';
+
+  @override
+  String get controlWhereYouGetLeads => 'Controla dónde recibes leads';
+
+  @override
+  String get showcaseBestWork => 'Muestra tus mejores trabajos';
+
+  @override
+  String get manageCompanyDetails => 'Administra los datos de la empresa';
+
+  @override
+  String get answerCustomerQuestions =>
+      'Responde preguntas comunes de clientes';
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override

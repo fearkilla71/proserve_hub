@@ -1011,6 +1011,226 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notNow => 'Not now';
+
+  @override
+  String get upgrade => 'Upgrade';
+
+  @override
+  String get signInRequired => 'Sign in required';
+
+  @override
+  String get checkConnectionTryAgain => 'Check your connection and try again.';
+
+  @override
+  String get pullToRefreshTryAgain =>
+      'Pull to refresh or try again in a moment.';
+
+  @override
+  String get service => 'Service';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get escrow => 'Escrow';
+
+  @override
+  String get approved => 'Approved';
+
+  @override
+  String get pendingAdminApproval => 'Pending Admin Approval';
+
+  @override
+  String get payoutsConnected => 'Payouts connected';
+
+  @override
+  String get payoutsPending => 'Payouts pending';
+
+  @override
+  String get payoutsSetup => 'Payouts setup';
+
+  @override
+  String get payoutsNotConnected => 'Payouts not connected';
+
+  @override
+  String get accountOverview => 'Account overview';
+
+  @override
+  String nonExclusiveCredits(int count) {
+    return 'Non-exclusive credits: $count';
+  }
+
+  @override
+  String exclusiveCredits(int count) {
+    return 'Exclusive credits: $count';
+  }
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get updatePublicContractorInfo => 'Update your public contractor info';
+
+  @override
+  String get getVerified => 'Get verified';
+
+  @override
+  String get improveTrustWinMoreWork => 'Improve trust and win more work';
+
+  @override
+  String get analytics => 'Analytics';
+
+  @override
+  String get availability => 'Availability';
+
+  @override
+  String get serviceArea => 'Service area';
+
+  @override
+  String get businessProfile => 'Business profile';
+
+  @override
+  String get qAndA => 'Q&A';
+
+  @override
+  String get contractorPortalWelcomeFallback => 'there';
+
+  @override
+  String get contractorPortalProRequiredTitle => 'Contractor Pro required';
+
+  @override
+  String get contractorPortalProRequiredBody =>
+      'Unlock the Pricing Calculator, Cost Estimator, and Render Tool with Contractor Pro.';
+
+  @override
+  String get contractorPortalEnterpriseRequiredTitle =>
+      'Enterprise plan required';
+
+  @override
+  String get contractorPortalEnterpriseBoardBody =>
+      'The Subcontractor Board is available on the Enterprise plan. Upgrade to post and browse subcontract jobs.';
+
+  @override
+  String get contractorPortalEnterpriseToolsBody =>
+      'Upgrade to Enterprise for multi-location operations, subcontractor marketplace workflows, bid analysis, crew scheduling, and quality reports.';
+
+  @override
+  String get contractorPortalBrowseJobs => 'Browse jobs';
+
+  @override
+  String get contractorPortalFindNewLeads => 'Find new leads';
+
+  @override
+  String get contractorPortalReplyFaster => 'Reply faster';
+
+  @override
+  String get contractorPortalPortfolio => 'Portfolio';
+
+  @override
+  String get contractorPortalShowcaseYourWork => 'Showcase your work';
+
+  @override
+  String get contractorPortalPayments => 'Payments';
+
+  @override
+  String get contractorPortalTrackEarnings => 'Track earnings';
+
+  @override
+  String get contractorPortalSubcontractJobs => 'Subcontract jobs';
+
+  @override
+  String get contractorPortalViewPostedWork => 'View posted work';
+
+  @override
+  String get contractorPortalPostJob => 'Post a job';
+
+  @override
+  String get contractorPortalShareOverflowWork => 'Share overflow work';
+
+  @override
+  String get contractorPortalCrewRoster => 'Crew roster';
+
+  @override
+  String get contractorPortalManageTeam => 'Manage your team';
+
+  @override
+  String get contractorPortalLeaderboard => 'Leaderboard';
+
+  @override
+  String get contractorPortalXpRankings => 'XP rankings';
+
+  @override
+  String get contractorPortalProfitLoss => 'Profit & Loss';
+
+  @override
+  String get contractorPortalFinancialDashboard => 'Financial dashboard';
+
+  @override
+  String get contractorPortalAiSupport => 'AI Support';
+
+  @override
+  String get contractorPortalInstantHelp => 'Get instant help 24/7';
+
+  @override
+  String get contractorPortalNoClaimedJobs => 'No claimed jobs yet';
+
+  @override
+  String get contractorPortalNoClaimedJobsSubtitle =>
+      'Browse leads and purchase one to start a conversation with the customer.';
+
+  @override
+  String get contractorPortalCouldNotLoadJobs => 'Couldn\'t load jobs';
+
+  @override
+  String contractorPortalLocationLabel(String location) {
+    return 'Location: $location';
+  }
+
+  @override
+  String contractorPortalClaimedLabel(String date) {
+    return 'Claimed: $date';
+  }
+
+  @override
+  String contractorPortalCreatedLabel(String date) {
+    return 'Created: $date';
+  }
+
+  @override
+  String get contractorPortalJobsSubtitle =>
+      'Browse and purchase customer project leads';
+
+  @override
+  String get contractorPortalMyClaimedJobs => 'My Claimed Jobs';
+
+  @override
+  String get contractorPortalPlanSubtitle =>
+      'Manage your account, credits, and subscription';
+
+  @override
+  String get contractorPortalCouldNotLoadAccount =>
+      'Couldn\'t load account info';
+
+  @override
+  String get contractorPortalTrackPerformance => 'Track performance and growth';
+
+  @override
+  String get keepScheduleUpToDate => 'Keep your schedule up to date';
+
+  @override
+  String get controlWhereYouGetLeads => 'Control where you get leads';
+
+  @override
+  String get showcaseBestWork => 'Showcase your best work';
+
+  @override
+  String get manageCompanyDetails => 'Manage company details';
+
+  @override
+  String get answerCustomerQuestions => 'Answer common customer questions';
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

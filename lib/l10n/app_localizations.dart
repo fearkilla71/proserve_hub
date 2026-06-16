@@ -1922,6 +1922,408 @@ abstract class AppLocalizations {
   /// **' (total: {total})'**
   String bidAnalyzerLocalSummaryTotal(String total);
 
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @upgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get upgrade;
+
+  /// No description provided for @signInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required'**
+  String get signInRequired;
+
+  /// No description provided for @checkConnectionTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get checkConnectionTryAgain;
+
+  /// No description provided for @pullToRefreshTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh or try again in a moment.'**
+  String get pullToRefreshTryAgain;
+
+  /// No description provided for @service.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get service;
+
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
+
+  /// No description provided for @escrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow'**
+  String get escrow;
+
+  /// No description provided for @approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get approved;
+
+  /// No description provided for @pendingAdminApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Admin Approval'**
+  String get pendingAdminApproval;
+
+  /// No description provided for @payoutsConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts connected'**
+  String get payoutsConnected;
+
+  /// No description provided for @payoutsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts pending'**
+  String get payoutsPending;
+
+  /// No description provided for @payoutsSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts setup'**
+  String get payoutsSetup;
+
+  /// No description provided for @payoutsNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts not connected'**
+  String get payoutsNotConnected;
+
+  /// No description provided for @accountOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Account overview'**
+  String get accountOverview;
+
+  /// No description provided for @nonExclusiveCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-exclusive credits: {count}'**
+  String nonExclusiveCredits(int count);
+
+  /// No description provided for @exclusiveCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive credits: {count}'**
+  String exclusiveCredits(int count);
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// No description provided for @updatePublicContractorInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your public contractor info'**
+  String get updatePublicContractorInfo;
+
+  /// No description provided for @getVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Get verified'**
+  String get getVerified;
+
+  /// No description provided for @improveTrustWinMoreWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve trust and win more work'**
+  String get improveTrustWinMoreWork;
+
+  /// No description provided for @analytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get analytics;
+
+  /// No description provided for @availability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get availability;
+
+  /// No description provided for @serviceArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Service area'**
+  String get serviceArea;
+
+  /// No description provided for @businessProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Business profile'**
+  String get businessProfile;
+
+  /// No description provided for @qAndA.
+  ///
+  /// In en, this message translates to:
+  /// **'Q&A'**
+  String get qAndA;
+
+  /// No description provided for @contractorPortalWelcomeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'there'**
+  String get contractorPortalWelcomeFallback;
+
+  /// No description provided for @contractorPortalProRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor Pro required'**
+  String get contractorPortalProRequiredTitle;
+
+  /// No description provided for @contractorPortalProRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock the Pricing Calculator, Cost Estimator, and Render Tool with Contractor Pro.'**
+  String get contractorPortalProRequiredBody;
+
+  /// No description provided for @contractorPortalEnterpriseRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise plan required'**
+  String get contractorPortalEnterpriseRequiredTitle;
+
+  /// No description provided for @contractorPortalEnterpriseBoardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The Subcontractor Board is available on the Enterprise plan. Upgrade to post and browse subcontract jobs.'**
+  String get contractorPortalEnterpriseBoardBody;
+
+  /// No description provided for @contractorPortalEnterpriseToolsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Enterprise for multi-location operations, subcontractor marketplace workflows, bid analysis, crew scheduling, and quality reports.'**
+  String get contractorPortalEnterpriseToolsBody;
+
+  /// No description provided for @contractorPortalBrowseJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse jobs'**
+  String get contractorPortalBrowseJobs;
+
+  /// No description provided for @contractorPortalFindNewLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Find new leads'**
+  String get contractorPortalFindNewLeads;
+
+  /// No description provided for @contractorPortalReplyFaster.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply faster'**
+  String get contractorPortalReplyFaster;
+
+  /// No description provided for @contractorPortalPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get contractorPortalPortfolio;
+
+  /// No description provided for @contractorPortalShowcaseYourWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Showcase your work'**
+  String get contractorPortalShowcaseYourWork;
+
+  /// No description provided for @contractorPortalPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get contractorPortalPayments;
+
+  /// No description provided for @contractorPortalTrackEarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Track earnings'**
+  String get contractorPortalTrackEarnings;
+
+  /// No description provided for @contractorPortalSubcontractJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Subcontract jobs'**
+  String get contractorPortalSubcontractJobs;
+
+  /// No description provided for @contractorPortalViewPostedWork.
+  ///
+  /// In en, this message translates to:
+  /// **'View posted work'**
+  String get contractorPortalViewPostedWork;
+
+  /// No description provided for @contractorPortalPostJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a job'**
+  String get contractorPortalPostJob;
+
+  /// No description provided for @contractorPortalShareOverflowWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Share overflow work'**
+  String get contractorPortalShareOverflowWork;
+
+  /// No description provided for @contractorPortalCrewRoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew roster'**
+  String get contractorPortalCrewRoster;
+
+  /// No description provided for @contractorPortalManageTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your team'**
+  String get contractorPortalManageTeam;
+
+  /// No description provided for @contractorPortalLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get contractorPortalLeaderboard;
+
+  /// No description provided for @contractorPortalXpRankings.
+  ///
+  /// In en, this message translates to:
+  /// **'XP rankings'**
+  String get contractorPortalXpRankings;
+
+  /// No description provided for @contractorPortalProfitLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & Loss'**
+  String get contractorPortalProfitLoss;
+
+  /// No description provided for @contractorPortalFinancialDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial dashboard'**
+  String get contractorPortalFinancialDashboard;
+
+  /// No description provided for @contractorPortalAiSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Support'**
+  String get contractorPortalAiSupport;
+
+  /// No description provided for @contractorPortalInstantHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Get instant help 24/7'**
+  String get contractorPortalInstantHelp;
+
+  /// No description provided for @contractorPortalNoClaimedJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'No claimed jobs yet'**
+  String get contractorPortalNoClaimedJobs;
+
+  /// No description provided for @contractorPortalNoClaimedJobsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse leads and purchase one to start a conversation with the customer.'**
+  String get contractorPortalNoClaimedJobsSubtitle;
+
+  /// No description provided for @contractorPortalCouldNotLoadJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load jobs'**
+  String get contractorPortalCouldNotLoadJobs;
+
+  /// No description provided for @contractorPortalLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location: {location}'**
+  String contractorPortalLocationLabel(String location);
+
+  /// No description provided for @contractorPortalClaimedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed: {date}'**
+  String contractorPortalClaimedLabel(String date);
+
+  /// No description provided for @contractorPortalCreatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created: {date}'**
+  String contractorPortalCreatedLabel(String date);
+
+  /// No description provided for @contractorPortalJobsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse and purchase customer project leads'**
+  String get contractorPortalJobsSubtitle;
+
+  /// No description provided for @contractorPortalMyClaimedJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'My Claimed Jobs'**
+  String get contractorPortalMyClaimedJobs;
+
+  /// No description provided for @contractorPortalPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your account, credits, and subscription'**
+  String get contractorPortalPlanSubtitle;
+
+  /// No description provided for @contractorPortalCouldNotLoadAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load account info'**
+  String get contractorPortalCouldNotLoadAccount;
+
+  /// No description provided for @contractorPortalTrackPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Track performance and growth'**
+  String get contractorPortalTrackPerformance;
+
+  /// No description provided for @keepScheduleUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your schedule up to date'**
+  String get keepScheduleUpToDate;
+
+  /// No description provided for @controlWhereYouGetLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Control where you get leads'**
+  String get controlWhereYouGetLeads;
+
+  /// No description provided for @showcaseBestWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Showcase your best work'**
+  String get showcaseBestWork;
+
+  /// No description provided for @manageCompanyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage company details'**
+  String get manageCompanyDetails;
+
+  /// No description provided for @answerCustomerQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer common customer questions'**
+  String get answerCustomerQuestions;
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:
