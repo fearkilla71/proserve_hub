@@ -5,8 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 
-import '../constants/service_types.dart';
-
 import 'contractor_login_page.dart';
 import 'community_feed_screen.dart';
 
@@ -19,6 +17,7 @@ import '../widgets/profile_completion_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/persistent_job_state_bar.dart';
 import '../widgets/contractor_portal_helpers.dart';
+import '../widgets/contractor_tools_hub.dart';
 import '../widgets/tools_quick_actions_sheet.dart';
 import '../widgets/contractor_card_builder.dart';
 import 'onboarding_screen.dart';
@@ -209,11 +208,89 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     }
   }
 
+  Future<void> _openEnterpriseToolOrSubscribe({
+    required Future<void> Function() open,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    bool unlocked = false;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get(const GetOptions(source: Source.serverAndCache));
+      unlocked = isEnterpriseFromUserDoc(snap.data());
+    } catch (e) {
+      debugPrint('Enterprise tool unlock check failed: $e');
+    }
+
+    if (unlocked) {
+      await open();
+      return;
+    }
+
+    if (!mounted) return;
+    final shouldSubscribe = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enterprise plan required',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Upgrade to Enterprise for multi-location operations, '
+                  'subcontractor marketplace workflows, bid analysis, '
+                  'crew scheduling, and quality reports.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Not now'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Upgrade'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (shouldSubscribe == true && mounted) {
+      context.push('/contractor-subscription');
+    }
+  }
+
   Future<void> _showToolsQuickActions(BuildContext context) async {
     await showToolsQuickActions(
       sheetContext: context,
       parentContext: this.context,
       openProToolOrSubscribe: _openPricingToolsOrSubscribe,
+      openEnterpriseToolOrSubscribe: _openEnterpriseToolOrSubscribe,
     );
   }
 
@@ -823,304 +900,16 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           .snapshots(),
       builder: (context, snap) {
         final data = snap.data?.data();
-        final unlocked = pricingToolsUnlockedFromUserDoc(data);
 
         Future<void> openSubscription() async {
           context.push('/contractor-subscription');
         }
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            const PageHeader(
-              title: 'Tools',
-              subtitle: 'AI-powered tools to help you win more work',
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 12),
-            ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Contractor Pro',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                        if (unlocked)
-                          const Chip(
-                            label: Text('Active'),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      r'$11.99 / month',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Unlocks: Pricing Calculator + Cost Estimator.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.workspace_premium),
-                        onPressed: openSubscription,
-                        label: Text(
-                          unlocked ? 'Manage subscription' : 'Subscribe',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.auto_awesome_outlined),
-                    title: const Text('AI Invoice Maker'),
-                    subtitle: const Text(
-                      'Generate line items, terms, and export PDF',
-                    ),
-                    trailing: Icon(unlocked ? Icons.chevron_right : Icons.lock),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/invoice-maker');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.folder_open : Icons.lock),
-                    title: const Text('Invoices'),
-                    subtitle: const Text(
-                      'Browse saved invoices & track status',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/invoice-drafts');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.calculate : Icons.lock),
-                    title: const Text('Pricing Calculator'),
-                    subtitle: const Text('Better pricing, faster quotes'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/pricing-calculator');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.receipt_long : Icons.lock),
-                    title: const Text('Cost Estimator'),
-                    subtitle: const Text('Quick cost breakdown by service'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Select Service Type'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: kPaintingServices.map((service) {
-                                    return ListTile(
-                                      title: Text(service),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        context.push(
-                                          '/cost-estimator/$service',
-                                        );
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(
-                      unlocked ? Icons.palette_outlined : Icons.lock,
-                    ),
-                    title: const Text('Render Tool'),
-                    subtitle: const Text('Preview wall colors on photos'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/render-tool');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(
-                      unlocked ? Icons.photo_library_outlined : Icons.lock,
-                    ),
-                    title: const Text('Render Gallery'),
-                    subtitle: const Text('Browse saved renders by room'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/render-gallery');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.folder_open : Icons.lock),
-                    title: const Text('Saved Estimates'),
-                    subtitle: const Text('Browse, edit & share past estimates'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/saved-estimates');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // ── Enterprise PRO Tools ──
-            Card(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Enterprise Tools',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                        const Chip(
-                          label: Text('PRO', style: TextStyle(fontSize: 10)),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ],
-                    ),
-                  ),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.auto_awesome : Icons.lock),
-                    title: const Text('Smart Scheduling AI'),
-                    subtitle: const Text('AI-optimized weekly crew schedules'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/smart-scheduling');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.camera_enhance : Icons.lock),
-                    title: const Text('AI Quality Inspector'),
-                    subtitle: const Text('Detect defects in completion photos'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/quality-inspector');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.dashboard : Icons.lock),
-                    title: const Text('Multi-Location Dashboard'),
-                    subtitle: const Text(
-                      'Track all crews, locations & revenue',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/multi-location-dashboard');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.storefront : Icons.lock),
-                    title: const Text('Sub Marketplace'),
-                    subtitle: const Text(
-                      'Post overflow jobs, hire verified subs',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/sub-marketplace');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(unlocked ? Icons.analytics : Icons.lock),
-                    title: const Text('AI Bid Analyzer'),
-                    subtitle: const Text('Compare competitor bids with AI'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await _openPricingToolsOrSubscribe(
-                        open: () async {
-                          context.push('/bid-analyzer');
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                ],
-              ),
-            ),
-          ],
+        return ContractorToolsHub(
+          userData: data,
+          openSubscription: openSubscription,
+          openProToolOrSubscribe: _openPricingToolsOrSubscribe,
+          openEnterpriseToolOrSubscribe: _openEnterpriseToolOrSubscribe,
         );
       },
     );

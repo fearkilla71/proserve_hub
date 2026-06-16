@@ -1154,6 +1154,480 @@ abstract class AppLocalizations {
   /// **'No subscription products are available for this Apple sandbox account yet.'**
   String get subscriptionNoProductsAvailable;
 
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @subscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get subscribe;
+
+  /// No description provided for @manageSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage subscription'**
+  String get manageSubscription;
+
+  /// No description provided for @toolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get toolsTitle;
+
+  /// No description provided for @toolsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Win work, estimate faster, manage jobs, and get paid'**
+  String get toolsSubtitle;
+
+  /// No description provided for @toolsTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get toolsTodayTitle;
+
+  /// No description provided for @toolsTodaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contractor operating system at a glance.'**
+  String get toolsTodaySubtitle;
+
+  /// No description provided for @toolsPayoutsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts ready'**
+  String get toolsPayoutsReady;
+
+  /// No description provided for @toolsPayoutsNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect payouts'**
+  String get toolsPayoutsNotConnected;
+
+  /// No description provided for @toolsLeadCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} lead credits'**
+  String toolsLeadCredits(int count);
+
+  /// No description provided for @toolsProActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro active'**
+  String get toolsProActive;
+
+  /// No description provided for @toolsProLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro locked'**
+  String get toolsProLocked;
+
+  /// No description provided for @toolsEnterpriseActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise active'**
+  String get toolsEnterpriseActive;
+
+  /// No description provided for @toolsEnterpriseLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise locked'**
+  String get toolsEnterpriseLocked;
+
+  /// No description provided for @toolsReviewSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Review setup'**
+  String get toolsReviewSetup;
+
+  /// No description provided for @contractorProTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor Pro'**
+  String get contractorProTitle;
+
+  /// No description provided for @contractorProPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'\$11.99 / month'**
+  String get contractorProPrice;
+
+  /// No description provided for @contractorProUnlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock invoices, pricing, estimates, renders, and stronger daily tools.'**
+  String get contractorProUnlocks;
+
+  /// No description provided for @accessPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro'**
+  String get accessPro;
+
+  /// No description provided for @accessEnterprise.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise'**
+  String get accessEnterprise;
+
+  /// No description provided for @lockedPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro locked'**
+  String get lockedPro;
+
+  /// No description provided for @lockedEnterprise.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise locked'**
+  String get lockedEnterprise;
+
+  /// No description provided for @toolsSectionWinWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Win Work'**
+  String get toolsSectionWinWork;
+
+  /// No description provided for @toolsSectionEstimateQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate & Quote'**
+  String get toolsSectionEstimateQuote;
+
+  /// No description provided for @toolsSectionGetPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Paid'**
+  String get toolsSectionGetPaid;
+
+  /// No description provided for @toolsSectionManageJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Jobs'**
+  String get toolsSectionManageJobs;
+
+  /// No description provided for @toolsSectionGrowOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow Operations'**
+  String get toolsSectionGrowOperations;
+
+  /// No description provided for @toolAiInvoiceMakerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Invoice Maker'**
+  String get toolAiInvoiceMakerTitle;
+
+  /// No description provided for @toolAiInvoiceMakerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a client or job, build line items, terms, deposits, and payment links.'**
+  String get toolAiInvoiceMakerSubtitle;
+
+  /// No description provided for @toolInvoicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get toolInvoicesTitle;
+
+  /// No description provided for @toolInvoicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter drafts, sent, paid, and overdue invoices; resend reminders.'**
+  String get toolInvoicesSubtitle;
+
+  /// No description provided for @toolPricingCalculatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing Calculator'**
+  String get toolPricingCalculatorTitle;
+
+  /// No description provided for @toolPricingCalculatorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use labor, material, margin, and market assumptions to price jobs.'**
+  String get toolPricingCalculatorSubtitle;
+
+  /// No description provided for @toolCostEstimatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Estimator'**
+  String get toolCostEstimatorTitle;
+
+  /// No description provided for @toolCostEstimatorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create detailed cost estimates with editable assumptions and revisions.'**
+  String get toolCostEstimatorSubtitle;
+
+  /// No description provided for @toolRenderToolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Render Tool'**
+  String get toolRenderToolTitle;
+
+  /// No description provided for @toolRenderToolSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview colors, rooms, and surfaces before sending a proposal.'**
+  String get toolRenderToolSubtitle;
+
+  /// No description provided for @toolRenderGalleryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Render Gallery'**
+  String get toolRenderGalleryTitle;
+
+  /// No description provided for @toolRenderGallerySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize renders by client, job, room, and share-ready packs.'**
+  String get toolRenderGallerySubtitle;
+
+  /// No description provided for @toolSavedEstimatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Estimates'**
+  String get toolSavedEstimatesTitle;
+
+  /// No description provided for @toolSavedEstimatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate, revise, compare, share, and convert estimates.'**
+  String get toolSavedEstimatesSubtitle;
+
+  /// No description provided for @toolSmartSchedulingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Scheduling AI'**
+  String get toolSmartSchedulingTitle;
+
+  /// No description provided for @toolSmartSchedulingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance crews, priorities, travel, and weather risk across the week.'**
+  String get toolSmartSchedulingSubtitle;
+
+  /// No description provided for @toolQualityInspectorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Quality Inspector'**
+  String get toolQualityInspectorTitle;
+
+  /// No description provided for @toolQualityInspectorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review job photos with checklists, defects, severity, and reports.'**
+  String get toolQualityInspectorSubtitle;
+
+  /// No description provided for @toolMultiLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-Location Dashboard'**
+  String get toolMultiLocationTitle;
+
+  /// No description provided for @toolMultiLocationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track revenue, active jobs, crews, unpaid invoices, and lead conversion.'**
+  String get toolMultiLocationSubtitle;
+
+  /// No description provided for @toolSubMarketplaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub Marketplace'**
+  String get toolSubMarketplaceTitle;
+
+  /// No description provided for @toolSubMarketplaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post overflow work, compare bids, verify subs, and hand off jobs.'**
+  String get toolSubMarketplaceSubtitle;
+
+  /// No description provided for @toolBidAnalyzerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Bid Analyzer'**
+  String get toolBidAnalyzerTitle;
+
+  /// No description provided for @toolBidAnalyzerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract line items, score margin risk, and generate counter-bids.'**
+  String get toolBidAnalyzerSubtitle;
+
+  /// No description provided for @toolSelectServiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Service Type'**
+  String get toolSelectServiceType;
+
+  /// No description provided for @toolActionUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get toolActionUnlock;
+
+  /// No description provided for @toolActionAnalyzeBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze bid'**
+  String get toolActionAnalyzeBid;
+
+  /// No description provided for @toolActionPostJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post job'**
+  String get toolActionPostJob;
+
+  /// No description provided for @toolActionPriceJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Price job'**
+  String get toolActionPriceJob;
+
+  /// No description provided for @toolActionEstimateCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate cost'**
+  String get toolActionEstimateCost;
+
+  /// No description provided for @toolActionReviewEstimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Review estimates'**
+  String get toolActionReviewEstimates;
+
+  /// No description provided for @toolActionCreateInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get toolActionCreateInvoice;
+
+  /// No description provided for @toolActionTrackInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Track invoices'**
+  String get toolActionTrackInvoices;
+
+  /// No description provided for @toolActionBuildSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Build schedule'**
+  String get toolActionBuildSchedule;
+
+  /// No description provided for @toolActionInspectPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect photos'**
+  String get toolActionInspectPhotos;
+
+  /// No description provided for @toolActionCreateRender.
+  ///
+  /// In en, this message translates to:
+  /// **'Create render'**
+  String get toolActionCreateRender;
+
+  /// No description provided for @toolActionOpenGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Open gallery'**
+  String get toolActionOpenGallery;
+
+  /// No description provided for @toolActionReviewLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Review locations'**
+  String get toolActionReviewLocations;
+
+  /// No description provided for @toolMetricRiskScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk score'**
+  String get toolMetricRiskScore;
+
+  /// No description provided for @toolMetricVerifiedSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified subs'**
+  String get toolMetricVerifiedSubs;
+
+  /// No description provided for @toolMetricMarginReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin ready'**
+  String get toolMetricMarginReady;
+
+  /// No description provided for @toolMetricRevisionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision history'**
+  String get toolMetricRevisionHistory;
+
+  /// No description provided for @toolMetricQuoteReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote ready'**
+  String get toolMetricQuoteReady;
+
+  /// No description provided for @toolMetricPaymentLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment link'**
+  String get toolMetricPaymentLink;
+
+  /// No description provided for @toolMetricOverdueBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue badges'**
+  String get toolMetricOverdueBadges;
+
+  /// No description provided for @toolMetricConflictWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict warnings'**
+  String get toolMetricConflictWarnings;
+
+  /// No description provided for @toolMetricReportPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Report PDF'**
+  String get toolMetricReportPdf;
+
+  /// No description provided for @toolMetricClientShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Client share'**
+  String get toolMetricClientShare;
+
+  /// No description provided for @toolMetricFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get toolMetricFolders;
+
+  /// No description provided for @toolMetricOwnerSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner summary'**
+  String get toolMetricOwnerSummary;
+
+  /// No description provided for @boostListingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost Listing'**
+  String get boostListingTitle;
+
+  /// No description provided for @boostListingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Appear first in search results'**
+  String get boostListingSubtitle;
+
   /// Retry button label
   ///
   /// In en, this message translates to:

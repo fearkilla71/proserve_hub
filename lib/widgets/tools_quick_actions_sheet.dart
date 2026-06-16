@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../constants/service_types.dart';
+import '../l10n/app_localizations.dart';
 
 /// Shows the tools quick-actions bottom sheet.
 ///
@@ -12,11 +13,15 @@ Future<void> showToolsQuickActions({
   required BuildContext parentContext,
   required Future<void> Function({required Future<void> Function() open})
   openProToolOrSubscribe,
+  required Future<void> Function({required Future<void> Function() open})
+  openEnterpriseToolOrSubscribe,
 }) async {
   await showModalBottomSheet<void>(
     context: sheetContext,
     showDragHandle: true,
     builder: (context) {
+      final l10n = AppLocalizations.of(context)!;
+
       Widget tile({
         required IconData icon,
         required String title,
@@ -39,7 +44,7 @@ Future<void> showToolsQuickActions({
           shrinkWrap: true,
           children: [
             Text(
-              'Tools',
+              l10n.toolsTitle,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -50,8 +55,8 @@ Future<void> showToolsQuickActions({
                 children: [
                   tile(
                     icon: Icons.auto_awesome_outlined,
-                    title: 'AI Invoice Maker',
-                    subtitle: 'Generate line items and export PDF',
+                    title: l10n.toolAiInvoiceMakerTitle,
+                    subtitle: l10n.toolAiInvoiceMakerSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -62,8 +67,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.folder_open,
-                    title: 'Invoices',
-                    subtitle: 'Browse saved invoices & track status',
+                    title: l10n.toolInvoicesTitle,
+                    subtitle: l10n.toolInvoicesSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -74,7 +79,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.calculate,
-                    title: 'Pricing Calculator',
+                    title: l10n.toolPricingCalculatorTitle,
+                    subtitle: l10n.toolPricingCalculatorSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -86,7 +92,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.receipt_long,
-                    title: 'Cost Estimator',
+                    title: l10n.toolCostEstimatorTitle,
+                    subtitle: l10n.toolCostEstimatorSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -94,7 +101,7 @@ Future<void> showToolsQuickActions({
                           showDialog(
                             context: parentContext,
                             builder: (dlgCtx) => AlertDialog(
-                              title: const Text('Select Service Type'),
+                              title: Text(l10n.toolSelectServiceType),
                               content: SingleChildScrollView(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -122,8 +129,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.palette_outlined,
-                    title: 'Render Tool',
-                    subtitle: 'Preview wall colors on photos',
+                    title: l10n.toolRenderToolTitle,
+                    subtitle: l10n.toolRenderToolSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -134,8 +141,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.photo_library_outlined,
-                    title: 'Render Gallery',
-                    subtitle: 'Browse saved renders by room',
+                    title: l10n.toolRenderGalleryTitle,
+                    subtitle: l10n.toolRenderGallerySubtitle,
                     onTap: () async {
                       Navigator.pop(context);
                       await openProToolOrSubscribe(
@@ -146,11 +153,11 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.auto_awesome,
-                    title: 'Smart Scheduling AI',
-                    subtitle: 'AI-optimized crew schedules',
+                    title: l10n.toolSmartSchedulingTitle,
+                    subtitle: l10n.toolSmartSchedulingSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
-                      await openProToolOrSubscribe(
+                      await openEnterpriseToolOrSubscribe(
                         open: () async =>
                             parentContext.push('/smart-scheduling'),
                       );
@@ -159,11 +166,11 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.camera_enhance,
-                    title: 'AI Quality Inspector',
-                    subtitle: 'Detect defects in photos',
+                    title: l10n.toolQualityInspectorTitle,
+                    subtitle: l10n.toolQualityInspectorSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
-                      await openProToolOrSubscribe(
+                      await openEnterpriseToolOrSubscribe(
                         open: () async =>
                             parentContext.push('/quality-inspector'),
                       );
@@ -172,11 +179,11 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.dashboard,
-                    title: 'Multi-Location Dashboard',
-                    subtitle: 'Track crews & revenue',
+                    title: l10n.toolMultiLocationTitle,
+                    subtitle: l10n.toolMultiLocationSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
-                      await openProToolOrSubscribe(
+                      await openEnterpriseToolOrSubscribe(
                         open: () async =>
                             parentContext.push('/multi-location-dashboard'),
                       );
@@ -185,11 +192,11 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.storefront,
-                    title: 'Sub Marketplace',
-                    subtitle: 'Post jobs for sub bids',
+                    title: l10n.toolSubMarketplaceTitle,
+                    subtitle: l10n.toolSubMarketplaceSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
-                      await openProToolOrSubscribe(
+                      await openEnterpriseToolOrSubscribe(
                         open: () async =>
                             parentContext.push('/sub-marketplace'),
                       );
@@ -198,11 +205,11 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.analytics,
-                    title: 'AI Bid Analyzer',
-                    subtitle: 'Compare competitor bids',
+                    title: l10n.toolBidAnalyzerTitle,
+                    subtitle: l10n.toolBidAnalyzerSubtitle,
                     onTap: () async {
                       Navigator.pop(context);
-                      await openProToolOrSubscribe(
+                      await openEnterpriseToolOrSubscribe(
                         open: () async => parentContext.push('/bid-analyzer'),
                       );
                     },
@@ -210,7 +217,7 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.workspace_premium,
-                    title: 'Subscribe (\$11.99/mo)',
+                    title: l10n.subscribe,
                     onTap: () {
                       Navigator.pop(context);
                       parentContext.push('/contractor-subscription');
@@ -219,8 +226,8 @@ Future<void> showToolsQuickActions({
                   divider,
                   tile(
                     icon: Icons.rocket_launch,
-                    title: 'Boost Listing',
-                    subtitle: 'Appear first in search results',
+                    title: l10n.boostListingTitle,
+                    subtitle: l10n.boostListingSubtitle,
                     onTap: () {
                       Navigator.pop(context);
                       parentContext.push('/boost-listing');

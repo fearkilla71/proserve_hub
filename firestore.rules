@@ -110,6 +110,12 @@ service cloud.firestore {
       return isSignedIn() && myCredits() > 0;
     }
 
+    function isSubMarketplacePoster(listingId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/sub_marketplace/$(listingId))
+        && get(/databases/$(database)/documents/sub_marketplace/$(listingId)).data.postedBy == request.auth.uid;
+    }
+
     function bidInvite(jobId) {
       return get(/databases/$(database)/documents/bid_invites/$(jobId + '_' + request.auth.uid)).data;
     }
@@ -255,6 +261,35 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
+    // Contractor tool artifacts that belong to a single signed-in user.
+    match /users/{uid}/render_history/{renderId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/quality_reports/{reportId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/bid_analyses/{analysisId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/locations/{locationId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/job_pipeline/{jobId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/schedules/{scheduleId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/crews/{crewId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // Trusted pros (customer's curated contractor shortlist).
     match /users/{uid}/trusted_pros/{contractorId} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
@@ -355,6 +390,14 @@ service cloud.firestore {
         allow create, update: if isSignedIn() && request.auth.uid == uid;
         allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
       }
+
+      match /saved_estimates/{estimateId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      match /cost_estimates/{estimateId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // --- REVIEWS ---
@@ -375,6 +418,41 @@ service cloud.firestore {
       allow get: if isSignedIn();
       allow list: if false;
       allow create, update, delete: if isAdmin();
+    }
+
+    // --- SUBCONTRACTOR MARKETPLACE ---
+    match /sub_marketplace/{listingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.postedBy == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if isAdmin()
+        || (isSignedIn() && resource.data.postedBy == request.auth.uid)
+        || (
+          isSignedIn()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['bidCount'])
+          && request.resource.data.bidCount == resource.data.bidCount + 1
+        );
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.postedBy == request.auth.uid);
+    }
+
+    match /sub_marketplace_bids/{bidId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.bidderId == request.auth.uid
+        && request.resource.data.listingId is string
+        && request.resource.data.status == 'pending'
+        && !isSubMarketplacePoster(request.resource.data.listingId);
+      allow update: if isAdmin()
+        || (isSignedIn() && resource.data.bidderId == request.auth.uid)
+        || (
+          isSubMarketplacePoster(resource.data.listingId)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
+        );
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.bidderId == request.auth.uid)
+        || isSubMarketplacePoster(resource.data.listingId);
     }
 
     // --- PAYMENTS ---

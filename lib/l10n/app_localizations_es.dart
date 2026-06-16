@@ -598,5 +598,260 @@ class AppLocalizationsEs extends AppLocalizations {
       'Aún no hay productos de suscripción disponibles para esta cuenta sandbox de Apple.';
 
   @override
+  String get active => 'Activo';
+
+  @override
+  String get subscribe => 'Suscribirse';
+
+  @override
+  String get manageSubscription => 'Administrar suscripción';
+
+  @override
+  String get toolsTitle => 'Herramientas';
+
+  @override
+  String get toolsSubtitle =>
+      'Gana trabajos, cotiza más rápido, administra proyectos y cobra pagos';
+
+  @override
+  String get toolsTodayTitle => 'Hoy';
+
+  @override
+  String get toolsTodaySubtitle =>
+      'Tu sistema operativo de contratista de un vistazo.';
+
+  @override
+  String get toolsPayoutsReady => 'Pagos listos';
+
+  @override
+  String get toolsPayoutsNotConnected => 'Conectar pagos';
+
+  @override
+  String toolsLeadCredits(int count) {
+    return '$count créditos de leads';
+  }
+
+  @override
+  String get toolsProActive => 'Pro activo';
+
+  @override
+  String get toolsProLocked => 'Pro bloqueado';
+
+  @override
+  String get toolsEnterpriseActive => 'Enterprise activo';
+
+  @override
+  String get toolsEnterpriseLocked => 'Enterprise bloqueado';
+
+  @override
+  String get toolsReviewSetup => 'Revisar configuración';
+
+  @override
+  String get contractorProTitle => 'Contractor Pro';
+
+  @override
+  String get contractorProPrice => '\$11.99 / mes';
+
+  @override
+  String get contractorProUnlocks =>
+      'Desbloquea facturas, precios, presupuestos, renders y mejores herramientas diarias.';
+
+  @override
+  String get accessPro => 'Pro';
+
+  @override
+  String get accessEnterprise => 'Enterprise';
+
+  @override
+  String get lockedPro => 'Pro bloqueado';
+
+  @override
+  String get lockedEnterprise => 'Enterprise bloqueado';
+
+  @override
+  String get toolsSectionWinWork => 'Ganar trabajos';
+
+  @override
+  String get toolsSectionEstimateQuote => 'Presupuestar y cotizar';
+
+  @override
+  String get toolsSectionGetPaid => 'Cobrar pagos';
+
+  @override
+  String get toolsSectionManageJobs => 'Administrar trabajos';
+
+  @override
+  String get toolsSectionGrowOperations => 'Crecer operaciones';
+
+  @override
+  String get toolAiInvoiceMakerTitle => 'Creador de facturas con IA';
+
+  @override
+  String get toolAiInvoiceMakerSubtitle =>
+      'Elige un cliente o trabajo, crea partidas, términos, depósitos y enlaces de pago.';
+
+  @override
+  String get toolInvoicesTitle => 'Facturas';
+
+  @override
+  String get toolInvoicesSubtitle =>
+      'Filtra borradores, enviadas, pagadas y vencidas; envía recordatorios.';
+
+  @override
+  String get toolPricingCalculatorTitle => 'Calculadora de precios';
+
+  @override
+  String get toolPricingCalculatorSubtitle =>
+      'Usa mano de obra, materiales, margen y mercado para poner precio al trabajo.';
+
+  @override
+  String get toolCostEstimatorTitle => 'Estimador de costos';
+
+  @override
+  String get toolCostEstimatorSubtitle =>
+      'Crea presupuestos detallados con supuestos editables y revisiones.';
+
+  @override
+  String get toolRenderToolTitle => 'Herramienta de renders';
+
+  @override
+  String get toolRenderToolSubtitle =>
+      'Previsualiza colores, habitaciones y superficies antes de enviar una propuesta.';
+
+  @override
+  String get toolRenderGalleryTitle => 'Galería de renders';
+
+  @override
+  String get toolRenderGallerySubtitle =>
+      'Organiza renders por cliente, trabajo, habitación y paquetes para compartir.';
+
+  @override
+  String get toolSavedEstimatesTitle => 'Presupuestos guardados';
+
+  @override
+  String get toolSavedEstimatesSubtitle =>
+      'Duplica, revisa, compara, comparte y convierte presupuestos.';
+
+  @override
+  String get toolSmartSchedulingTitle => 'Programación inteligente con IA';
+
+  @override
+  String get toolSmartSchedulingSubtitle =>
+      'Equilibra equipos, prioridades, traslados y riesgo climático en la semana.';
+
+  @override
+  String get toolQualityInspectorTitle => 'Inspector de calidad con IA';
+
+  @override
+  String get toolQualityInspectorSubtitle =>
+      'Revisa fotos del trabajo con listas, defectos, severidad e informes.';
+
+  @override
+  String get toolMultiLocationTitle => 'Panel multiubicación';
+
+  @override
+  String get toolMultiLocationSubtitle =>
+      'Controla ingresos, trabajos activos, equipos, facturas sin pagar y conversión de leads.';
+
+  @override
+  String get toolSubMarketplaceTitle => 'Mercado de subcontratistas';
+
+  @override
+  String get toolSubMarketplaceSubtitle =>
+      'Publica trabajo sobrante, compara ofertas, verifica subs y transfiere trabajos.';
+
+  @override
+  String get toolBidAnalyzerTitle => 'Analizador de cotizaciones con IA';
+
+  @override
+  String get toolBidAnalyzerSubtitle =>
+      'Extrae partidas, mide riesgo de margen y genera contraofertas.';
+
+  @override
+  String get toolSelectServiceType => 'Seleccionar tipo de servicio';
+
+  @override
+  String get toolActionUnlock => 'Desbloquear';
+
+  @override
+  String get toolActionAnalyzeBid => 'Analizar cotización';
+
+  @override
+  String get toolActionPostJob => 'Publicar trabajo';
+
+  @override
+  String get toolActionPriceJob => 'Poner precio';
+
+  @override
+  String get toolActionEstimateCost => 'Estimar costo';
+
+  @override
+  String get toolActionReviewEstimates => 'Revisar presupuestos';
+
+  @override
+  String get toolActionCreateInvoice => 'Crear factura';
+
+  @override
+  String get toolActionTrackInvoices => 'Ver facturas';
+
+  @override
+  String get toolActionBuildSchedule => 'Crear agenda';
+
+  @override
+  String get toolActionInspectPhotos => 'Inspeccionar fotos';
+
+  @override
+  String get toolActionCreateRender => 'Crear render';
+
+  @override
+  String get toolActionOpenGallery => 'Abrir galería';
+
+  @override
+  String get toolActionReviewLocations => 'Revisar ubicaciones';
+
+  @override
+  String get toolMetricRiskScore => 'Riesgo';
+
+  @override
+  String get toolMetricVerifiedSubs => 'Subs verificados';
+
+  @override
+  String get toolMetricMarginReady => 'Margen listo';
+
+  @override
+  String get toolMetricRevisionHistory => 'Historial';
+
+  @override
+  String get toolMetricQuoteReady => 'Cotización lista';
+
+  @override
+  String get toolMetricPaymentLink => 'Enlace de pago';
+
+  @override
+  String get toolMetricOverdueBadges => 'Vencidas';
+
+  @override
+  String get toolMetricConflictWarnings => 'Conflictos';
+
+  @override
+  String get toolMetricReportPdf => 'Informe PDF';
+
+  @override
+  String get toolMetricClientShare => 'Compartir con cliente';
+
+  @override
+  String get toolMetricFolders => 'Carpetas';
+
+  @override
+  String get toolMetricOwnerSummary => 'Resumen del dueño';
+
+  @override
+  String get boostListingTitle => 'Impulsar perfil';
+
+  @override
+  String get boostListingSubtitle =>
+      'Aparece primero en los resultados de búsqueda';
+
+  @override
   String get retry => 'Reintentar';
 }

@@ -238,4 +238,90 @@ describe('Firestore user security rules', () => {
       where(documentId(), 'in', ['invitedJobA']),
     )));
   });
+
+  it('allows owners to manage user-owned contractor tool artifacts', async () => {
+    const ownerPaths = [
+      'users/contractorA/render_history/renderA',
+      'users/contractorA/quality_reports/reportA',
+      'users/contractorA/bid_analyses/analysisA',
+      'users/contractorA/locations/locationA',
+      'users/contractorA/job_pipeline/jobA',
+      'users/contractorA/schedules/scheduleA',
+      'users/contractorA/crews/crewA',
+    ];
+
+    for (const pathName of ownerPaths) {
+      await assertSucceeds(setDoc(doc(db('contractorA'), pathName), {
+        ownerId: 'contractorA',
+        title: 'Tool artifact',
+        createdAt: new Date(),
+      }));
+      await assertSucceeds(getDoc(doc(db('contractorA'), pathName)));
+      await assertFails(getDoc(doc(db('contractorB'), pathName)));
+    }
+  });
+
+  it('allows contractors to manage their own saved and cost estimates', async () => {
+    const savedEstimate = 'contractors/contractorA/saved_estimates/estimateA';
+    const costEstimate = 'contractors/contractorA/cost_estimates/costA';
+
+    await assertSucceeds(setDoc(doc(db('contractorA'), savedEstimate), {
+      contractorId: 'contractorA',
+      clientName: 'Client',
+      total: 1200,
+    }));
+    await assertSucceeds(setDoc(doc(db('contractorA'), costEstimate), {
+      contractorId: 'contractorA',
+      serviceType: 'Interior Painting',
+      total: 900,
+    }));
+
+    await assertSucceeds(getDoc(doc(db('contractorA'), savedEstimate)));
+    await assertSucceeds(getDoc(doc(db('contractorA'), costEstimate)));
+    await assertFails(getDoc(doc(db('contractorB'), savedEstimate)));
+    await assertFails(setDoc(doc(db('contractorB'), costEstimate), {
+      contractorId: 'contractorB',
+      total: 1,
+    }));
+  });
+
+  it('protects sub marketplace listings and bids by poster and bidder', async () => {
+    await assertSucceeds(setDoc(doc(db('posterA'), 'sub_marketplace/listingA'), {
+      postedBy: 'posterA',
+      title: 'Interior overflow job',
+      status: 'open',
+      bidCount: 0,
+      createdAt: new Date(),
+    }));
+    await assertFails(setDoc(doc(db('posterB'), 'sub_marketplace/listingBad'), {
+      postedBy: 'posterA',
+      title: 'Spoofed listing',
+      status: 'open',
+      bidCount: 0,
+    }));
+    await assertSucceeds(getDocs(collection(db('bidderA'), 'sub_marketplace')));
+
+    await assertFails(setDoc(doc(db('posterA'), 'sub_marketplace_bids/selfBid'), {
+      listingId: 'listingA',
+      bidderId: 'posterA',
+      amount: 300,
+      status: 'pending',
+    }));
+    await assertSucceeds(setDoc(doc(db('bidderA'), 'sub_marketplace_bids/bidA'), {
+      listingId: 'listingA',
+      bidderId: 'bidderA',
+      amount: 300,
+      status: 'pending',
+      createdAt: new Date(),
+    }));
+    await assertSucceeds(updateDoc(doc(db('bidderA'), 'sub_marketplace/listingA'), {
+      bidCount: 1,
+    }));
+    await assertSucceeds(updateDoc(doc(db('posterA'), 'sub_marketplace_bids/bidA'), {
+      status: 'accepted',
+    }));
+    await assertFails(updateDoc(doc(db('contractorC'), 'sub_marketplace_bids/bidA'), {
+      status: 'rejected',
+    }));
+  });
 });
