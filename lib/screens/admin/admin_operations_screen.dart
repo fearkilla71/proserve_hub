@@ -2,8 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'admin_overview_tab.dart';
 import 'dispute_admin_tab.dart';
 import 'job_admin_tab.dart';
+import 'moderation_admin_tab.dart';
 import 'payment_operations_tab.dart';
 
 class AdminOperationsScreen extends StatelessWidget {
@@ -51,27 +53,31 @@ class AdminOperationsScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          length: 3,
+          length: 5,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Admin Operations'),
               bottom: const TabBar(
                 isScrollable: true,
                 tabs: [
+                  Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
                   Tab(icon: Icon(Icons.payments_outlined), text: 'Payments'),
                   Tab(icon: Icon(Icons.work_outline), text: 'Jobs'),
                   Tab(
                     icon: Icon(Icons.report_problem_outlined),
                     text: 'Disputes',
                   ),
+                  Tab(icon: Icon(Icons.flag_outlined), text: 'Moderation'),
                 ],
               ),
             ),
             body: const TabBarView(
               children: [
+                AdminOverviewTab(),
                 PaymentOperationsTab(),
                 JobAdminTab(),
                 DisputeAdminTab(),
+                ModerationAdminTab(),
               ],
             ),
           ),
