@@ -2888,6 +2888,198 @@ abstract class AppLocalizations {
   /// **'Reports marked reviewed.'**
   String get reportsMarkedReviewed;
 
+  /// No description provided for @leaveReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a Review'**
+  String get leaveReviewTitle;
+
+  /// No description provided for @reviewSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to leave a review.'**
+  String get reviewSignInRequired;
+
+  /// No description provided for @reviewSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Review submitted'**
+  String get reviewSubmitted;
+
+  /// No description provided for @reviewTrustTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help the next homeowner choose confidently'**
+  String get reviewTrustTitle;
+
+  /// No description provided for @reviewTrustSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your review improves contractor quality, pricing trust, and safety for future jobs.'**
+  String get reviewTrustSubtitle;
+
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// No description provided for @reviewRatingSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} star rating'**
+  String reviewRatingSemantics(int count);
+
+  /// No description provided for @reviewRatingHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected rating: {count}/5'**
+  String reviewRatingHelper(int count);
+
+  /// No description provided for @reviewCommentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get reviewCommentLabel;
+
+  /// No description provided for @reviewCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What went well? Was the contractor on time, clear, and professional?'**
+  String get reviewCommentHint;
+
+  /// No description provided for @submitReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Review'**
+  String get submitReview;
+
+  /// No description provided for @bidsSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to view bids.'**
+  String get bidsSignInRequired;
+
+  /// No description provided for @compareBids.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Bids'**
+  String get compareBids;
+
+  /// No description provided for @noBidsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No bids yet'**
+  String get noBidsYet;
+
+  /// No description provided for @noBidsYetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractors will submit bids soon'**
+  String get noBidsYetSubtitle;
+
+  /// No description provided for @completedJobsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} completed'**
+  String completedJobsCount(int count);
+
+  /// No description provided for @etaDays.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA: {count, plural, =1{1 day} other{{count} days}}'**
+  String etaDays(int count);
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter'**
+  String get counter;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @viewCounterOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'View counter offer'**
+  String get viewCounterOffer;
+
+  /// No description provided for @bidStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid {status}'**
+  String bidStatusUpdated(String status);
+
+  /// No description provided for @acceptBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Bid'**
+  String get acceptBid;
+
+  /// No description provided for @acceptBidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept bid for {amount}?\n\nThis will assign the job to {contractorName}.'**
+  String acceptBidMessage(String amount, String contractorName);
+
+  /// No description provided for @acceptingBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting bid...'**
+  String get acceptingBid;
+
+  /// No description provided for @bidAcceptedJobAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid accepted! Job assigned.'**
+  String get bidAcceptedJobAssigned;
+
+  /// No description provided for @counterOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter Offer'**
+  String get counterOffer;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @messageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (optional)'**
+  String get messageOptional;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @counterOfferDefaultDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter offer to original bid'**
+  String get counterOfferDefaultDescription;
+
+  /// No description provided for @counterOfferSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter offer sent'**
+  String get counterOfferSent;
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:

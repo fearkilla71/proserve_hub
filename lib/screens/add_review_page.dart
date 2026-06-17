@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class AddReviewPage extends StatefulWidget {
   final String contractorId;
   final String jobId;
@@ -29,12 +31,13 @@ class _AddReviewPageState extends State<AddReviewPage> {
 
   Future<void> submitReview() async {
     if (loading) return;
+    final l10n = AppLocalizations.of(context)!;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to leave a review.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.reviewSignInRequired)));
       return;
     }
 
@@ -61,12 +64,14 @@ class _AddReviewPageState extends State<AddReviewPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Review submitted')));
+      ).showSnackBar(SnackBar(content: Text(l10n.reviewSubmitted)));
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage(msg))));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -74,45 +79,96 @@ class _AddReviewPageState extends State<AddReviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Leave a Review')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      appBar: AppBar(title: Text(l10n.leaveReviewTitle)),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Rating', style: TextStyle(fontSize: 18)),
-            ),
-            Slider(
-              value: rating.toDouble(),
-              min: 1,
-              max: 5,
-              divisions: 4,
-              label: rating.toString(),
-              onChanged: loading
-                  ? null
-                  : (v) => setState(() => rating = v.toInt()),
-            ),
-            TextField(
-              controller: commentCtrl,
-              minLines: 2,
-              maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Comment'),
+            Card(
+              color: scheme.primaryContainer.withValues(alpha: 0.45),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.verified_user_outlined, color: scheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.reviewTrustTitle,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(l10n.reviewTrustSubtitle),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: loading ? null : submitReview,
-                child: loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Submit Review'),
+            Text(
+              l10n.rating,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              children: List.generate(5, (index) {
+                final value = index + 1;
+                return IconButton.filledTonal(
+                  onPressed: loading
+                      ? null
+                      : () => setState(() => rating = value),
+                  icon: Icon(
+                    value <= rating ? Icons.star : Icons.star_border,
+                    color: value <= rating ? Colors.amber.shade700 : null,
+                  ),
+                  tooltip: l10n.reviewRatingSemantics(value),
+                );
+              }),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.reviewRatingHelper(rating),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: commentCtrl,
+              minLines: 4,
+              maxLines: 6,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: l10n.reviewCommentLabel,
+                hintText: l10n.reviewCommentHint,
+                alignLabelWithHint: true,
+                border: const OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: loading ? null : submitReview,
+              icon: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.rate_review_outlined),
+              label: Text(loading ? l10n.working : l10n.submitReview),
             ),
           ],
         ),

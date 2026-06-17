@@ -1598,6 +1598,125 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reportsMarkedReviewed => 'Reportes marcados como revisados.';
 
   @override
+  String get leaveReviewTitle => 'Dejar una reseña';
+
+  @override
+  String get reviewSignInRequired => 'Inicia sesión para dejar una reseña.';
+
+  @override
+  String get reviewSubmitted => 'Reseña enviada';
+
+  @override
+  String get reviewTrustTitle =>
+      'Ayuda al próximo dueño de casa a elegir con confianza';
+
+  @override
+  String get reviewTrustSubtitle =>
+      'Tu reseña mejora la calidad de contratistas, la confianza en precios y la seguridad de futuros trabajos.';
+
+  @override
+  String get rating => 'Calificación';
+
+  @override
+  String reviewRatingSemantics(int count) {
+    return 'Calificación de $count estrellas';
+  }
+
+  @override
+  String reviewRatingHelper(int count) {
+    return 'Calificación seleccionada: $count/5';
+  }
+
+  @override
+  String get reviewCommentLabel => 'Comentario';
+
+  @override
+  String get reviewCommentHint =>
+      '¿Qué salió bien? ¿El contratista fue puntual, claro y profesional?';
+
+  @override
+  String get submitReview => 'Enviar reseña';
+
+  @override
+  String get bidsSignInRequired => 'Inicia sesión para ver cotizaciones.';
+
+  @override
+  String get compareBids => 'Comparar cotizaciones';
+
+  @override
+  String get noBidsYet => 'Aún no hay cotizaciones';
+
+  @override
+  String get noBidsYetSubtitle =>
+      'Los contratistas enviarán cotizaciones pronto';
+
+  @override
+  String completedJobsCount(int count) {
+    return '$count completados';
+  }
+
+  @override
+  String etaDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count días',
+      one: '1 día',
+    );
+    return 'Tiempo estimado: $_temp0';
+  }
+
+  @override
+  String get reject => 'Rechazar';
+
+  @override
+  String get counter => 'Contraoferta';
+
+  @override
+  String get accept => 'Aceptar';
+
+  @override
+  String get viewCounterOffer => 'Ver contraoferta';
+
+  @override
+  String bidStatusUpdated(String status) {
+    return 'Cotización $status';
+  }
+
+  @override
+  String get acceptBid => 'Aceptar cotización';
+
+  @override
+  String acceptBidMessage(String amount, String contractorName) {
+    return '¿Aceptar la cotización por $amount?\n\nEsto asignará el trabajo a $contractorName.';
+  }
+
+  @override
+  String get acceptingBid => 'Aceptando cotización...';
+
+  @override
+  String get bidAcceptedJobAssigned => 'Cotización aceptada. Trabajo asignado.';
+
+  @override
+  String get counterOffer => 'Contraoferta';
+
+  @override
+  String get amount => 'Monto';
+
+  @override
+  String get messageOptional => 'Mensaje (opcional)';
+
+  @override
+  String get send => 'Enviar';
+
+  @override
+  String get counterOfferDefaultDescription =>
+      'Contraoferta a la cotización original';
+
+  @override
+  String get counterOfferSent => 'Contraoferta enviada';
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override

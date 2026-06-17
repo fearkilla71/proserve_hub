@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/marketplace_models.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
@@ -14,15 +15,14 @@ class BidsListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view bids.')),
-      );
+      return Scaffold(body: Center(child: Text(l10n.bidsSignInRequired)));
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Compare Bids')),
+      appBar: AppBar(title: Text(l10n.compareBids)),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('bids')
@@ -34,7 +34,9 @@ class BidsListScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(l10n.errorWithMessage(snapshot.error.toString())),
+            );
           }
 
           if (!snapshot.hasData) {
@@ -73,21 +75,21 @@ class BidsListScreen extends StatelessWidget {
           final bids = docs.map((doc) => Bid.fromFirestore(doc)).toList();
 
           if (bids.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.request_quote_outlined,
                     size: 64,
                     color: Colors.grey,
                   ),
-                  SizedBox(height: 16),
-                  Text('No bids yet'),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 16),
+                  Text(l10n.noBidsYet),
+                  const SizedBox(height: 8),
                   Text(
-                    'Contractors will submit bids soon',
-                    style: TextStyle(color: Colors.grey),
+                    l10n.noBidsYetSubtitle,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -98,19 +100,27 @@ class BidsListScreen extends StatelessWidget {
             builder: (context, constraints) {
               final crossAxisCount = constraints.maxWidth >= 720 ? 2 : 1;
 
+              if (crossAxisCount == 1) {
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  itemCount: bids.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) =>
+                      _BidCard(bid: bids[index], jobId: jobId),
+                );
+              }
+
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: crossAxisCount == 1 ? 1.15 : 1.3,
+                  childAspectRatio: 1.2,
                 ),
                 itemCount: bids.length,
-                itemBuilder: (context, index) {
-                  final bid = bids[index];
-                  return _BidCard(bid: bid, jobId: jobId);
-                },
+                itemBuilder: (context, index) =>
+                    _BidCard(bid: bids[index], jobId: jobId),
               );
             },
           );
@@ -129,6 +139,7 @@ class _BidCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
 
     Color statusColor;
@@ -222,8 +233,8 @@ class _BidCard extends StatelessWidget {
                                   Text(rating.toStringAsFixed(1)),
                                 ],
                               ),
-                              Text('$completedJobs completed'),
-                              Text('ETA: ${bid.estimatedDays} days'),
+                              Text(l10n.completedJobsCount(completedJobs)),
+                              Text(l10n.etaDays(bid.estimatedDays)),
                             ],
                           );
                         },
@@ -273,7 +284,7 @@ class _BidCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.cancel_outlined),
-                      label: const Text('Reject'),
+                      label: Text(l10n.reject),
                       onPressed: () => _updateBidStatus(context, 'rejected'),
                     ),
                   ),
@@ -281,7 +292,7 @@ class _BidCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.edit),
-                      label: const Text('Counter'),
+                      label: Text(l10n.counter),
                       onPressed: () => _showCounterOfferDialog(context),
                     ),
                   ),
@@ -289,7 +300,7 @@ class _BidCard extends StatelessWidget {
                   Expanded(
                     child: FilledButton.icon(
                       icon: const Icon(Icons.check),
-                      label: const Text('Accept'),
+                      label: Text(l10n.accept),
                       onPressed: () => _acceptBid(context),
                     ),
                   ),
@@ -300,7 +311,7 @@ class _BidCard extends StatelessWidget {
               const SizedBox(height: 8),
               TextButton.icon(
                 icon: const Icon(Icons.visibility),
-                label: const Text('View counter offer'),
+                label: Text(l10n.viewCounterOffer),
                 onPressed: () {
                   // Navigate to counter offer
                 },
@@ -319,26 +330,34 @@ class _BidCard extends StatelessWidget {
       });
 
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Bid $status')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.bidStatusUpdated(status),
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage('$e'))));
       }
     }
   }
 
   Future<void> _acceptBid(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await BottomSheetHelper.showConfirmation(
       context: context,
-      title: 'Accept Bid',
-      message:
-          'Accept bid for \$${bid.amount.toStringAsFixed(2)}?\n\nThis will assign the job to ${bid.contractorName}.',
-      confirmText: 'Accept',
+      title: l10n.acceptBid,
+      message: l10n.acceptBidMessage(
+        '\$${bid.amount.toStringAsFixed(2)}',
+        bid.contractorName,
+      ),
+      confirmText: l10n.accept,
     );
 
     if (!confirmed || !context.mounted) return;
@@ -380,8 +399,8 @@ class _BidCard extends StatelessWidget {
 
         await batch.commit();
       },
-      loadingMessage: 'Accepting bid...',
-      successMessage: 'Bid accepted! Job assigned.',
+      loadingMessage: l10n.acceptingBid,
+      successMessage: l10n.bidAcceptedJobAssigned,
       onSuccess: () {
         if (context.mounted) Navigator.pop(context);
       },
@@ -389,20 +408,21 @@ class _BidCard extends StatelessWidget {
   }
 
   Future<void> _showCounterOfferDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final amountController = TextEditingController(text: bid.amount.toString());
     final descriptionController = TextEditingController();
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Counter Offer'),
+        title: Text(l10n.counterOffer),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: amountController,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
+              decoration: InputDecoration(
+                labelText: l10n.amount,
                 prefixText: '\$',
               ),
               keyboardType: TextInputType.number,
@@ -410,9 +430,7 @@ class _BidCard extends StatelessWidget {
             const SizedBox(height: 16),
             TextField(
               controller: descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Message (optional)',
-              ),
+              decoration: InputDecoration(labelText: l10n.messageOptional),
               maxLines: 3,
             ),
           ],
@@ -420,7 +438,7 @@ class _BidCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -429,7 +447,7 @@ class _BidCard extends StatelessWidget {
                 'description': descriptionController.text.trim(),
               });
             },
-            child: const Text('Send'),
+            child: Text(l10n.send),
           ),
         ],
       ),
@@ -462,7 +480,7 @@ class _BidCard extends StatelessWidget {
         'currency': 'USD',
         'description': result['description'].isNotEmpty
             ? result['description']
-            : 'Counter offer to original bid',
+            : l10n.counterOfferDefaultDescription,
         'estimatedDays': bid.estimatedDays,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
@@ -479,13 +497,13 @@ class _BidCard extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Counter offer sent')));
+        ).showSnackBar(SnackBar(content: Text(l10n.counterOfferSent)));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage('$e'))));
       }
     }
   }

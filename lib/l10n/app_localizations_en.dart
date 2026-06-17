@@ -1586,6 +1586,122 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsMarkedReviewed => 'Reports marked reviewed.';
 
   @override
+  String get leaveReviewTitle => 'Leave a Review';
+
+  @override
+  String get reviewSignInRequired => 'Please sign in to leave a review.';
+
+  @override
+  String get reviewSubmitted => 'Review submitted';
+
+  @override
+  String get reviewTrustTitle => 'Help the next homeowner choose confidently';
+
+  @override
+  String get reviewTrustSubtitle =>
+      'Your review improves contractor quality, pricing trust, and safety for future jobs.';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String reviewRatingSemantics(int count) {
+    return '$count star rating';
+  }
+
+  @override
+  String reviewRatingHelper(int count) {
+    return 'Selected rating: $count/5';
+  }
+
+  @override
+  String get reviewCommentLabel => 'Comment';
+
+  @override
+  String get reviewCommentHint =>
+      'What went well? Was the contractor on time, clear, and professional?';
+
+  @override
+  String get submitReview => 'Submit Review';
+
+  @override
+  String get bidsSignInRequired => 'Please sign in to view bids.';
+
+  @override
+  String get compareBids => 'Compare Bids';
+
+  @override
+  String get noBidsYet => 'No bids yet';
+
+  @override
+  String get noBidsYetSubtitle => 'Contractors will submit bids soon';
+
+  @override
+  String completedJobsCount(int count) {
+    return '$count completed';
+  }
+
+  @override
+  String etaDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return 'ETA: $_temp0';
+  }
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get counter => 'Counter';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get viewCounterOffer => 'View counter offer';
+
+  @override
+  String bidStatusUpdated(String status) {
+    return 'Bid $status';
+  }
+
+  @override
+  String get acceptBid => 'Accept Bid';
+
+  @override
+  String acceptBidMessage(String amount, String contractorName) {
+    return 'Accept bid for $amount?\n\nThis will assign the job to $contractorName.';
+  }
+
+  @override
+  String get acceptingBid => 'Accepting bid...';
+
+  @override
+  String get bidAcceptedJobAssigned => 'Bid accepted! Job assigned.';
+
+  @override
+  String get counterOffer => 'Counter Offer';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get messageOptional => 'Message (optional)';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get counterOfferDefaultDescription => 'Counter offer to original bid';
+
+  @override
+  String get counterOfferSent => 'Counter offer sent';
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override
