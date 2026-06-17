@@ -2275,6 +2275,119 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentRefunded => 'Your payment has been refunded.';
 
   @override
+  String get writeReviewTitle => 'Write a Review';
+
+  @override
+  String get verifiedReviewTitle => 'Verified job review';
+
+  @override
+  String get verifiedReviewSubtitle =>
+      'This review is tied to a completed ProServe job, so future homeowners can trust the feedback.';
+
+  @override
+  String get rateYourExperience => 'Rate your experience';
+
+  @override
+  String get quality => 'Quality';
+
+  @override
+  String get timeliness => 'Timeliness';
+
+  @override
+  String get communication => 'Communication';
+
+  @override
+  String reviewCategoryRatingSemantics(String label, int count) {
+    return '$label $count of 5 stars';
+  }
+
+  @override
+  String overallRatingValue(String rating) {
+    return 'Overall: $rating/5';
+  }
+
+  @override
+  String get shareYourExperience => 'Share your experience';
+
+  @override
+  String get reviewExperienceHint =>
+      'Tell us about the contractor\'s quality, timing, communication, and professionalism.';
+
+  @override
+  String get reviewCommentRequired => 'Please write a comment';
+
+  @override
+  String get reviewCommentTooShort => 'Comment must be at least 20 characters';
+
+  @override
+  String get reviewRemoveInappropriateLanguage =>
+      'Please remove inappropriate language';
+
+  @override
+  String get addPhotosOptional => 'Add photos (optional)';
+
+  @override
+  String get reviewPhotosSubtitle =>
+      'Show before/after photos or highlight quality of work.';
+
+  @override
+  String reviewPhotoSemantics(int count) {
+    return 'Review photo $count';
+  }
+
+  @override
+  String get removePhoto => 'Remove photo';
+
+  @override
+  String addPhotosCount(int count) {
+    return 'Add Photos ($count/5)';
+  }
+
+  @override
+  String get submitting => 'Submitting...';
+
+  @override
+  String get reviewTips => 'Review Tips';
+
+  @override
+  String get reviewTipSpecific => '• Be specific about quality and service';
+
+  @override
+  String get reviewTipProfessionalism =>
+      '• Mention professionalism and communication';
+
+  @override
+  String get reviewTipPhotos => '• Include before/after photos if applicable';
+
+  @override
+  String get reviewTipHonest => '• Be honest but constructive';
+
+  @override
+  String errorPickingPhotos(String error) {
+    return 'Error picking photos: $error';
+  }
+
+  @override
+  String get onlyRequestingCustomerCanReview =>
+      'Only the customer who requested this job can review';
+
+  @override
+  String get reviewOnlyAfterCompleted =>
+      'You can only review after the job is completed';
+
+  @override
+  String get reviewAlreadySubmittedForJob =>
+      'You already submitted a review for this job';
+
+  @override
+  String get reviewSubmittedSuccessfully => 'Review submitted successfully!';
+
+  @override
+  String errorSubmittingReview(String error) {
+    return 'Error submitting review: $error';
+  }
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

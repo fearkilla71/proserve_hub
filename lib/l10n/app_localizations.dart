@@ -4106,6 +4106,192 @@ abstract class AppLocalizations {
   /// **'Your payment has been refunded.'**
   String get paymentRefunded;
 
+  /// No description provided for @writeReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a Review'**
+  String get writeReviewTitle;
+
+  /// No description provided for @verifiedReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified job review'**
+  String get verifiedReviewTitle;
+
+  /// No description provided for @verifiedReviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This review is tied to a completed ProServe job, so future homeowners can trust the feedback.'**
+  String get verifiedReviewSubtitle;
+
+  /// No description provided for @rateYourExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate your experience'**
+  String get rateYourExperience;
+
+  /// No description provided for @quality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get quality;
+
+  /// No description provided for @timeliness.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeliness'**
+  String get timeliness;
+
+  /// No description provided for @communication.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication'**
+  String get communication;
+
+  /// No description provided for @reviewCategoryRatingSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {count} of 5 stars'**
+  String reviewCategoryRatingSemantics(String label, int count);
+
+  /// No description provided for @overallRatingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall: {rating}/5'**
+  String overallRatingValue(String rating);
+
+  /// No description provided for @shareYourExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your experience'**
+  String get shareYourExperience;
+
+  /// No description provided for @reviewExperienceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about the contractor\'s quality, timing, communication, and professionalism.'**
+  String get reviewExperienceHint;
+
+  /// No description provided for @reviewCommentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please write a comment'**
+  String get reviewCommentRequired;
+
+  /// No description provided for @reviewCommentTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment must be at least 20 characters'**
+  String get reviewCommentTooShort;
+
+  /// No description provided for @reviewRemoveInappropriateLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please remove inappropriate language'**
+  String get reviewRemoveInappropriateLanguage;
+
+  /// No description provided for @addPhotosOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos (optional)'**
+  String get addPhotosOptional;
+
+  /// No description provided for @reviewPhotosSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show before/after photos or highlight quality of work.'**
+  String get reviewPhotosSubtitle;
+
+  /// No description provided for @reviewPhotoSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Review photo {count}'**
+  String reviewPhotoSemantics(int count);
+
+  /// No description provided for @removePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get removePhoto;
+
+  /// No description provided for @addPhotosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photos ({count}/5)'**
+  String addPhotosCount(int count);
+
+  /// No description provided for @submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get submitting;
+
+  /// No description provided for @reviewTips.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Tips'**
+  String get reviewTips;
+
+  /// No description provided for @reviewTipSpecific.
+  ///
+  /// In en, this message translates to:
+  /// **'• Be specific about quality and service'**
+  String get reviewTipSpecific;
+
+  /// No description provided for @reviewTipProfessionalism.
+  ///
+  /// In en, this message translates to:
+  /// **'• Mention professionalism and communication'**
+  String get reviewTipProfessionalism;
+
+  /// No description provided for @reviewTipPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'• Include before/after photos if applicable'**
+  String get reviewTipPhotos;
+
+  /// No description provided for @reviewTipHonest.
+  ///
+  /// In en, this message translates to:
+  /// **'• Be honest but constructive'**
+  String get reviewTipHonest;
+
+  /// No description provided for @errorPickingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking photos: {error}'**
+  String errorPickingPhotos(String error);
+
+  /// No description provided for @onlyRequestingCustomerCanReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the customer who requested this job can review'**
+  String get onlyRequestingCustomerCanReview;
+
+  /// No description provided for @reviewOnlyAfterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only review after the job is completed'**
+  String get reviewOnlyAfterCompleted;
+
+  /// No description provided for @reviewAlreadySubmittedForJob.
+  ///
+  /// In en, this message translates to:
+  /// **'You already submitted a review for this job'**
+  String get reviewAlreadySubmittedForJob;
+
+  /// No description provided for @reviewSubmittedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Review submitted successfully!'**
+  String get reviewSubmittedSuccessfully;
+
+  /// No description provided for @errorSubmittingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Error submitting review: {error}'**
+  String errorSubmittingReview(String error);
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import '../l10n/app_localizations.dart';
 import '../models/marketplace_models.dart';
 import '../utils/profanity_filter.dart';
 
@@ -45,32 +46,40 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
     required ValueChanged<double> onChanged,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        SizedBox(width: 120, child: Text(label)),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(5, (i) {
-            final starValue = (i + 1).toDouble();
-            final filled = value >= starValue;
-            return Semantics(
-              label: '$label ${i + 1} of 5 stars',
-              selected: filled,
-              child: GestureDetector(
-                onTap: _isSubmitting ? null : () => onChanged(starValue),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Icon(
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            children: List.generate(5, (i) {
+              final starValue = (i + 1).toDouble();
+              final filled = value >= starValue;
+              return Semantics(
+                label: l10n.reviewCategoryRatingSemantics(label, i + 1),
+                selected: filled,
+                child: IconButton.filledTonal(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _isSubmitting ? null : () => onChanged(starValue),
+                  icon: Icon(
                     filled ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: filled ? Colors.amber : scheme.outlineVariant,
-                    size: 32,
+                    color: filled ? Colors.amber.shade700 : scheme.outline,
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
-      ],
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
@@ -90,9 +99,10 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
       });
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error picking photos: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.errorPickingPhotos('$e'))));
       }
     }
   }
@@ -131,12 +141,13 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
 
   Future<void> _submitReview() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to submit a review')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.reviewSignInRequired)));
       return;
     }
 
@@ -151,17 +162,17 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
 
       final jobData = jobDoc.data();
       if (jobData == null) {
-        throw Exception('Job not found');
+        throw Exception(l10n.jobNotFoundTitle);
       }
 
       final requesterUid = (jobData['requesterUid'] as String?)?.trim() ?? '';
       if (requesterUid.isEmpty || requesterUid != user.uid) {
-        throw Exception('Only the customer who requested this job can review');
+        throw Exception(l10n.onlyRequestingCustomerCanReview);
       }
 
       final status = (jobData['status'] as String?)?.trim().toLowerCase() ?? '';
       if (status != 'completed') {
-        throw Exception('You can only review after the job is completed');
+        throw Exception(l10n.reviewOnlyAfterCompleted);
       }
 
       // Prevent duplicate reviews for the same job/customer
@@ -175,7 +186,7 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
         return customerId == user.uid;
       });
       if (alreadyReviewed) {
-        throw Exception('You already submitted a review for this job');
+        throw Exception(l10n.reviewAlreadySubmittedForJob);
       }
 
       // Get user name
@@ -224,14 +235,15 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review submitted successfully!')),
+          SnackBar(content: Text(l10n.reviewSubmittedSuccessfully)),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error submitting review: $e')));
+        final message = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSubmittingReview(message))),
+        );
       }
     } finally {
       if (mounted) {
@@ -242,206 +254,252 @@ class _SubmitReviewScreenState extends State<SubmitReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final overall = ((_quality + _timeliness + _communication) / 3.0);
     return Scaffold(
-      appBar: AppBar(title: const Text('Write a Review')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Category Ratings
-              const Text(
-                'Rate your experience',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              _categoryRatingRow(
-                context,
-                label: 'Quality',
-                value: _quality,
-                onChanged: (v) => setState(() => _quality = v),
-              ),
-              const SizedBox(height: 12),
-              _categoryRatingRow(
-                context,
-                label: 'Timeliness',
-                value: _timeliness,
-                onChanged: (v) => setState(() => _timeliness = v),
-              ),
-              const SizedBox(height: 12),
-              _categoryRatingRow(
-                context,
-                label: 'Communication',
-                value: _communication,
-                onChanged: (v) => setState(() => _communication = v),
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: Text(
-                  'Overall: ${((_quality + _timeliness + _communication) / 3.0).toStringAsFixed(1)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
+      appBar: AppBar(title: Text(l10n.writeReviewTitle)),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  color: scheme.primaryContainer.withValues(alpha: 0.45),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.verified_user_outlined,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.verifiedReviewTitle,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w900),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(l10n.verifiedReviewSubtitle),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
-
-              // Comment Section
-              const Text(
-                'Share your experience',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _commentController,
-                maxLines: 5,
-                maxLength: 500,
-                decoration: const InputDecoration(
-                  hintText:
-                      'Tell us about your experience with this contractor...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.rateYourExperience,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please write a comment';
-                  }
-                  if (value.trim().length < 20) {
-                    return 'Comment must be at least 20 characters';
-                  }
-                  if (ProfanityFilter.containsProfanity(value)) {
-                    return 'Please remove inappropriate language';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Photos Section
-              const Text(
-                'Add photos (optional)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Show before/after photos or highlight quality of work',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                const SizedBox(height: 16),
+                _categoryRatingRow(
+                  context,
+                  label: l10n.quality,
+                  value: _quality,
+                  onChanged: (v) => setState(() => _quality = v),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Photo Grid
-              if (_selectedPhotos.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (int i = 0; i < _selectedPhotos.length; i++)
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_selectedPhotos[i].path),
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              semanticLabel: 'Review photo ${i + 1}',
-                            ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: Tooltip(
-                              message: 'Remove photo',
-                              child: InkWell(
-                                onTap: () => _removePhoto(i),
-                                child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+                _categoryRatingRow(
+                  context,
+                  label: l10n.timeliness,
+                  value: _timeliness,
+                  onChanged: (v) => setState(() => _timeliness = v),
                 ),
-
-              if (_selectedPhotos.length < 5) ...[
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: _pickPhotos,
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: Text('Add Photos (${_selectedPhotos.length}/5)'),
+                _categoryRatingRow(
+                  context,
+                  label: l10n.communication,
+                  value: _communication,
+                  onChanged: (v) => setState(() => _communication = v),
                 ),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _isSubmitting ? null : _submitReview,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Submit Review'),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Tips Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.45,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.tips_and_updates,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Review Tips',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                      Icon(Icons.star_rounded, color: Colors.amber.shade700),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.overallRatingValue(overall.toStringAsFixed(1)),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: scheme.primary,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text('• Be specific about quality and service'),
-                      const Text('• Mention professionalism and communication'),
-                      const Text('• Include before/after photos if applicable'),
-                      const Text('• Be honest but constructive'),
                     ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                Text(
+                  l10n.shareYourExperience,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _commentController,
+                  maxLines: 5,
+                  maxLength: 500,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    hintText: l10n.reviewExperienceHint,
+                    border: const OutlineInputBorder(),
+                    alignLabelWithHint: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return l10n.reviewCommentRequired;
+                    }
+                    if (value.trim().length < 20) {
+                      return l10n.reviewCommentTooShort;
+                    }
+                    if (ProfanityFilter.containsProfanity(value)) {
+                      return l10n.reviewRemoveInappropriateLanguage;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.addPhotosOptional,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.reviewPhotosSubtitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_selectedPhotos.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (int i = 0; i < _selectedPhotos.length; i++)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(_selectedPhotos[i].path),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                semanticLabel: l10n.reviewPhotoSemantics(i + 1),
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Tooltip(
+                                message: l10n.removePhoto,
+                                child: InkWell(
+                                  onTap: () => _removePhoto(i),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+
+                if (_selectedPhotos.length < 5) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _pickPhotos,
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: Text(l10n.addPhotosCount(_selectedPhotos.length)),
+                  ),
+                ],
+
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _isSubmitting ? null : _submitReview,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.rate_review_outlined),
+                    label: Text(
+                      _isSubmitting ? l10n.submitting : l10n.submitReview,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.tips_and_updates,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.reviewTips,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(l10n.reviewTipSpecific),
+                        Text(l10n.reviewTipProfessionalism),
+                        Text(l10n.reviewTipPhotos),
+                        Text(l10n.reviewTipHonest),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
