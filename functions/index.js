@@ -5907,7 +5907,8 @@ async function applyContractorSubscriptionState(userRef, {
   purchaseId,
   purchaseToken,
   expiresAtMillis,
-}) {
+}, deps = {}) {
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
   const payload = {
     subscriptionTier: active ? tier : null,
     contractorPro: !!active,
@@ -5919,11 +5920,11 @@ async function applyContractorSubscriptionState(userRef, {
     iapPurchaseId: purchaseId || null,
     iapPurchaseToken: purchaseToken || null,
     iapExpiresAtMillis: expiresAtMillis || null,
-    proSubscriptionUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    proSubscriptionUpdatedAt: FieldValue.serverTimestamp(),
   };
 
   if (active) {
-    payload.iapActivatedAt = admin.firestore.FieldValue.serverTimestamp();
+    payload.iapActivatedAt = FieldValue.serverTimestamp();
   }
 
   await userRef.set(payload, { merge: true });
@@ -6345,7 +6346,7 @@ const IAP_PRODUCT_TO_PACK = {
   lead_ex_1: 'ex_1',
 };
 
-async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verificationData, source }) {
+async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verificationData, source, deps = {} }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
@@ -6369,13 +6370,14 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
     throw new functions.https.HttpsError('invalid-argument', 'Unknown product ID');
   }
 
-  const pack = await getLeadPack(packId);
+  const getLeadPackFn = deps.getLeadPack || getLeadPack;
+  const pack = await getLeadPackFn(packId);
   if (!pack) {
     throw new functions.https.HttpsError('invalid-argument', 'Pack configuration missing');
   }
 
   // ---------- Server-side receipt verification ----------
-  if (normalizedSource === 'google_play') {
+  if (!deps.skipReceiptVerification && normalizedSource === 'google_play') {
     try {
       const { google } = require('googleapis');
       const auth = new google.auth.GoogleAuth({
@@ -6401,7 +6403,7 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
       console.error('Google Play lead pack verification failed:', err.message);
       throw new functions.https.HttpsError('failed-precondition', 'Purchase verification failed');
     }
-  } else if (normalizedSource === 'app_store') {
+  } else if (!deps.skipReceiptVerification && normalizedSource === 'app_store') {
     try {
       let sharedSecret;
       try {
@@ -6434,7 +6436,8 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
     }
   }
 
-  const db = admin.firestore();
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
   const paymentRef = db.collection('payments').doc(`iap_${normalizedSource}_${normalizedPurchaseId}`);
   const userRef = db.collection('users').doc(uid);
   const creditType = normalizeLeadCreditType(pack.creditType);
@@ -6462,7 +6465,7 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
         leadsGranted: pack.leads,
         source: normalizedSource,
         purchaseId: normalizedPurchaseId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -6470,15 +6473,15 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
     if (creditType === 'exclusive') {
       tx.set(
         userRef,
-        { exclusiveLeadCredits: admin.firestore.FieldValue.increment(pack.leads) },
+        { exclusiveLeadCredits: FieldValue.increment(pack.leads) },
         { merge: true }
       );
     } else {
       tx.set(
         userRef,
         {
-          leadCredits: admin.firestore.FieldValue.increment(pack.leads),
-          credits: admin.firestore.FieldValue.increment(pack.leads),
+          leadCredits: FieldValue.increment(pack.leads),
+          credits: FieldValue.increment(pack.leads),
         },
         { merge: true }
       );
@@ -6646,6 +6649,80 @@ exports.reconcileGooglePlaySubscriptions = functions.pubsub
     return null;
   });
 
+async function fulfillContractorSubscriptionCheckoutSession(session, deps = {}) {
+  if (!session) return { ok: false, ignored: true, reason: 'missing-session' };
+
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
+  const contractorId = (
+    session.metadata?.contractorId ||
+    session.client_reference_id ||
+    ''
+  ).toString().trim();
+
+  if (!contractorId) {
+    console.warn('[stripeWebhook] Ignored subscription checkout without contractorId/client_reference_id', {
+      sessionId: session.id,
+    });
+    return { ok: true, ignored: true, reason: 'missing-contractor-id' };
+  }
+
+  const userRef = db.collection('users').doc(contractorId);
+  const userSnap = await userRef.get();
+  const userData = userSnap.exists ? userSnap.data() || {} : {};
+  const role = (userData.role || '').toString().trim().toLowerCase();
+
+  if (role !== 'contractor') {
+    return { ok: true, ignored: true, reason: 'not-contractor' };
+  }
+
+  const paymentRef = db.collection('payments').doc(session.id);
+  const amountTotalCents = Number(session.amount_total || 0);
+  const amountDollars = Math.round(amountTotalCents / 100);
+
+  await db.runTransaction(async (tx) => {
+    const existing = await tx.get(paymentRef);
+    if (existing.exists) {
+      const d = existing.data() || {};
+      if (d.type === 'contractor_subscription' && d.status === 'success') {
+        return;
+      }
+    }
+
+    tx.set(
+      paymentRef,
+      {
+        contractorId,
+        amount: amountDollars,
+        currency: (session.currency || 'usd').toString(),
+        status: 'success',
+        stripeSessionId: session.id,
+        stripeSubscriptionId: session.subscription || null,
+        stripeCustomerId: session.customer || null,
+        type: 'contractor_subscription',
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    tx.set(
+      userRef,
+      {
+        pricingToolsPro: true,
+        contractorPro: true,
+        isPro: true,
+        proSubscriptionStatus: 'active',
+        stripeSubscriptionId: session.subscription || null,
+        stripeCustomerId: session.customer || null,
+        proSubscribedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  });
+
+  return { ok: true, contractorId };
+}
+
 exports.stripeWebhook = functions
   .runWith({ secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] })
   .https.onRequest(async (req, res) => {
@@ -6679,70 +6756,7 @@ exports.stripeWebhook = functions
     // Contractor subscription purchase. Entitlements require an owner-bound
     // session created by our backend; never grant by customer email alone.
     if (sessionType === 'contractor_subscription' || session.mode === 'subscription') {
-      const db = admin.firestore();
-
-      const contractorId = (
-        session.metadata?.contractorId ||
-        session.client_reference_id ||
-        ''
-      ).toString().trim();
-
-      if (contractorId) {
-        const userRef = db.collection('users').doc(contractorId);
-        const userSnap = await userRef.get();
-        const userData = userSnap.exists ? userSnap.data() || {} : {};
-        const role = (userData.role || '').toString().trim().toLowerCase();
-
-        if (role === 'contractor') {
-          const paymentRef = db.collection('payments').doc(session.id);
-          const amountTotalCents = Number(session.amount_total || 0);
-          const amountDollars = Math.round(amountTotalCents / 100);
-
-          await db.runTransaction(async (tx) => {
-            const existing = await tx.get(paymentRef);
-            if (existing.exists) {
-              const d = existing.data() || {};
-              if (d.type === 'contractor_subscription' && d.status === 'success') {
-                return;
-              }
-            }
-
-            tx.set(
-              paymentRef,
-              {
-                contractorId,
-                amount: amountDollars,
-                currency: (session.currency || 'usd').toString(),
-                status: 'success',
-                stripeSessionId: session.id,
-                stripeSubscriptionId: session.subscription || null,
-                stripeCustomerId: session.customer || null,
-                type: 'contractor_subscription',
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true }
-            );
-
-            tx.set(
-              userRef,
-              {
-                pricingToolsPro: true,
-                contractorPro: true,
-                isPro: true,
-                proSubscriptionStatus: 'active',
-                stripeSubscriptionId: session.subscription || null,
-                stripeCustomerId: session.customer || null,
-                proSubscribedAt: admin.firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true }
-            );
-          });
-        }
-      } else {
-        console.warn('[stripeWebhook] Ignored subscription checkout without contractorId/client_reference_id', {
-          sessionId: session.id,
-        });
-      }
+      await fulfillContractorSubscriptionCheckoutSession(session);
 
       res.json({ received: true });
       return;
@@ -6940,7 +6954,7 @@ exports.stripeWebhook = functions
   res.json({ received: true });
   });
 
-async function fulfillLeadPackFromCheckoutSession(session) {
+async function fulfillLeadPackFromCheckoutSession(session, deps = {}) {
   if (!session) return;
 
   // Only fulfill paid/complete sessions.
@@ -6962,10 +6976,12 @@ async function fulfillLeadPackFromCheckoutSession(session) {
   const packId = (session.metadata?.packId || '').toString().trim();
   const creditType = normalizeLeadCreditType(session.metadata?.creditType);
 
-  const pack = await getLeadPack(packId);
+  const getLeadPackFn = deps.getLeadPack || getLeadPack;
+  const pack = await getLeadPackFn(packId);
   if (!contractorId || !pack) return;
 
-  const db = admin.firestore();
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
   const paymentRef = db.collection('payments').doc(session.id);
   const userRef = db.collection('users').doc(contractorId);
 
@@ -6993,7 +7009,7 @@ async function fulfillLeadPackFromCheckoutSession(session) {
         packId: pack.id,
         creditType,
         leadsGranted: pack.leads,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -7001,15 +7017,15 @@ async function fulfillLeadPackFromCheckoutSession(session) {
     if (creditType === 'exclusive') {
       tx.set(
         userRef,
-        { exclusiveLeadCredits: admin.firestore.FieldValue.increment(pack.leads) },
+        { exclusiveLeadCredits: FieldValue.increment(pack.leads) },
         { merge: true }
       );
     } else {
       tx.set(
         userRef,
         {
-          leadCredits: admin.firestore.FieldValue.increment(pack.leads),
-          credits: admin.firestore.FieldValue.increment(pack.leads),
+          leadCredits: FieldValue.increment(pack.leads),
+          credits: FieldValue.increment(pack.leads),
         },
         { merge: true }
       );
@@ -8319,14 +8335,15 @@ exports.createEscrowCheckoutSessionHttp = functions
  * Called from the fulfillCheckoutSession handler when session type is
  * 'escrow_payment'. Updates escrow to 'funded' and job to 'escrow_funded'.
  */
-async function fulfillEscrowPayment(session) {
+async function fulfillEscrowPayment(session, deps = {}) {
   const escrowId = (session.metadata?.escrowId || '').toString().trim();
   const customerId = (session.metadata?.customerId || '').toString().trim();
   const jobId = (session.metadata?.jobId || '').toString().trim();
 
   if (!escrowId) return;
 
-  const db = admin.firestore();
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
   const escrowRef = db.collection('escrow_bookings').doc(escrowId);
 
   const paymentIntentId = (session.payment_intent || '').toString().trim();
@@ -8341,7 +8358,7 @@ async function fulfillEscrowPayment(session) {
 
     tx.update(escrowRef, {
       status: 'funded',
-      fundedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fundedAt: FieldValue.serverTimestamp(),
       stripePaymentIntentId: paymentIntentId || null,
       stripeCheckoutSessionId: session.id,
     });
@@ -8365,13 +8382,15 @@ async function fulfillEscrowPayment(session) {
  * Called after both customer and contractor confirm job completion.
  * Creates a Stripe Transfer to the contractor's connected account.
  */
-async function releaseEscrowFundsCore({ escrowId, uid }) {
+async function releaseEscrowFundsCore({ escrowId, uid, deps = {} }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
-  await enforceRateLimit(uid, 'releaseEscrowFunds', 30, 60 * 60 * 1000);
+  const enforceRateLimitFn = deps.enforceRateLimit || enforceRateLimit;
+  await enforceRateLimitFn(uid, 'releaseEscrowFunds', 30, 60 * 60 * 1000);
 
-  const db = admin.firestore();
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
   const escrowRef = db.collection('escrow_bookings').doc(escrowId);
   const escrowSnap = await escrowRef.get();
   if (!escrowSnap.exists) {
@@ -8383,7 +8402,8 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
   // Authorization: only customer, contractor, or admin can trigger release
   const isCustomer = escrow.customerId === uid;
   const isContractor = escrow.contractorId === uid;
-  const isAdmin = await isAdminUser(uid);
+  const isAdminUserFn = deps.isAdminUser || isAdminUser;
+  const isAdmin = await isAdminUserFn(uid);
   if (!isCustomer && !isContractor && !isAdmin) {
     throw new functions.https.HttpsError('permission-denied', 'Not authorized for this escrow');
   }
@@ -8447,7 +8467,7 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
   }
 
   // Stripe transfer happens outside the transaction (idempotent via metadata)
-  const stripe = getStripeClient();
+  const stripe = deps.stripe || getStripeClient();
   try {
     const transfer = await stripe.transfers.create({
       amount: payoutAmountCents,
@@ -8463,10 +8483,10 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
 
     await escrowRef.update({
       status: 'released',
-      releasedAt: admin.firestore.FieldValue.serverTimestamp(),
+      releasedAt: FieldValue.serverTimestamp(),
       stripeTransferId: transfer.id,
       payoutStatus: 'transferred',
-      payoutAt: admin.firestore.FieldValue.serverTimestamp(),
+      payoutAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, transferId: transfer.id };
@@ -8475,7 +8495,7 @@ async function releaseEscrowFundsCore({ escrowId, uid }) {
       status: 'payoutFailed',
       payoutStatus: 'failed',
       payoutError: (err.message || 'Transfer failed').toString(),
-      payoutFailedAt: admin.firestore.FieldValue.serverTimestamp(),
+      payoutFailedAt: FieldValue.serverTimestamp(),
     });
     throw toStripeHttpsError(err, 'Contractor payout failed');
   }
@@ -8510,16 +8530,19 @@ exports.releaseEscrowFundsHttp = functions
  * Only allowed when status is 'funded', 'customerConfirmed', or 'contractorConfirmed'
  * (i.e. before funds are released to the contractor).
  */
-async function refundEscrowCore({ escrowId, uid }) {
+async function refundEscrowCore({ escrowId, uid, deps = {} }) {
   if (!uid) {
     throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   }
-  await enforceRateLimit(uid, 'refundEscrow', 30, 60 * 60 * 1000);
+  const enforceRateLimitFn = deps.enforceRateLimit || enforceRateLimit;
+  await enforceRateLimitFn(uid, 'refundEscrow', 30, 60 * 60 * 1000);
   if (!escrowId) {
     throw new functions.https.HttpsError('invalid-argument', 'escrowId is required');
   }
 
-  const escrowRef = admin.firestore().collection('escrow_bookings').doc(escrowId);
+  const db = deps.db || admin.firestore();
+  const FieldValue = deps.FieldValue || admin.firestore.FieldValue;
+  const escrowRef = db.collection('escrow_bookings').doc(escrowId);
   const escrowSnap = await escrowRef.get();
   if (!escrowSnap.exists) {
     throw new functions.https.HttpsError('not-found', 'Escrow booking not found');
@@ -8529,7 +8552,8 @@ async function refundEscrowCore({ escrowId, uid }) {
 
   // The paying customer can request a refund. Admins can refund stuck/disputed
   // escrows from operations.
-  const uidIsAdmin = await isAdminUser(uid);
+  const isAdminUserFn = deps.isAdminUser || isAdminUser;
+  const uidIsAdmin = await isAdminUserFn(uid);
   if (escrow.customerId !== uid && !uidIsAdmin) {
     throw new functions.https.HttpsError('permission-denied', 'Only the customer or an admin can request a refund');
   }
@@ -8553,7 +8577,7 @@ async function refundEscrowCore({ escrowId, uid }) {
   // Issue full refund via Stripe
   let refund;
   try {
-    const stripe = getStripeClient();
+    const stripe = deps.stripe || getStripeClient();
     refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       reason: 'requested_by_customer',
@@ -8569,7 +8593,7 @@ async function refundEscrowCore({ escrowId, uid }) {
   // Update escrow booking
   await escrowRef.update({
     status: 'cancelled',
-    refundedAt: admin.firestore.FieldValue.serverTimestamp(),
+    refundedAt: FieldValue.serverTimestamp(),
     stripeRefundId: refund.id,
     refundStatus: refund.status, // 'succeeded', 'pending', etc.
     refundAmountCents: refund.amount,
@@ -8578,11 +8602,11 @@ async function refundEscrowCore({ escrowId, uid }) {
   // Reset the job_request back to open
   const jobId = escrow.jobId;
   if (jobId) {
-    await admin.firestore().collection('job_requests').doc(jobId).update({
+    await db.collection('job_requests').doc(jobId).update({
       status: 'open',
-      escrowId: admin.firestore.FieldValue.delete(),
-      escrowPrice: admin.firestore.FieldValue.delete(),
-      instantBook: admin.firestore.FieldValue.delete(),
+      escrowId: FieldValue.delete(),
+      escrowPrice: FieldValue.delete(),
+      instantBook: FieldValue.delete(),
     });
   }
 
@@ -9569,6 +9593,20 @@ exports.adminForceCancelEscrowHttp = functions
 // -------------------- INVOICE PAYMENT LINK --------------------
 // Creates a Stripe Checkout session so a client can pay a contractor's invoice.
 
+function parseInvoiceCheckoutMetadata(session) {
+  const metadata = session?.metadata || {};
+  return {
+    contractorUid: (metadata.contractorUid || metadata.uid || metadata.userId || session?.client_reference_id || '')
+      .toString()
+      .trim(),
+    invoiceId: (metadata.invoiceId || metadata.invoice_id || '')
+      .toString()
+      .trim(),
+    stripeSessionId: (session?.id || '').toString().trim(),
+    paymentIntentId: (session?.payment_intent || '').toString().trim(),
+  };
+}
+
 async function createInvoicePaymentLinkCore({ uid, invoiceId, amount, clientEmail, description }) {
   if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   await enforceRateLimit(uid, 'createInvoicePaymentLink', 30, 60 * 60 * 1000);
@@ -10526,3 +10564,18 @@ exports.checkPriceGuarantee = functions.firestore
       console.error('[checkPriceGuarantee] Error:', e);
     }
   });
+
+exports._test = {
+  IAP_PRODUCT_TO_PACK,
+  DEFAULT_LEAD_PACKS,
+  normalizeLeadCreditType,
+  contractorSubscriptionTier,
+  applyContractorSubscriptionState,
+  fulfillContractorSubscriptionCheckoutSession,
+  verifyLeadPackPurchaseCore,
+  fulfillLeadPackFromCheckoutSession,
+  fulfillEscrowPayment,
+  releaseEscrowFundsCore,
+  refundEscrowCore,
+  parseInvoiceCheckoutMetadata,
+};
