@@ -1662,10 +1662,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reject => 'Reject';
 
   @override
+  String get decline => 'Decline';
+
+  @override
   String get counter => 'Counter';
 
   @override
   String get accept => 'Accept';
+
+  @override
+  String get price => 'Price';
 
   @override
   String get viewCounterOffer => 'View counter offer';
@@ -1706,6 +1712,159 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get counterOfferSent => 'Counter offer sent';
+
+  @override
+  String get compareQuotes => 'Compare Quotes';
+
+  @override
+  String get noQuotesYet => 'No quotes yet';
+
+  @override
+  String get noQuotesYetSubtitle =>
+      'Contractors will submit quotes for your job request.';
+
+  @override
+  String get quoteAccepted => 'Quote accepted';
+
+  @override
+  String get chooseTheRightPro => 'Choose the right pro';
+
+  @override
+  String get quoteAcceptedHeaderBody =>
+      'Your job is assigned. Open the Job Command Center to chat, track status, escrow, photos, invoice, and review.';
+
+  @override
+  String get compareQuotesHeaderBody =>
+      'Compare price, reviews, completed jobs, notes, warranty, scope, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.';
+
+  @override
+  String get quotesLower => 'quotes';
+
+  @override
+  String get pendingLower => 'pending';
+
+  @override
+  String get rangeLower => 'range';
+
+  @override
+  String get escrowAfterApproval => 'Escrow after approval';
+
+  @override
+  String get openJobCommandCenter => 'Open Job Command Center';
+
+  @override
+  String get unknownContractor => 'Unknown Contractor';
+
+  @override
+  String quoteEtaValue(String value) {
+    return 'ETA: $value';
+  }
+
+  @override
+  String get insured => 'Insured';
+
+  @override
+  String get licensed => 'Licensed';
+
+  @override
+  String reviewCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reviews',
+      one: '1 review',
+      zero: 'No reviews',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiPrice => 'AI price';
+
+  @override
+  String get adjustedFromAi => 'Adjusted from AI';
+
+  @override
+  String revisionNumber(int number) {
+    return 'Revision $number';
+  }
+
+  @override
+  String expiresDate(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get scopeAttached => 'Scope attached';
+
+  @override
+  String get protectedPaymentPath => 'Protected payment path';
+
+  @override
+  String get beforeYouAccept => 'Before you accept';
+
+  @override
+  String get scopeOfWork => 'Scope of work';
+
+  @override
+  String get scopeMissing => 'Ask for scope details before approving';
+
+  @override
+  String get warranty => 'Warranty';
+
+  @override
+  String get warrantyIncluded => 'Included in this quote';
+
+  @override
+  String get warrantyNotListed => 'Not listed';
+
+  @override
+  String get exclusions => 'Exclusions';
+
+  @override
+  String get exclusionsListed => 'Listed by contractor';
+
+  @override
+  String get exclusionsNotListed => 'Not listed';
+
+  @override
+  String get deposit => 'Deposit';
+
+  @override
+  String depositRequiredAmount(String amount) {
+    return '$amount required';
+  }
+
+  @override
+  String get depositNotListed => 'No deposit listed';
+
+  @override
+  String get adjustment => 'Adjustment';
+
+  @override
+  String submittedDate(String date) {
+    return 'Submitted $date';
+  }
+
+  @override
+  String get acceptQuote => 'Accept Quote';
+
+  @override
+  String get continueJob => 'Continue Job';
+
+  @override
+  String acceptQuoteMessage(String amount, String contractorName) {
+    return 'Accept this quote for $amount from $contractorName?\n\nThe contractor will be assigned and your next steps will move to the Job Command Center.';
+  }
+
+  @override
+  String get acceptingQuote => 'Accepting quote...';
+
+  @override
+  String get quoteAcceptedJobAssigned => 'Quote accepted. Job assigned.';
+
+  @override
+  String get quoteDeclined => 'Quote declined';
 
   @override
   String get jobCommandCenterTitle => 'Job Command Center';

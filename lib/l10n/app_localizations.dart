@@ -3008,6 +3008,12 @@ abstract class AppLocalizations {
   /// **'Reject'**
   String get reject;
 
+  /// No description provided for @decline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
   /// No description provided for @counter.
   ///
   /// In en, this message translates to:
@@ -3019,6 +3025,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accept'**
   String get accept;
+
+  /// No description provided for @price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get price;
 
   /// No description provided for @viewCounterOffer.
   ///
@@ -3091,6 +3103,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Counter offer sent'**
   String get counterOfferSent;
+
+  /// No description provided for @compareQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Quotes'**
+  String get compareQuotes;
+
+  /// No description provided for @noQuotesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No quotes yet'**
+  String get noQuotesYet;
+
+  /// No description provided for @noQuotesYetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractors will submit quotes for your job request.'**
+  String get noQuotesYetSubtitle;
+
+  /// No description provided for @quoteAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote accepted'**
+  String get quoteAccepted;
+
+  /// No description provided for @chooseTheRightPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the right pro'**
+  String get chooseTheRightPro;
+
+  /// No description provided for @quoteAcceptedHeaderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your job is assigned. Open the Job Command Center to chat, track status, escrow, photos, invoice, and review.'**
+  String get quoteAcceptedHeaderBody;
+
+  /// No description provided for @compareQuotesHeaderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare price, reviews, completed jobs, notes, warranty, scope, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.'**
+  String get compareQuotesHeaderBody;
+
+  /// No description provided for @quotesLower.
+  ///
+  /// In en, this message translates to:
+  /// **'quotes'**
+  String get quotesLower;
+
+  /// No description provided for @pendingLower.
+  ///
+  /// In en, this message translates to:
+  /// **'pending'**
+  String get pendingLower;
+
+  /// No description provided for @rangeLower.
+  ///
+  /// In en, this message translates to:
+  /// **'range'**
+  String get rangeLower;
+
+  /// No description provided for @escrowAfterApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow after approval'**
+  String get escrowAfterApproval;
+
+  /// No description provided for @openJobCommandCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Job Command Center'**
+  String get openJobCommandCenter;
+
+  /// No description provided for @unknownContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Contractor'**
+  String get unknownContractor;
+
+  /// No description provided for @quoteEtaValue.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA: {value}'**
+  String quoteEtaValue(String value);
+
+  /// No description provided for @insured.
+  ///
+  /// In en, this message translates to:
+  /// **'Insured'**
+  String get insured;
+
+  /// No description provided for @licensed.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed'**
+  String get licensed;
+
+  /// No description provided for @reviewCountShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No reviews} =1{1 review} other{{count} reviews}}'**
+  String reviewCountShort(int count);
+
+  /// No description provided for @aiPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'AI price'**
+  String get aiPrice;
+
+  /// No description provided for @adjustedFromAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusted from AI'**
+  String get adjustedFromAi;
+
+  /// No description provided for @revisionNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision {number}'**
+  String revisionNumber(int number);
+
+  /// No description provided for @expiresDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String expiresDate(String date);
+
+  /// No description provided for @scopeAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope attached'**
+  String get scopeAttached;
+
+  /// No description provided for @protectedPaymentPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected payment path'**
+  String get protectedPaymentPath;
+
+  /// No description provided for @beforeYouAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you accept'**
+  String get beforeYouAccept;
+
+  /// No description provided for @scopeOfWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope of work'**
+  String get scopeOfWork;
+
+  /// No description provided for @scopeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for scope details before approving'**
+  String get scopeMissing;
+
+  /// No description provided for @warranty.
+  ///
+  /// In en, this message translates to:
+  /// **'Warranty'**
+  String get warranty;
+
+  /// No description provided for @warrantyIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Included in this quote'**
+  String get warrantyIncluded;
+
+  /// No description provided for @warrantyNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not listed'**
+  String get warrantyNotListed;
+
+  /// No description provided for @exclusions.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusions'**
+  String get exclusions;
+
+  /// No description provided for @exclusionsListed.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed by contractor'**
+  String get exclusionsListed;
+
+  /// No description provided for @exclusionsNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not listed'**
+  String get exclusionsNotListed;
+
+  /// No description provided for @deposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit'**
+  String get deposit;
+
+  /// No description provided for @depositRequiredAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} required'**
+  String depositRequiredAmount(String amount);
+
+  /// No description provided for @depositNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'No deposit listed'**
+  String get depositNotListed;
+
+  /// No description provided for @adjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get adjustment;
+
+  /// No description provided for @submittedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted {date}'**
+  String submittedDate(String date);
+
+  /// No description provided for @acceptQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Quote'**
+  String get acceptQuote;
+
+  /// No description provided for @continueJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Job'**
+  String get continueJob;
+
+  /// No description provided for @acceptQuoteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept this quote for {amount} from {contractorName}?\n\nThe contractor will be assigned and your next steps will move to the Job Command Center.'**
+  String acceptQuoteMessage(String amount, String contractorName);
+
+  /// No description provided for @acceptingQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting quote...'**
+  String get acceptingQuote;
+
+  /// No description provided for @quoteAcceptedJobAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote accepted. Job assigned.'**
+  String get quoteAcceptedJobAssigned;
+
+  /// No description provided for @quoteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote declined'**
+  String get quoteDeclined;
 
   /// No description provided for @jobCommandCenterTitle.
   ///

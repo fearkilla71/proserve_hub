@@ -1676,10 +1676,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reject => 'Rechazar';
 
   @override
+  String get decline => 'Rechazar';
+
+  @override
   String get counter => 'Contraoferta';
 
   @override
   String get accept => 'Aceptar';
+
+  @override
+  String get price => 'Precio';
 
   @override
   String get viewCounterOffer => 'Ver contraoferta';
@@ -1721,6 +1727,160 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get counterOfferSent => 'Contraoferta enviada';
+
+  @override
+  String get compareQuotes => 'Comparar cotizaciones';
+
+  @override
+  String get noQuotesYet => 'Aún no hay cotizaciones';
+
+  @override
+  String get noQuotesYetSubtitle =>
+      'Los contratistas enviarán cotizaciones para tu solicitud de trabajo.';
+
+  @override
+  String get quoteAccepted => 'Cotización aceptada';
+
+  @override
+  String get chooseTheRightPro => 'Elige el pro correcto';
+
+  @override
+  String get quoteAcceptedHeaderBody =>
+      'Tu trabajo fue asignado. Abre el Centro del trabajo para chatear, seguir el estado, escrow, fotos, factura y reseña.';
+
+  @override
+  String get compareQuotesHeaderBody =>
+      'Compara precio, reseñas, trabajos completados, notas, garantía, alcance y tiempo antes de aceptar. Después de aceptar, el Centro del trabajo mantiene todo en un solo lugar.';
+
+  @override
+  String get quotesLower => 'cotizaciones';
+
+  @override
+  String get pendingLower => 'pendientes';
+
+  @override
+  String get rangeLower => 'rango';
+
+  @override
+  String get escrowAfterApproval => 'Escrow después de aprobar';
+
+  @override
+  String get openJobCommandCenter => 'Abrir Centro del trabajo';
+
+  @override
+  String get unknownContractor => 'Contratista desconocido';
+
+  @override
+  String quoteEtaValue(String value) {
+    return 'Tiempo estimado: $value';
+  }
+
+  @override
+  String get insured => 'Asegurado';
+
+  @override
+  String get licensed => 'Licenciado';
+
+  @override
+  String reviewCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reseñas',
+      one: '1 reseña',
+      zero: 'Sin reseñas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiPrice => 'Precio de IA';
+
+  @override
+  String get adjustedFromAi => 'Ajustado desde IA';
+
+  @override
+  String revisionNumber(int number) {
+    return 'Revisión $number';
+  }
+
+  @override
+  String expiresDate(String date) {
+    return 'Vence $date';
+  }
+
+  @override
+  String get scopeAttached => 'Alcance adjunto';
+
+  @override
+  String get protectedPaymentPath => 'Ruta de pago protegida';
+
+  @override
+  String get beforeYouAccept => 'Antes de aceptar';
+
+  @override
+  String get scopeOfWork => 'Alcance del trabajo';
+
+  @override
+  String get scopeMissing => 'Pide detalles del alcance antes de aprobar';
+
+  @override
+  String get warranty => 'Garantía';
+
+  @override
+  String get warrantyIncluded => 'Incluida en esta cotización';
+
+  @override
+  String get warrantyNotListed => 'No indicada';
+
+  @override
+  String get exclusions => 'Exclusiones';
+
+  @override
+  String get exclusionsListed => 'Indicadas por el contratista';
+
+  @override
+  String get exclusionsNotListed => 'No indicadas';
+
+  @override
+  String get deposit => 'Depósito';
+
+  @override
+  String depositRequiredAmount(String amount) {
+    return '$amount requerido';
+  }
+
+  @override
+  String get depositNotListed => 'No se indica depósito';
+
+  @override
+  String get adjustment => 'Ajuste';
+
+  @override
+  String submittedDate(String date) {
+    return 'Enviada $date';
+  }
+
+  @override
+  String get acceptQuote => 'Aceptar cotización';
+
+  @override
+  String get continueJob => 'Continuar trabajo';
+
+  @override
+  String acceptQuoteMessage(String amount, String contractorName) {
+    return '¿Aceptar esta cotización por $amount de $contractorName?\n\nEl contratista será asignado y los siguientes pasos pasarán al Centro del trabajo.';
+  }
+
+  @override
+  String get acceptingQuote => 'Aceptando cotización...';
+
+  @override
+  String get quoteAcceptedJobAssigned =>
+      'Cotización aceptada. Trabajo asignado.';
+
+  @override
+  String get quoteDeclined => 'Cotización rechazada';
 
   @override
   String get jobCommandCenterTitle => 'Centro del trabajo';

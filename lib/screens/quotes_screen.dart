@@ -7,6 +7,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
 import '../utils/app_error_handler.dart';
@@ -48,8 +49,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Compare Quotes')),
+      appBar: AppBar(title: Text(l10n.compareQuotes)),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('quotes')
@@ -57,7 +59,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(l10n.errorWithMessage(snapshot.error.toString())),
+            );
           }
 
           if (!snapshot.hasData) {
@@ -92,12 +96,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No quotes yet',
+                      l10n.noQuotesYet,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Contractors will submit quotes for your job request.',
+                      l10n.noQuotesYetSubtitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -149,6 +153,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
   Widget _buildDecisionHeader(List<Map<String, dynamic>> quotes) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final pending = quotes
         .where((q) => (q['status'] as String? ?? 'pending') == 'pending')
         .length;
@@ -182,7 +187,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    accepted ? 'Quote accepted' : 'Choose the right pro',
+                    accepted ? l10n.quoteAccepted : l10n.chooseTheRightPro,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -193,24 +198,24 @@ class _QuotesScreenState extends State<QuotesScreen> {
             const SizedBox(height: 8),
             Text(
               accepted
-                  ? 'Your job is assigned. Open the Job Command Center to chat, track status, escrow, photos, invoice, and review.'
-                  : 'Compare price, reviews, completed jobs, notes, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.',
+                  ? l10n.quoteAcceptedHeaderBody
+                  : l10n.compareQuotesHeaderBody,
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _metricChip('${quotes.length}', 'quotes'),
-                if (!accepted) _metricChip('$pending', 'pending'),
+                _metricChip('${quotes.length}', l10n.quotesLower),
+                if (!accepted) _metricChip('$pending', l10n.pendingLower),
                 if (prices.isNotEmpty)
                   _metricChip(
                     '\$${low.toStringAsFixed(0)}-\$${high.toStringAsFixed(0)}',
-                    'range',
+                    l10n.rangeLower,
                   ),
-                const Chip(
-                  avatar: Icon(Icons.shield_outlined, size: 18),
-                  label: Text('Escrow after approval'),
+                Chip(
+                  avatar: const Icon(Icons.shield_outlined, size: 18),
+                  label: Text(l10n.escrowAfterApproval),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
@@ -221,7 +226,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.dashboard_customize_outlined),
-                  label: const Text('Open Job Command Center'),
+                  label: Text(l10n.openJobCommandCenter),
                   onPressed: () =>
                       context.pushReplacement('/job-command/${widget.jobId}'),
                 ),
@@ -241,6 +246,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
   }
 
   Widget _buildQuoteCard(String quoteId, Map<String, dynamic> quote) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final contractorId = quote['contractorId'] as String;
     final price = (quote['price'] as num).toDouble();
     final estimatedDuration = quote['estimatedDuration'] as String?;
@@ -253,6 +260,11 @@ class _QuotesScreenState extends State<QuotesScreen> {
         (quote['aiAdjustmentExplanation'] as String?)?.trim() ?? '';
     final submittedAt = quote['submittedAt'] as Timestamp?;
     final status = quote['status'] as String? ?? 'pending';
+    final warranty = (quote['warranty'] as String?)?.trim() ?? '';
+    final exclusions = (quote['exclusions'] as String?)?.trim() ?? '';
+    final deposit =
+        (quote['depositRequired'] as num?)?.toDouble() ??
+        (quote['deposit'] as num?)?.toDouble();
 
     return Card(
       child: Padding(
@@ -263,84 +275,130 @@ class _QuotesScreenState extends State<QuotesScreen> {
             // Contractor Info (from cache)
             Builder(
               builder: (context) {
+                final hasContractorRecord = _contractorCache.containsKey(
+                  contractorId,
+                );
                 final contractor = _contractorCache[contractorId];
-                if (contractor == null) {
+                if (!hasContractorRecord) {
                   return const SizedBox(
                     height: 56,
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
-                final name = contractor['name'] ?? 'Unknown Contractor';
+                final name =
+                    contractor?['name']?.toString() ?? l10n.unknownContractor;
                 final rating =
-                    (contractor['averageRating'] as num?)?.toDouble() ??
-                    (contractor['avgRating'] as num?)?.toDouble() ??
+                    (contractor?['averageRating'] as num?)?.toDouble() ??
+                    (contractor?['avgRating'] as num?)?.toDouble() ??
                     0.0;
                 final reviewCount =
-                    contractor['reviewCount'] as int? ??
-                    contractor['totalReviews'] as int? ??
+                    (contractor?['reviewCount'] as num?)?.toInt() ??
+                    (contractor?['totalReviews'] as num?)?.toInt() ??
                     0;
                 final completedJobs =
-                    (contractor['completedJobs'] as num?)?.toInt() ??
-                    (contractor['totalJobsCompleted'] as num?)?.toInt() ??
+                    (contractor?['completedJobs'] as num?)?.toInt() ??
+                    (contractor?['totalJobsCompleted'] as num?)?.toInt() ??
                     0;
                 final profileImageUrl =
-                    contractor['profileImageUrl'] as String?;
+                    contractor?['profileImageUrl'] as String?;
+                final verified =
+                    contractor?['verificationStatus'] == 'verified' ||
+                    contractor?['verified'] == true;
+                final insured = contractor?['insured'] == true;
+                final licensed = contractor?['licensed'] == true;
 
-                return Row(
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      backgroundImage: profileImageUrl != null
-                          ? CachedNetworkImageProvider(profileImageUrl)
-                          : null,
-                      child: profileImageUrl == null
-                          ? Text(
-                              name.toString().isNotEmpty
-                                  ? name.toString()[0].toUpperCase()
-                                  : '?',
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 4,
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: profileImageUrl != null
+                              ? CachedNetworkImageProvider(profileImageUrl)
+                              : null,
+                          child: profileImageUrl == null
+                              ? Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
+                              Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 4,
                                 children: [
-                                  Icon(
-                                    Icons.star,
-                                    size: 16,
-                                    color: Colors.amber[700],
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        size: 16,
+                                        color: Colors.amber[700],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${rating.toStringAsFixed(1)} ($reviewCount)',
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
+                                  Text(l10n.completedJobsCount(completedJobs)),
                                   Text(
-                                    '${rating.toStringAsFixed(1)} ($reviewCount)',
+                                    l10n.quoteEtaValue(
+                                      estimatedDuration?.trim().isNotEmpty ==
+                                              true
+                                          ? estimatedDuration!.trim()
+                                          : '—',
+                                    ),
                                   ),
                                 ],
                               ),
-                              Text('$completedJobs completed'),
-                              Text(
-                                'ETA: ${estimatedDuration?.trim().isNotEmpty == true ? estimatedDuration!.trim() : '—'}',
-                              ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        _buildStatusChip(status),
+                      ],
                     ),
-                    _buildStatusChip(status),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _proofChip(
+                          verified,
+                          Icons.verified_user_outlined,
+                          l10n.verifiedPro,
+                        ),
+                        _proofChip(
+                          insured,
+                          Icons.health_and_safety_outlined,
+                          l10n.insured,
+                        ),
+                        _proofChip(
+                          licensed,
+                          Icons.badge_outlined,
+                          l10n.licensed,
+                        ),
+                        Chip(
+                          avatar: const Icon(Icons.reviews_outlined, size: 16),
+                          label: Text(l10n.reviewCountShort(reviewCount)),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
                   ],
                 );
               },
@@ -352,7 +410,10 @@ class _QuotesScreenState extends State<QuotesScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Price', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  l10n.price,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 Text(
                   '\$${price.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -370,14 +431,14 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 runSpacing: 6,
                 children: [
                   if (pricingMode == 'ai_accept')
-                    const Chip(
-                      avatar: Icon(Icons.auto_awesome, size: 16),
-                      label: Text('AI price'),
+                    Chip(
+                      avatar: const Icon(Icons.auto_awesome, size: 16),
+                      label: Text(l10n.aiPrice),
                     )
                   else if (pricingMode == 'ai_adjust')
-                    const Chip(
-                      avatar: Icon(Icons.tune, size: 16),
-                      label: Text('Adjusted from AI'),
+                    Chip(
+                      avatar: const Icon(Icons.tune, size: 16),
+                      label: Text(l10n.adjustedFromAi),
                     ),
                 ],
               ),
@@ -391,36 +452,48 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 if (revisionNumber > 0)
                   Chip(
                     avatar: const Icon(Icons.edit_note, size: 16),
-                    label: Text('Revision $revisionNumber'),
+                    label: Text(l10n.revisionNumber(revisionNumber)),
                     visualDensity: VisualDensity.compact,
                   ),
                 if (expiresAt != null)
                   Chip(
                     avatar: const Icon(Icons.timer_outlined, size: 16),
                     label: Text(
-                      'Expires ${DateFormat.MMMd().format(expiresAt.toDate())}',
+                      l10n.expiresDate(
+                        DateFormat.MMMd().format(expiresAt.toDate()),
+                      ),
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
                 if (sowUrl != null && sowUrl.trim().isNotEmpty)
-                  const Chip(
-                    avatar: Icon(Icons.attach_file, size: 16),
-                    label: Text('Scope attached'),
+                  Chip(
+                    avatar: const Icon(Icons.attach_file, size: 16),
+                    label: Text(l10n.scopeAttached),
                     visualDensity: VisualDensity.compact,
                   ),
-                const Chip(
-                  avatar: Icon(Icons.lock_outline, size: 16),
-                  label: Text('Protected payment path'),
+                Chip(
+                  avatar: const Icon(Icons.lock_outline, size: 16),
+                  label: Text(l10n.protectedPaymentPath),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+            _buildQuoteTrustPanel(
+              l10n: l10n,
+              scheme: scheme,
+              hasScope: sowUrl != null && sowUrl.trim().isNotEmpty,
+              hasWarranty: warranty.isNotEmpty,
+              hasExclusions: exclusions.isNotEmpty,
+              deposit: deposit,
             ),
 
             if (pricingMode == 'ai_adjust' &&
                 adjustmentExplanation.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                'Adjustment',
+                l10n.adjustment,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -433,7 +506,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
             if (notes != null && notes.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                'Notes',
+                l10n.notes,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -446,7 +519,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
             if (submittedAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'Submitted ${DateFormat.yMMMd().add_jm().format(submittedAt.toDate())}',
+                l10n.submittedDate(
+                  DateFormat.yMMMd().add_jm().format(submittedAt.toDate()),
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ] else ...[
@@ -460,14 +535,14 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _declineQuote(quoteId),
-                      child: const Text('Decline'),
+                      child: Text(l10n.decline),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
                       onPressed: () => _acceptQuote(quoteId, quote),
-                      child: const Text('Accept Quote'),
+                      child: Text(l10n.acceptQuote),
                     ),
                   ),
                 ],
@@ -478,7 +553,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.dashboard_customize_outlined),
-                  label: const Text('Continue Job'),
+                  label: Text(l10n.continueJob),
                   onPressed: () => context.push('/job-command/${widget.jobId}'),
                 ),
               ),
@@ -490,21 +565,22 @@ class _QuotesScreenState extends State<QuotesScreen> {
   }
 
   Widget _buildStatusChip(String status) {
+    final l10n = AppLocalizations.of(context)!;
     Color color;
     String label;
 
     switch (status) {
       case 'accepted':
         color = Colors.green;
-        label = 'Accepted';
+        label = l10n.accepted;
         break;
       case 'declined':
         color = Colors.red;
-        label = 'Declined';
+        label = l10n.declined;
         break;
       default:
         color = Colors.orange;
-        label = 'Pending';
+        label = l10n.pending;
     }
 
     return Chip(
@@ -514,17 +590,127 @@ class _QuotesScreenState extends State<QuotesScreen> {
     );
   }
 
+  Widget _proofChip(bool active, IconData icon, String label) {
+    final scheme = Theme.of(context).colorScheme;
+    return Chip(
+      avatar: Icon(
+        active ? icon : Icons.help_outline,
+        size: 16,
+        color: active ? Colors.green.shade700 : scheme.onSurfaceVariant,
+      ),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      backgroundColor: active ? Colors.green.withValues(alpha: 0.10) : null,
+    );
+  }
+
+  Widget _buildQuoteTrustPanel({
+    required AppLocalizations l10n,
+    required ColorScheme scheme,
+    required bool hasScope,
+    required bool hasWarranty,
+    required bool hasExclusions,
+    required double? deposit,
+  }) {
+    final depositLabel = deposit != null && deposit > 0
+        ? l10n.depositRequiredAmount('\$${deposit.toStringAsFixed(0)}')
+        : l10n.depositNotListed;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.fact_check_outlined, size: 18, color: scheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.beforeYouAccept,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _trustRow(
+            hasScope,
+            l10n.scopeOfWork,
+            hasScope ? l10n.scopeAttached : l10n.scopeMissing,
+          ),
+          _trustRow(
+            hasWarranty,
+            l10n.warranty,
+            hasWarranty ? l10n.warrantyIncluded : l10n.warrantyNotListed,
+          ),
+          _trustRow(
+            hasExclusions,
+            l10n.exclusions,
+            hasExclusions ? l10n.exclusionsListed : l10n.exclusionsNotListed,
+          ),
+          _trustRow(deposit != null && deposit > 0, l10n.deposit, depositLabel),
+        ],
+      ),
+    );
+  }
+
+  Widget _trustRow(bool positive, String label, String value) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            positive ? Icons.check_circle_outline : Icons.info_outline,
+            size: 17,
+            color: positive ? Colors.green.shade700 : scheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurface),
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: value),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _acceptQuote(String quoteId, Map<String, dynamic> quote) async {
+    final l10n = AppLocalizations.of(context)!;
     final contractorId = quote['contractorId'] as String;
     final price = (quote['price'] as num).toDouble();
+    final contractorName =
+        _contractorCache[contractorId]?['name']?.toString() ??
+        l10n.unknownContractor;
 
     // Show confirmation bottom sheet
     final confirmed = await BottomSheetHelper.showConfirmation(
       context: context,
-      title: 'Accept Quote',
-      message:
-          'Accept this quote for \$${price.toStringAsFixed(0)}? The contractor will be assigned and your next steps will move to the Job Command Center.',
-      confirmText: 'Accept',
+      title: l10n.acceptQuote,
+      message: l10n.acceptQuoteMessage(
+        '\$${price.toStringAsFixed(0)}',
+        contractorName,
+      ),
+      confirmText: l10n.accept,
     );
 
     if (!confirmed || !mounted) return;
@@ -569,8 +755,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
               'quoteAcceptedAt': FieldValue.serverTimestamp(),
             });
       },
-      loadingMessage: 'Accepting quote...',
-      successMessage: 'Quote accepted. Job assigned.',
+      loadingMessage: l10n.acceptingQuote,
+      successMessage: l10n.quoteAcceptedJobAssigned,
       onSuccess: () {
         if (mounted) context.pushReplacement('/job-command/${widget.jobId}');
       },
@@ -578,6 +764,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
   }
 
   Future<void> _declineQuote(String quoteId) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       await FirebaseFirestore.instance.collection('quotes').doc(quoteId).update(
         {'status': 'declined', 'declinedAt': FieldValue.serverTimestamp()},
@@ -586,13 +773,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Quote declined')));
+        ).showSnackBar(SnackBar(content: Text(l10n.quoteDeclined)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error declining quote: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage('$e'))));
       }
     }
   }
