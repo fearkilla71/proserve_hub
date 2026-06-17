@@ -478,6 +478,17 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 12),
             _fadeSlide(
+              child: _CustomerActionCenter(
+                userId: user.uid,
+                requestsQuery: _myRequestsQuery(user.uid),
+                canLeaveReview: _canLeaveReview,
+                onProjectTab: () => setState(() => _tabIndex = 2),
+              ),
+              fade: _nextFade,
+              slide: _nextSlide,
+            ),
+            const SizedBox(height: 12),
+            _fadeSlide(
               child: const EscrowBookingsCard(isCustomer: true),
               fade: _nextFade,
               slide: _nextSlide,
@@ -1846,6 +1857,375 @@ class _HeroPill extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: scheme.onPrimaryContainer,
         ),
+      ),
+    );
+  }
+}
+
+class _CustomerActionCenter extends StatelessWidget {
+  const _CustomerActionCenter({
+    required this.userId,
+    required this.requestsQuery,
+    required this.canLeaveReview,
+    required this.onProjectTab,
+  });
+
+  final String userId;
+  final Query<Map<String, dynamic>> requestsQuery;
+  final bool Function(Map<String, dynamic> data) canLeaveReview;
+  final VoidCallback onProjectTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: requestsQuery.snapshots(),
+      builder: (context, snapshot) {
+        final docs =
+            snapshot.data?.docs.where((d) {
+              final status = (d.data()['status'] ?? '')
+                  .toString()
+                  .toLowerCase();
+              return status != 'cancelled' && status != 'deleted';
+            }).toList() ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+        docs.sort((a, b) {
+          final at = a.data()['createdAt'];
+          final bt = b.data()['createdAt'];
+          final aMs = at is Timestamp ? at.millisecondsSinceEpoch : 0;
+          final bMs = bt is Timestamp ? bt.millisecondsSinceEpoch : 0;
+          return bMs.compareTo(aMs);
+        });
+
+        final actionable =
+            docs
+                .map((doc) => _CustomerActionItem.fromDoc(doc, canLeaveReview))
+                .where((item) => item.priority > 0)
+                .toList()
+              ..sort((a, b) => b.priority.compareTo(a.priority));
+
+        final topItems = actionable.take(3).toList();
+        final openJobs = docs.where((doc) {
+          final data = doc.data();
+          final claimed = data['claimed'] == true;
+          final status = (data['status'] ?? '').toString().toLowerCase();
+          return !claimed && (status.isEmpty || status == 'open');
+        }).length;
+        final pendingQuotes = docs.where((doc) {
+          final data = doc.data();
+          final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
+          final claimed = data['claimed'] == true;
+          return quoteCount > 0 && !claimed;
+        }).length;
+        final protectedJobs = docs.where((doc) {
+          final data = doc.data();
+          return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
+              data['instantBook'] == true;
+        }).length;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: scheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.task_alt_outlined,
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Action Center',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Your next steps from request to paid, completed, and reviewed.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _ActionMetricChip(
+                      value: docs.length.toString(),
+                      label: 'active',
+                    ),
+                    _ActionMetricChip(
+                      value: pendingQuotes.toString(),
+                      label: 'quotes',
+                    ),
+                    _ActionMetricChip(
+                      value: protectedJobs.toString(),
+                      label: 'protected',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const LinearProgressIndicator()
+                else if (docs.isEmpty)
+                  _EmptyCustomerAction(onProjectTab: onProjectTab)
+                else if (topItems.isEmpty)
+                  _ActionCenterAllClear(onProjectTab: onProjectTab)
+                else
+                  ...topItems.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _CustomerActionTile(item: item),
+                    ),
+                  ),
+                if (openJobs > 0 && pendingQuotes == 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tip: invite more pros or browse contractors if a request has no quotes yet.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onProjectTab,
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('View all projects'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CustomerActionItem {
+  const _CustomerActionItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.route,
+    required this.priority,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String route;
+  final int priority;
+
+  static _CustomerActionItem fromDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    bool Function(Map<String, dynamic> data) canLeaveReview,
+  ) {
+    final data = doc.data();
+    final jobId = doc.id;
+    final service = (data['service'] ?? 'your project').toString();
+    final status = (data['status'] ?? 'open').toString().toLowerCase();
+    final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
+    final claimed = data['claimed'] == true;
+    final escrowId = (data['escrowId'] ?? '').toString().trim();
+    final contractorId = (data['claimedBy'] as String?)?.trim() ?? '';
+
+    if (canLeaveReview(data)) {
+      return _CustomerActionItem(
+        icon: Icons.rate_review_outlined,
+        title: 'Review $service',
+        subtitle: 'Help future homeowners trust the right pro.',
+        route: '/submit-review/$jobId/$contractorId',
+        priority: 100,
+      );
+    }
+
+    if (escrowId.isNotEmpty) {
+      return _CustomerActionItem(
+        icon: Icons.shield_outlined,
+        title: 'Check protected payment',
+        subtitle: 'View escrow status and release steps for $service.',
+        route: '/escrow-status/$escrowId',
+        priority: status.contains('completion') ? 95 : 80,
+      );
+    }
+
+    if (quoteCount > 0 && !claimed) {
+      return _CustomerActionItem(
+        icon: Icons.compare_arrows_outlined,
+        title: 'Compare $quoteCount quote${quoteCount == 1 ? '' : 's'}',
+        subtitle: 'Review price, scope, warranty, and contractor proof.',
+        route: '/quotes/$jobId',
+        priority: 90,
+      );
+    }
+
+    if (claimed || status == 'accepted' || status == 'in_progress') {
+      return _CustomerActionItem(
+        icon: Icons.dashboard_customize_outlined,
+        title: 'Track $service',
+        subtitle: 'Open chat, photos, timeline, invoice, and next steps.',
+        route: '/job-command/$jobId',
+        priority: 70,
+      );
+    }
+
+    if (status == 'open') {
+      return _CustomerActionItem(
+        icon: Icons.person_search_outlined,
+        title: 'Waiting for quotes',
+        subtitle: 'Open the job and invite or compare nearby pros.',
+        route: '/job-command/$jobId',
+        priority: 50,
+      );
+    }
+
+    return _CustomerActionItem(
+      icon: Icons.info_outline,
+      title: '',
+      subtitle: '',
+      route: '',
+      priority: 0,
+    );
+  }
+}
+
+class _CustomerActionTile extends StatelessWidget {
+  const _CustomerActionTile({required this.item});
+
+  final _CustomerActionItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => context.push(item.route),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Icon(item.icon, color: scheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item.subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionMetricChip extends StatelessWidget {
+  const _ActionMetricChip({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text('$value $label'),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _EmptyCustomerAction extends StatelessWidget {
+  const _EmptyCustomerAction({required this.onProjectTab});
+
+  final VoidCallback onProjectTab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'No active projects yet. Start with photos, ZIP code, and service type.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => context.push('/smart-request'),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('Post your first job'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionCenterAllClear extends StatelessWidget {
+  const _ActionCenterAllClear({required this.onProjectTab});
+
+  final VoidCallback onProjectTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_outline, color: scheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'No urgent actions. You can still review project details or start another request.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }
