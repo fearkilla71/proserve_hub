@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class DisputeAdminTab extends StatefulWidget {
   const DisputeAdminTab({super.key});
 
@@ -61,38 +63,41 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
       }
 
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Dispute status updated to $newStatus')),
+          SnackBar(content: Text(l10n.disputeStatusUpdated(newStatus))),
         );
       }
     } catch (e) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage('$e'))));
       }
     }
   }
 
   void _showResolutionDialog(BuildContext context, String disputeId) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Resolve Dispute'),
+        title: Text(l10n.resolveDispute),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Resolution Details',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.resolutionDetails,
+            border: const OutlineInputBorder(),
           ),
           maxLines: 5,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -104,7 +109,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                 controller.text.trim(),
               );
             },
-            child: const Text('Resolve'),
+            child: Text(l10n.resolve),
           ),
         ],
       ),
@@ -113,6 +118,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('disputes').snapshots(),
       builder: (context, snapshot) {
@@ -121,7 +127,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Error loading disputes:\n\n${snapshot.error}',
+                l10n.errorLoadingDisputes(snapshot.error.toString()),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -158,7 +164,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
         });
 
         if (disputes.isEmpty) {
-          return const Center(child: Text('No active disputes'));
+          return Center(child: Text(l10n.noActiveDisputes));
         }
 
         return ListView.builder(
@@ -174,7 +180,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Filters & sorting',
+                        l10n.filtersAndSorting,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -185,42 +191,42 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                         runSpacing: 8,
                         children: [
                           ChoiceChip(
-                            label: const Text('Active'),
+                            label: Text(l10n.active),
                             selected: _statusFilter == 'active',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'active');
                             },
                           ),
                           ChoiceChip(
-                            label: const Text('Open'),
+                            label: Text(l10n.open),
                             selected: _statusFilter == 'open',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'open');
                             },
                           ),
                           ChoiceChip(
-                            label: const Text('Under review'),
+                            label: Text(l10n.underReview),
                             selected: _statusFilter == 'under_review',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'under_review');
                             },
                           ),
                           ChoiceChip(
-                            label: const Text('Resolved'),
+                            label: Text(l10n.resolved),
                             selected: _statusFilter == 'resolved',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'resolved');
                             },
                           ),
                           ChoiceChip(
-                            label: const Text('Closed'),
+                            label: Text(l10n.closed),
                             selected: _statusFilter == 'closed',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'closed');
                             },
                           ),
                           ChoiceChip(
-                            label: const Text('All'),
+                            label: Text(l10n.all),
                             selected: _statusFilter == 'all',
                             onSelected: (_) {
                               setState(() => _statusFilter = 'all');
@@ -231,19 +237,19 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
                         initialValue: _sortBy,
-                        decoration: const InputDecoration(
-                          labelText: 'Sort by',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.sortBy,
+                          border: const OutlineInputBorder(),
                           isDense: true,
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'newest',
-                            child: Text('Newest → Oldest'),
+                            child: Text(l10n.newestToOldest),
                           ),
                           DropdownMenuItem(
                             value: 'oldest',
-                            child: Text('Oldest → Newest'),
+                            child: Text(l10n.oldestToNewest),
                           ),
                         ],
                         onChanged: (value) {
@@ -301,9 +307,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Details',
-                          style: TextStyle(
+                        Text(
+                          l10n.details,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -312,7 +318,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                         Text(details),
                         const SizedBox(height: 16),
                         Text(
-                          'Job ID: $jobId',
+                          l10n.jobIdLabel(jobId),
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(
@@ -332,7 +338,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                                     'under_review',
                                     null,
                                   ),
-                                  child: const Text('Start Review'),
+                                  child: Text(l10n.startReview),
                                 ),
                               ),
                             if (status == 'open') const SizedBox(width: 8),
@@ -340,7 +346,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               child: FilledButton(
                                 onPressed: () =>
                                     _showResolutionDialog(context, disputeId),
-                                child: const Text('Resolve'),
+                                child: Text(l10n.resolve),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -353,9 +359,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                                   context,
                                   disputeId,
                                   'closed',
-                                  'Dispute closed without resolution',
+                                  l10n.disputeClosedWithoutResolution,
                                 ),
-                                child: const Text('Close'),
+                                child: Text(l10n.close),
                               ),
                             ),
                           ],

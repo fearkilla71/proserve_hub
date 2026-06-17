@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class PaymentOperationsTab extends StatefulWidget {
   const PaymentOperationsTab({super.key});
 
@@ -16,6 +18,7 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('escrow_bookings')
@@ -84,40 +87,37 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
                     ),
                     const SizedBox(height: 12),
                     _SectionTitle(
-                      title: 'Escrow Operations',
-                      subtitle:
-                          'Stuck, failed, refund, dispute, and payout states.',
+                      title: l10n.paymentOpsEscrowOperations,
+                      subtitle: l10n.paymentOpsEscrowOperationsSubtitle,
                     ),
                     if (showEscrows.isEmpty)
-                      const _EmptyState(
-                        title: 'No escrow issues',
-                        subtitle: 'Escrow records do not need admin attention.',
+                      _EmptyState(
+                        title: l10n.paymentOpsNoEscrowIssues,
+                        subtitle: l10n.paymentOpsNoEscrowIssuesSubtitle,
                       )
                     else
                       ...showEscrows.map(_escrowCard),
                     const SizedBox(height: 12),
                     _SectionTitle(
-                      title: 'Payment Records',
-                      subtitle:
-                          'Stripe, app store, lead credit, and invoice records.',
+                      title: l10n.paymentOpsPaymentRecords,
+                      subtitle: l10n.paymentOpsPaymentRecordsSubtitle,
                     ),
                     if (showPayments.isEmpty)
-                      const _EmptyState(
-                        title: 'No payment issues',
-                        subtitle: 'Payment records do not need attention.',
+                      _EmptyState(
+                        title: l10n.paymentOpsNoPaymentIssues,
+                        subtitle: l10n.paymentOpsNoPaymentIssuesSubtitle,
                       )
                     else
                       ...showPayments.map(_paymentCard),
                     const SizedBox(height: 12),
                     _SectionTitle(
-                      title: 'Contractor Payout Setup',
-                      subtitle:
-                          'Contractors who cannot reliably receive payouts yet.',
+                      title: l10n.paymentOpsPayoutSetup,
+                      subtitle: l10n.paymentOpsPayoutSetupSubtitle,
                     ),
                     if (payoutItems.isEmpty)
-                      const _EmptyState(
-                        title: 'All payout setups look ready',
-                        subtitle: 'No contractor payout blockers found.',
+                      _EmptyState(
+                        title: l10n.paymentOpsPayoutsReady,
+                        subtitle: l10n.paymentOpsPayoutsReadySubtitle,
                       )
                     else
                       ...payoutItems.map(_payoutCard),
@@ -133,6 +133,7 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
 
   Widget _escrowCard(_EscrowOpsItem item) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -151,17 +152,20 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
                   ),
                 ),
                 _RiskChip(
-                  label: item.riskLabel,
+                  label: item.needsAttention ? l10n.needsAttention : l10n.ok,
                   color: item.needsAttention ? scheme.error : scheme.primary,
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text('Escrow: ${item.id}'),
-            if (item.jobId.isNotEmpty) Text('Job: ${item.jobId}'),
-            Text('Status: ${item.status} • Payout: ${item.payoutStatus}'),
+            Text(l10n.escrowIdLabel(item.id)),
+            if (item.jobId.isNotEmpty) Text(l10n.jobLabel(item.jobId)),
+            Text(l10n.statusPayoutLabel(item.status, item.payoutStatus)),
             Text(
-              'Amount: ${_currency.format(item.aiPrice)} • Contractor payout: ${_currency.format(item.contractorPayout)}',
+              l10n.amountContractorPayoutLabel(
+                _currency.format(item.aiPrice),
+                _currency.format(item.contractorPayout),
+              ),
             ),
             if (item.payoutError.isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -175,18 +179,18 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
                 FilledButton.tonalIcon(
                   onPressed: () => context.push('/escrow-status/${item.id}'),
                   icon: const Icon(Icons.shield_outlined),
-                  label: const Text('Open escrow'),
+                  label: Text(l10n.openEscrow),
                 ),
                 if (item.jobId.isNotEmpty)
                   OutlinedButton.icon(
                     onPressed: () => context.push('/job-command/${item.jobId}'),
                     icon: const Icon(Icons.work_outline),
-                    label: const Text('Open job'),
+                    label: Text(l10n.openJob),
                   ),
                 OutlinedButton.icon(
                   onPressed: () => _markEscrowReviewed(item.id),
                   icon: const Icon(Icons.done_all),
-                  label: const Text('Mark reviewed'),
+                  label: Text(l10n.markReviewed),
                 ),
               ],
             ),
@@ -198,6 +202,7 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
 
   Widget _paymentCard(_PaymentOpsItem item) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -210,15 +215,16 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
         title: Text(item.title),
         subtitle: Text(
           [
-            'ID: ${item.id}',
-            if (item.type.isNotEmpty) 'Type: ${item.type}',
-            if (item.uid.isNotEmpty) 'User: ${item.uid}',
-            if (item.status.isNotEmpty) 'Status: ${item.status}',
-            if (item.amount > 0) 'Amount: ${_currency.format(item.amount)}',
+            l10n.idLabel(item.id),
+            if (item.type.isNotEmpty) l10n.typeLabel(item.type),
+            if (item.uid.isNotEmpty) l10n.userLabel(item.uid),
+            if (item.status.isNotEmpty) l10n.statusLabel(item.status),
+            if (item.amount > 0)
+              l10n.amountLabel(_currency.format(item.amount)),
           ].join('\n'),
         ),
         trailing: _RiskChip(
-          label: item.needsAttention ? 'Check' : 'OK',
+          label: item.needsAttention ? l10n.check : l10n.ok,
           color: item.needsAttention ? scheme.error : scheme.primary,
         ),
       ),
@@ -226,19 +232,29 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
   }
 
   Widget _payoutCard(_PayoutOpsItem item) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: ListTile(
         leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
         title: Text(item.displayName),
         subtitle: Text(
           [
-            'User: ${item.uid}',
-            'Stripe account: ${item.stripeAccountId.isEmpty ? 'Missing' : item.stripeAccountId}',
-            'Details submitted: ${item.detailsSubmitted ? 'yes' : 'no'}',
-            'Payouts enabled: ${item.payoutsEnabled ? 'yes' : 'no'}',
+            l10n.userLabel(item.uid),
+            l10n.stripeAccountLabel(
+              item.stripeAccountId.isEmpty
+                  ? l10n.missing
+                  : item.stripeAccountId,
+            ),
+            l10n.detailsSubmittedLabel(
+              item.detailsSubmitted ? l10n.yes : l10n.no,
+            ),
+            l10n.payoutsEnabledLabel(item.payoutsEnabled ? l10n.yes : l10n.no),
           ].join('\n'),
         ),
-        trailing: const _RiskChip(label: 'Payout setup', color: Colors.orange),
+        trailing: _RiskChip(
+          label: l10n.paymentOpsPayoutSetup,
+          color: Colors.orange,
+        ),
       ),
     );
   }
@@ -250,14 +266,17 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
           .doc(escrowId)
           .update({'adminReviewedAt': FieldValue.serverTimestamp()});
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Escrow marked reviewed.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.escrowMarkedReviewed),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not mark reviewed: $e')));
+      ).showSnackBar(SnackBar(content: Text(l10n.couldNotMarkReviewed('$e'))));
     }
   }
 }
@@ -452,6 +471,7 @@ class _SummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -460,10 +480,16 @@ class _SummaryGrid extends StatelessWidget {
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
       children: [
-        _MetricCard(label: 'Escrows', value: escrowTotal.toString()),
-        _MetricCard(label: 'Escrow alerts', value: stuckEscrows.toString()),
-        _MetricCard(label: 'Payment alerts', value: failedPayments.toString()),
-        _MetricCard(label: 'Payout setup', value: payoutIssues.toString()),
+        _MetricCard(label: l10n.escrows, value: escrowTotal.toString()),
+        _MetricCard(label: l10n.escrowAlerts, value: stuckEscrows.toString()),
+        _MetricCard(
+          label: l10n.paymentAlerts,
+          value: failedPayments.toString(),
+        ),
+        _MetricCard(
+          label: l10n.paymentOpsPayoutSetup,
+          value: payoutIssues.toString(),
+        ),
       ],
     );
   }
@@ -506,6 +532,7 @@ class _FilterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -513,12 +540,12 @@ class _FilterCard extends StatelessWidget {
           spacing: 8,
           children: [
             ChoiceChip(
-              label: const Text('Needs attention'),
+              label: Text(l10n.needsAttention),
               selected: filter == 'attention',
               onSelected: (_) => onChanged('attention'),
             ),
             ChoiceChip(
-              label: const Text('All records'),
+              label: Text(l10n.allRecords),
               selected: filter == 'all',
               onSelected: (_) => onChanged('all'),
             ),
@@ -600,10 +627,11 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Error loading payment operations:\n\n$message'),
+        child: Text(l10n.errorLoadingPaymentOperations(message)),
       ),
     );
   }

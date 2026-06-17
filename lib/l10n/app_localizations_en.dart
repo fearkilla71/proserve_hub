@@ -1231,6 +1231,256 @@ class AppLocalizationsEn extends AppLocalizations {
   String get answerCustomerQuestions => 'Answer common customer questions';
 
   @override
+  String get adminOperationsTitle => 'Admin Operations';
+
+  @override
+  String get adminOverviewTab => 'Overview';
+
+  @override
+  String get adminPaymentsTab => 'Payments';
+
+  @override
+  String get adminDisputesTab => 'Disputes';
+
+  @override
+  String get adminModerationTab => 'Moderation';
+
+  @override
+  String adminCheckFailed(String error) {
+    return 'Admin check failed: $error';
+  }
+
+  @override
+  String get adminAccessRequired =>
+      'Admin access required. This screen is only available to approved operators.';
+
+  @override
+  String disputeStatusUpdated(String status) {
+    return 'Dispute status updated to $status';
+  }
+
+  @override
+  String errorWithMessage(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get resolveDispute => 'Resolve Dispute';
+
+  @override
+  String get resolutionDetails => 'Resolution Details';
+
+  @override
+  String get resolve => 'Resolve';
+
+  @override
+  String errorLoadingDisputes(String error) {
+    return 'Error loading disputes:\n\n$error';
+  }
+
+  @override
+  String get noActiveDisputes => 'No active disputes';
+
+  @override
+  String get filtersAndSorting => 'Filters & sorting';
+
+  @override
+  String get open => 'Open';
+
+  @override
+  String get underReview => 'Under review';
+
+  @override
+  String get resolved => 'Resolved';
+
+  @override
+  String get closed => 'Closed';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get newestToOldest => 'Newest to Oldest';
+
+  @override
+  String get oldestToNewest => 'Oldest to Newest';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String jobIdLabel(String jobId) {
+    return 'Job ID: $jobId';
+  }
+
+  @override
+  String get startReview => 'Start Review';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get disputeClosedWithoutResolution =>
+      'Dispute closed without resolution';
+
+  @override
+  String get paymentOpsEscrowOperations => 'Escrow Operations';
+
+  @override
+  String get paymentOpsEscrowOperationsSubtitle =>
+      'Stuck, failed, refund, dispute, and payout states.';
+
+  @override
+  String get paymentOpsNoEscrowIssues => 'No escrow issues';
+
+  @override
+  String get paymentOpsNoEscrowIssuesSubtitle =>
+      'Escrow records do not need admin attention.';
+
+  @override
+  String get paymentOpsPaymentRecords => 'Payment Records';
+
+  @override
+  String get paymentOpsPaymentRecordsSubtitle =>
+      'Stripe, app store, lead credit, and invoice records.';
+
+  @override
+  String get paymentOpsNoPaymentIssues => 'No payment issues';
+
+  @override
+  String get paymentOpsNoPaymentIssuesSubtitle =>
+      'Payment records do not need attention.';
+
+  @override
+  String get paymentOpsPayoutSetup => 'Payout setup';
+
+  @override
+  String get paymentOpsPayoutSetupSubtitle =>
+      'Contractors who cannot reliably receive payouts yet.';
+
+  @override
+  String get paymentOpsPayoutsReady => 'All payout setups look ready';
+
+  @override
+  String get paymentOpsPayoutsReadySubtitle =>
+      'No contractor payout blockers found.';
+
+  @override
+  String get needsAttention => 'Needs attention';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String escrowIdLabel(String id) {
+    return 'Escrow: $id';
+  }
+
+  @override
+  String jobLabel(String jobId) {
+    return 'Job: $jobId';
+  }
+
+  @override
+  String statusPayoutLabel(String status, String payout) {
+    return 'Status: $status • Payout: $payout';
+  }
+
+  @override
+  String amountContractorPayoutLabel(String amount, String payout) {
+    return 'Amount: $amount • Contractor payout: $payout';
+  }
+
+  @override
+  String get openEscrow => 'Open escrow';
+
+  @override
+  String get openJob => 'Open job';
+
+  @override
+  String get markReviewed => 'Mark reviewed';
+
+  @override
+  String idLabel(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String typeLabel(String type) {
+    return 'Type: $type';
+  }
+
+  @override
+  String userLabel(String userId) {
+    return 'User: $userId';
+  }
+
+  @override
+  String statusLabel(String status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String amountLabel(String amount) {
+    return 'Amount: $amount';
+  }
+
+  @override
+  String get check => 'Check';
+
+  @override
+  String stripeAccountLabel(String account) {
+    return 'Stripe account: $account';
+  }
+
+  @override
+  String detailsSubmittedLabel(String value) {
+    return 'Details submitted: $value';
+  }
+
+  @override
+  String payoutsEnabledLabel(String value) {
+    return 'Payouts enabled: $value';
+  }
+
+  @override
+  String get missing => 'Missing';
+
+  @override
+  String get yes => 'yes';
+
+  @override
+  String get no => 'no';
+
+  @override
+  String get escrowMarkedReviewed => 'Escrow marked reviewed.';
+
+  @override
+  String couldNotMarkReviewed(String error) {
+    return 'Could not mark reviewed: $error';
+  }
+
+  @override
+  String get escrows => 'Escrows';
+
+  @override
+  String get escrowAlerts => 'Escrow alerts';
+
+  @override
+  String get paymentAlerts => 'Payment alerts';
+
+  @override
+  String get allRecords => 'All records';
+
+  @override
+  String errorLoadingPaymentOperations(String message) {
+    return 'Error loading payment operations:\n\n$message';
+  }
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

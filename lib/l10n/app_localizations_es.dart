@@ -1243,6 +1243,256 @@ class AppLocalizationsEs extends AppLocalizations {
       'Responde preguntas comunes de clientes';
 
   @override
+  String get adminOperationsTitle => 'Operaciones admin';
+
+  @override
+  String get adminOverviewTab => 'Resumen';
+
+  @override
+  String get adminPaymentsTab => 'Pagos';
+
+  @override
+  String get adminDisputesTab => 'Disputas';
+
+  @override
+  String get adminModerationTab => 'Moderación';
+
+  @override
+  String adminCheckFailed(String error) {
+    return 'Falló la verificación admin: $error';
+  }
+
+  @override
+  String get adminAccessRequired =>
+      'Se requiere acceso admin. Esta pantalla solo está disponible para operadores aprobados.';
+
+  @override
+  String disputeStatusUpdated(String status) {
+    return 'Estado de disputa actualizado a $status';
+  }
+
+  @override
+  String errorWithMessage(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get resolveDispute => 'Resolver disputa';
+
+  @override
+  String get resolutionDetails => 'Detalles de resolución';
+
+  @override
+  String get resolve => 'Resolver';
+
+  @override
+  String errorLoadingDisputes(String error) {
+    return 'Error al cargar disputas:\n\n$error';
+  }
+
+  @override
+  String get noActiveDisputes => 'No hay disputas activas';
+
+  @override
+  String get filtersAndSorting => 'Filtros y orden';
+
+  @override
+  String get open => 'Abierta';
+
+  @override
+  String get underReview => 'En revisión';
+
+  @override
+  String get resolved => 'Resuelta';
+
+  @override
+  String get closed => 'Cerrada';
+
+  @override
+  String get all => 'Todo';
+
+  @override
+  String get sortBy => 'Ordenar por';
+
+  @override
+  String get newestToOldest => 'Más reciente a más antiguo';
+
+  @override
+  String get oldestToNewest => 'Más antiguo a más reciente';
+
+  @override
+  String get details => 'Detalles';
+
+  @override
+  String jobIdLabel(String jobId) {
+    return 'ID del trabajo: $jobId';
+  }
+
+  @override
+  String get startReview => 'Iniciar revisión';
+
+  @override
+  String get close => 'Cerrar';
+
+  @override
+  String get disputeClosedWithoutResolution => 'Disputa cerrada sin resolución';
+
+  @override
+  String get paymentOpsEscrowOperations => 'Operaciones de escrow';
+
+  @override
+  String get paymentOpsEscrowOperationsSubtitle =>
+      'Estados atascados, fallidos, reembolsos, disputas y pagos.';
+
+  @override
+  String get paymentOpsNoEscrowIssues => 'Sin problemas de escrow';
+
+  @override
+  String get paymentOpsNoEscrowIssuesSubtitle =>
+      'Los registros de escrow no requieren atención admin.';
+
+  @override
+  String get paymentOpsPaymentRecords => 'Registros de pago';
+
+  @override
+  String get paymentOpsPaymentRecordsSubtitle =>
+      'Registros de Stripe, tienda, créditos de leads y facturas.';
+
+  @override
+  String get paymentOpsNoPaymentIssues => 'Sin problemas de pago';
+
+  @override
+  String get paymentOpsNoPaymentIssuesSubtitle =>
+      'Los registros de pago no requieren atención.';
+
+  @override
+  String get paymentOpsPayoutSetup => 'Configuración de cobros';
+
+  @override
+  String get paymentOpsPayoutSetupSubtitle =>
+      'Contratistas que aún no pueden recibir cobros de forma confiable.';
+
+  @override
+  String get paymentOpsPayoutsReady =>
+      'Todas las configuraciones de cobro se ven listas';
+
+  @override
+  String get paymentOpsPayoutsReadySubtitle =>
+      'No se encontraron bloqueos de cobro para contratistas.';
+
+  @override
+  String get needsAttention => 'Requiere atención';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String escrowIdLabel(String id) {
+    return 'Escrow: $id';
+  }
+
+  @override
+  String jobLabel(String jobId) {
+    return 'Trabajo: $jobId';
+  }
+
+  @override
+  String statusPayoutLabel(String status, String payout) {
+    return 'Estado: $status • Cobro: $payout';
+  }
+
+  @override
+  String amountContractorPayoutLabel(String amount, String payout) {
+    return 'Monto: $amount • Cobro del contratista: $payout';
+  }
+
+  @override
+  String get openEscrow => 'Abrir escrow';
+
+  @override
+  String get openJob => 'Abrir trabajo';
+
+  @override
+  String get markReviewed => 'Marcar revisado';
+
+  @override
+  String idLabel(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String typeLabel(String type) {
+    return 'Tipo: $type';
+  }
+
+  @override
+  String userLabel(String userId) {
+    return 'Usuario: $userId';
+  }
+
+  @override
+  String statusLabel(String status) {
+    return 'Estado: $status';
+  }
+
+  @override
+  String amountLabel(String amount) {
+    return 'Monto: $amount';
+  }
+
+  @override
+  String get check => 'Revisar';
+
+  @override
+  String stripeAccountLabel(String account) {
+    return 'Cuenta Stripe: $account';
+  }
+
+  @override
+  String detailsSubmittedLabel(String value) {
+    return 'Datos enviados: $value';
+  }
+
+  @override
+  String payoutsEnabledLabel(String value) {
+    return 'Cobros activados: $value';
+  }
+
+  @override
+  String get missing => 'Faltante';
+
+  @override
+  String get yes => 'sí';
+
+  @override
+  String get no => 'no';
+
+  @override
+  String get escrowMarkedReviewed => 'Escrow marcado como revisado.';
+
+  @override
+  String couldNotMarkReviewed(String error) {
+    return 'No se pudo marcar como revisado: $error';
+  }
+
+  @override
+  String get escrows => 'Escrows';
+
+  @override
+  String get escrowAlerts => 'Alertas de escrow';
+
+  @override
+  String get paymentAlerts => 'Alertas de pago';
+
+  @override
+  String get allRecords => 'Todos los registros';
+
+  @override
+  String errorLoadingPaymentOperations(String message) {
+    return 'Error al cargar operaciones de pago:\n\n$message';
+  }
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override

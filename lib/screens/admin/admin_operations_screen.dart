@@ -7,15 +7,17 @@ import 'dispute_admin_tab.dart';
 import 'job_admin_tab.dart';
 import 'moderation_admin_tab.dart';
 import 'payment_operations_tab.dart';
+import '../../l10n/app_localizations.dart';
 
 class AdminOperationsScreen extends StatelessWidget {
   const AdminOperationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      return const Scaffold(body: Center(child: Text('Sign in required')));
+      return Scaffold(body: Center(child: Text(l10n.signInRequired)));
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -26,8 +28,10 @@ class AdminOperationsScreen extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Admin Operations')),
-            body: Center(child: Text('Admin check failed: ${snapshot.error}')),
+            appBar: AppBar(title: Text(l10n.adminOperationsTitle)),
+            body: Center(
+              child: Text(l10n.adminCheckFailed(snapshot.error.toString())),
+            ),
           );
         }
 
@@ -39,12 +43,12 @@ class AdminOperationsScreen extends StatelessWidget {
 
         if (snapshot.data?.exists != true) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Admin Operations')),
-            body: const Center(
+            appBar: AppBar(title: Text(l10n.adminOperationsTitle)),
+            body: Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Admin access required. This screen is only available to approved operators.',
+                  l10n.adminAccessRequired,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -56,18 +60,27 @@ class AdminOperationsScreen extends StatelessWidget {
           length: 5,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Admin Operations'),
-              bottom: const TabBar(
+              title: Text(l10n.adminOperationsTitle),
+              bottom: TabBar(
                 isScrollable: true,
                 tabs: [
-                  Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
-                  Tab(icon: Icon(Icons.payments_outlined), text: 'Payments'),
-                  Tab(icon: Icon(Icons.work_outline), text: 'Jobs'),
                   Tab(
-                    icon: Icon(Icons.report_problem_outlined),
-                    text: 'Disputes',
+                    icon: const Icon(Icons.dashboard_outlined),
+                    text: l10n.adminOverviewTab,
                   ),
-                  Tab(icon: Icon(Icons.flag_outlined), text: 'Moderation'),
+                  Tab(
+                    icon: const Icon(Icons.payments_outlined),
+                    text: l10n.adminPaymentsTab,
+                  ),
+                  Tab(icon: const Icon(Icons.work_outline), text: l10n.jobs),
+                  Tab(
+                    icon: const Icon(Icons.report_problem_outlined),
+                    text: l10n.adminDisputesTab,
+                  ),
+                  Tab(
+                    icon: const Icon(Icons.flag_outlined),
+                    text: l10n.adminModerationTab,
+                  ),
                 ],
               ),
             ),

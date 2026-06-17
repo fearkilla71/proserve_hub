@@ -2324,6 +2324,414 @@ abstract class AppLocalizations {
   /// **'Answer common customer questions'**
   String get answerCustomerQuestions;
 
+  /// No description provided for @adminOperationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Operations'**
+  String get adminOperationsTitle;
+
+  /// No description provided for @adminOverviewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get adminOverviewTab;
+
+  /// No description provided for @adminPaymentsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get adminPaymentsTab;
+
+  /// No description provided for @adminDisputesTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Disputes'**
+  String get adminDisputesTab;
+
+  /// No description provided for @adminModerationTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation'**
+  String get adminModerationTab;
+
+  /// No description provided for @adminCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin check failed: {error}'**
+  String adminCheckFailed(String error);
+
+  /// No description provided for @adminAccessRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin access required. This screen is only available to approved operators.'**
+  String get adminAccessRequired;
+
+  /// No description provided for @disputeStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute status updated to {status}'**
+  String disputeStatusUpdated(String status);
+
+  /// No description provided for @errorWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String errorWithMessage(String message);
+
+  /// No description provided for @resolveDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve Dispute'**
+  String get resolveDispute;
+
+  /// No description provided for @resolutionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution Details'**
+  String get resolutionDetails;
+
+  /// No description provided for @resolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve'**
+  String get resolve;
+
+  /// No description provided for @errorLoadingDisputes.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading disputes:\n\n{error}'**
+  String errorLoadingDisputes(String error);
+
+  /// No description provided for @noActiveDisputes.
+  ///
+  /// In en, this message translates to:
+  /// **'No active disputes'**
+  String get noActiveDisputes;
+
+  /// No description provided for @filtersAndSorting.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters & sorting'**
+  String get filtersAndSorting;
+
+  /// No description provided for @open.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get open;
+
+  /// No description provided for @underReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get underReview;
+
+  /// No description provided for @resolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get resolved;
+
+  /// No description provided for @closed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get closed;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortBy;
+
+  /// No description provided for @newestToOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest to Oldest'**
+  String get newestToOldest;
+
+  /// No description provided for @oldestToNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest to Newest'**
+  String get oldestToNewest;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @jobIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Job ID: {jobId}'**
+  String jobIdLabel(String jobId);
+
+  /// No description provided for @startReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Review'**
+  String get startReview;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @disputeClosedWithoutResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute closed without resolution'**
+  String get disputeClosedWithoutResolution;
+
+  /// No description provided for @paymentOpsEscrowOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Operations'**
+  String get paymentOpsEscrowOperations;
+
+  /// No description provided for @paymentOpsEscrowOperationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stuck, failed, refund, dispute, and payout states.'**
+  String get paymentOpsEscrowOperationsSubtitle;
+
+  /// No description provided for @paymentOpsNoEscrowIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'No escrow issues'**
+  String get paymentOpsNoEscrowIssues;
+
+  /// No description provided for @paymentOpsNoEscrowIssuesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow records do not need admin attention.'**
+  String get paymentOpsNoEscrowIssuesSubtitle;
+
+  /// No description provided for @paymentOpsPaymentRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Records'**
+  String get paymentOpsPaymentRecords;
+
+  /// No description provided for @paymentOpsPaymentRecordsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stripe, app store, lead credit, and invoice records.'**
+  String get paymentOpsPaymentRecordsSubtitle;
+
+  /// No description provided for @paymentOpsNoPaymentIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment issues'**
+  String get paymentOpsNoPaymentIssues;
+
+  /// No description provided for @paymentOpsNoPaymentIssuesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment records do not need attention.'**
+  String get paymentOpsNoPaymentIssuesSubtitle;
+
+  /// No description provided for @paymentOpsPayoutSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout setup'**
+  String get paymentOpsPayoutSetup;
+
+  /// No description provided for @paymentOpsPayoutSetupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractors who cannot reliably receive payouts yet.'**
+  String get paymentOpsPayoutSetupSubtitle;
+
+  /// No description provided for @paymentOpsPayoutsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'All payout setups look ready'**
+  String get paymentOpsPayoutsReady;
+
+  /// No description provided for @paymentOpsPayoutsReadySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No contractor payout blockers found.'**
+  String get paymentOpsPayoutsReadySubtitle;
+
+  /// No description provided for @needsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get needsAttention;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @escrowIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow: {id}'**
+  String escrowIdLabel(String id);
+
+  /// No description provided for @jobLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Job: {jobId}'**
+  String jobLabel(String jobId);
+
+  /// No description provided for @statusPayoutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status} • Payout: {payout}'**
+  String statusPayoutLabel(String status, String payout);
+
+  /// No description provided for @amountContractorPayoutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount} • Contractor payout: {payout}'**
+  String amountContractorPayoutLabel(String amount, String payout);
+
+  /// No description provided for @openEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open escrow'**
+  String get openEscrow;
+
+  /// No description provided for @openJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Open job'**
+  String get openJob;
+
+  /// No description provided for @markReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark reviewed'**
+  String get markReviewed;
+
+  /// No description provided for @idLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id}'**
+  String idLabel(String id);
+
+  /// No description provided for @typeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type: {type}'**
+  String typeLabel(String type);
+
+  /// No description provided for @userLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User: {userId}'**
+  String userLabel(String userId);
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String statusLabel(String status);
+
+  /// No description provided for @amountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount}'**
+  String amountLabel(String amount);
+
+  /// No description provided for @check.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get check;
+
+  /// No description provided for @stripeAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stripe account: {account}'**
+  String stripeAccountLabel(String account);
+
+  /// No description provided for @detailsSubmittedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Details submitted: {value}'**
+  String detailsSubmittedLabel(String value);
+
+  /// No description provided for @payoutsEnabledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts enabled: {value}'**
+  String payoutsEnabledLabel(String value);
+
+  /// No description provided for @missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get missing;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'no'**
+  String get no;
+
+  /// No description provided for @escrowMarkedReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow marked reviewed.'**
+  String get escrowMarkedReviewed;
+
+  /// No description provided for @couldNotMarkReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not mark reviewed: {error}'**
+  String couldNotMarkReviewed(String error);
+
+  /// No description provided for @escrows.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrows'**
+  String get escrows;
+
+  /// No description provided for @escrowAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow alerts'**
+  String get escrowAlerts;
+
+  /// No description provided for @paymentAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment alerts'**
+  String get paymentAlerts;
+
+  /// No description provided for @allRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'All records'**
+  String get allRecords;
+
+  /// No description provided for @errorLoadingPaymentOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading payment operations:\n\n{message}'**
+  String errorLoadingPaymentOperations(String message);
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:
