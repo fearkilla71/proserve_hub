@@ -1990,6 +1990,315 @@ class AppLocalizationsEs extends AppLocalizations {
       'La cancelación no está disponible para este estado.';
 
   @override
+  String get escrowStatusTitle => 'Estado de escrow';
+
+  @override
+  String get bookingNotFound => 'Reserva no encontrada';
+
+  @override
+  String get bookingNotFoundSubtitle =>
+      'Pudo haber sido eliminada o el enlace no es válido.';
+
+  @override
+  String get goBack => 'Volver';
+
+  @override
+  String get confirmJobCompleteQuestion => '¿Confirmar trabajo completado?';
+
+  @override
+  String customerConfirmReleaseMessage(String amount) {
+    return 'Estás verificando que el trabajo se completó a tu satisfacción. Cuando el contratista también confirme, se liberarán $amount.';
+  }
+
+  @override
+  String contractorConfirmReleaseMessage(String amount) {
+    return 'Estás verificando que el trabajo se completó. Cuando el cliente también confirme, se liberará tu pago de $amount.';
+  }
+
+  @override
+  String get confirmRelease => 'Confirmar y liberar';
+
+  @override
+  String get notYet => 'Todavía no';
+
+  @override
+  String get confirmationRecorded => 'Confirmación registrada.';
+
+  @override
+  String get cancelBookingQuestion => '¿Cancelar reserva?';
+
+  @override
+  String get cancelBookingRefundWarning =>
+      'Tu pago será reembolsado por completo. Esta acción no se puede deshacer.';
+
+  @override
+  String get keepBooking => 'Mantener reserva';
+
+  @override
+  String get bookingCancelledRefunded => 'Reserva cancelada y reembolsada.';
+
+  @override
+  String get cancellationFailedTryAgain =>
+      'La cancelación falló. Intenta de nuevo.';
+
+  @override
+  String get priceOffered => 'Precio ofrecido';
+
+  @override
+  String get paymentHeldInEscrow => 'Pago retenido en escrow';
+
+  @override
+  String get customerConfirmed => 'Cliente confirmado';
+
+  @override
+  String get contractorConfirmed => 'Contratista confirmado';
+
+  @override
+  String get payoutProcessing => 'Cobro en proceso';
+
+  @override
+  String get fundsReleased => 'Fondos liberados';
+
+  @override
+  String get payoutFailed => 'Cobro fallido';
+
+  @override
+  String get declined => 'Rechazado';
+
+  @override
+  String get escrowMeaningOfferedTitle => 'El precio está listo';
+
+  @override
+  String get escrowMeaningOfferedBody =>
+      'El precio de IA fue creado, pero los fondos aún no están retenidos.';
+
+  @override
+  String get escrowMeaningOfferedNext =>
+      'Siguiente: el cliente acepta y paga, o solicita cotizaciones de contratistas.';
+
+  @override
+  String get escrowMeaningFundedTitle => 'El dinero está protegido';
+
+  @override
+  String get escrowMeaningFundedBody =>
+      'El cliente pagó y los fondos están retenidos mientras se completa el trabajo.';
+
+  @override
+  String get escrowMeaningFundedNext =>
+      'Siguiente: completar el trabajo y que ambas partes confirmen.';
+
+  @override
+  String get escrowMeaningCustomerConfirmedTitle =>
+      'Cliente confirmó finalización';
+
+  @override
+  String get escrowMeaningCustomerConfirmedBody =>
+      'El cliente aprobó el trabajo completado. El contratista aún debe confirmar.';
+
+  @override
+  String get escrowMeaningCustomerConfirmedNext =>
+      'Siguiente: el contratista confirma para continuar con el cobro.';
+
+  @override
+  String get escrowMeaningContractorConfirmedTitle =>
+      'Contratista confirmó finalización';
+
+  @override
+  String get escrowMeaningContractorConfirmedBody =>
+      'El contratista marcó el trabajo como completado. El cliente aún debe aprobarlo.';
+
+  @override
+  String get escrowMeaningContractorConfirmedNext =>
+      'Siguiente: el cliente confirma antes de continuar con la liberación del pago.';
+
+  @override
+  String get escrowMeaningPayoutPendingTitle => 'Cobro en proceso';
+
+  @override
+  String escrowMeaningPayoutPendingBody(String amount) {
+    return '$amount se está preparando para el cobro del contratista.';
+  }
+
+  @override
+  String get escrowMeaningPayoutPendingNext =>
+      'Siguiente: Stripe confirma la transferencia automáticamente.';
+
+  @override
+  String get escrowMeaningReleasedTitle => 'Pago liberado';
+
+  @override
+  String escrowMeaningReleasedBody(String amount) {
+    return '$amount fue liberado al contratista.';
+  }
+
+  @override
+  String get escrowMeaningReleasedNext =>
+      'Siguiente: el cliente puede calificar el precio de IA y dejar una reseña.';
+
+  @override
+  String get escrowMeaningPayoutFailedTitle => 'El cobro necesita revisión';
+
+  @override
+  String get escrowMeaningPayoutFailedBody =>
+      'El trabajo está completo, pero el cobro del contratista no terminó automáticamente.';
+
+  @override
+  String get escrowMeaningPayoutFailedNext =>
+      'Siguiente: soporte/admin debe revisar y reintentar o resolver el cobro.';
+
+  @override
+  String get escrowMeaningDeclinedTitle => 'Escrow rechazado';
+
+  @override
+  String get escrowMeaningDeclinedBody =>
+      'El precio de IA fue rechazado, así que este escrow no fue financiado.';
+
+  @override
+  String get escrowMeaningDeclinedNext =>
+      'Siguiente: continuar con cotizaciones de contratistas o publicar una nueva solicitud.';
+
+  @override
+  String get escrowMeaningCancelledTitle => 'Escrow cancelado';
+
+  @override
+  String get escrowMeaningCancelledBody =>
+      'Esta reserva fue cancelada y el pago debe ser reembolsado.';
+
+  @override
+  String escrowMeaningCancelledRefundBody(String status) {
+    return 'Estado del reembolso: $status';
+  }
+
+  @override
+  String get escrowMeaningCancelledNext =>
+      'Siguiente: revisa el estado del reembolso o contacta soporte si no se actualiza.';
+
+  @override
+  String get paymentSummary => 'Resumen de pago';
+
+  @override
+  String get totalPaid => 'Total pagado';
+
+  @override
+  String get platformFeePercent => 'Tarifa de plataforma (5%)';
+
+  @override
+  String get contractorPayout => 'Cobro del contratista';
+
+  @override
+  String get payoutStatus => 'Estado del cobro';
+
+  @override
+  String get refundStatus => 'Estado del reembolso';
+
+  @override
+  String get stripeTransfer => 'Transferencia Stripe';
+
+  @override
+  String get stripeRefund => 'Reembolso Stripe';
+
+  @override
+  String get aiPriceOffered => 'Precio de IA ofrecido';
+
+  @override
+  String get paymentFunded => 'Pago financiado';
+
+  @override
+  String get awaitingPayment => 'Esperando pago';
+
+  @override
+  String get afterBothConfirm => 'Después de que ambos confirmen';
+
+  @override
+  String get escrowTimeline => 'Cronología de escrow';
+
+  @override
+  String get howEscrowWorks => 'Cómo funciona escrow';
+
+  @override
+  String get howEscrowStepOne =>
+      'Pagas el precio de IA y los fondos se retienen de forma segura.';
+
+  @override
+  String get howEscrowStepTwo =>
+      'Un contratista reclama tu trabajo y completa el trabajo.';
+
+  @override
+  String get howEscrowStepThree =>
+      'Tú y el contratista confirman la finalización.';
+
+  @override
+  String get howEscrowStepFour =>
+      'Los fondos se liberan al contratista menos la tarifa de plataforma.';
+
+  @override
+  String get confirmJobComplete => 'Confirmar trabajo completado';
+
+  @override
+  String get cancelling => 'Cancelando...';
+
+  @override
+  String get cancelBooking => 'Cancelar reserva';
+
+  @override
+  String get contractorConfirmedPleaseRelease =>
+      'El contratista confirmó. Confirma para liberar el pago.';
+
+  @override
+  String get confirmReleasePayment => 'Confirmar y liberar pago';
+
+  @override
+  String get waitingForContractor => 'Esperando al contratista';
+
+  @override
+  String get waitingForContractorSubtitle =>
+      'Ya confirmaste la finalización. Cuando el contratista también confirme, los fondos serán liberados.';
+
+  @override
+  String get jobCompleteExclamation => 'Trabajo completado.';
+
+  @override
+  String releasedToContractor(String amount) {
+    return '$amount liberados al contratista.';
+  }
+
+  @override
+  String get rateAiPrice => 'Calificar precio de IA';
+
+  @override
+  String get rateAiPriceSubtitle =>
+      'Ayuda a nuestra IA calificando qué tan justo fue el precio.';
+
+  @override
+  String get youRatedThisPrice => 'Calificaste este precio';
+
+  @override
+  String get backToHome => 'Volver al inicio';
+
+  @override
+  String payoutProcessingMessage(String amount) {
+    return '$amount se está preparando para el cobro del contratista. Normalmente se actualiza automáticamente cuando Stripe confirma la transferencia.';
+  }
+
+  @override
+  String get payoutNeedsAdminReview => 'El cobro necesita revisión admin';
+
+  @override
+  String get payoutNeedsAdminReviewMessage =>
+      'El trabajo está completo, pero el cobro del contratista no terminó automáticamente. Soporte puede revisar este escrow y reintentar o resolver el cobro.';
+
+  @override
+  String get bookingCancelled => 'Reserva cancelada';
+
+  @override
+  String refundStatusValue(String status) {
+    return 'Estado del reembolso: $status';
+  }
+
+  @override
+  String get paymentRefunded => 'Tu pago fue reembolsado.';
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override

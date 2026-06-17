@@ -3578,6 +3578,534 @@ abstract class AppLocalizations {
   /// **'Cancellation is unavailable for this status.'**
   String get cancellationUnavailable;
 
+  /// No description provided for @escrowStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Status'**
+  String get escrowStatusTitle;
+
+  /// No description provided for @bookingNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking not found'**
+  String get bookingNotFound;
+
+  /// No description provided for @bookingNotFoundSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted or the link is invalid.'**
+  String get bookingNotFoundSubtitle;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
+
+  /// No description provided for @confirmJobCompleteQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Job Complete?'**
+  String get confirmJobCompleteQuestion;
+
+  /// No description provided for @customerConfirmReleaseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verifying the work was completed to your satisfaction. Once the contractor also confirms, {amount} will be released.'**
+  String customerConfirmReleaseMessage(String amount);
+
+  /// No description provided for @contractorConfirmReleaseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verifying the job has been completed. Once the customer also confirms, your payment of {amount} will be released.'**
+  String contractorConfirmReleaseMessage(String amount);
+
+  /// No description provided for @confirmRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Release'**
+  String get confirmRelease;
+
+  /// No description provided for @notYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Yet'**
+  String get notYet;
+
+  /// No description provided for @confirmationRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation recorded!'**
+  String get confirmationRecorded;
+
+  /// No description provided for @cancelBookingQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking?'**
+  String get cancelBookingQuestion;
+
+  /// No description provided for @cancelBookingRefundWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment will be fully refunded. This action cannot be undone.'**
+  String get cancelBookingRefundWarning;
+
+  /// No description provided for @keepBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Booking'**
+  String get keepBooking;
+
+  /// No description provided for @bookingCancelledRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled & refunded.'**
+  String get bookingCancelledRefunded;
+
+  /// No description provided for @cancellationFailedTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation failed. Please try again.'**
+  String get cancellationFailedTryAgain;
+
+  /// No description provided for @priceOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Offered'**
+  String get priceOffered;
+
+  /// No description provided for @paymentHeldInEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Held in Escrow'**
+  String get paymentHeldInEscrow;
+
+  /// No description provided for @customerConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Confirmed'**
+  String get customerConfirmed;
+
+  /// No description provided for @contractorConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor Confirmed'**
+  String get contractorConfirmed;
+
+  /// No description provided for @payoutProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout Processing'**
+  String get payoutProcessing;
+
+  /// No description provided for @fundsReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'Funds Released'**
+  String get fundsReleased;
+
+  /// No description provided for @payoutFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout Failed'**
+  String get payoutFailed;
+
+  /// No description provided for @declined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get declined;
+
+  /// No description provided for @escrowMeaningOfferedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Price is ready'**
+  String get escrowMeaningOfferedTitle;
+
+  /// No description provided for @escrowMeaningOfferedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI price has been created, but funds are not held yet.'**
+  String get escrowMeaningOfferedBody;
+
+  /// No description provided for @escrowMeaningOfferedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: customer accepts and pays, or requests contractor quotes.'**
+  String get escrowMeaningOfferedNext;
+
+  /// No description provided for @escrowMeaningFundedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Money is protected'**
+  String get escrowMeaningFundedTitle;
+
+  /// No description provided for @escrowMeaningFundedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer paid and funds are being held while the work is completed.'**
+  String get escrowMeaningFundedBody;
+
+  /// No description provided for @escrowMeaningFundedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: complete the job, then both sides confirm completion.'**
+  String get escrowMeaningFundedNext;
+
+  /// No description provided for @escrowMeaningCustomerConfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer confirmed completion'**
+  String get escrowMeaningCustomerConfirmedTitle;
+
+  /// No description provided for @escrowMeaningCustomerConfirmedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer approved the completed work. The contractor still needs to confirm.'**
+  String get escrowMeaningCustomerConfirmedBody;
+
+  /// No description provided for @escrowMeaningCustomerConfirmedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: contractor confirms so payout can continue.'**
+  String get escrowMeaningCustomerConfirmedNext;
+
+  /// No description provided for @escrowMeaningContractorConfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor confirmed completion'**
+  String get escrowMeaningContractorConfirmedTitle;
+
+  /// No description provided for @escrowMeaningContractorConfirmedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The contractor marked the work complete. The customer still needs to approve it.'**
+  String get escrowMeaningContractorConfirmedBody;
+
+  /// No description provided for @escrowMeaningContractorConfirmedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: customer confirms before payment release continues.'**
+  String get escrowMeaningContractorConfirmedNext;
+
+  /// No description provided for @escrowMeaningPayoutPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout is processing'**
+  String get escrowMeaningPayoutPendingTitle;
+
+  /// No description provided for @escrowMeaningPayoutPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} is being prepared for contractor payout.'**
+  String escrowMeaningPayoutPendingBody(String amount);
+
+  /// No description provided for @escrowMeaningPayoutPendingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: Stripe confirms the transfer automatically.'**
+  String get escrowMeaningPayoutPendingNext;
+
+  /// No description provided for @escrowMeaningReleasedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment released'**
+  String get escrowMeaningReleasedTitle;
+
+  /// No description provided for @escrowMeaningReleasedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} was released to the contractor.'**
+  String escrowMeaningReleasedBody(String amount);
+
+  /// No description provided for @escrowMeaningReleasedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: customer can rate the AI price and leave a review.'**
+  String get escrowMeaningReleasedNext;
+
+  /// No description provided for @escrowMeaningPayoutFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout needs review'**
+  String get escrowMeaningPayoutFailedTitle;
+
+  /// No description provided for @escrowMeaningPayoutFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The job is complete, but the contractor payout did not finish automatically.'**
+  String get escrowMeaningPayoutFailedBody;
+
+  /// No description provided for @escrowMeaningPayoutFailedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: admin support should review and retry or resolve the payout.'**
+  String get escrowMeaningPayoutFailedNext;
+
+  /// No description provided for @escrowMeaningDeclinedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow declined'**
+  String get escrowMeaningDeclinedTitle;
+
+  /// No description provided for @escrowMeaningDeclinedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI price was declined, so this escrow was not funded.'**
+  String get escrowMeaningDeclinedBody;
+
+  /// No description provided for @escrowMeaningDeclinedNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: continue with contractor quotes or post a new request.'**
+  String get escrowMeaningDeclinedNext;
+
+  /// No description provided for @escrowMeaningCancelledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow cancelled'**
+  String get escrowMeaningCancelledTitle;
+
+  /// No description provided for @escrowMeaningCancelledBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This booking was cancelled and the payment should be refunded.'**
+  String get escrowMeaningCancelledBody;
+
+  /// No description provided for @escrowMeaningCancelledRefundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund status: {status}'**
+  String escrowMeaningCancelledRefundBody(String status);
+
+  /// No description provided for @escrowMeaningCancelledNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: check refund status or contact support if it does not update.'**
+  String get escrowMeaningCancelledNext;
+
+  /// No description provided for @paymentSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Summary'**
+  String get paymentSummary;
+
+  /// No description provided for @totalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Paid'**
+  String get totalPaid;
+
+  /// No description provided for @platformFeePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform Fee (5%)'**
+  String get platformFeePercent;
+
+  /// No description provided for @contractorPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor Payout'**
+  String get contractorPayout;
+
+  /// No description provided for @payoutStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout Status'**
+  String get payoutStatus;
+
+  /// No description provided for @refundStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund Status'**
+  String get refundStatus;
+
+  /// No description provided for @stripeTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Stripe Transfer'**
+  String get stripeTransfer;
+
+  /// No description provided for @stripeRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Stripe Refund'**
+  String get stripeRefund;
+
+  /// No description provided for @aiPriceOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Price Offered'**
+  String get aiPriceOffered;
+
+  /// No description provided for @paymentFunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Funded'**
+  String get paymentFunded;
+
+  /// No description provided for @awaitingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting payment'**
+  String get awaitingPayment;
+
+  /// No description provided for @afterBothConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'After both confirm'**
+  String get afterBothConfirm;
+
+  /// No description provided for @escrowTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Timeline'**
+  String get escrowTimeline;
+
+  /// No description provided for @howEscrowWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'How Escrow Works'**
+  String get howEscrowWorks;
+
+  /// No description provided for @howEscrowStepOne.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay the AI price, and funds are held securely.'**
+  String get howEscrowStepOne;
+
+  /// No description provided for @howEscrowStepTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'A contractor claims your job and completes the work.'**
+  String get howEscrowStepTwo;
+
+  /// No description provided for @howEscrowStepThree.
+  ///
+  /// In en, this message translates to:
+  /// **'Both you and the contractor confirm completion.'**
+  String get howEscrowStepThree;
+
+  /// No description provided for @howEscrowStepFour.
+  ///
+  /// In en, this message translates to:
+  /// **'Funds are released to the contractor minus the platform fee.'**
+  String get howEscrowStepFour;
+
+  /// No description provided for @confirmJobComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Job Complete'**
+  String get confirmJobComplete;
+
+  /// No description provided for @cancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling...'**
+  String get cancelling;
+
+  /// No description provided for @cancelBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking'**
+  String get cancelBooking;
+
+  /// No description provided for @contractorConfirmedPleaseRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'The contractor has confirmed. Please confirm to release payment.'**
+  String get contractorConfirmedPleaseRelease;
+
+  /// No description provided for @confirmReleasePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Release Payment'**
+  String get confirmReleasePayment;
+
+  /// No description provided for @waitingForContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for Contractor'**
+  String get waitingForContractor;
+
+  /// No description provided for @waitingForContractorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve confirmed completion. Once the contractor also confirms, funds will be released.'**
+  String get waitingForContractorSubtitle;
+
+  /// No description provided for @jobCompleteExclamation.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Complete!'**
+  String get jobCompleteExclamation;
+
+  /// No description provided for @releasedToContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} released to contractor.'**
+  String releasedToContractor(String amount);
+
+  /// No description provided for @rateAiPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate the AI Price'**
+  String get rateAiPrice;
+
+  /// No description provided for @rateAiPriceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help our AI learn by rating how fair the price was.'**
+  String get rateAiPriceSubtitle;
+
+  /// No description provided for @youRatedThisPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'You rated this price'**
+  String get youRatedThisPrice;
+
+  /// No description provided for @backToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get backToHome;
+
+  /// No description provided for @payoutProcessingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} is being prepared for contractor payout. This usually updates automatically after Stripe confirms the transfer.'**
+  String payoutProcessingMessage(String amount);
+
+  /// No description provided for @payoutNeedsAdminReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout Needs Admin Review'**
+  String get payoutNeedsAdminReview;
+
+  /// No description provided for @payoutNeedsAdminReviewMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The job is complete, but the contractor payout did not finish automatically. Support can review this escrow and retry or resolve the payout.'**
+  String get payoutNeedsAdminReviewMessage;
+
+  /// No description provided for @bookingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Cancelled'**
+  String get bookingCancelled;
+
+  /// No description provided for @refundStatusValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund status: {status}'**
+  String refundStatusValue(String status);
+
+  /// No description provided for @paymentRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment has been refunded.'**
+  String get paymentRefunded;
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:

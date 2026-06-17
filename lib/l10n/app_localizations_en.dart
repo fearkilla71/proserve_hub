@@ -1966,6 +1966,315 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cancellation is unavailable for this status.';
 
   @override
+  String get escrowStatusTitle => 'Escrow Status';
+
+  @override
+  String get bookingNotFound => 'Booking not found';
+
+  @override
+  String get bookingNotFoundSubtitle =>
+      'It may have been deleted or the link is invalid.';
+
+  @override
+  String get goBack => 'Go Back';
+
+  @override
+  String get confirmJobCompleteQuestion => 'Confirm Job Complete?';
+
+  @override
+  String customerConfirmReleaseMessage(String amount) {
+    return 'You\'re verifying the work was completed to your satisfaction. Once the contractor also confirms, $amount will be released.';
+  }
+
+  @override
+  String contractorConfirmReleaseMessage(String amount) {
+    return 'You\'re verifying the job has been completed. Once the customer also confirms, your payment of $amount will be released.';
+  }
+
+  @override
+  String get confirmRelease => 'Confirm & Release';
+
+  @override
+  String get notYet => 'Not Yet';
+
+  @override
+  String get confirmationRecorded => 'Confirmation recorded!';
+
+  @override
+  String get cancelBookingQuestion => 'Cancel Booking?';
+
+  @override
+  String get cancelBookingRefundWarning =>
+      'Your payment will be fully refunded. This action cannot be undone.';
+
+  @override
+  String get keepBooking => 'Keep Booking';
+
+  @override
+  String get bookingCancelledRefunded => 'Booking cancelled & refunded.';
+
+  @override
+  String get cancellationFailedTryAgain =>
+      'Cancellation failed. Please try again.';
+
+  @override
+  String get priceOffered => 'Price Offered';
+
+  @override
+  String get paymentHeldInEscrow => 'Payment Held in Escrow';
+
+  @override
+  String get customerConfirmed => 'Customer Confirmed';
+
+  @override
+  String get contractorConfirmed => 'Contractor Confirmed';
+
+  @override
+  String get payoutProcessing => 'Payout Processing';
+
+  @override
+  String get fundsReleased => 'Funds Released';
+
+  @override
+  String get payoutFailed => 'Payout Failed';
+
+  @override
+  String get declined => 'Declined';
+
+  @override
+  String get escrowMeaningOfferedTitle => 'Price is ready';
+
+  @override
+  String get escrowMeaningOfferedBody =>
+      'The AI price has been created, but funds are not held yet.';
+
+  @override
+  String get escrowMeaningOfferedNext =>
+      'Next: customer accepts and pays, or requests contractor quotes.';
+
+  @override
+  String get escrowMeaningFundedTitle => 'Money is protected';
+
+  @override
+  String get escrowMeaningFundedBody =>
+      'The customer paid and funds are being held while the work is completed.';
+
+  @override
+  String get escrowMeaningFundedNext =>
+      'Next: complete the job, then both sides confirm completion.';
+
+  @override
+  String get escrowMeaningCustomerConfirmedTitle =>
+      'Customer confirmed completion';
+
+  @override
+  String get escrowMeaningCustomerConfirmedBody =>
+      'The customer approved the completed work. The contractor still needs to confirm.';
+
+  @override
+  String get escrowMeaningCustomerConfirmedNext =>
+      'Next: contractor confirms so payout can continue.';
+
+  @override
+  String get escrowMeaningContractorConfirmedTitle =>
+      'Contractor confirmed completion';
+
+  @override
+  String get escrowMeaningContractorConfirmedBody =>
+      'The contractor marked the work complete. The customer still needs to approve it.';
+
+  @override
+  String get escrowMeaningContractorConfirmedNext =>
+      'Next: customer confirms before payment release continues.';
+
+  @override
+  String get escrowMeaningPayoutPendingTitle => 'Payout is processing';
+
+  @override
+  String escrowMeaningPayoutPendingBody(String amount) {
+    return '$amount is being prepared for contractor payout.';
+  }
+
+  @override
+  String get escrowMeaningPayoutPendingNext =>
+      'Next: Stripe confirms the transfer automatically.';
+
+  @override
+  String get escrowMeaningReleasedTitle => 'Payment released';
+
+  @override
+  String escrowMeaningReleasedBody(String amount) {
+    return '$amount was released to the contractor.';
+  }
+
+  @override
+  String get escrowMeaningReleasedNext =>
+      'Next: customer can rate the AI price and leave a review.';
+
+  @override
+  String get escrowMeaningPayoutFailedTitle => 'Payout needs review';
+
+  @override
+  String get escrowMeaningPayoutFailedBody =>
+      'The job is complete, but the contractor payout did not finish automatically.';
+
+  @override
+  String get escrowMeaningPayoutFailedNext =>
+      'Next: admin support should review and retry or resolve the payout.';
+
+  @override
+  String get escrowMeaningDeclinedTitle => 'Escrow declined';
+
+  @override
+  String get escrowMeaningDeclinedBody =>
+      'The AI price was declined, so this escrow was not funded.';
+
+  @override
+  String get escrowMeaningDeclinedNext =>
+      'Next: continue with contractor quotes or post a new request.';
+
+  @override
+  String get escrowMeaningCancelledTitle => 'Escrow cancelled';
+
+  @override
+  String get escrowMeaningCancelledBody =>
+      'This booking was cancelled and the payment should be refunded.';
+
+  @override
+  String escrowMeaningCancelledRefundBody(String status) {
+    return 'Refund status: $status';
+  }
+
+  @override
+  String get escrowMeaningCancelledNext =>
+      'Next: check refund status or contact support if it does not update.';
+
+  @override
+  String get paymentSummary => 'Payment Summary';
+
+  @override
+  String get totalPaid => 'Total Paid';
+
+  @override
+  String get platformFeePercent => 'Platform Fee (5%)';
+
+  @override
+  String get contractorPayout => 'Contractor Payout';
+
+  @override
+  String get payoutStatus => 'Payout Status';
+
+  @override
+  String get refundStatus => 'Refund Status';
+
+  @override
+  String get stripeTransfer => 'Stripe Transfer';
+
+  @override
+  String get stripeRefund => 'Stripe Refund';
+
+  @override
+  String get aiPriceOffered => 'AI Price Offered';
+
+  @override
+  String get paymentFunded => 'Payment Funded';
+
+  @override
+  String get awaitingPayment => 'Awaiting payment';
+
+  @override
+  String get afterBothConfirm => 'After both confirm';
+
+  @override
+  String get escrowTimeline => 'Escrow Timeline';
+
+  @override
+  String get howEscrowWorks => 'How Escrow Works';
+
+  @override
+  String get howEscrowStepOne =>
+      'You pay the AI price, and funds are held securely.';
+
+  @override
+  String get howEscrowStepTwo =>
+      'A contractor claims your job and completes the work.';
+
+  @override
+  String get howEscrowStepThree =>
+      'Both you and the contractor confirm completion.';
+
+  @override
+  String get howEscrowStepFour =>
+      'Funds are released to the contractor minus the platform fee.';
+
+  @override
+  String get confirmJobComplete => 'Confirm Job Complete';
+
+  @override
+  String get cancelling => 'Cancelling...';
+
+  @override
+  String get cancelBooking => 'Cancel Booking';
+
+  @override
+  String get contractorConfirmedPleaseRelease =>
+      'The contractor has confirmed. Please confirm to release payment.';
+
+  @override
+  String get confirmReleasePayment => 'Confirm & Release Payment';
+
+  @override
+  String get waitingForContractor => 'Waiting for Contractor';
+
+  @override
+  String get waitingForContractorSubtitle =>
+      'You\'ve confirmed completion. Once the contractor also confirms, funds will be released.';
+
+  @override
+  String get jobCompleteExclamation => 'Job Complete!';
+
+  @override
+  String releasedToContractor(String amount) {
+    return '$amount released to contractor.';
+  }
+
+  @override
+  String get rateAiPrice => 'Rate the AI Price';
+
+  @override
+  String get rateAiPriceSubtitle =>
+      'Help our AI learn by rating how fair the price was.';
+
+  @override
+  String get youRatedThisPrice => 'You rated this price';
+
+  @override
+  String get backToHome => 'Back to Home';
+
+  @override
+  String payoutProcessingMessage(String amount) {
+    return '$amount is being prepared for contractor payout. This usually updates automatically after Stripe confirms the transfer.';
+  }
+
+  @override
+  String get payoutNeedsAdminReview => 'Payout Needs Admin Review';
+
+  @override
+  String get payoutNeedsAdminReviewMessage =>
+      'The job is complete, but the contractor payout did not finish automatically. Support can review this escrow and retry or resolve the payout.';
+
+  @override
+  String get bookingCancelled => 'Booking Cancelled';
+
+  @override
+  String refundStatusValue(String status) {
+    return 'Refund status: $status';
+  }
+
+  @override
+  String get paymentRefunded => 'Your payment has been refunded.';
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

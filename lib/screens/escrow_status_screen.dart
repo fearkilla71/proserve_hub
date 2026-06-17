@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/escrow_booking.dart';
 import '../services/escrow_service.dart';
 import '../theme/proserve_theme.dart';
@@ -32,6 +33,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     if (_confirming) return;
     HapticFeedback.mediumImpact();
 
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -56,7 +58,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Confirm Job Complete?',
+                l10n.confirmJobCompleteQuestion,
                 style: Theme.of(
                   ctx,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -64,8 +66,12 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               const SizedBox(height: 8),
               Text(
                 isCustomer
-                    ? 'You\'re verifying the work was completed to your satisfaction. Once the contractor also confirms, ${_currencyFmt.format(booking.contractorPayout)} will be released.'
-                    : 'You\'re verifying the job has been completed. Once the customer also confirms, your payment of ${_currencyFmt.format(booking.contractorPayout)} will be released.',
+                    ? l10n.customerConfirmReleaseMessage(
+                        _currencyFmt.format(booking.contractorPayout),
+                      )
+                    : l10n.contractorConfirmReleaseMessage(
+                        _currencyFmt.format(booking.contractorPayout),
+                      ),
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
@@ -108,8 +114,8 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: ProServeColors.success,
                   ),
-                  label: const Text(
-                    'Confirm & Release',
+                  label: Text(
+                    l10n.confirmRelease,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Colors.black,
@@ -120,7 +126,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Not Yet'),
+                child: Text(l10n.notYet),
               ),
             ],
           ),
@@ -148,7 +154,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text('Confirmation recorded!'),
+              Text(l10n.confirmationRecorded),
             ],
           ),
         ),
@@ -159,7 +165,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         SnackBar(
           content: Text('Something went wrong. Please try again.'),
           action: SnackBarAction(
-            label: 'Retry',
+            label: l10n.retry,
             onPressed: () => _confirmCompletion(booking, isCustomer),
           ),
         ),
@@ -173,6 +179,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     if (_cancelling) return;
     HapticFeedback.mediumImpact();
 
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -197,14 +204,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Cancel Booking?',
+                l10n.cancelBookingQuestion,
                 style: Theme.of(
                   ctx,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
-                'Your payment will be fully refunded. This action cannot be undone.',
+                l10n.cancelBookingRefundWarning,
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
@@ -226,7 +233,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Keep Booking'),
+                child: Text(l10n.keepBooking),
               ),
             ],
           ),
@@ -240,15 +247,15 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     try {
       await EscrowService.instance.cancel(widget.escrowId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking cancelled & refunded.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.bookingCancelledRefunded)));
       context.pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cancellation failed. Please try again.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.cancellationFailedTryAgain)));
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
@@ -256,8 +263,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Escrow Status'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.escrowStatusTitle), centerTitle: true),
       body: StreamBuilder<EscrowBooking?>(
         stream: EscrowService.instance.watchBooking(widget.escrowId),
         builder: (context, snapshot) {
@@ -278,14 +286,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Booking not found',
+                    l10n.bookingNotFound,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'It may have been deleted or the link is invalid.',
+                    l10n.bookingNotFoundSubtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -293,7 +301,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => context.pop(),
-                    child: const Text('Go Back'),
+                    child: Text(l10n.goBack),
                   ),
                 ],
               ),
@@ -318,7 +326,10 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
       children: [
         // ── Status header ──
         _statusHeader(booking, scheme),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+
+        _statusMeaningCard(booking, scheme),
+        const SizedBox(height: 16),
 
         // ── Payment summary card ──
         _paymentSummaryCard(booking, scheme),
@@ -359,6 +370,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   Widget _statusHeader(EscrowBooking booking, ColorScheme scheme) {
     final isReleased = booking.status == EscrowStatus.released;
     final isCancelled = booking.status == EscrowStatus.cancelled;
+    final l10n = AppLocalizations.of(context)!;
 
     final Color statusColor;
     final IconData statusIcon;
@@ -398,7 +410,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           Icon(statusIcon, size: 48, color: statusColor),
           const SizedBox(height: 10),
           Text(
-            booking.statusLabel,
+            _localizedEscrowStatus(booking.status, l10n),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: statusColor,
@@ -423,9 +435,166 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
     );
   }
 
+  Widget _statusMeaningCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
+    final status = _statusMessage(booking, l10n);
+    return Card(
+      elevation: 0,
+      color: status.color.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: status.color.withValues(alpha: 0.18)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: status.color.withValues(alpha: 0.14),
+              child: Icon(status.icon, color: status.color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    status.title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: status.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(status.body),
+                  const SizedBox(height: 10),
+                  Text(
+                    status.next,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  _EscrowStatusMessage _statusMessage(
+    EscrowBooking booking,
+    AppLocalizations l10n,
+  ) {
+    final payout = _currencyFmt.format(booking.contractorPayout);
+    switch (booking.status) {
+      case EscrowStatus.offered:
+        return _EscrowStatusMessage(
+          icon: Icons.price_check_outlined,
+          color: Theme.of(context).colorScheme.primary,
+          title: l10n.escrowMeaningOfferedTitle,
+          body: l10n.escrowMeaningOfferedBody,
+          next: l10n.escrowMeaningOfferedNext,
+        );
+      case EscrowStatus.funded:
+        return _EscrowStatusMessage(
+          icon: Icons.shield_outlined,
+          color: Theme.of(context).colorScheme.primary,
+          title: l10n.escrowMeaningFundedTitle,
+          body: l10n.escrowMeaningFundedBody,
+          next: l10n.escrowMeaningFundedNext,
+        );
+      case EscrowStatus.customerConfirmed:
+        return _EscrowStatusMessage(
+          icon: Icons.person_outline,
+          color: ProServeColors.warning,
+          title: l10n.escrowMeaningCustomerConfirmedTitle,
+          body: l10n.escrowMeaningCustomerConfirmedBody,
+          next: l10n.escrowMeaningCustomerConfirmedNext,
+        );
+      case EscrowStatus.contractorConfirmed:
+        return _EscrowStatusMessage(
+          icon: Icons.handyman_outlined,
+          color: ProServeColors.warning,
+          title: l10n.escrowMeaningContractorConfirmedTitle,
+          body: l10n.escrowMeaningContractorConfirmedBody,
+          next: l10n.escrowMeaningContractorConfirmedNext,
+        );
+      case EscrowStatus.payoutPending:
+        return _EscrowStatusMessage(
+          icon: Icons.pending_actions_outlined,
+          color: ProServeColors.warning,
+          title: l10n.escrowMeaningPayoutPendingTitle,
+          body: l10n.escrowMeaningPayoutPendingBody(payout),
+          next: l10n.escrowMeaningPayoutPendingNext,
+        );
+      case EscrowStatus.released:
+        return _EscrowStatusMessage(
+          icon: Icons.check_circle_outline,
+          color: ProServeColors.success,
+          title: l10n.escrowMeaningReleasedTitle,
+          body: l10n.escrowMeaningReleasedBody(payout),
+          next: l10n.escrowMeaningReleasedNext,
+        );
+      case EscrowStatus.payoutFailed:
+        return _EscrowStatusMessage(
+          icon: Icons.warning_amber_rounded,
+          color: Theme.of(context).colorScheme.error,
+          title: l10n.escrowMeaningPayoutFailedTitle,
+          body: l10n.escrowMeaningPayoutFailedBody,
+          next: l10n.escrowMeaningPayoutFailedNext,
+        );
+      case EscrowStatus.declined:
+        return _EscrowStatusMessage(
+          icon: Icons.block_outlined,
+          color: Theme.of(context).colorScheme.error,
+          title: l10n.escrowMeaningDeclinedTitle,
+          body: l10n.escrowMeaningDeclinedBody,
+          next: l10n.escrowMeaningDeclinedNext,
+        );
+      case EscrowStatus.cancelled:
+        return _EscrowStatusMessage(
+          icon: Icons.undo_outlined,
+          color: Theme.of(context).colorScheme.error,
+          title: l10n.escrowMeaningCancelledTitle,
+          body: (booking.refundStatus ?? '').isNotEmpty
+              ? l10n.escrowMeaningCancelledRefundBody(booking.refundStatus!)
+              : l10n.escrowMeaningCancelledBody,
+          next: l10n.escrowMeaningCancelledNext,
+        );
+    }
+  }
+
+  String _localizedEscrowStatus(EscrowStatus status, AppLocalizations l10n) {
+    switch (status) {
+      case EscrowStatus.offered:
+        return l10n.priceOffered;
+      case EscrowStatus.funded:
+        return l10n.paymentHeldInEscrow;
+      case EscrowStatus.customerConfirmed:
+        return l10n.customerConfirmed;
+      case EscrowStatus.contractorConfirmed:
+        return l10n.contractorConfirmed;
+      case EscrowStatus.payoutPending:
+        return l10n.payoutProcessing;
+      case EscrowStatus.released:
+        return l10n.fundsReleased;
+      case EscrowStatus.payoutFailed:
+        return l10n.payoutFailed;
+      case EscrowStatus.declined:
+        return l10n.declined;
+      case EscrowStatus.cancelled:
+        return l10n.cancelled;
+    }
+  }
+
   // ───────────────────── Payment Summary ────────────────────
 
   Widget _paymentSummaryCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       color: scheme.surface,
@@ -436,31 +605,31 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Payment Summary',
+              l10n.paymentSummary,
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
-            _summaryRow('Total Paid', _currencyFmt.format(booking.aiPrice)),
+            _summaryRow(l10n.totalPaid, _currencyFmt.format(booking.aiPrice)),
             _summaryRow(
-              'Platform Fee (5%)',
+              l10n.platformFeePercent,
               _currencyFmt.format(booking.platformFee),
             ),
             const Divider(height: 16),
             _summaryRow(
-              'Contractor Payout',
+              l10n.contractorPayout,
               _currencyFmt.format(booking.contractorPayout),
               bold: true,
             ),
             if ((booking.payoutStatus ?? '').isNotEmpty)
-              _summaryRow('Payout Status', booking.payoutStatus!),
+              _summaryRow(l10n.payoutStatus, booking.payoutStatus!),
             if ((booking.refundStatus ?? '').isNotEmpty)
-              _summaryRow('Refund Status', booking.refundStatus!),
+              _summaryRow(l10n.refundStatus, booking.refundStatus!),
             if ((booking.stripeTransferId ?? '').isNotEmpty)
-              _summaryRow('Stripe Transfer', booking.stripeTransferId!),
+              _summaryRow(l10n.stripeTransfer, booking.stripeTransferId!),
             if ((booking.stripeRefundId ?? '').isNotEmpty)
-              _summaryRow('Stripe Refund', booking.stripeRefundId!),
+              _summaryRow(l10n.stripeRefund, booking.stripeRefundId!),
           ],
         ),
       ),
@@ -494,42 +663,43 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   // ───────────────────── Timeline ────────────────────────────
 
   Widget _escrowTimeline(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     final steps = <_TimelineStep>[
       _TimelineStep(
-        title: 'AI Price Offered',
+        title: l10n.aiPriceOffered,
         subtitle: _formatDate(booking.createdAt),
         done: true,
         icon: Icons.auto_awesome,
       ),
       _TimelineStep(
-        title: 'Payment Funded',
+        title: l10n.paymentFunded,
         subtitle: booking.fundedAt != null
             ? _formatDate(booking.fundedAt!)
-            : 'Awaiting payment',
+            : l10n.awaitingPayment,
         done: booking.fundedAt != null,
         icon: Icons.account_balance_wallet,
       ),
       _TimelineStep(
-        title: 'Customer Confirmed',
+        title: l10n.customerConfirmed,
         subtitle: booking.customerConfirmedAt != null
             ? _formatDate(booking.customerConfirmedAt!)
-            : 'Pending',
+            : l10n.pending,
         done: booking.customerConfirmedAt != null,
         icon: Icons.person_outline,
       ),
       _TimelineStep(
-        title: 'Contractor Confirmed',
+        title: l10n.contractorConfirmed,
         subtitle: booking.contractorConfirmedAt != null
             ? _formatDate(booking.contractorConfirmedAt!)
-            : 'Pending',
+            : l10n.pending,
         done: booking.contractorConfirmedAt != null,
         icon: Icons.handyman,
       ),
       _TimelineStep(
-        title: 'Funds Released',
+        title: l10n.fundsReleased,
         subtitle: booking.releasedAt != null
             ? _formatDate(booking.releasedAt!)
-            : 'After both confirm',
+            : l10n.afterBothConfirm,
         done: booking.releasedAt != null,
         icon: Icons.payments_outlined,
       ),
@@ -545,7 +715,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Escrow Timeline',
+              l10n.escrowTimeline,
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -632,6 +802,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   // ───────────────────── How It Works ────────────────────────
 
   Widget _howItWorksCard(ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       color: scheme.surface,
@@ -641,16 +812,16 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         leading: Icon(Icons.info_outline, color: scheme.primary, size: 20),
         title: Text(
-          'How Escrow Works',
+          l10n.howEscrowWorks,
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         children: [
-          _howStep('1', 'You pay the AI price — funds are held securely.'),
-          _howStep('2', 'A contractor claims your job and completes the work.'),
-          _howStep('3', 'Both you and the contractor confirm completion.'),
-          _howStep('4', 'Funds are released to the contractor (minus 5% fee).'),
+          _howStep('1', l10n.howEscrowStepOne),
+          _howStep('2', l10n.howEscrowStepTwo),
+          _howStep('3', l10n.howEscrowStepThree),
+          _howStep('4', l10n.howEscrowStepFour),
         ],
       ),
     );
@@ -692,6 +863,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   // ───────────────────── Action Buttons ──────────────────────
 
   Widget _actionButtons(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         SizedBox(
@@ -711,8 +883,8 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                     ),
                   )
                 : const Icon(Icons.check_circle_outline),
-            label: const Text(
-              'Confirm Job Complete',
+            label: Text(
+              l10n.confirmJobComplete,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
@@ -724,7 +896,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           child: TextButton(
             onPressed: _cancelling ? null : _cancelBooking,
             child: Text(
-              _cancelling ? 'Cancelling...' : 'Cancel Booking',
+              _cancelling ? l10n.cancelling : l10n.cancelBooking,
               style: TextStyle(color: scheme.error),
             ),
           ),
@@ -734,6 +906,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _customerConfirmButton(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Container(
@@ -752,7 +925,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'The contractor has confirmed. Please confirm to release payment.',
+                  l10n.contractorConfirmedPleaseRelease,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -768,8 +941,8 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                 ? null
                 : () => _confirmCompletion(booking, true),
             icon: const Icon(Icons.check_circle_outline),
-            label: const Text(
-              'Confirm & Release Payment',
+            label: Text(
+              l10n.confirmReleasePayment,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
@@ -779,6 +952,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _waitingForContractorCard(ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -801,14 +975,14 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Waiting for Contractor',
+                  l10n.waitingForContractor,
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'You\'ve confirmed completion. Once the contractor also confirms, funds will be released.',
+                  l10n.waitingForContractorSubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -822,6 +996,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _completedCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -845,7 +1020,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Job Complete!',
+            l10n.jobCompleteExclamation,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: ProServeColors.success,
@@ -853,7 +1028,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_currencyFmt.format(booking.contractorPayout)} released to contractor.',
+            l10n.releasedToContractor(
+              _currencyFmt.format(booking.contractorPayout),
+            ),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -868,15 +1045,15 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
               child: FilledButton.icon(
                 onPressed: () => context.push('/escrow-rating/${booking.id}'),
                 icon: const Icon(Icons.star_outline),
-                label: const Text(
-                  'Rate the AI Price',
+                label: Text(
+                  l10n.rateAiPrice,
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Help our AI learn — rate how fair the price was',
+              l10n.rateAiPriceSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
@@ -904,7 +1081,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'You rated this price',
+                    l10n.youRatedThisPrice,
                     style: TextStyle(
                       color: ProServeColors.accent2,
                       fontSize: 12,
@@ -920,7 +1097,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           OutlinedButton.icon(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.home_outlined),
-            label: const Text('Back to Home'),
+            label: Text(l10n.backToHome),
           ),
         ],
       ),
@@ -928,6 +1105,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _payoutPendingCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -940,7 +1118,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Payout Processing',
+              l10n.payoutProcessing,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: ProServeColors.warning,
@@ -948,7 +1126,9 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${_currencyFmt.format(booking.contractorPayout)} is being prepared for contractor payout. This usually updates automatically after Stripe confirms the transfer.',
+              l10n.payoutProcessingMessage(
+                _currencyFmt.format(booking.contractorPayout),
+              ),
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -961,6 +1141,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _payoutFailedCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: scheme.errorContainer.withValues(alpha: 0.32),
       child: Padding(
@@ -970,7 +1151,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
             Icon(Icons.warning_amber_rounded, size: 40, color: scheme.error),
             const SizedBox(height: 10),
             Text(
-              'Payout Needs Admin Review',
+              l10n.payoutNeedsAdminReview,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: scheme.error,
@@ -978,7 +1159,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'The job is complete, but the contractor payout did not finish automatically. Support can review this escrow and retry or resolve the payout.',
+              l10n.payoutNeedsAdminReviewMessage,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -999,6 +1180,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   }
 
   Widget _cancelledCard(EscrowBooking booking, ColorScheme scheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1010,7 +1192,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           Icon(Icons.cancel_outlined, size: 40, color: scheme.error),
           const SizedBox(height: 10),
           Text(
-            'Booking Cancelled',
+            l10n.bookingCancelled,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: scheme.error,
@@ -1019,8 +1201,8 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           const SizedBox(height: 4),
           Text(
             (booking.refundStatus ?? '').isNotEmpty
-                ? 'Refund status: ${booking.refundStatus}'
-                : 'Your payment has been refunded.',
+                ? l10n.refundStatusValue(booking.refundStatus!)
+                : l10n.paymentRefunded,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -1029,7 +1211,7 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
           OutlinedButton.icon(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.home_outlined),
-            label: const Text('Back to Home'),
+            label: Text(l10n.backToHome),
           ),
         ],
       ),
@@ -1097,4 +1279,20 @@ class _TimelineStep {
     required this.done,
     required this.icon,
   });
+}
+
+class _EscrowStatusMessage {
+  const _EscrowStatusMessage({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.body,
+    required this.next,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String body;
+  final String next;
 }
