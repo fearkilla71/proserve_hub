@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get home;
 
+  /// Browse tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get browse;
+
   /// Search tab label
   ///
   /// In en, this message translates to:
@@ -265,6 +271,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Project'**
   String get project;
+
+  /// Team tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get team;
+
+  /// Gallery tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
 
   /// Community tab label
   ///

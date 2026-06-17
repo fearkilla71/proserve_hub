@@ -298,7 +298,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final contentBottomPadding = 96.0 + bottomInset;
+    const navHeight = 80.0;
+    const persistentBarReserve = 92.0;
+    final contentBottomPadding = navHeight + persistentBarReserve + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
@@ -311,12 +313,17 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: 80 + bottomInset,
+            bottom: navHeight + bottomInset,
             child: const PersistentJobStateBar(role: JobBarRole.contractor),
           ),
         ],
       ),
-      floatingActionButton: fab,
+      floatingActionButton: fab == null
+          ? null
+          : Padding(
+              padding: EdgeInsets.only(bottom: persistentBarReserve),
+              child: fab,
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
@@ -448,7 +455,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             .snapshots();
 
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             Row(
               children: [
@@ -868,7 +875,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       return Center(child: Text(l10n.signInRequired));
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         PageHeader(
           title: l10n.jobs,
@@ -961,7 +968,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 _buildHomeTab(context: context, user: user),
                 _buildSearchTab(context),
                 ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
                     PageHeader(
                       title: l10n.plan,

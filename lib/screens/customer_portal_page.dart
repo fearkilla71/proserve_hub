@@ -26,6 +26,8 @@ import 'onboarding_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_localizations.dart';
+
 class _RequestsFetchResult {
   const _RequestsFetchResult({required this.docs, required this.usedFallback});
 
@@ -240,7 +242,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final contentBottomPadding = 96.0 + bottomInset;
+    final l10n = AppLocalizations.of(context)!;
+    const navHeight = 80.0;
+    const persistentBarReserve = 92.0;
+    final contentBottomPadding = navHeight + persistentBarReserve + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
@@ -253,41 +258,46 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           Positioned(
             left: 0,
             right: 0,
-            bottom: 80 + bottomInset,
+            bottom: navHeight + bottomInset,
             child: const PersistentJobStateBar(role: JobBarRole.customer),
           ),
         ],
       ),
-      floatingActionButton: fab,
+      floatingActionButton: fab == null
+          ? null
+          : Padding(
+              padding: EdgeInsets.only(bottom: persistentBarReserve),
+              child: fab,
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (i) => setState(() => _tabIndex = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.home,
           ),
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Browse',
+            icon: const Icon(Icons.search_outlined),
+            selectedIcon: const Icon(Icons.search),
+            label: l10n.browse,
           ),
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Project',
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: l10n.project,
           ),
           NavigationDestination(
-            icon: Icon(Icons.group_outlined),
-            selectedIcon: Icon(Icons.group),
-            label: 'Team',
+            icon: const Icon(Icons.group_outlined),
+            selectedIcon: const Icon(Icons.group),
+            label: l10n.team,
           ),
           NavigationDestination(
-            icon: Icon(Icons.photo_library_outlined),
-            selectedIcon: Icon(Icons.photo_library),
-            label: 'Gallery',
+            icon: const Icon(Icons.photo_library_outlined),
+            selectedIcon: const Icon(Icons.photo_library),
+            label: l10n.gallery,
           ),
         ],
       ),
@@ -440,7 +450,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             : (fallback.isNotEmpty ? fallback : 'there');
 
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             Row(
               children: [
@@ -687,7 +697,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     final scheme = Theme.of(context).colorScheme;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         // ── Header ──
         Text(
@@ -1174,7 +1184,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 _buildHomeTab(context: context, user: user),
                 _buildSearchTab(context),
                 ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
                     Text(
                       'Project',

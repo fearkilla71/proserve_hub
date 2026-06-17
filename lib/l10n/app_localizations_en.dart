@@ -89,10 +89,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get home => 'Home';
 
   @override
+  String get browse => 'Browse';
+
+  @override
   String get search => 'Search';
 
   @override
   String get project => 'Project';
+
+  @override
+  String get team => 'Team';
+
+  @override
+  String get gallery => 'Gallery';
 
   @override
   String get community => 'Community';
