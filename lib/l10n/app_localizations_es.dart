@@ -63,6 +63,305 @@ class AppLocalizationsEs extends AppLocalizations {
   String get referral => 'Referidos';
 
   @override
+  String get loyalty => 'Lealtad';
+
+  @override
+  String get leaderboard => 'Ranking';
+
+  @override
+  String get aiSupport => 'Soporte IA';
+
+  @override
+  String get myRequests => 'Mis Solicitudes';
+
+  @override
+  String get refresh => 'Actualizar';
+
+  @override
+  String get actionCenter => 'Centro de Acción';
+
+  @override
+  String get active => 'Activo';
+
+  @override
+  String get quotes => 'cotizaciones';
+
+  @override
+  String get protected => 'protegidos';
+
+  @override
+  String get verifiedPros => 'Pros verificados';
+
+  @override
+  String get upfrontPricing => 'Precios claros';
+
+  @override
+  String get projectTracking => 'Seguimiento';
+
+  @override
+  String get snapForInstantQuote => 'Foto para cotización';
+
+  @override
+  String get viewAllProjects => 'Ver proyectos';
+
+  @override
+  String get postYourFirstJob => 'Publicar primer trabajo';
+
+  @override
+  String get customerWelcomeFallback => 'amigo';
+
+  @override
+  String get customerHomeHeroTitle => 'RESERVA UN PRO EN MINUTOS';
+
+  @override
+  String get customerHomeHeroSubtitle =>
+      'Cuéntanos qué necesitas, compara cotizaciones y sigue el trabajo aquí.';
+
+  @override
+  String get customerQuickStartRequestSubtitle => 'Flujo simple de 4 pasos';
+
+  @override
+  String get customerQuickBrowseProsSubtitle => 'Compara contratistas cercanos';
+
+  @override
+  String get customerQuickMessagesSubtitle => 'Abre tus mensajes';
+
+  @override
+  String get customerQuickProjectTrackerSubtitle => 'Ver solicitudes activas';
+
+  @override
+  String get customerQuickSavedProsSubtitle => 'Tus contratistas favoritos';
+
+  @override
+  String get customerQuickReferralSubtitle => 'Comparte y gana crédito';
+
+  @override
+  String get customerQuickLoyaltySubtitle => 'Puntos y recompensas';
+
+  @override
+  String get customerQuickLeaderboardSubtitle => 'Profesionales destacados';
+
+  @override
+  String get customerQuickSavedProjectsSubtitle => 'Planifica trabajos futuros';
+
+  @override
+  String get customerQuickMyEstimatesSubtitle => 'Ver estimaciones guardadas';
+
+  @override
+  String get customerQuickAiSupportSubtitle => 'Ayuda instantánea 24/7';
+
+  @override
+  String get couldNotLoadRequests => 'No se pudieron cargar tus solicitudes';
+
+  @override
+  String get stillLoadingRequests => 'Seguimos cargando tus solicitudes...';
+
+  @override
+  String get showingLegacyRequests => 'Mostrando solicitudes anteriores.';
+
+  @override
+  String get customerActionCenterSubtitle =>
+      'Tus próximos pasos desde la solicitud hasta el pago, finalización y reseña.';
+
+  @override
+  String get customerActionCenterNoQuotesTip =>
+      'Consejo: invita más profesionales o busca contratistas si una solicitud no tiene cotizaciones.';
+
+  @override
+  String reviewService(String service) {
+    return 'Reseñar $service';
+  }
+
+  @override
+  String get customerActionReviewSubtitle =>
+      'Ayuda a otros dueños a confiar en el profesional correcto.';
+
+  @override
+  String get checkProtectedPayment => 'Revisar pago protegido';
+
+  @override
+  String customerActionEscrowSubtitle(String service) {
+    return 'Ver estado del escrow y pasos de liberación para $service.';
+  }
+
+  @override
+  String compareQuoteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cotizaciones',
+      one: '1 cotización',
+    );
+    return 'Comparar $_temp0';
+  }
+
+  @override
+  String get customerActionCompareSubtitle =>
+      'Revisa precio, alcance, garantía y pruebas del contratista.';
+
+  @override
+  String trackService(String service) {
+    return 'Seguir $service';
+  }
+
+  @override
+  String get customerActionTrackSubtitle =>
+      'Abre chat, fotos, línea de tiempo, factura y próximos pasos.';
+
+  @override
+  String get waitingForQuotes => 'Esperando cotizaciones';
+
+  @override
+  String get customerActionWaitingSubtitle =>
+      'Abre el trabajo e invita o compara profesionales cercanos.';
+
+  @override
+  String get customerActionEmptyBody =>
+      'Aún no tienes proyectos activos. Empieza con fotos, código postal y tipo de servicio.';
+
+  @override
+  String get customerActionAllClearBody =>
+      'No hay acciones urgentes. Puedes revisar detalles del proyecto o iniciar otra solicitud.';
+
+  @override
+  String get myTeam => 'Mi Equipo';
+
+  @override
+  String get myTeamSubtitle =>
+      'Tus profesionales contratados y contactos de confianza.';
+
+  @override
+  String get hiredPros => 'Pros Contratados';
+
+  @override
+  String get hiredProsSubtitle =>
+      'Contratistas con quienes ya completaste trabajos.';
+
+  @override
+  String get trustedPros => 'Pros de Confianza';
+
+  @override
+  String get trustedProsSubtitle =>
+      'Tu lista corta: agrega notas y organiza por oficio.';
+
+  @override
+  String get shareMyList => 'Compartir mi lista';
+
+  @override
+  String get add => 'Agregar';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get updated => 'Actualizado.';
+
+  @override
+  String get pro => 'Pro';
+
+  @override
+  String get contractor => 'Contratista';
+
+  @override
+  String get message => 'Mensaje';
+
+  @override
+  String get rebook => 'Reservar';
+
+  @override
+  String get addTrustedPro => 'Agregar Pro de Confianza';
+
+  @override
+  String get editTrustedPro => 'Editar Pro de Confianza';
+
+  @override
+  String get searchContractorName => 'Buscar contratista';
+
+  @override
+  String get noContractorsFound => 'No se encontraron contratistas.';
+
+  @override
+  String get tradeSpecialty => 'Oficio / especialidad';
+
+  @override
+  String get tradeSpecialtyHint => 'ej. Pintor, lavado a presión';
+
+  @override
+  String get privateNote => 'Nota privada';
+
+  @override
+  String get privateNoteHint => 'ej. Buen trabajo con tile, responde rápido';
+
+  @override
+  String get addToTrustedList => 'Agregar a confianza';
+
+  @override
+  String addedToTrustedList(String name) {
+    return '$name agregado a tu lista de confianza.';
+  }
+
+  @override
+  String get removeQuestion => '¿Eliminar?';
+
+  @override
+  String get removeTrustedProConfirm =>
+      '¿Eliminar este contratista de tu lista de confianza?';
+
+  @override
+  String get noRequestsYet => 'Sin solicitudes';
+
+  @override
+  String get noRequestsYetSubtitle =>
+      'Publica tu primera solicitud y profesionales locales te enviarán cotizaciones.';
+
+  @override
+  String get noProsYet => 'Aún sin pros';
+
+  @override
+  String get noProsYetSubtitle =>
+      'Cuando completes un trabajo, tus contratistas aparecerán aquí.';
+
+  @override
+  String get noTrustedProsYet => 'Sin pros de confianza';
+
+  @override
+  String get noTrustedProsYetSubtitle =>
+      'Agrega contratistas de confianza para encontrarlos rápido, guardar notas y compartir tu lista.';
+
+  @override
+  String jobsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count trabajos',
+      one: '1 trabajo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String activeCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count activos',
+      one: '1 activo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count terminados',
+      one: '1 terminado',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String welcome(String name) {
     return 'Bienvenido, $name';
   }
@@ -605,9 +904,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get subscriptionNoProductsAvailable =>
       'Aún no hay productos de suscripción disponibles para esta cuenta sandbox de Apple.';
-
-  @override
-  String get active => 'Activo';
 
   @override
   String get subscribe => 'Suscribirse';

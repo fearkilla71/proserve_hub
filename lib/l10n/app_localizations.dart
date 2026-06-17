@@ -206,6 +206,492 @@ abstract class AppLocalizations {
   /// **'Referral'**
   String get referral;
 
+  /// Customer loyalty feature label
+  ///
+  /// In en, this message translates to:
+  /// **'Loyalty'**
+  String get loyalty;
+
+  /// Leaderboard feature label
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get leaderboard;
+
+  /// AI support chat label
+  ///
+  /// In en, this message translates to:
+  /// **'AI Support'**
+  String get aiSupport;
+
+  /// Customer project request list title
+  ///
+  /// In en, this message translates to:
+  /// **'My Requests'**
+  String get myRequests;
+
+  /// Refresh button label
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// Customer portal action center title
+  ///
+  /// In en, this message translates to:
+  /// **'Action Center'**
+  String get actionCenter;
+
+  /// Metric label for active items
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// Metric label for quote count
+  ///
+  /// In en, this message translates to:
+  /// **'quotes'**
+  String get quotes;
+
+  /// Metric label for protected payment jobs
+  ///
+  /// In en, this message translates to:
+  /// **'protected'**
+  String get protected;
+
+  /// Home hero trust chip
+  ///
+  /// In en, this message translates to:
+  /// **'Verified pros'**
+  String get verifiedPros;
+
+  /// Home hero trust chip
+  ///
+  /// In en, this message translates to:
+  /// **'Upfront pricing'**
+  String get upfrontPricing;
+
+  /// Home hero trust chip
+  ///
+  /// In en, this message translates to:
+  /// **'Project tracking'**
+  String get projectTracking;
+
+  /// Camera quote button label
+  ///
+  /// In en, this message translates to:
+  /// **'Snap for Instant Quote'**
+  String get snapForInstantQuote;
+
+  /// Action center button label
+  ///
+  /// In en, this message translates to:
+  /// **'View all projects'**
+  String get viewAllProjects;
+
+  /// Empty action center CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Post your first job'**
+  String get postYourFirstJob;
+
+  /// Fallback name for customer welcome
+  ///
+  /// In en, this message translates to:
+  /// **'there'**
+  String get customerWelcomeFallback;
+
+  /// Customer home hero headline
+  ///
+  /// In en, this message translates to:
+  /// **'BOOK A PRO IN MINUTES'**
+  String get customerHomeHeroTitle;
+
+  /// Customer home hero subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you need, compare quotes, and track the job here.'**
+  String get customerHomeHeroSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Smart 4-step flow'**
+  String get customerQuickStartRequestSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Compare nearby contractors'**
+  String get customerQuickBrowseProsSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Open your inbox'**
+  String get customerQuickMessagesSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'View active requests'**
+  String get customerQuickProjectTrackerSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Your favorite contractors'**
+  String get customerQuickSavedProsSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Share and earn credit'**
+  String get customerQuickReferralSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Points and rewards'**
+  String get customerQuickLoyaltySubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Top-rated pros'**
+  String get customerQuickLeaderboardSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Plan future work'**
+  String get customerQuickSavedProjectsSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'View saved AI estimates'**
+  String get customerQuickMyEstimatesSubtitle;
+
+  /// Customer quick action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Get instant help 24/7'**
+  String get customerQuickAiSupportSubtitle;
+
+  /// Customer requests error title
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your requests'**
+  String get couldNotLoadRequests;
+
+  /// Customer requests delayed loading title
+  ///
+  /// In en, this message translates to:
+  /// **'Still loading your requests...'**
+  String get stillLoadingRequests;
+
+  /// Customer requests fallback notice
+  ///
+  /// In en, this message translates to:
+  /// **'Showing legacy requests.'**
+  String get showingLegacyRequests;
+
+  /// Customer action center subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Your next steps from request to paid, completed, and reviewed.'**
+  String get customerActionCenterSubtitle;
+
+  /// Customer action center no quotes tip
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: invite more pros or browse contractors if a request has no quotes yet.'**
+  String get customerActionCenterNoQuotesTip;
+
+  /// No description provided for @reviewService.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {service}'**
+  String reviewService(String service);
+
+  /// Customer review action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Help future homeowners trust the right pro.'**
+  String get customerActionReviewSubtitle;
+
+  /// Customer escrow action title
+  ///
+  /// In en, this message translates to:
+  /// **'Check protected payment'**
+  String get checkProtectedPayment;
+
+  /// No description provided for @customerActionEscrowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View escrow status and release steps for {service}.'**
+  String customerActionEscrowSubtitle(String service);
+
+  /// No description provided for @compareQuoteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare {count, plural, =1{1 quote} other{{count} quotes}}'**
+  String compareQuoteCount(int count);
+
+  /// Customer compare quote action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Review price, scope, warranty, and contractor proof.'**
+  String get customerActionCompareSubtitle;
+
+  /// No description provided for @trackService.
+  ///
+  /// In en, this message translates to:
+  /// **'Track {service}'**
+  String trackService(String service);
+
+  /// Customer track job action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat, photos, timeline, invoice, and next steps.'**
+  String get customerActionTrackSubtitle;
+
+  /// Customer action title for open request
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for quotes'**
+  String get waitingForQuotes;
+
+  /// Customer waiting action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Open the job and invite or compare nearby pros.'**
+  String get customerActionWaitingSubtitle;
+
+  /// Customer action center empty body
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects yet. Start with photos, ZIP code, and service type.'**
+  String get customerActionEmptyBody;
+
+  /// Customer action center all clear body
+  ///
+  /// In en, this message translates to:
+  /// **'No urgent actions. You can still review project details or start another request.'**
+  String get customerActionAllClearBody;
+
+  /// Customer team tab title
+  ///
+  /// In en, this message translates to:
+  /// **'My Team'**
+  String get myTeam;
+
+  /// Customer team tab subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Your hired pros and trusted contacts.'**
+  String get myTeamSubtitle;
+
+  /// Customer hired pros section title
+  ///
+  /// In en, this message translates to:
+  /// **'Hired Pros'**
+  String get hiredPros;
+
+  /// Customer hired pros section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Contractors you\'ve completed jobs with.'**
+  String get hiredProsSubtitle;
+
+  /// Customer trusted pros section title
+  ///
+  /// In en, this message translates to:
+  /// **'Trusted Pros'**
+  String get trustedPros;
+
+  /// Customer trusted pros section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Your curated shortlist - add notes and organize by trade.'**
+  String get trustedProsSubtitle;
+
+  /// Trusted pros share tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Share my list'**
+  String get shareMyList;
+
+  /// Add button label
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// Save button label
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// Saved update snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Updated.'**
+  String get updated;
+
+  /// Generic professional label
+  ///
+  /// In en, this message translates to:
+  /// **'Pro'**
+  String get pro;
+
+  /// Generic contractor label
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor'**
+  String get contractor;
+
+  /// Message button label
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get message;
+
+  /// Rebook button label
+  ///
+  /// In en, this message translates to:
+  /// **'Rebook'**
+  String get rebook;
+
+  /// Add trusted pro sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Add Trusted Pro'**
+  String get addTrustedPro;
+
+  /// Edit trusted pro sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Trusted Pro'**
+  String get editTrustedPro;
+
+  /// Contractor search field label
+  ///
+  /// In en, this message translates to:
+  /// **'Search contractor name'**
+  String get searchContractorName;
+
+  /// Contractor search empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No contractors found.'**
+  String get noContractorsFound;
+
+  /// Trusted pro trade field label
+  ///
+  /// In en, this message translates to:
+  /// **'Trade / specialty'**
+  String get tradeSpecialty;
+
+  /// Trusted pro trade field hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Painter, pressure washing tech'**
+  String get tradeSpecialtyHint;
+
+  /// Trusted pro note field label
+  ///
+  /// In en, this message translates to:
+  /// **'Private note'**
+  String get privateNote;
+
+  /// Trusted pro note field hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Great with tile, fast response'**
+  String get privateNoteHint;
+
+  /// Trusted pro add button label
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Trusted List'**
+  String get addToTrustedList;
+
+  /// No description provided for @addedToTrustedList.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added to trusted list.'**
+  String addedToTrustedList(String name);
+
+  /// Remove confirmation dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Remove?'**
+  String get removeQuestion;
+
+  /// Remove trusted pro confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this contractor from your trusted list?'**
+  String get removeTrustedProConfirm;
+
+  /// Customer requests empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No requests yet'**
+  String get noRequestsYet;
+
+  /// Customer requests empty subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Post your first service request and local pros will send you quotes.'**
+  String get noRequestsYetSubtitle;
+
+  /// Hired pros empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No pros yet'**
+  String get noProsYet;
+
+  /// Hired pros empty subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Once you complete a job, your contractors will appear here.'**
+  String get noProsYetSubtitle;
+
+  /// Trusted pros empty title
+  ///
+  /// In en, this message translates to:
+  /// **'No trusted pros yet'**
+  String get noTrustedProsYet;
+
+  /// Trusted pros empty subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Add contractors you trust so you can find them fast, add notes, and share your list.'**
+  String get noTrustedProsYetSubtitle;
+
+  /// No description provided for @jobsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 job} other{{count} jobs}}'**
+  String jobsCount(int count);
+
+  /// No description provided for @activeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 active} other{{count} active}}'**
+  String activeCount(int count);
+
+  /// No description provided for @doneCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 done} other{{count} done}}'**
+  String doneCount(int count);
+
   /// No description provided for @welcome.
   ///
   /// In en, this message translates to:
@@ -1171,12 +1657,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No subscription products are available for this Apple sandbox account yet.'**
   String get subscriptionNoProductsAvailable;
-
-  /// No description provided for @active.
-  ///
-  /// In en, this message translates to:
-  /// **'Active'**
-  String get active;
 
   /// No description provided for @subscribe.
   ///

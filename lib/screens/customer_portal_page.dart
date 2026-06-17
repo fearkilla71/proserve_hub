@@ -306,6 +306,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   Widget _buildHomeHero(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: scheme.primaryContainer.withValues(alpha: 0.72),
       child: Padding(
@@ -314,7 +315,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'BOOK A PRO IN MINUTES',
+              l10n.customerHomeHeroTitle,
               style: GoogleFonts.bebasNeue(
                 fontSize: 26,
                 letterSpacing: 1.2,
@@ -323,20 +324,20 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 6),
             Text(
-              'Tell us what you need, compare quotes, and track the job here.',
+              l10n.customerHomeHeroSubtitle,
               style: GoogleFonts.manrope(
                 fontSize: 14,
                 color: scheme.onPrimaryContainer.withValues(alpha: 0.82),
               ),
             ),
             const SizedBox(height: 12),
-            const Wrap(
+            Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _HeroPill(label: 'Verified pros'),
-                _HeroPill(label: 'Upfront pricing'),
-                _HeroPill(label: 'Project tracking'),
+                _HeroPill(label: l10n.verifiedPros),
+                _HeroPill(label: l10n.upfrontPricing),
+                _HeroPill(label: l10n.projectTracking),
               ],
             ),
             const SizedBox(height: 14),
@@ -345,14 +346,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: FilledButton(
                     onPressed: () => context.push('/smart-request'),
-                    child: const Text('Start a request'),
+                    child: Text(l10n.startRequest),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => setState(() => _tabIndex = 1),
-                    child: const Text('Browse pros'),
+                    child: Text(l10n.browsePros),
                   ),
                 ),
               ],
@@ -363,7 +364,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/instant-quote'),
                 icon: const Icon(Icons.camera_alt, size: 18),
-                label: const Text('Snap for Instant Quote'),
+                label: Text(l10n.snapForInstantQuote),
               ),
             ),
           ],
@@ -436,6 +437,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildHomeTab({required BuildContext context, required User user}) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -447,7 +449,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         final fallback = (user.email ?? '').split('@').first.trim();
         final name = rawName.isNotEmpty
             ? rawName
-            : (fallback.isNotEmpty ? fallback : 'there');
+            : (fallback.isNotEmpty ? fallback : l10n.customerWelcomeFallback);
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -456,7 +458,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               children: [
                 Expanded(
                   child: Text(
-                    'Welcome, $name',
+                    l10n.welcome(name),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -465,14 +467,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Notifications',
+                  tooltip: l10n.notifications,
                   onPressed: () {
                     context.push('/notifications');
                   },
                   icon: const Icon(Icons.notifications_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Profile',
+                  tooltip: l10n.profile,
                   onPressed: () {
                     context.push('/customer-profile');
                   },
@@ -521,7 +523,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             const SizedBox(height: 16),
 
             Text(
-              'Quick actions',
+              l10n.quickActions,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -532,8 +534,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Start request',
-                    subtitle: 'Smart 4-step flow',
+                    title: l10n.startRequest,
+                    subtitle: l10n.customerQuickStartRequestSubtitle,
                     icon: Icons.add_circle_outline,
                     onTap: () {
                       context.push('/smart-request');
@@ -544,8 +546,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Browse pros',
-                    subtitle: 'Compare nearby contractors',
+                    title: l10n.browsePros,
+                    subtitle: l10n.customerQuickBrowseProsSubtitle,
                     icon: Icons.search,
                     onTap: () {
                       setState(() => _tabIndex = 1);
@@ -560,8 +562,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Messages',
-                    subtitle: 'Open your inbox',
+                    title: l10n.messages,
+                    subtitle: l10n.customerQuickMessagesSubtitle,
                     icon: Icons.chat_bubble_outline,
                     onTap: () {
                       context.push('/conversations');
@@ -572,8 +574,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Project tracker',
-                    subtitle: 'View active requests',
+                    title: l10n.projectTracker,
+                    subtitle: l10n.customerQuickProjectTrackerSubtitle,
                     icon: Icons.receipt_long,
                     onTap: () {
                       setState(() => _tabIndex = 2);
@@ -588,8 +590,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Saved pros',
-                    subtitle: 'Your favorite contractors',
+                    title: l10n.savedPros,
+                    subtitle: l10n.customerQuickSavedProsSubtitle,
                     icon: Icons.favorite_border,
                     onTap: () {
                       context.push('/favorites');
@@ -600,8 +602,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Referral',
-                    subtitle: 'Share & earn credit',
+                    title: l10n.referral,
+                    subtitle: l10n.customerQuickReferralSubtitle,
                     icon: Icons.card_giftcard,
                     onTap: () {
                       context.push('/referral');
@@ -616,8 +618,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Loyalty',
-                    subtitle: 'Points & rewards',
+                    title: l10n.loyalty,
+                    subtitle: l10n.customerQuickLoyaltySubtitle,
                     icon: Icons.loyalty_outlined,
                     onTap: () {
                       context.push('/loyalty-rewards');
@@ -628,8 +630,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Leaderboard',
-                    subtitle: 'Top-rated pros',
+                    title: l10n.leaderboard,
+                    subtitle: l10n.customerQuickLeaderboardSubtitle,
                     icon: Icons.emoji_events_outlined,
                     onTap: () {
                       context.push('/leaderboard');
@@ -644,8 +646,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'Saved projects',
-                    subtitle: 'Plan future work',
+                    title: l10n.savedProjects,
+                    subtitle: l10n.customerQuickSavedProjectsSubtitle,
                     icon: Icons.dashboard_customize_outlined,
                     onTap: () {
                       context.push('/project-boards');
@@ -656,8 +658,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 Expanded(
                   child: _quickActionTile(
                     context: context,
-                    title: 'My Estimates',
-                    subtitle: 'View saved AI estimates',
+                    title: l10n.myEstimates,
+                    subtitle: l10n.customerQuickMyEstimatesSubtitle,
                     icon: Icons.calculate_outlined,
                     onTap: () {
                       context.push('/saved-estimates');
@@ -671,8 +673,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               width: double.infinity,
               child: _quickActionTile(
                 context: context,
-                title: 'AI Support',
-                subtitle: 'Get instant help 24/7',
+                title: l10n.aiSupport,
+                subtitle: l10n.customerQuickAiSupportSubtitle,
                 icon: Icons.support_agent,
                 onTap: () {
                   context.push('/ai-support-chat');
@@ -690,9 +692,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _buildTeamTab(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Center(child: Text('Please sign in.'));
+      return Center(child: Text(l10n.signInRequired));
     }
     final scheme = Theme.of(context).colorScheme;
 
@@ -701,14 +704,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
       children: [
         // ── Header ──
         Text(
-          'My Team',
+          l10n.myTeam,
           style: Theme.of(
             context,
           ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
         Text(
-          'Your hired pros and trusted contacts.',
+          l10n.myTeamSubtitle,
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -719,8 +722,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         // SECTION 1 — My Hired Pros
         // ────────────────────────────────────────────
         _TeamSectionHeader(
-          title: 'Hired Pros',
-          subtitle: 'Contractors you\'ve completed jobs with.',
+          title: l10n.hiredPros,
+          subtitle: l10n.hiredProsSubtitle,
           icon: Icons.handshake_outlined,
         ),
         const SizedBox(height: 10),
@@ -732,21 +735,21 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         // SECTION 2 — Trusted Pros Circle
         // ────────────────────────────────────────────
         _TeamSectionHeader(
-          title: 'Trusted Pros',
-          subtitle: 'Your curated shortlist — add notes, organize by trade.',
+          title: l10n.trustedPros,
+          subtitle: l10n.trustedProsSubtitle,
           icon: Icons.verified_user_outlined,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                tooltip: 'Share my list',
+                tooltip: l10n.shareMyList,
                 icon: const Icon(Icons.share_outlined, size: 20),
                 onPressed: () => _shareTrustedList(context),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => _showAddTrustedProSheet(context),
                 icon: const Icon(Icons.person_add_alt, size: 18),
-                label: const Text('Add'),
+                label: Text(l10n.add),
               ),
             ],
           ),
@@ -767,6 +770,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   // ── Add trusted pro bottom sheet ──
   Future<void> _showAddTrustedProSheet(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -795,7 +799,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Add Trusted Pro',
+                    l10n.addTrustedPro,
                     style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -805,7 +809,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   TextField(
                     controller: contractorIdController,
                     decoration: InputDecoration(
-                      labelText: 'Search contractor name',
+                      labelText: l10n.searchContractorName,
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       fillColor: Theme.of(
@@ -851,7 +855,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                           if (matches.isEmpty) {
                             return Center(
                               child: Text(
-                                'No contractors found.',
+                                l10n.noContractorsFound,
                                 style: Theme.of(ctx).textTheme.bodySmall,
                               ),
                             );
@@ -924,8 +928,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   TextField(
                     controller: tradeController,
                     decoration: InputDecoration(
-                      labelText: 'Trade / speciality',
-                      hintText: 'e.g. Painter, PW Tech',
+                      labelText: l10n.tradeSpecialty,
+                      hintText: l10n.tradeSpecialtyHint,
                       prefixIcon: const Icon(Icons.construction),
                       filled: true,
                       fillColor: Theme.of(
@@ -941,8 +945,8 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   TextField(
                     controller: noteController,
                     decoration: InputDecoration(
-                      labelText: 'Private note',
-                      hintText: 'e.g. Great with tile, fast response',
+                      labelText: l10n.privateNote,
+                      hintText: l10n.privateNoteHint,
                       prefixIcon: const Icon(Icons.sticky_note_2_outlined),
                       filled: true,
                       fillColor: Theme.of(
@@ -972,12 +976,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    '${selectedContractorName ?? 'Pro'} added to trusted list.',
+                                    l10n.addedToTrustedList(
+                                      selectedContractorName ?? l10n.pro,
+                                    ),
                                   ),
                                 ),
                               );
                             },
-                      child: const Text('Add to Trusted List'),
+                      child: Text(l10n.addToTrustedList),
                     ),
                   ),
                 ],
@@ -996,6 +1002,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     required String currentTrade,
     required String currentNote,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     final tradeController = TextEditingController(text: currentTrade);
     final noteController = TextEditingController(text: currentNote);
 
@@ -1016,7 +1023,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Edit Trusted Pro',
+                l10n.editTrustedPro,
                 style: Theme.of(
                   ctx,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -1025,7 +1032,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               TextField(
                 controller: tradeController,
                 decoration: InputDecoration(
-                  labelText: 'Trade / speciality',
+                  labelText: l10n.tradeSpecialty,
                   prefixIcon: const Icon(Icons.construction),
                   filled: true,
                   fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
@@ -1039,7 +1046,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               TextField(
                 controller: noteController,
                 decoration: InputDecoration(
-                  labelText: 'Private note',
+                  labelText: l10n.privateNote,
                   prefixIcon: const Icon(Icons.sticky_note_2_outlined),
                   filled: true,
                   fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
@@ -1059,18 +1066,16 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (c) => AlertDialog(
-                            title: const Text('Remove?'),
-                            content: const Text(
-                              'Remove this contractor from your trusted list?',
-                            ),
+                            title: Text(l10n.removeQuestion),
+                            content: Text(l10n.removeTrustedProConfirm),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(c, false),
-                                child: const Text('Cancel'),
+                                child: Text(l10n.cancel),
                               ),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
-                                child: const Text('Remove'),
+                                child: Text(l10n.remove),
                               ),
                             ],
                           ),
@@ -1080,7 +1085,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
                       },
-                      child: const Text('Remove'),
+                      child: Text(l10n.remove),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1094,11 +1099,11 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         );
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Updated.')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(l10n.updated)));
                       },
-                      child: const Text('Save'),
+                      child: Text(l10n.save),
                     ),
                   ),
                 ],
@@ -1155,6 +1160,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snap) {
@@ -1171,7 +1177,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           child: _tabScaffold(
             fab: _tabIndex == 0
                 ? FloatingActionButton(
-                    tooltip: 'Inbox',
+                    tooltip: l10n.messages,
                     onPressed: () {
                       context.push('/conversations');
                     },
@@ -1187,7 +1193,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
                     Text(
-                      'Project',
+                      l10n.project,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
@@ -1200,7 +1206,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         onPressed: () {
                           context.push('/select-service');
                         },
-                        child: const Text('Start a New Request'),
+                        child: Text(l10n.startNewRequest),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1210,7 +1216,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         onPressed: () {
                           context.push('/ai-estimator');
                         },
-                        child: const Text('AI Estimator'),
+                        child: Text(l10n.aiEstimator),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1220,14 +1226,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         onPressed: () {
                           context.push('/customer-analytics');
                         },
-                        child: const Text('Analytics'),
+                        child: Text(l10n.analytics),
                       ),
                     ),
                     const SizedBox(height: 16),
                     const EscrowBookingsCard(isCustomer: true),
                     const SizedBox(height: 24),
                     Text(
-                      'My Requests',
+                      l10n.myRequests,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -1245,7 +1251,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Couldn\'t load your requests',
+                                    l10n.couldNotLoadRequests,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -1259,7 +1265,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                     child: OutlinedButton.icon(
                                       onPressed: _retryMyRequests,
                                       icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry'),
+                                      label: Text(l10n.retry),
                                     ),
                                   ),
                                 ],
@@ -1313,7 +1319,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Still loading your requests…',
+                                              l10n.stillLoadingRequests,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .titleMedium
@@ -1329,7 +1335,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                               child: OutlinedButton.icon(
                                                 onPressed: _retryMyRequests,
                                                 icon: const Icon(Icons.refresh),
-                                                label: const Text('Retry'),
+                                                label: Text(l10n.retry),
                                               ),
                                             ),
                                           ],
@@ -1368,7 +1374,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                             bottom: 8,
                                           ),
                                           child: Text(
-                                            'Showing legacy requests (clientId).',
+                                            l10n.showingLegacyRequests,
                                             style: Theme.of(
                                               context,
                                             ).textTheme.bodySmall,
@@ -1387,7 +1393,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                                         child: OutlinedButton.icon(
                                           onPressed: _retryMyRequests,
                                           icon: const Icon(Icons.refresh),
-                                          label: const Text('Refresh'),
+                                          label: Text(l10n.refresh),
                                         ),
                                       ),
                                     ],
@@ -1480,6 +1486,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   Widget _buildEmptyRequestsState(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -1492,14 +1499,14 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 12),
             Text(
-              'No requests yet',
+              l10n.noRequestsYet,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
-              'Post your first service request and local pros will send you quotes.',
+              l10n.noRequestsYetSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -1509,7 +1516,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             FilledButton.icon(
               onPressed: () => context.push('/smart-request'),
               icon: const Icon(Icons.add),
-              label: const Text('Start a Request'),
+              label: Text(l10n.startRequest),
             ),
           ],
         ),
@@ -1888,6 +1895,7 @@ class _CustomerActionCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: requestsQuery.snapshots(),
       builder: (context, snapshot) {
@@ -1910,7 +1918,10 @@ class _CustomerActionCenter extends StatelessWidget {
 
         final actionable =
             docs
-                .map((doc) => _CustomerActionItem.fromDoc(doc, canLeaveReview))
+                .map(
+                  (doc) =>
+                      _CustomerActionItem.fromDoc(doc, canLeaveReview, l10n),
+                )
                 .where((item) => item.priority > 0)
                 .toList()
               ..sort((a, b) => b.priority.compareTo(a.priority));
@@ -1960,13 +1971,13 @@ class _CustomerActionCenter extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Action Center',
+                            l10n.actionCenter,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Your next steps from request to paid, completed, and reviewed.',
+                            l10n.customerActionCenterSubtitle,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: scheme.onSurfaceVariant),
                           ),
@@ -1982,15 +1993,15 @@ class _CustomerActionCenter extends StatelessWidget {
                   children: [
                     _ActionMetricChip(
                       value: docs.length.toString(),
-                      label: 'active',
+                      label: l10n.active,
                     ),
                     _ActionMetricChip(
                       value: pendingQuotes.toString(),
-                      label: 'quotes',
+                      label: l10n.quotes,
                     ),
                     _ActionMetricChip(
                       value: protectedJobs.toString(),
-                      label: 'protected',
+                      label: l10n.protected,
                     ),
                   ],
                 ),
@@ -2011,7 +2022,7 @@ class _CustomerActionCenter extends StatelessWidget {
                 if (openJobs > 0 && pendingQuotes == 0) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Tip: invite more pros or browse contractors if a request has no quotes yet.',
+                    l10n.customerActionCenterNoQuotesTip,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -2023,7 +2034,7 @@ class _CustomerActionCenter extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onProjectTab,
                     icon: const Icon(Icons.receipt_long_outlined),
-                    label: const Text('View all projects'),
+                    label: Text(l10n.viewAllProjects),
                   ),
                 ),
               ],
@@ -2053,6 +2064,7 @@ class _CustomerActionItem {
   static _CustomerActionItem fromDoc(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
     bool Function(Map<String, dynamic> data) canLeaveReview,
+    AppLocalizations l10n,
   ) {
     final data = doc.data();
     final jobId = doc.id;
@@ -2066,8 +2078,8 @@ class _CustomerActionItem {
     if (canLeaveReview(data)) {
       return _CustomerActionItem(
         icon: Icons.rate_review_outlined,
-        title: 'Review $service',
-        subtitle: 'Help future homeowners trust the right pro.',
+        title: l10n.reviewService(service),
+        subtitle: l10n.customerActionReviewSubtitle,
         route: '/submit-review/$jobId/$contractorId',
         priority: 100,
       );
@@ -2076,8 +2088,8 @@ class _CustomerActionItem {
     if (escrowId.isNotEmpty) {
       return _CustomerActionItem(
         icon: Icons.shield_outlined,
-        title: 'Check protected payment',
-        subtitle: 'View escrow status and release steps for $service.',
+        title: l10n.checkProtectedPayment,
+        subtitle: l10n.customerActionEscrowSubtitle(service),
         route: '/escrow-status/$escrowId',
         priority: status.contains('completion') ? 95 : 80,
       );
@@ -2086,8 +2098,8 @@ class _CustomerActionItem {
     if (quoteCount > 0 && !claimed) {
       return _CustomerActionItem(
         icon: Icons.compare_arrows_outlined,
-        title: 'Compare $quoteCount quote${quoteCount == 1 ? '' : 's'}',
-        subtitle: 'Review price, scope, warranty, and contractor proof.',
+        title: l10n.compareQuoteCount(quoteCount),
+        subtitle: l10n.customerActionCompareSubtitle,
         route: '/quotes/$jobId',
         priority: 90,
       );
@@ -2096,8 +2108,8 @@ class _CustomerActionItem {
     if (claimed || status == 'accepted' || status == 'in_progress') {
       return _CustomerActionItem(
         icon: Icons.dashboard_customize_outlined,
-        title: 'Track $service',
-        subtitle: 'Open chat, photos, timeline, invoice, and next steps.',
+        title: l10n.trackService(service),
+        subtitle: l10n.customerActionTrackSubtitle,
         route: '/job-command/$jobId',
         priority: 70,
       );
@@ -2106,8 +2118,8 @@ class _CustomerActionItem {
     if (status == 'open') {
       return _CustomerActionItem(
         icon: Icons.person_search_outlined,
-        title: 'Waiting for quotes',
-        subtitle: 'Open the job and invite or compare nearby pros.',
+        title: l10n.waitingForQuotes,
+        subtitle: l10n.customerActionWaitingSubtitle,
         route: '/job-command/$jobId',
         priority: 50,
       );
@@ -2192,18 +2204,19 @@ class _EmptyCustomerAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'No active projects yet. Start with photos, ZIP code, and service type.',
+          l10n.customerActionEmptyBody,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 10),
         FilledButton.icon(
           onPressed: () => context.push('/smart-request'),
           icon: const Icon(Icons.add_circle_outline),
-          label: const Text('Post your first job'),
+          label: Text(l10n.postYourFirstJob),
         ),
       ],
     );
@@ -2218,6 +2231,7 @@ class _ActionCenterAllClear extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -2231,7 +2245,7 @@ class _ActionCenterAllClear extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'No urgent actions. You can still review project details or start another request.',
+              l10n.customerActionAllClearBody,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -2307,6 +2321,7 @@ class _HiredProsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('job_requests')
@@ -2371,9 +2386,8 @@ class _HiredProsList extends StatelessWidget {
         if (hiredMap.isEmpty) {
           return _EmptyTeamCard(
             icon: Icons.people_outline,
-            title: 'No pros yet',
-            message:
-                'Once you complete a job, your contractors will appear here.',
+            title: l10n.noProsYet,
+            message: l10n.noProsYetSubtitle,
           );
         }
 
@@ -2419,6 +2433,7 @@ class _HiredProCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       future: FirebaseFirestore.instance
@@ -2471,7 +2486,7 @@ class _HiredProCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            name.isNotEmpty ? name : 'Contractor',
+                            name.isNotEmpty ? name : l10n.contractor,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                             maxLines: 1,
@@ -2489,20 +2504,20 @@ class _HiredProCard extends StatelessWidget {
                           Row(
                             children: [
                               _StatChip(
-                                label: '${info.totalJobs} jobs',
+                                label: l10n.jobsCount(info.totalJobs),
                                 icon: Icons.work_outline,
                               ),
                               const SizedBox(width: 8),
                               if (info.activeJobs > 0)
                                 _StatChip(
-                                  label: '${info.activeJobs} active',
+                                  label: l10n.activeCount(info.activeJobs),
                                   icon: Icons.timelapse,
                                   color: Colors.orange,
                                 ),
                               if (info.activeJobs == 0 &&
                                   info.completedJobs > 0)
                                 _StatChip(
-                                  label: '${info.completedJobs} done',
+                                  label: l10n.doneCount(info.completedJobs),
                                   icon: Icons.check_circle_outline,
                                   color: Colors.green,
                                 ),
@@ -2538,7 +2553,7 @@ class _HiredProCard extends StatelessWidget {
                           context.push('/chat/$convId');
                         },
                         icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                        label: const Text('Message'),
+                        label: Text(l10n.message),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -2548,7 +2563,7 @@ class _HiredProCard extends StatelessWidget {
                           context.push('/contractor/${info.contractorId}');
                         },
                         icon: const Icon(Icons.person_outline, size: 16),
-                        label: const Text('Profile'),
+                        label: Text(l10n.profile),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -2559,7 +2574,7 @@ class _HiredProCard extends StatelessWidget {
                           context.push('/select-service');
                         },
                         icon: const Icon(Icons.replay, size: 16),
-                        label: const Text('Rebook'),
+                        label: Text(l10n.rebook),
                       ),
                     ),
                   ],
@@ -2581,6 +2596,7 @@ class _TrustedProsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: TrustedProsService.instance.watchAll(),
       builder: (context, snap) {
@@ -2595,9 +2611,8 @@ class _TrustedProsList extends StatelessWidget {
         if (docs.isEmpty) {
           return _EmptyTeamCard(
             icon: Icons.verified_user_outlined,
-            title: 'No trusted pros yet',
-            message:
-                'Add contractors you trust so you can find them fast, add notes, and share your list.',
+            title: l10n.noTrustedProsYet,
+            message: l10n.noTrustedProsYetSubtitle,
           );
         }
 
