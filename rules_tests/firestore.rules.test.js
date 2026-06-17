@@ -406,6 +406,13 @@ describe('Firestore user security rules', () => {
 
   it('allows admins to inspect payment operations and review escrow records', async () => {
     await seed(['admins', 'adminA'], { role: 'operator' });
+    await seed(['users', 'contractorA'], {
+      uid: 'contractorA',
+      role: 'contractor',
+      stripeAccountId: '',
+      stripeDetailsSubmitted: false,
+      stripePayoutsEnabled: false,
+    });
     await seed(['escrow_bookings', 'escrowA'], {
       customerId: 'customerA',
       contractorId: 'contractorA',
@@ -430,9 +437,43 @@ describe('Firestore user security rules', () => {
     await assertSucceeds(updateDoc(doc(db('adminA'), 'escrow_bookings/escrowA'), {
       adminReviewedAt: new Date(),
     }));
+    await assertSucceeds(setDoc(doc(db('adminA'), 'escrow_bookings/escrowA/admin_actions/actionA'), {
+      type: 'reviewed',
+      note: 'Checked payout failure.',
+      operatorUid: 'adminA',
+      createdAt: new Date(),
+    }));
     await assertSucceeds(getDoc(doc(db('adminA'), 'payments/paymentA')));
+    await assertSucceeds(updateDoc(doc(db('adminA'), 'payments/paymentA'), {
+      adminReviewedAt: new Date(),
+      lastAdminActionAt: new Date(),
+      lastAdminNote: 'Stripe dashboard checked.',
+    }));
+    await assertSucceeds(setDoc(doc(db('adminA'), 'payments/paymentA/admin_actions/actionA'), {
+      type: 'note',
+      note: 'Waiting on webhook retry.',
+      operatorUid: 'adminA',
+      createdAt: new Date(),
+    }));
+    await assertSucceeds(updateDoc(doc(db('adminA'), 'users/contractorA'), {
+      payoutAdminContactedAt: new Date(),
+      lastAdminActionAt: new Date(),
+      lastAdminNote: 'Asked contractor to finish Stripe onboarding.',
+    }));
+    await assertSucceeds(setDoc(doc(db('adminA'), 'users/contractorA/admin_actions/actionA'), {
+      type: 'payout_contacted',
+      note: 'Sent payout setup reminder.',
+      operatorUid: 'adminA',
+      createdAt: new Date(),
+    }));
     await assertFails(updateDoc(doc(db('adminA'), 'payments/paymentA'), {
       status: 'reviewed',
+    }));
+    await assertFails(setDoc(doc(db('contractorA'), 'payments/paymentA/admin_actions/actionB'), {
+      type: 'note',
+      note: 'Contractor should not write admin action.',
+      operatorUid: 'contractorA',
+      createdAt: new Date(),
     }));
   });
 });

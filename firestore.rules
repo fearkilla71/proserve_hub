@@ -271,6 +271,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /users/{uid}/admin_actions/{actionId} {
+      allow read, write: if isAdmin();
+    }
+
     // --- INVOICE MAKER (user-owned) ---
     // Drafts live in a per-user subcollection.
     match /users/{uid}/invoice_drafts/{draftId} {
@@ -484,7 +488,17 @@ service cloud.firestore {
     // --- PAYMENTS ---
     match /payments/{paymentId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.contractorId == request.auth.uid);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'adminReviewedAt',
+          'lastAdminActionAt',
+          'lastAdminNote',
+        ]);
       allow write: if false; // written by server (Admin SDK)
+
+      match /admin_actions/{actionId} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // --- CHATS (one chat per jobId) ---
@@ -820,6 +834,10 @@ service cloud.firestore {
 
       // Only admins can delete escrow records
       allow delete: if isAdmin();
+
+      match /admin_actions/{actionId} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // --- QUOTES (competitive bidding for jobs) ---

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ class PaymentOperationsTab extends StatefulWidget {
 class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
   String _filter = 'attention';
   final _currency = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+  final _dateTime = DateFormat('MMM d, h:mm a');
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +173,14 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
               const SizedBox(height: 6),
               Text(item.payoutError, style: TextStyle(color: scheme.error)),
             ],
+            if (item.lastAdminNote.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _AdminNotePreview(
+                note: item.lastAdminNote,
+                timestamp: item.lastAdminActionAt,
+                formatter: _dateTime,
+              ),
+            ],
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -192,6 +202,17 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
                   icon: const Icon(Icons.done_all),
                   label: Text(l10n.markReviewed),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () => _showAdminNoteDialog(
+                    title: 'Add escrow note',
+                    parentRef: FirebaseFirestore.instance
+                        .collection('escrow_bookings')
+                        .doc(item.id),
+                    type: 'note',
+                  ),
+                  icon: const Icon(Icons.note_add_outlined),
+                  label: const Text('Add note'),
+                ),
               ],
             ),
           ],
@@ -204,28 +225,85 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          child: Icon(
-            item.needsAttention
-                ? Icons.warning_amber_outlined
-                : Icons.receipt_long_outlined,
-          ),
-        ),
-        title: Text(item.title),
-        subtitle: Text(
-          [
-            l10n.idLabel(item.id),
-            if (item.type.isNotEmpty) l10n.typeLabel(item.type),
-            if (item.uid.isNotEmpty) l10n.userLabel(item.uid),
-            if (item.status.isNotEmpty) l10n.statusLabel(item.status),
-            if (item.amount > 0)
-              l10n.amountLabel(_currency.format(item.amount)),
-          ].join('\n'),
-        ),
-        trailing: _RiskChip(
-          label: item.needsAttention ? l10n.check : l10n.ok,
-          color: item.needsAttention ? scheme.error : scheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  child: Icon(
+                    item.needsAttention
+                        ? Icons.warning_amber_outlined
+                        : Icons.receipt_long_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        [
+                          l10n.idLabel(item.id),
+                          if (item.type.isNotEmpty) l10n.typeLabel(item.type),
+                          if (item.uid.isNotEmpty) l10n.userLabel(item.uid),
+                          if (item.status.isNotEmpty)
+                            l10n.statusLabel(item.status),
+                          if (item.amount > 0)
+                            l10n.amountLabel(_currency.format(item.amount)),
+                          if (item.adminReviewedAt != null)
+                            'Reviewed ${_dateTime.format(item.adminReviewedAt!)}',
+                        ].join('\n'),
+                      ),
+                    ],
+                  ),
+                ),
+                _RiskChip(
+                  label: item.needsAttention ? l10n.check : l10n.ok,
+                  color: item.needsAttention ? scheme.error : scheme.primary,
+                ),
+              ],
+            ),
+            if (item.lastAdminNote.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _AdminNotePreview(
+                note: item.lastAdminNote,
+                timestamp: item.lastAdminActionAt,
+                formatter: _dateTime,
+              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _markPaymentReviewed(item.id),
+                  icon: const Icon(Icons.done_all),
+                  label: Text(l10n.markReviewed),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _showAdminNoteDialog(
+                    title: 'Add payment note',
+                    parentRef: FirebaseFirestore.instance
+                        .collection('payments')
+                        .doc(item.id),
+                    type: 'note',
+                  ),
+                  icon: const Icon(Icons.note_add_outlined),
+                  label: const Text('Add note'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -234,49 +312,196 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
   Widget _payoutCard(_PayoutOpsItem item) {
     final l10n = AppLocalizations.of(context)!;
     return Card(
-      child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
-        title: Text(item.displayName),
-        subtitle: Text(
-          [
-            l10n.userLabel(item.uid),
-            l10n.stripeAccountLabel(
-              item.stripeAccountId.isEmpty
-                  ? l10n.missing
-                  : item.stripeAccountId,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircleAvatar(child: Icon(Icons.payments_outlined)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.displayName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        [
+                          l10n.userLabel(item.uid),
+                          l10n.stripeAccountLabel(
+                            item.stripeAccountId.isEmpty
+                                ? l10n.missing
+                                : item.stripeAccountId,
+                          ),
+                          l10n.detailsSubmittedLabel(
+                            item.detailsSubmitted ? l10n.yes : l10n.no,
+                          ),
+                          l10n.payoutsEnabledLabel(
+                            item.payoutsEnabled ? l10n.yes : l10n.no,
+                          ),
+                          if (item.payoutAdminContactedAt != null)
+                            'Contacted ${_dateTime.format(item.payoutAdminContactedAt!)}',
+                        ].join('\n'),
+                      ),
+                    ],
+                  ),
+                ),
+                _RiskChip(
+                  label: l10n.paymentOpsPayoutSetup,
+                  color: Colors.orange,
+                ),
+              ],
             ),
-            l10n.detailsSubmittedLabel(
-              item.detailsSubmitted ? l10n.yes : l10n.no,
+            if (item.lastAdminNote.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _AdminNotePreview(
+                note: item.lastAdminNote,
+                timestamp: item.lastAdminActionAt,
+                formatter: _dateTime,
+              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () => _markPayoutContacted(item.uid),
+                  icon: const Icon(Icons.contact_mail_outlined),
+                  label: const Text('Mark contacted'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _showAdminNoteDialog(
+                    title: 'Add payout note',
+                    parentRef: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(item.uid),
+                    type: 'payout_note',
+                  ),
+                  icon: const Icon(Icons.note_add_outlined),
+                  label: const Text('Add note'),
+                ),
+              ],
             ),
-            l10n.payoutsEnabledLabel(item.payoutsEnabled ? l10n.yes : l10n.no),
-          ].join('\n'),
-        ),
-        trailing: _RiskChip(
-          label: l10n.paymentOpsPayoutSetup,
-          color: Colors.orange,
+          ],
         ),
       ),
     );
   }
 
+  Future<void> _showAdminNoteDialog({
+    required String title,
+    required DocumentReference<Map<String, dynamic>> parentRef,
+    required String type,
+  }) async {
+    final controller = TextEditingController();
+    final note = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 4,
+            maxLength: 500,
+            decoration: const InputDecoration(
+              labelText: 'Internal admin note',
+              hintText: 'What did you check, change, or tell the user?',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('Save note'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+
+    if (note == null || note.isEmpty) return;
+    await _addAdminAction(parentRef: parentRef, type: type, note: note);
+  }
+
   Future<void> _markEscrowReviewed(String escrowId) async {
-    try {
-      await FirebaseFirestore.instance
+    await _addAdminAction(
+      parentRef: FirebaseFirestore.instance
           .collection('escrow_bookings')
-          .doc(escrowId)
-          .update({'adminReviewedAt': FieldValue.serverTimestamp()});
+          .doc(escrowId),
+      type: 'reviewed',
+      note: 'Marked reviewed from payment operations.',
+      parentUpdate: {'adminReviewedAt': FieldValue.serverTimestamp()},
+      successMessage: AppLocalizations.of(context)!.escrowMarkedReviewed,
+    );
+  }
+
+  Future<void> _markPaymentReviewed(String paymentId) async {
+    await _addAdminAction(
+      parentRef: FirebaseFirestore.instance
+          .collection('payments')
+          .doc(paymentId),
+      type: 'reviewed',
+      note: 'Marked reviewed from payment operations.',
+      parentUpdate: {'adminReviewedAt': FieldValue.serverTimestamp()},
+      successMessage: 'Payment marked reviewed.',
+    );
+  }
+
+  Future<void> _markPayoutContacted(String uid) async {
+    await _addAdminAction(
+      parentRef: FirebaseFirestore.instance.collection('users').doc(uid),
+      type: 'payout_contacted',
+      note: 'Contractor contacted about payout setup.',
+      parentUpdate: {'payoutAdminContactedAt': FieldValue.serverTimestamp()},
+      successMessage: 'Payout setup marked contacted.',
+    );
+  }
+
+  Future<void> _addAdminAction({
+    required DocumentReference<Map<String, dynamic>> parentRef,
+    required String type,
+    required String note,
+    Map<String, Object?> parentUpdate = const {},
+    String successMessage = 'Admin note saved.',
+  }) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final actionRef = parentRef.collection('admin_actions').doc();
+      batch.set(actionRef, {
+        'type': type,
+        'note': note,
+        'operatorUid':
+            FirebaseAuth.instance.currentUser?.uid ?? 'unknown_admin',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      batch.update(parentRef, {
+        ...parentUpdate,
+        'lastAdminActionAt': FieldValue.serverTimestamp(),
+        'lastAdminNote': note,
+      });
+      await batch.commit();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.escrowMarkedReviewed),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.couldNotMarkReviewed('$e'))));
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save admin action: $e')),
+      );
     }
   }
 }
@@ -293,6 +518,8 @@ class _EscrowOpsItem {
     required this.contractorPayout,
     required this.createdAt,
     required this.adminReviewedAt,
+    required this.lastAdminNote,
+    required this.lastAdminActionAt,
   });
 
   factory _EscrowOpsItem.fromDoc(
@@ -310,6 +537,8 @@ class _EscrowOpsItem {
       contractorPayout: (data['contractorPayout'] as num?)?.toDouble() ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       adminReviewedAt: (data['adminReviewedAt'] as Timestamp?)?.toDate(),
+      lastAdminNote: (data['lastAdminNote'] ?? '').toString(),
+      lastAdminActionAt: (data['lastAdminActionAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -323,6 +552,8 @@ class _EscrowOpsItem {
   final double contractorPayout;
   final DateTime? createdAt;
   final DateTime? adminReviewedAt;
+  final String lastAdminNote;
+  final DateTime? lastAdminActionAt;
 
   int get sortTime => (createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
       .millisecondsSinceEpoch;
@@ -360,6 +591,9 @@ class _PaymentOpsItem {
     required this.uid,
     required this.amount,
     required this.createdAt,
+    required this.adminReviewedAt,
+    required this.lastAdminNote,
+    required this.lastAdminActionAt,
   });
 
   factory _PaymentOpsItem.fromDoc(
@@ -392,6 +626,9 @@ class _PaymentOpsItem {
       createdAt:
           (data['createdAt'] as Timestamp?)?.toDate() ??
           (data['created'] as Timestamp?)?.toDate(),
+      adminReviewedAt: (data['adminReviewedAt'] as Timestamp?)?.toDate(),
+      lastAdminNote: (data['lastAdminNote'] ?? '').toString(),
+      lastAdminActionAt: (data['lastAdminActionAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -402,6 +639,9 @@ class _PaymentOpsItem {
   final String uid;
   final double amount;
   final DateTime? createdAt;
+  final DateTime? adminReviewedAt;
+  final String lastAdminNote;
+  final DateTime? lastAdminActionAt;
 
   int get sortTime => (createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
       .millisecondsSinceEpoch;
@@ -425,6 +665,9 @@ class _PayoutOpsItem {
     required this.stripeAccountId,
     required this.detailsSubmitted,
     required this.payoutsEnabled,
+    required this.lastAdminNote,
+    required this.lastAdminActionAt,
+    required this.payoutAdminContactedAt,
   });
 
   factory _PayoutOpsItem.fromDoc(
@@ -443,6 +686,10 @@ class _PayoutOpsItem {
       stripeAccountId: (data['stripeAccountId'] ?? '').toString(),
       detailsSubmitted: data['stripeDetailsSubmitted'] == true,
       payoutsEnabled: data['stripePayoutsEnabled'] == true,
+      lastAdminNote: (data['lastAdminNote'] ?? '').toString(),
+      lastAdminActionAt: (data['lastAdminActionAt'] as Timestamp?)?.toDate(),
+      payoutAdminContactedAt: (data['payoutAdminContactedAt'] as Timestamp?)
+          ?.toDate(),
     );
   }
 
@@ -451,9 +698,53 @@ class _PayoutOpsItem {
   final String stripeAccountId;
   final bool detailsSubmitted;
   final bool payoutsEnabled;
+  final String lastAdminNote;
+  final DateTime? lastAdminActionAt;
+  final DateTime? payoutAdminContactedAt;
 
   bool get payoutReady =>
       stripeAccountId.isNotEmpty && detailsSubmitted && payoutsEnabled;
+}
+
+class _AdminNotePreview extends StatelessWidget {
+  const _AdminNotePreview({
+    required this.note,
+    required this.timestamp,
+    required this.formatter,
+  });
+
+  final String note;
+  final DateTime? timestamp;
+  final DateFormat formatter;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            timestamp == null
+                ? 'Last admin note'
+                : 'Last admin note • ${formatter.format(timestamp!)}',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(note),
+        ],
+      ),
+    );
+  }
 }
 
 class _SummaryGrid extends StatelessWidget {
