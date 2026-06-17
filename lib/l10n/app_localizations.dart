@@ -1628,6 +1628,18 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get phone;
 
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @zipCode.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP Code'**
+  String get zipCode;
+
   /// No description provided for @address.
   ///
   /// In en, this message translates to:
@@ -4291,6 +4303,432 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error submitting review: {error}'**
   String errorSubmittingReview(String error);
+
+  /// No description provided for @smartRequestStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String smartRequestStepTitle(int current, int total);
+
+  /// No description provided for @smartRequestResumeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume saved request?'**
+  String get smartRequestResumeTitle;
+
+  /// No description provided for @smartRequestResumeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We found a saved job request. Continue where you left off or start fresh.'**
+  String get smartRequestResumeBody;
+
+  /// No description provided for @smartRequestResumeBodyWithDate.
+  ///
+  /// In en, this message translates to:
+  /// **'We found a saved job request from {time}. Continue where you left off or start fresh.'**
+  String smartRequestResumeBodyWithDate(String time);
+
+  /// No description provided for @smartRequestStartFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Start fresh'**
+  String get smartRequestStartFresh;
+
+  /// No description provided for @smartRequestResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get smartRequestResume;
+
+  /// No description provided for @smartRequestDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard request?'**
+  String get smartRequestDiscardTitle;
+
+  /// No description provided for @smartRequestDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress is saved automatically. Leave now and resume this request later.'**
+  String get smartRequestDiscardBody;
+
+  /// No description provided for @smartRequestStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay'**
+  String get smartRequestStay;
+
+  /// No description provided for @smartRequestDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get smartRequestDiscard;
+
+  /// No description provided for @smartRequestClearDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear saved draft'**
+  String get smartRequestClearDraft;
+
+  /// No description provided for @smartRequestDraftCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved draft cleared'**
+  String get smartRequestDraftCleared;
+
+  /// No description provided for @smartRequestDraftAutosave.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saves automatically as you build the request.'**
+  String get smartRequestDraftAutosave;
+
+  /// No description provided for @smartRequestDraftSavedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved at {time}'**
+  String smartRequestDraftSavedAt(String time);
+
+  /// No description provided for @smartRequestPhotoRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one photo of the project area.'**
+  String get smartRequestPhotoRequired;
+
+  /// No description provided for @smartRequestZipInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid 5-digit ZIP code.'**
+  String get smartRequestZipInvalid;
+
+  /// No description provided for @smartRequestServiceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a service type.'**
+  String get smartRequestServiceRequired;
+
+  /// No description provided for @smartRequestAiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AI analysis unavailable. You can fill in details manually.'**
+  String get smartRequestAiUnavailable;
+
+  /// No description provided for @smartRequestSubmitFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit request: {error}'**
+  String smartRequestSubmitFailed(String error);
+
+  /// No description provided for @smartRequestSnapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap & Describe'**
+  String get smartRequestSnapTitle;
+
+  /// No description provided for @smartRequestSnapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take or upload photos and we\'ll help build the request.'**
+  String get smartRequestSnapSubtitle;
+
+  /// No description provided for @smartRequestPhotoTrustTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos make quotes more accurate'**
+  String get smartRequestPhotoTrustTitle;
+
+  /// No description provided for @smartRequestPhotoTrustSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the project area, close-up damage, and any access details so contractors can quote with fewer follow-up questions.'**
+  String get smartRequestPhotoTrustSubtitle;
+
+  /// No description provided for @smartRequestProjectPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Photos'**
+  String get smartRequestProjectPhotos;
+
+  /// No description provided for @smartRequestPhotoPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo or upload from gallery'**
+  String get smartRequestPhotoPlaceholder;
+
+  /// No description provided for @smartRequestCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get smartRequestCamera;
+
+  /// No description provided for @smartRequestGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get smartRequestGallery;
+
+  /// No description provided for @smartRequestAddMorePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Add More'**
+  String get smartRequestAddMorePhotos;
+
+  /// No description provided for @smartRequestZipHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your ZIP code'**
+  String get smartRequestZipHint;
+
+  /// No description provided for @smartRequestServiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Type'**
+  String get smartRequestServiceType;
+
+  /// No description provided for @smartRequestAnalyzeWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze with AI'**
+  String get smartRequestAnalyzeWithAi;
+
+  /// No description provided for @smartRequestAiAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is analyzing your photos...'**
+  String get smartRequestAiAnalyzing;
+
+  /// No description provided for @smartRequestAiAnalyzingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimating size, condition, and pricing'**
+  String get smartRequestAiAnalyzingSubtitle;
+
+  /// No description provided for @smartRequestAiDetectedDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-Detected Details'**
+  String get smartRequestAiDetectedDetails;
+
+  /// No description provided for @smartRequestReviewAdjust.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and adjust the details below.'**
+  String get smartRequestReviewAdjust;
+
+  /// No description provided for @smartRequestAiConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Confidence: {percent}%'**
+  String smartRequestAiConfidence(String percent);
+
+  /// No description provided for @smartRequestEstimatedSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Size (sqft)'**
+  String get smartRequestEstimatedSize;
+
+  /// No description provided for @smartRequestPropertyType.
+  ///
+  /// In en, this message translates to:
+  /// **'Property Type'**
+  String get smartRequestPropertyType;
+
+  /// No description provided for @smartRequestHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get smartRequestHome;
+
+  /// No description provided for @smartRequestBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get smartRequestBusiness;
+
+  /// No description provided for @smartRequestSurfaceCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface Condition'**
+  String get smartRequestSurfaceCondition;
+
+  /// No description provided for @smartRequestExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get smartRequestExcellent;
+
+  /// No description provided for @smartRequestFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get smartRequestFair;
+
+  /// No description provided for @smartRequestPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Poor'**
+  String get smartRequestPoor;
+
+  /// No description provided for @smartRequestAiNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Notes'**
+  String get smartRequestAiNotes;
+
+  /// No description provided for @smartRequestContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get smartRequestContinue;
+
+  /// No description provided for @smartRequestTimelineBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline & Budget'**
+  String get smartRequestTimelineBudget;
+
+  /// No description provided for @smartRequestTimelineQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you need the work done?'**
+  String get smartRequestTimelineQuestion;
+
+  /// No description provided for @smartRequestTimelineStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get smartRequestTimelineStandard;
+
+  /// No description provided for @smartRequestTimelineStandardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Within 1-2 weeks'**
+  String get smartRequestTimelineStandardSubtitle;
+
+  /// No description provided for @smartRequestTimelineAsap.
+  ///
+  /// In en, this message translates to:
+  /// **'ASAP'**
+  String get smartRequestTimelineAsap;
+
+  /// No description provided for @smartRequestTimelineAsapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'As soon as possible (+15% urgency premium)'**
+  String get smartRequestTimelineAsapSubtitle;
+
+  /// No description provided for @smartRequestTimelineFlexible.
+  ///
+  /// In en, this message translates to:
+  /// **'Flexible'**
+  String get smartRequestTimelineFlexible;
+
+  /// No description provided for @smartRequestTimelineFlexibleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No rush. I\'m flexible on timing'**
+  String get smartRequestTimelineFlexibleSubtitle;
+
+  /// No description provided for @smartRequestBudgetPreference.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget Preference'**
+  String get smartRequestBudgetPreference;
+
+  /// No description provided for @smartRequestBudgetFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget-Friendly'**
+  String get smartRequestBudgetFriendly;
+
+  /// No description provided for @smartRequestBudgetFriendlySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower end of market pricing'**
+  String get smartRequestBudgetFriendlySubtitle;
+
+  /// No description provided for @smartRequestBudgetRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get smartRequestBudgetRecommended;
+
+  /// No description provided for @smartRequestBudgetRecommendedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair market price for quality work'**
+  String get smartRequestBudgetRecommendedSubtitle;
+
+  /// No description provided for @smartRequestBudgetPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get smartRequestBudgetPremium;
+
+  /// No description provided for @smartRequestBudgetPremiumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-tier materials and craftsmanship'**
+  String get smartRequestBudgetPremiumSubtitle;
+
+  /// No description provided for @smartRequestReviewSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & Submit'**
+  String get smartRequestReviewSubmit;
+
+  /// No description provided for @smartRequestConfirmDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your details and submit.'**
+  String get smartRequestConfirmDetails;
+
+  /// No description provided for @smartRequestSummarySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get smartRequestSummarySize;
+
+  /// No description provided for @smartRequestSummaryProperty.
+  ///
+  /// In en, this message translates to:
+  /// **'Property'**
+  String get smartRequestSummaryProperty;
+
+  /// No description provided for @smartRequestSummaryCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get smartRequestSummaryCondition;
+
+  /// No description provided for @smartRequestSummaryBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get smartRequestSummaryBudget;
+
+  /// No description provided for @smartRequestSummaryPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get smartRequestSummaryPhotos;
+
+  /// No description provided for @smartRequestContactInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Information'**
+  String get smartRequestContactInformation;
+
+  /// No description provided for @smartRequestAdditionalNotesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Notes (optional)'**
+  String get smartRequestAdditionalNotesOptional;
+
+  /// No description provided for @smartRequestSubmitRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Request'**
+  String get smartRequestSubmitRequest;
 
   /// No description provided for @boostListingTitle.
   ///

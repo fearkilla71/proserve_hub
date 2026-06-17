@@ -848,6 +848,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phone => 'Phone';
 
   @override
+  String get name => 'Name';
+
+  @override
+  String get zipCode => 'ZIP Code';
+
+  @override
   String get address => 'Address';
 
   @override
@@ -2386,6 +2392,244 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorSubmittingReview(String error) {
     return 'Error submitting review: $error';
   }
+
+  @override
+  String smartRequestStepTitle(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get smartRequestResumeTitle => 'Resume saved request?';
+
+  @override
+  String get smartRequestResumeBody =>
+      'We found a saved job request. Continue where you left off or start fresh.';
+
+  @override
+  String smartRequestResumeBodyWithDate(String time) {
+    return 'We found a saved job request from $time. Continue where you left off or start fresh.';
+  }
+
+  @override
+  String get smartRequestStartFresh => 'Start fresh';
+
+  @override
+  String get smartRequestResume => 'Resume';
+
+  @override
+  String get smartRequestDiscardTitle => 'Discard request?';
+
+  @override
+  String get smartRequestDiscardBody =>
+      'Your progress is saved automatically. Leave now and resume this request later.';
+
+  @override
+  String get smartRequestStay => 'Stay';
+
+  @override
+  String get smartRequestDiscard => 'Leave';
+
+  @override
+  String get smartRequestClearDraft => 'Clear saved draft';
+
+  @override
+  String get smartRequestDraftCleared => 'Saved draft cleared';
+
+  @override
+  String get smartRequestDraftAutosave =>
+      'Draft saves automatically as you build the request.';
+
+  @override
+  String smartRequestDraftSavedAt(String time) {
+    return 'Draft saved at $time';
+  }
+
+  @override
+  String get smartRequestPhotoRequired =>
+      'Please add at least one photo of the project area.';
+
+  @override
+  String get smartRequestZipInvalid => 'Please enter a valid 5-digit ZIP code.';
+
+  @override
+  String get smartRequestServiceRequired => 'Please select a service type.';
+
+  @override
+  String get smartRequestAiUnavailable =>
+      'AI analysis unavailable. You can fill in details manually.';
+
+  @override
+  String smartRequestSubmitFailed(String error) {
+    return 'Failed to submit request: $error';
+  }
+
+  @override
+  String get smartRequestSnapTitle => 'Snap & Describe';
+
+  @override
+  String get smartRequestSnapSubtitle =>
+      'Take or upload photos and we\'ll help build the request.';
+
+  @override
+  String get smartRequestPhotoTrustTitle => 'Photos make quotes more accurate';
+
+  @override
+  String get smartRequestPhotoTrustSubtitle =>
+      'Add the project area, close-up damage, and any access details so contractors can quote with fewer follow-up questions.';
+
+  @override
+  String get smartRequestProjectPhotos => 'Project Photos';
+
+  @override
+  String get smartRequestPhotoPlaceholder =>
+      'Take a photo or upload from gallery';
+
+  @override
+  String get smartRequestCamera => 'Camera';
+
+  @override
+  String get smartRequestGallery => 'Gallery';
+
+  @override
+  String get smartRequestAddMorePhotos => 'Add More';
+
+  @override
+  String get smartRequestZipHint => 'Enter your ZIP code';
+
+  @override
+  String get smartRequestServiceType => 'Service Type';
+
+  @override
+  String get smartRequestAnalyzeWithAi => 'Analyze with AI';
+
+  @override
+  String get smartRequestAiAnalyzing => 'AI is analyzing your photos...';
+
+  @override
+  String get smartRequestAiAnalyzingSubtitle =>
+      'Estimating size, condition, and pricing';
+
+  @override
+  String get smartRequestAiDetectedDetails => 'AI-Detected Details';
+
+  @override
+  String get smartRequestReviewAdjust => 'Review and adjust the details below.';
+
+  @override
+  String smartRequestAiConfidence(String percent) {
+    return 'AI Confidence: $percent%';
+  }
+
+  @override
+  String get smartRequestEstimatedSize => 'Estimated Size (sqft)';
+
+  @override
+  String get smartRequestPropertyType => 'Property Type';
+
+  @override
+  String get smartRequestHome => 'Home';
+
+  @override
+  String get smartRequestBusiness => 'Business';
+
+  @override
+  String get smartRequestSurfaceCondition => 'Surface Condition';
+
+  @override
+  String get smartRequestExcellent => 'Excellent';
+
+  @override
+  String get smartRequestFair => 'Fair';
+
+  @override
+  String get smartRequestPoor => 'Poor';
+
+  @override
+  String get smartRequestAiNotes => 'AI Notes';
+
+  @override
+  String get smartRequestContinue => 'Continue';
+
+  @override
+  String get smartRequestTimelineBudget => 'Timeline & Budget';
+
+  @override
+  String get smartRequestTimelineQuestion => 'When do you need the work done?';
+
+  @override
+  String get smartRequestTimelineStandard => 'Standard';
+
+  @override
+  String get smartRequestTimelineStandardSubtitle => 'Within 1-2 weeks';
+
+  @override
+  String get smartRequestTimelineAsap => 'ASAP';
+
+  @override
+  String get smartRequestTimelineAsapSubtitle =>
+      'As soon as possible (+15% urgency premium)';
+
+  @override
+  String get smartRequestTimelineFlexible => 'Flexible';
+
+  @override
+  String get smartRequestTimelineFlexibleSubtitle =>
+      'No rush. I\'m flexible on timing';
+
+  @override
+  String get smartRequestBudgetPreference => 'Budget Preference';
+
+  @override
+  String get smartRequestBudgetFriendly => 'Budget-Friendly';
+
+  @override
+  String get smartRequestBudgetFriendlySubtitle =>
+      'Lower end of market pricing';
+
+  @override
+  String get smartRequestBudgetRecommended => 'Recommended';
+
+  @override
+  String get smartRequestBudgetRecommendedSubtitle =>
+      'Fair market price for quality work';
+
+  @override
+  String get smartRequestBudgetPremium => 'Premium';
+
+  @override
+  String get smartRequestBudgetPremiumSubtitle =>
+      'Top-tier materials and craftsmanship';
+
+  @override
+  String get smartRequestReviewSubmit => 'Review & Submit';
+
+  @override
+  String get smartRequestConfirmDetails => 'Confirm your details and submit.';
+
+  @override
+  String get smartRequestSummarySize => 'Size';
+
+  @override
+  String get smartRequestSummaryProperty => 'Property';
+
+  @override
+  String get smartRequestSummaryCondition => 'Condition';
+
+  @override
+  String get smartRequestSummaryBudget => 'Budget';
+
+  @override
+  String get smartRequestSummaryPhotos => 'Photos';
+
+  @override
+  String get smartRequestContactInformation => 'Contact Information';
+
+  @override
+  String get smartRequestAdditionalNotesOptional =>
+      'Additional Notes (optional)';
+
+  @override
+  String get smartRequestSubmitRequest => 'Submit Request';
 
   @override
   String get boostListingTitle => 'Boost Listing';

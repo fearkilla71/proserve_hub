@@ -852,6 +852,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get phone => 'Teléfono';
 
   @override
+  String get name => 'Nombre';
+
+  @override
+  String get zipCode => 'Código postal';
+
+  @override
   String get address => 'Dirección';
 
   @override
@@ -2411,6 +2417,246 @@ class AppLocalizationsEs extends AppLocalizations {
   String errorSubmittingReview(String error) {
     return 'Error al enviar reseña: $error';
   }
+
+  @override
+  String smartRequestStepTitle(int current, int total) {
+    return 'Paso $current de $total';
+  }
+
+  @override
+  String get smartRequestResumeTitle => '¿Continuar solicitud guardada?';
+
+  @override
+  String get smartRequestResumeBody =>
+      'Encontramos una solicitud de trabajo guardada. Continúa donde la dejaste o empieza de nuevo.';
+
+  @override
+  String smartRequestResumeBodyWithDate(String time) {
+    return 'Encontramos una solicitud de trabajo guardada de las $time. Continúa donde la dejaste o empieza de nuevo.';
+  }
+
+  @override
+  String get smartRequestStartFresh => 'Empezar de nuevo';
+
+  @override
+  String get smartRequestResume => 'Continuar';
+
+  @override
+  String get smartRequestDiscardTitle => '¿Salir de la solicitud?';
+
+  @override
+  String get smartRequestDiscardBody =>
+      'Tu progreso se guarda automáticamente. Puedes salir ahora y continuar esta solicitud después.';
+
+  @override
+  String get smartRequestStay => 'Quedarme';
+
+  @override
+  String get smartRequestDiscard => 'Salir';
+
+  @override
+  String get smartRequestClearDraft => 'Borrar borrador guardado';
+
+  @override
+  String get smartRequestDraftCleared => 'Borrador guardado borrado';
+
+  @override
+  String get smartRequestDraftAutosave =>
+      'El borrador se guarda automáticamente mientras creas la solicitud.';
+
+  @override
+  String smartRequestDraftSavedAt(String time) {
+    return 'Borrador guardado a las $time';
+  }
+
+  @override
+  String get smartRequestPhotoRequired =>
+      'Agrega al menos una foto del área del proyecto.';
+
+  @override
+  String get smartRequestZipInvalid =>
+      'Ingresa un código postal válido de 5 dígitos.';
+
+  @override
+  String get smartRequestServiceRequired => 'Selecciona un tipo de servicio.';
+
+  @override
+  String get smartRequestAiUnavailable =>
+      'El análisis de IA no está disponible. Puedes llenar los detalles manualmente.';
+
+  @override
+  String smartRequestSubmitFailed(String error) {
+    return 'No se pudo enviar la solicitud: $error';
+  }
+
+  @override
+  String get smartRequestSnapTitle => 'Foto y descripción';
+
+  @override
+  String get smartRequestSnapSubtitle =>
+      'Toma o sube fotos y te ayudaremos a crear la solicitud.';
+
+  @override
+  String get smartRequestPhotoTrustTitle =>
+      'Las fotos hacen las cotizaciones más precisas';
+
+  @override
+  String get smartRequestPhotoTrustSubtitle =>
+      'Agrega el área del proyecto, daños de cerca y detalles de acceso para que los contratistas coticen con menos preguntas.';
+
+  @override
+  String get smartRequestProjectPhotos => 'Fotos del proyecto';
+
+  @override
+  String get smartRequestPhotoPlaceholder =>
+      'Toma una foto o súbela de la galería';
+
+  @override
+  String get smartRequestCamera => 'Cámara';
+
+  @override
+  String get smartRequestGallery => 'Galería';
+
+  @override
+  String get smartRequestAddMorePhotos => 'Agregar más';
+
+  @override
+  String get smartRequestZipHint => 'Ingresa tu código postal';
+
+  @override
+  String get smartRequestServiceType => 'Tipo de servicio';
+
+  @override
+  String get smartRequestAnalyzeWithAi => 'Analizar con IA';
+
+  @override
+  String get smartRequestAiAnalyzing => 'La IA está analizando tus fotos...';
+
+  @override
+  String get smartRequestAiAnalyzingSubtitle =>
+      'Estimando tamaño, condición y precio';
+
+  @override
+  String get smartRequestAiDetectedDetails => 'Detalles detectados por IA';
+
+  @override
+  String get smartRequestReviewAdjust => 'Revisa y ajusta los detalles abajo.';
+
+  @override
+  String smartRequestAiConfidence(String percent) {
+    return 'Confianza de IA: $percent%';
+  }
+
+  @override
+  String get smartRequestEstimatedSize => 'Tamaño estimado (pies cuadrados)';
+
+  @override
+  String get smartRequestPropertyType => 'Tipo de propiedad';
+
+  @override
+  String get smartRequestHome => 'Casa';
+
+  @override
+  String get smartRequestBusiness => 'Negocio';
+
+  @override
+  String get smartRequestSurfaceCondition => 'Condición de la superficie';
+
+  @override
+  String get smartRequestExcellent => 'Excelente';
+
+  @override
+  String get smartRequestFair => 'Regular';
+
+  @override
+  String get smartRequestPoor => 'Mala';
+
+  @override
+  String get smartRequestAiNotes => 'Notas de IA';
+
+  @override
+  String get smartRequestContinue => 'Continuar';
+
+  @override
+  String get smartRequestTimelineBudget => 'Tiempo y presupuesto';
+
+  @override
+  String get smartRequestTimelineQuestion => '¿Cuándo necesitas el trabajo?';
+
+  @override
+  String get smartRequestTimelineStandard => 'Estándar';
+
+  @override
+  String get smartRequestTimelineStandardSubtitle => 'Dentro de 1 a 2 semanas';
+
+  @override
+  String get smartRequestTimelineAsap => 'Lo antes posible';
+
+  @override
+  String get smartRequestTimelineAsapSubtitle =>
+      'Lo antes posible (+15% por urgencia)';
+
+  @override
+  String get smartRequestTimelineFlexible => 'Flexible';
+
+  @override
+  String get smartRequestTimelineFlexibleSubtitle =>
+      'Sin prisa. Tengo flexibilidad de tiempo';
+
+  @override
+  String get smartRequestBudgetPreference => 'Preferencia de presupuesto';
+
+  @override
+  String get smartRequestBudgetFriendly => 'Económico';
+
+  @override
+  String get smartRequestBudgetFriendlySubtitle =>
+      'Rango bajo del precio de mercado';
+
+  @override
+  String get smartRequestBudgetRecommended => 'Recomendado';
+
+  @override
+  String get smartRequestBudgetRecommendedSubtitle =>
+      'Precio justo de mercado para trabajo de calidad';
+
+  @override
+  String get smartRequestBudgetPremium => 'Premium';
+
+  @override
+  String get smartRequestBudgetPremiumSubtitle =>
+      'Materiales y mano de obra de alto nivel';
+
+  @override
+  String get smartRequestReviewSubmit => 'Revisar y enviar';
+
+  @override
+  String get smartRequestConfirmDetails => 'Confirma tus detalles y envía.';
+
+  @override
+  String get smartRequestSummarySize => 'Tamaño';
+
+  @override
+  String get smartRequestSummaryProperty => 'Propiedad';
+
+  @override
+  String get smartRequestSummaryCondition => 'Condición';
+
+  @override
+  String get smartRequestSummaryBudget => 'Presupuesto';
+
+  @override
+  String get smartRequestSummaryPhotos => 'Fotos';
+
+  @override
+  String get smartRequestContactInformation => 'Información de contacto';
+
+  @override
+  String get smartRequestAdditionalNotesOptional =>
+      'Notas adicionales (opcional)';
+
+  @override
+  String get smartRequestSubmitRequest => 'Enviar solicitud';
 
   @override
   String get boostListingTitle => 'Impulsar perfil';
