@@ -99,6 +99,90 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTracking => 'Project tracking';
 
   @override
+  String get landingLanguageSystem => 'System';
+
+  @override
+  String get landingBadge => 'AI-powered contractor OS';
+
+  @override
+  String get landingHeadlinePrefix => 'Connect. Hire.\nGet Work ';
+
+  @override
+  String get landingHeadlineAccent => 'Done.';
+
+  @override
+  String get landingSubtitle =>
+      'The all-in-one platform for homeowners and contractors to keep projects moving.';
+
+  @override
+  String get landingHomeownerTitle => 'I need a contractor';
+
+  @override
+  String get landingHomeownerBody =>
+      'Post your job and connect with trusted local pros.';
+
+  @override
+  String get landingHomeownerBulletVerified => 'Verified & reviewed pros';
+
+  @override
+  String get landingHomeownerBulletQuotes => 'Upfront quotes';
+
+  @override
+  String get landingHomeownerBulletEscrow => 'Escrow-safe payments';
+
+  @override
+  String get landingHomeownerCta => 'Find a Contractor';
+
+  @override
+  String get landingHomeownerFootnote => 'As a homeowner';
+
+  @override
+  String get landingContractorTitle => 'I run a contractor business';
+
+  @override
+  String get landingContractorBody =>
+      'Find quality leads, quote fast, and grow your business.';
+
+  @override
+  String get landingContractorBulletLeads => 'High-quality local leads';
+
+  @override
+  String get landingContractorBulletTools => 'AI tools to quote & invoice';
+
+  @override
+  String get landingContractorBulletPaid => 'Get paid faster';
+
+  @override
+  String get landingContractorCta => 'I\'m a Contractor';
+
+  @override
+  String get landingContractorFootnote => 'Grow my business';
+
+  @override
+  String get landingTrustVerifiedTitle => 'Verified Pros';
+
+  @override
+  String get landingTrustVerifiedBody => 'Background checked and insured';
+
+  @override
+  String get landingTrustEscrowTitle => 'Escrow-Safe Payments';
+
+  @override
+  String get landingTrustEscrowBody => 'Your payment is protected';
+
+  @override
+  String get landingTrustTrackingTitle => 'Real Project Tracking';
+
+  @override
+  String get landingTrustTrackingBody => 'Stay updated from start to finish';
+
+  @override
+  String get landingBuiltTitle => 'Built for the trades.';
+
+  @override
+  String get landingBuiltSubtitle => 'Powered by AI. Backed by trust.';
+
+  @override
   String get snapForInstantQuote => 'Snap for Instant Quote';
 
   @override

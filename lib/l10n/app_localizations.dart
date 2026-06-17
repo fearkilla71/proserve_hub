@@ -278,6 +278,168 @@ abstract class AppLocalizations {
   /// **'Project tracking'**
   String get projectTracking;
 
+  /// No description provided for @landingLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get landingLanguageSystem;
+
+  /// No description provided for @landingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-powered contractor OS'**
+  String get landingBadge;
+
+  /// No description provided for @landingHeadlinePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect. Hire.\nGet Work '**
+  String get landingHeadlinePrefix;
+
+  /// No description provided for @landingHeadlineAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Done.'**
+  String get landingHeadlineAccent;
+
+  /// No description provided for @landingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The all-in-one platform for homeowners and contractors to keep projects moving.'**
+  String get landingSubtitle;
+
+  /// No description provided for @landingHomeownerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'I need a contractor'**
+  String get landingHomeownerTitle;
+
+  /// No description provided for @landingHomeownerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Post your job and connect with trusted local pros.'**
+  String get landingHomeownerBody;
+
+  /// No description provided for @landingHomeownerBulletVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified & reviewed pros'**
+  String get landingHomeownerBulletVerified;
+
+  /// No description provided for @landingHomeownerBulletQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Upfront quotes'**
+  String get landingHomeownerBulletQuotes;
+
+  /// No description provided for @landingHomeownerBulletEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow-safe payments'**
+  String get landingHomeownerBulletEscrow;
+
+  /// No description provided for @landingHomeownerCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a Contractor'**
+  String get landingHomeownerCta;
+
+  /// No description provided for @landingHomeownerFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'As a homeowner'**
+  String get landingHomeownerFootnote;
+
+  /// No description provided for @landingContractorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'I run a contractor business'**
+  String get landingContractorTitle;
+
+  /// No description provided for @landingContractorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Find quality leads, quote fast, and grow your business.'**
+  String get landingContractorBody;
+
+  /// No description provided for @landingContractorBulletLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'High-quality local leads'**
+  String get landingContractorBulletLeads;
+
+  /// No description provided for @landingContractorBulletTools.
+  ///
+  /// In en, this message translates to:
+  /// **'AI tools to quote & invoice'**
+  String get landingContractorBulletTools;
+
+  /// No description provided for @landingContractorBulletPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Get paid faster'**
+  String get landingContractorBulletPaid;
+
+  /// No description provided for @landingContractorCta.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m a Contractor'**
+  String get landingContractorCta;
+
+  /// No description provided for @landingContractorFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow my business'**
+  String get landingContractorFootnote;
+
+  /// No description provided for @landingTrustVerifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified Pros'**
+  String get landingTrustVerifiedTitle;
+
+  /// No description provided for @landingTrustVerifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Background checked and insured'**
+  String get landingTrustVerifiedBody;
+
+  /// No description provided for @landingTrustEscrowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow-Safe Payments'**
+  String get landingTrustEscrowTitle;
+
+  /// No description provided for @landingTrustEscrowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is protected'**
+  String get landingTrustEscrowBody;
+
+  /// No description provided for @landingTrustTrackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real Project Tracking'**
+  String get landingTrustTrackingTitle;
+
+  /// No description provided for @landingTrustTrackingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay updated from start to finish'**
+  String get landingTrustTrackingBody;
+
+  /// No description provided for @landingBuiltTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Built for the trades.'**
+  String get landingBuiltTitle;
+
+  /// No description provided for @landingBuiltSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered by AI. Backed by trust.'**
+  String get landingBuiltSubtitle;
+
   /// Camera quote button label
   ///
   /// In en, this message translates to:

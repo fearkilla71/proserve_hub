@@ -99,6 +99,92 @@ class AppLocalizationsEs extends AppLocalizations {
   String get projectTracking => 'Seguimiento';
 
   @override
+  String get landingLanguageSystem => 'Sistema';
+
+  @override
+  String get landingBadge => 'Sistema operativo para contratistas con IA';
+
+  @override
+  String get landingHeadlinePrefix => 'Conecta. Contrata.\nTermina el ';
+
+  @override
+  String get landingHeadlineAccent => 'trabajo.';
+
+  @override
+  String get landingSubtitle =>
+      'La plataforma todo-en-uno para que dueños de casa y contratistas mantengan los proyectos avanzando.';
+
+  @override
+  String get landingHomeownerTitle => 'Necesito un contratista';
+
+  @override
+  String get landingHomeownerBody =>
+      'Publica tu trabajo y conecta con profesionales locales de confianza.';
+
+  @override
+  String get landingHomeownerBulletVerified => 'Pros verificados y reseñados';
+
+  @override
+  String get landingHomeownerBulletQuotes => 'Cotizaciones claras';
+
+  @override
+  String get landingHomeownerBulletEscrow => 'Pagos protegidos por escrow';
+
+  @override
+  String get landingHomeownerCta => 'Buscar contratista';
+
+  @override
+  String get landingHomeownerFootnote => 'Como dueño de casa';
+
+  @override
+  String get landingContractorTitle => 'Tengo un negocio contratista';
+
+  @override
+  String get landingContractorBody =>
+      'Encuentra leads de calidad, cotiza rápido y haz crecer tu negocio.';
+
+  @override
+  String get landingContractorBulletLeads => 'Leads locales de calidad';
+
+  @override
+  String get landingContractorBulletTools =>
+      'Herramientas IA para cotizar y facturar';
+
+  @override
+  String get landingContractorBulletPaid => 'Cobra más rápido';
+
+  @override
+  String get landingContractorCta => 'Soy contratista';
+
+  @override
+  String get landingContractorFootnote => 'Crecer mi negocio';
+
+  @override
+  String get landingTrustVerifiedTitle => 'Pros verificados';
+
+  @override
+  String get landingTrustVerifiedBody => 'Revisados y asegurados';
+
+  @override
+  String get landingTrustEscrowTitle => 'Pagos seguros';
+
+  @override
+  String get landingTrustEscrowBody => 'Tu pago está protegido';
+
+  @override
+  String get landingTrustTrackingTitle => 'Seguimiento real';
+
+  @override
+  String get landingTrustTrackingBody => 'Actualizado de inicio a fin';
+
+  @override
+  String get landingBuiltTitle => 'Hecho para los oficios.';
+
+  @override
+  String get landingBuiltSubtitle =>
+      'Impulsado por IA. Respaldado por confianza.';
+
+  @override
   String get snapForInstantQuote => 'Foto para cotización';
 
   @override
