@@ -353,7 +353,7 @@ abstract class AppLocalizations {
   /// Expenses screen title
   ///
   /// In en, this message translates to:
-  /// **'Receipts & Expenses'**
+  /// **'Receipts & expenses'**
   String get receiptsExpenses;
 
   /// CSV export button
@@ -3079,6 +3079,504 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Counter offer sent'**
   String get counterOfferSent;
+
+  /// No description provided for @jobCommandCenterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Command Center'**
+  String get jobCommandCenterTitle;
+
+  /// No description provided for @jobDetailsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Job details'**
+  String get jobDetailsTooltip;
+
+  /// No description provided for @couldNotLoadJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load job'**
+  String get couldNotLoadJob;
+
+  /// No description provided for @jobNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Job not found'**
+  String get jobNotFoundTitle;
+
+  /// No description provided for @jobNotFoundSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This job may have been removed or is unavailable.'**
+  String get jobNotFoundSubtitle;
+
+  /// No description provided for @pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// No description provided for @accepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get accepted;
+
+  /// No description provided for @completionRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion Requested'**
+  String get completionRequested;
+
+  /// No description provided for @completionApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion Approved'**
+  String get completionApproved;
+
+  /// No description provided for @escrowFunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Funded'**
+  String get escrowFunded;
+
+  /// No description provided for @customerView.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer view'**
+  String get customerView;
+
+  /// No description provided for @contractorView.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor view'**
+  String get contractorView;
+
+  /// No description provided for @escrowAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow attached'**
+  String get escrowAttached;
+
+  /// No description provided for @disputeOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute open'**
+  String get disputeOpen;
+
+  /// No description provided for @customerJourney.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer journey'**
+  String get customerJourney;
+
+  /// No description provided for @customerJourneySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track the job from request to paid, completed, and reviewed.'**
+  String get customerJourneySubtitle;
+
+  /// No description provided for @jobStepRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get jobStepRequest;
+
+  /// No description provided for @jobStepQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes'**
+  String get jobStepQuotes;
+
+  /// No description provided for @jobStepHire.
+  ///
+  /// In en, this message translates to:
+  /// **'Hire'**
+  String get jobStepHire;
+
+  /// No description provided for @jobStepEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow'**
+  String get jobStepEscrow;
+
+  /// No description provided for @jobStepWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get jobStepWork;
+
+  /// No description provided for @jobStepReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get jobStepReview;
+
+  /// No description provided for @nextBestAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Next best action'**
+  String get nextBestAction;
+
+  /// No description provided for @reviewIncomingQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Review incoming quotes'**
+  String get reviewIncomingQuotes;
+
+  /// No description provided for @submitAQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit a quote'**
+  String get submitAQuote;
+
+  /// No description provided for @startWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Start work'**
+  String get startWork;
+
+  /// No description provided for @requestCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Request completion'**
+  String get requestCompletion;
+
+  /// No description provided for @approveCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve completion'**
+  String get approveCompletion;
+
+  /// No description provided for @checkEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Check escrow'**
+  String get checkEscrow;
+
+  /// No description provided for @openJobStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Open job status'**
+  String get openJobStatus;
+
+  /// No description provided for @compareBidsChooseContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare bids, chat with pros, and choose the right contractor.'**
+  String get compareBidsChooseContractor;
+
+  /// No description provided for @sendClearQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a clear quote so the customer can approve the work.'**
+  String get sendClearQuote;
+
+  /// No description provided for @confirmWorkBeforeRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the work before payment release continues.'**
+  String get confirmWorkBeforeRelease;
+
+  /// No description provided for @fundsVisibleFromEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Funds and release state are visible from escrow status.'**
+  String get fundsVisibleFromEscrow;
+
+  /// No description provided for @useStatusToAlign.
+  ///
+  /// In en, this message translates to:
+  /// **'Use status to keep both sides aligned.'**
+  String get useStatusToAlign;
+
+  /// No description provided for @commandSectionWinConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Win & confirm work'**
+  String get commandSectionWinConfirm;
+
+  /// No description provided for @reviewQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Review quotes'**
+  String get reviewQuotes;
+
+  /// No description provided for @submitQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit quote'**
+  String get submitQuote;
+
+  /// No description provided for @reviewQuotesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare contractor pricing and terms.'**
+  String get reviewQuotesSubtitle;
+
+  /// No description provided for @submitQuoteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send pricing, notes, and scope for this job.'**
+  String get submitQuoteSubtitle;
+
+  /// No description provided for @bids.
+  ///
+  /// In en, this message translates to:
+  /// **'Bids'**
+  String get bids;
+
+  /// No description provided for @bidsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View bids and acceptance status.'**
+  String get bidsSubtitle;
+
+  /// No description provided for @commandSectionToolsForJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools for this job'**
+  String get commandSectionToolsForJob;
+
+  /// No description provided for @priceThisJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Price this job'**
+  String get priceThisJob;
+
+  /// No description provided for @priceThisJobSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the calculator with this job attached.'**
+  String get priceThisJobSubtitle;
+
+  /// No description provided for @savedEstimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved estimates'**
+  String get savedEstimates;
+
+  /// No description provided for @savedEstimatesJobSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View estimates connected to this job or create one.'**
+  String get savedEstimatesJobSubtitle;
+
+  /// No description provided for @aiInvoiceMaker.
+  ///
+  /// In en, this message translates to:
+  /// **'AI invoice maker'**
+  String get aiInvoiceMaker;
+
+  /// No description provided for @aiInvoiceMakerJobSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft an invoice with this client and job context.'**
+  String get aiInvoiceMakerJobSubtitle;
+
+  /// No description provided for @createRender.
+  ///
+  /// In en, this message translates to:
+  /// **'Create render'**
+  String get createRender;
+
+  /// No description provided for @createRenderJobSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach render concepts back to this job.'**
+  String get createRenderJobSubtitle;
+
+  /// No description provided for @commandSectionCommunicateDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Communicate & document'**
+  String get commandSectionCommunicateDocument;
+
+  /// No description provided for @chatWithContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with contractor'**
+  String get chatWithContractor;
+
+  /// No description provided for @chatWithClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with client'**
+  String get chatWithClient;
+
+  /// No description provided for @openJobConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the job conversation.'**
+  String get openJobConversation;
+
+  /// No description provided for @chatOpensAfterClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat opens after the job is claimed.'**
+  String get chatOpensAfterClaimed;
+
+  /// No description provided for @progressPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress photos'**
+  String get progressPhotos;
+
+  /// No description provided for @progressPhotosSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload and review job photos.'**
+  String get progressPhotosSubtitle;
+
+  /// No description provided for @timeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get timeline;
+
+  /// No description provided for @timelineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'See updates, milestones, and activity.'**
+  String get timelineSubtitle;
+
+  /// No description provided for @milestones.
+  ///
+  /// In en, this message translates to:
+  /// **'Milestones'**
+  String get milestones;
+
+  /// No description provided for @milestonesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track major job checkpoints.'**
+  String get milestonesSubtitle;
+
+  /// No description provided for @commandSectionMoneyCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Money & completion'**
+  String get commandSectionMoneyCompletion;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @statusJobSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start work, request completion, or approve it.'**
+  String get statusJobSubtitle;
+
+  /// No description provided for @createInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get createInvoice;
+
+  /// No description provided for @invoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get invoice;
+
+  /// No description provided for @createInvoiceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create or update the customer invoice.'**
+  String get createInvoiceSubtitle;
+
+  /// No description provided for @invoiceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review invoice details for this job.'**
+  String get invoiceSubtitle;
+
+  /// No description provided for @escrowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View secured funds and release status.'**
+  String get escrowSubtitle;
+
+  /// No description provided for @noEscrowAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'No escrow has been attached to this job yet.'**
+  String get noEscrowAttached;
+
+  /// No description provided for @receiptsExpensesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track materials, labor, and reimbursements.'**
+  String get receiptsExpensesSubtitle;
+
+  /// No description provided for @commandSectionTrustCloseout.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust & closeout'**
+  String get commandSectionTrustCloseout;
+
+  /// No description provided for @review.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get review;
+
+  /// No description provided for @reviewCompletedWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate the completed contractor work.'**
+  String get reviewCompletedWork;
+
+  /// No description provided for @reviewOpensAfterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews open after the job is completed.'**
+  String get reviewOpensAfterCompleted;
+
+  /// No description provided for @viewDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'View dispute'**
+  String get viewDispute;
+
+  /// No description provided for @reportDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Report dispute'**
+  String get reportDispute;
+
+  /// No description provided for @viewDisputeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the latest dispute details.'**
+  String get viewDisputeSubtitle;
+
+  /// No description provided for @reportDisputeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an issue with this job.'**
+  String get reportDisputeSubtitle;
+
+  /// No description provided for @cancellation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation'**
+  String get cancellation;
+
+  /// No description provided for @cancelRefundEligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel and check refund eligibility.'**
+  String get cancelRefundEligibility;
+
+  /// No description provided for @cancellationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation is unavailable for this status.'**
+  String get cancellationUnavailable;
 
   /// No description provided for @boostListingTitle.
   ///

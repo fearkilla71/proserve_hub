@@ -137,7 +137,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get deleteEstimate => 'Eliminar Estimación';
 
   @override
-  String get receiptsExpenses => 'Recibos y Gastos';
+  String get receiptsExpenses => 'Recibos y gastos';
 
   @override
   String get exportCsv => 'Exportar CSV';
@@ -1715,6 +1715,279 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get counterOfferSent => 'Contraoferta enviada';
+
+  @override
+  String get jobCommandCenterTitle => 'Centro del trabajo';
+
+  @override
+  String get jobDetailsTooltip => 'Detalles del trabajo';
+
+  @override
+  String get couldNotLoadJob => 'No se pudo cargar el trabajo';
+
+  @override
+  String get jobNotFoundTitle => 'Trabajo no encontrado';
+
+  @override
+  String get jobNotFoundSubtitle =>
+      'Este trabajo pudo haber sido eliminado o no está disponible.';
+
+  @override
+  String get pending => 'Pendiente';
+
+  @override
+  String get accepted => 'Aceptado';
+
+  @override
+  String get completionRequested => 'Finalización solicitada';
+
+  @override
+  String get completionApproved => 'Finalización aprobada';
+
+  @override
+  String get escrowFunded => 'Escrow financiado';
+
+  @override
+  String get customerView => 'Vista de cliente';
+
+  @override
+  String get contractorView => 'Vista de contratista';
+
+  @override
+  String get escrowAttached => 'Escrow adjunto';
+
+  @override
+  String get disputeOpen => 'Disputa abierta';
+
+  @override
+  String get customerJourney => 'Recorrido del cliente';
+
+  @override
+  String get customerJourneySubtitle =>
+      'Sigue el trabajo desde la solicitud hasta el pago, finalización y reseña.';
+
+  @override
+  String get jobStepRequest => 'Solicitud';
+
+  @override
+  String get jobStepQuotes => 'Cotizaciones';
+
+  @override
+  String get jobStepHire => 'Contratar';
+
+  @override
+  String get jobStepEscrow => 'Escrow';
+
+  @override
+  String get jobStepWork => 'Trabajo';
+
+  @override
+  String get jobStepReview => 'Reseña';
+
+  @override
+  String get nextBestAction => 'Siguiente mejor acción';
+
+  @override
+  String get reviewIncomingQuotes => 'Revisar cotizaciones recibidas';
+
+  @override
+  String get submitAQuote => 'Enviar cotización';
+
+  @override
+  String get startWork => 'Iniciar trabajo';
+
+  @override
+  String get requestCompletion => 'Solicitar finalización';
+
+  @override
+  String get approveCompletion => 'Aprobar finalización';
+
+  @override
+  String get checkEscrow => 'Revisar escrow';
+
+  @override
+  String get openJobStatus => 'Abrir estado del trabajo';
+
+  @override
+  String get compareBidsChooseContractor =>
+      'Compara cotizaciones, chatea con pros y elige el contratista correcto.';
+
+  @override
+  String get sendClearQuote =>
+      'Envía una cotización clara para que el cliente pueda aprobar el trabajo.';
+
+  @override
+  String get confirmWorkBeforeRelease =>
+      'Confirma el trabajo antes de continuar con la liberación del pago.';
+
+  @override
+  String get fundsVisibleFromEscrow =>
+      'Los fondos y el estado de liberación se ven desde el estado de escrow.';
+
+  @override
+  String get useStatusToAlign =>
+      'Usa el estado para mantener a ambas partes alineadas.';
+
+  @override
+  String get commandSectionWinConfirm => 'Ganar y confirmar trabajo';
+
+  @override
+  String get reviewQuotes => 'Revisar cotizaciones';
+
+  @override
+  String get submitQuote => 'Enviar cotización';
+
+  @override
+  String get reviewQuotesSubtitle =>
+      'Compara precios y términos de contratistas.';
+
+  @override
+  String get submitQuoteSubtitle =>
+      'Envía precio, notas y alcance para este trabajo.';
+
+  @override
+  String get bids => 'Cotizaciones';
+
+  @override
+  String get bidsSubtitle => 'Ver cotizaciones y estado de aceptación.';
+
+  @override
+  String get commandSectionToolsForJob => 'Herramientas para este trabajo';
+
+  @override
+  String get priceThisJob => 'Calcular este trabajo';
+
+  @override
+  String get priceThisJobSubtitle =>
+      'Abre la calculadora con este trabajo adjunto.';
+
+  @override
+  String get savedEstimates => 'Presupuestos guardados';
+
+  @override
+  String get savedEstimatesJobSubtitle =>
+      'Ver presupuestos conectados a este trabajo o crear uno.';
+
+  @override
+  String get aiInvoiceMaker => 'Creador de facturas con IA';
+
+  @override
+  String get aiInvoiceMakerJobSubtitle =>
+      'Crear una factura con contexto del cliente y trabajo.';
+
+  @override
+  String get createRender => 'Crear render';
+
+  @override
+  String get createRenderJobSubtitle =>
+      'Adjunta conceptos de render a este trabajo.';
+
+  @override
+  String get commandSectionCommunicateDocument => 'Comunicar y documentar';
+
+  @override
+  String get chatWithContractor => 'Chat con contratista';
+
+  @override
+  String get chatWithClient => 'Chat con cliente';
+
+  @override
+  String get openJobConversation => 'Abrir conversación del trabajo.';
+
+  @override
+  String get chatOpensAfterClaimed =>
+      'El chat se abre después de que el trabajo sea reclamado.';
+
+  @override
+  String get progressPhotos => 'Fotos de progreso';
+
+  @override
+  String get progressPhotosSubtitle => 'Sube y revisa fotos del trabajo.';
+
+  @override
+  String get timeline => 'Cronología';
+
+  @override
+  String get timelineSubtitle => 'Ver actualizaciones, hitos y actividad.';
+
+  @override
+  String get milestones => 'Hitos';
+
+  @override
+  String get milestonesSubtitle => 'Sigue los puntos principales del trabajo.';
+
+  @override
+  String get commandSectionMoneyCompletion => 'Dinero y finalización';
+
+  @override
+  String get status => 'Estado';
+
+  @override
+  String get statusJobSubtitle =>
+      'Inicia trabajo, solicita finalización o apruébala.';
+
+  @override
+  String get createInvoice => 'Crear factura';
+
+  @override
+  String get invoice => 'Factura';
+
+  @override
+  String get createInvoiceSubtitle =>
+      'Crea o actualiza la factura del cliente.';
+
+  @override
+  String get invoiceSubtitle =>
+      'Revisa los detalles de factura de este trabajo.';
+
+  @override
+  String get escrowSubtitle => 'Ver fondos asegurados y estado de liberación.';
+
+  @override
+  String get noEscrowAttached =>
+      'Todavía no hay escrow adjunto a este trabajo.';
+
+  @override
+  String get receiptsExpensesSubtitle =>
+      'Sigue materiales, mano de obra y reembolsos.';
+
+  @override
+  String get commandSectionTrustCloseout => 'Confianza y cierre';
+
+  @override
+  String get review => 'Reseña';
+
+  @override
+  String get reviewCompletedWork =>
+      'Califica el trabajo completado por el contratista.';
+
+  @override
+  String get reviewOpensAfterCompleted =>
+      'Las reseñas se abren después de completar el trabajo.';
+
+  @override
+  String get viewDispute => 'Ver disputa';
+
+  @override
+  String get reportDispute => 'Reportar disputa';
+
+  @override
+  String get viewDisputeSubtitle =>
+      'Abrir los detalles de la disputa más reciente.';
+
+  @override
+  String get reportDisputeSubtitle => 'Reportar un problema con este trabajo.';
+
+  @override
+  String get cancellation => 'Cancelación';
+
+  @override
+  String get cancelRefundEligibility =>
+      'Cancelar y revisar elegibilidad de reembolso.';
+
+  @override
+  String get cancellationUnavailable =>
+      'La cancelación no está disponible para este estado.';
 
   @override
   String get boostListingTitle => 'Impulsar perfil';

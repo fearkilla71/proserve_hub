@@ -137,7 +137,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteEstimate => 'Delete Estimate';
 
   @override
-  String get receiptsExpenses => 'Receipts & Expenses';
+  String get receiptsExpenses => 'Receipts & expenses';
 
   @override
   String get exportCsv => 'Export CSV';
@@ -1700,6 +1700,270 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get counterOfferSent => 'Counter offer sent';
+
+  @override
+  String get jobCommandCenterTitle => 'Job Command Center';
+
+  @override
+  String get jobDetailsTooltip => 'Job details';
+
+  @override
+  String get couldNotLoadJob => 'Could not load job';
+
+  @override
+  String get jobNotFoundTitle => 'Job not found';
+
+  @override
+  String get jobNotFoundSubtitle =>
+      'This job may have been removed or is unavailable.';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String get accepted => 'Accepted';
+
+  @override
+  String get completionRequested => 'Completion Requested';
+
+  @override
+  String get completionApproved => 'Completion Approved';
+
+  @override
+  String get escrowFunded => 'Escrow Funded';
+
+  @override
+  String get customerView => 'Customer view';
+
+  @override
+  String get contractorView => 'Contractor view';
+
+  @override
+  String get escrowAttached => 'Escrow attached';
+
+  @override
+  String get disputeOpen => 'Dispute open';
+
+  @override
+  String get customerJourney => 'Customer journey';
+
+  @override
+  String get customerJourneySubtitle =>
+      'Track the job from request to paid, completed, and reviewed.';
+
+  @override
+  String get jobStepRequest => 'Request';
+
+  @override
+  String get jobStepQuotes => 'Quotes';
+
+  @override
+  String get jobStepHire => 'Hire';
+
+  @override
+  String get jobStepEscrow => 'Escrow';
+
+  @override
+  String get jobStepWork => 'Work';
+
+  @override
+  String get jobStepReview => 'Review';
+
+  @override
+  String get nextBestAction => 'Next best action';
+
+  @override
+  String get reviewIncomingQuotes => 'Review incoming quotes';
+
+  @override
+  String get submitAQuote => 'Submit a quote';
+
+  @override
+  String get startWork => 'Start work';
+
+  @override
+  String get requestCompletion => 'Request completion';
+
+  @override
+  String get approveCompletion => 'Approve completion';
+
+  @override
+  String get checkEscrow => 'Check escrow';
+
+  @override
+  String get openJobStatus => 'Open job status';
+
+  @override
+  String get compareBidsChooseContractor =>
+      'Compare bids, chat with pros, and choose the right contractor.';
+
+  @override
+  String get sendClearQuote =>
+      'Send a clear quote so the customer can approve the work.';
+
+  @override
+  String get confirmWorkBeforeRelease =>
+      'Confirm the work before payment release continues.';
+
+  @override
+  String get fundsVisibleFromEscrow =>
+      'Funds and release state are visible from escrow status.';
+
+  @override
+  String get useStatusToAlign => 'Use status to keep both sides aligned.';
+
+  @override
+  String get commandSectionWinConfirm => 'Win & confirm work';
+
+  @override
+  String get reviewQuotes => 'Review quotes';
+
+  @override
+  String get submitQuote => 'Submit quote';
+
+  @override
+  String get reviewQuotesSubtitle => 'Compare contractor pricing and terms.';
+
+  @override
+  String get submitQuoteSubtitle =>
+      'Send pricing, notes, and scope for this job.';
+
+  @override
+  String get bids => 'Bids';
+
+  @override
+  String get bidsSubtitle => 'View bids and acceptance status.';
+
+  @override
+  String get commandSectionToolsForJob => 'Tools for this job';
+
+  @override
+  String get priceThisJob => 'Price this job';
+
+  @override
+  String get priceThisJobSubtitle =>
+      'Open the calculator with this job attached.';
+
+  @override
+  String get savedEstimates => 'Saved estimates';
+
+  @override
+  String get savedEstimatesJobSubtitle =>
+      'View estimates connected to this job or create one.';
+
+  @override
+  String get aiInvoiceMaker => 'AI invoice maker';
+
+  @override
+  String get aiInvoiceMakerJobSubtitle =>
+      'Draft an invoice with this client and job context.';
+
+  @override
+  String get createRender => 'Create render';
+
+  @override
+  String get createRenderJobSubtitle =>
+      'Attach render concepts back to this job.';
+
+  @override
+  String get commandSectionCommunicateDocument => 'Communicate & document';
+
+  @override
+  String get chatWithContractor => 'Chat with contractor';
+
+  @override
+  String get chatWithClient => 'Chat with client';
+
+  @override
+  String get openJobConversation => 'Open the job conversation.';
+
+  @override
+  String get chatOpensAfterClaimed => 'Chat opens after the job is claimed.';
+
+  @override
+  String get progressPhotos => 'Progress photos';
+
+  @override
+  String get progressPhotosSubtitle => 'Upload and review job photos.';
+
+  @override
+  String get timeline => 'Timeline';
+
+  @override
+  String get timelineSubtitle => 'See updates, milestones, and activity.';
+
+  @override
+  String get milestones => 'Milestones';
+
+  @override
+  String get milestonesSubtitle => 'Track major job checkpoints.';
+
+  @override
+  String get commandSectionMoneyCompletion => 'Money & completion';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get statusJobSubtitle =>
+      'Start work, request completion, or approve it.';
+
+  @override
+  String get createInvoice => 'Create invoice';
+
+  @override
+  String get invoice => 'Invoice';
+
+  @override
+  String get createInvoiceSubtitle => 'Create or update the customer invoice.';
+
+  @override
+  String get invoiceSubtitle => 'Review invoice details for this job.';
+
+  @override
+  String get escrowSubtitle => 'View secured funds and release status.';
+
+  @override
+  String get noEscrowAttached => 'No escrow has been attached to this job yet.';
+
+  @override
+  String get receiptsExpensesSubtitle =>
+      'Track materials, labor, and reimbursements.';
+
+  @override
+  String get commandSectionTrustCloseout => 'Trust & closeout';
+
+  @override
+  String get review => 'Review';
+
+  @override
+  String get reviewCompletedWork => 'Rate the completed contractor work.';
+
+  @override
+  String get reviewOpensAfterCompleted =>
+      'Reviews open after the job is completed.';
+
+  @override
+  String get viewDispute => 'View dispute';
+
+  @override
+  String get reportDispute => 'Report dispute';
+
+  @override
+  String get viewDisputeSubtitle => 'Open the latest dispute details.';
+
+  @override
+  String get reportDisputeSubtitle => 'Report an issue with this job.';
+
+  @override
+  String get cancellation => 'Cancellation';
+
+  @override
+  String get cancelRefundEligibility => 'Cancel and check refund eligibility.';
+
+  @override
+  String get cancellationUnavailable =>
+      'Cancellation is unavailable for this status.';
 
   @override
   String get boostListingTitle => 'Boost Listing';
