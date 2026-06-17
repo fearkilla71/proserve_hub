@@ -1493,6 +1493,111 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String errorLoadingJobs(String error) {
+    return 'Error al cargar trabajos:\n\n$error';
+  }
+
+  @override
+  String get noJobsFound => 'No se encontraron trabajos';
+
+  @override
+  String get inProgress => 'En progreso';
+
+  @override
+  String get completed => 'Completado';
+
+  @override
+  String get cancelled => 'Cancelado';
+
+  @override
+  String get allClaims => 'Todos los reclamos';
+
+  @override
+  String get unclaimed => 'Sin reclamar';
+
+  @override
+  String get claimed => 'Reclamado';
+
+  @override
+  String get serviceAToZ => 'Servicio A a Z';
+
+  @override
+  String get serviceZToA => 'Servicio Z a A';
+
+  @override
+  String get deleteJobQuestion => '¿Eliminar trabajo?';
+
+  @override
+  String get deleteJobPermanentWarning =>
+      'Esto eliminará permanentemente esta solicitud de trabajo. No se puede deshacer.';
+
+  @override
+  String errorLoadingModerationQueue(String error) {
+    return 'Error al cargar cola de moderación: $error';
+  }
+
+  @override
+  String get communityModeration => 'Moderación de comunidad';
+
+  @override
+  String get communityModerationSubtitle =>
+      'Revisa publicaciones reportadas, elimina contenido dañino, restaura falsos positivos o limpia reportes revisados.';
+
+  @override
+  String get reported => 'Reportado';
+
+  @override
+  String get removed => 'Eliminado';
+
+  @override
+  String get unknownAuthor => 'Autor desconocido';
+
+  @override
+  String postIdLabel(String postId) {
+    return 'Publicación $postId';
+  }
+
+  @override
+  String reportCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reportes',
+      one: '1 reporte',
+      zero: '0 reportes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noCaption => 'Sin descripción';
+
+  @override
+  String mediaAttachmentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count archivos multimedia',
+      one: '1 archivo multimedia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get restore => 'Restaurar';
+
+  @override
+  String get remove => 'Eliminar';
+
+  @override
+  String postMarkedStatus(String status) {
+    return 'Publicación marcada como $status.';
+  }
+
+  @override
+  String get reportsMarkedReviewed => 'Reportes marcados como revisados.';
+
+  @override
   String get boostListingTitle => 'Impulsar perfil';
 
   @override

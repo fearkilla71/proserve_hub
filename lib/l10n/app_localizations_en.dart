@@ -1481,6 +1481,111 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String errorLoadingJobs(String error) {
+    return 'Error loading jobs:\n\n$error';
+  }
+
+  @override
+  String get noJobsFound => 'No jobs found';
+
+  @override
+  String get inProgress => 'In progress';
+
+  @override
+  String get completed => 'Completed';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get allClaims => 'All claims';
+
+  @override
+  String get unclaimed => 'Unclaimed';
+
+  @override
+  String get claimed => 'Claimed';
+
+  @override
+  String get serviceAToZ => 'Service A to Z';
+
+  @override
+  String get serviceZToA => 'Service Z to A';
+
+  @override
+  String get deleteJobQuestion => 'Delete Job?';
+
+  @override
+  String get deleteJobPermanentWarning =>
+      'This will permanently delete this job request. This cannot be undone.';
+
+  @override
+  String errorLoadingModerationQueue(String error) {
+    return 'Error loading moderation queue: $error';
+  }
+
+  @override
+  String get communityModeration => 'Community moderation';
+
+  @override
+  String get communityModerationSubtitle =>
+      'Review reported posts, remove harmful content, restore false positives, or clear reviewed reports.';
+
+  @override
+  String get reported => 'Reported';
+
+  @override
+  String get removed => 'Removed';
+
+  @override
+  String get unknownAuthor => 'Unknown author';
+
+  @override
+  String postIdLabel(String postId) {
+    return 'Post $postId';
+  }
+
+  @override
+  String reportCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reports',
+      one: '1 report',
+      zero: '0 reports',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noCaption => 'No caption';
+
+  @override
+  String mediaAttachmentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media attachments',
+      one: '1 media attachment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String postMarkedStatus(String status) {
+    return 'Post marked $status.';
+  }
+
+  @override
+  String get reportsMarkedReviewed => 'Reports marked reviewed.';
+
+  @override
   String get boostListingTitle => 'Boost Listing';
 
   @override

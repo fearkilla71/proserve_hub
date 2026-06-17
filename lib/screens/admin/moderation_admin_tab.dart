@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ModerationAdminTab extends StatefulWidget {
   const ModerationAdminTab({super.key});
 
@@ -15,6 +17,7 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('community_posts')
@@ -22,7 +25,9 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-            child: Text('Error loading moderation queue: ${snapshot.error}'),
+            child: Text(
+              l10n.errorLoadingModerationQueue(snapshot.error.toString()),
+            ),
           );
         }
         if (!snapshot.hasData) {
@@ -71,32 +76,30 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Community moderation',
+              AppLocalizations.of(context)!.communityModeration,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Review reported posts, remove harmful content, restore false positives, or clear reviewed reports.',
-            ),
+            Text(AppLocalizations.of(context)!.communityModerationSubtitle),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('Reported'),
+                  label: Text(AppLocalizations.of(context)!.reported),
                   selected: _filter == 'reported',
                   onSelected: (_) => setState(() => _filter = 'reported'),
                 ),
                 ChoiceChip(
-                  label: const Text('Removed'),
+                  label: Text(AppLocalizations.of(context)!.removed),
                   selected: _filter == 'removed',
                   onSelected: (_) => setState(() => _filter = 'removed'),
                 ),
                 ChoiceChip(
-                  label: const Text('All'),
+                  label: Text(AppLocalizations.of(context)!.all),
                   selected: _filter == 'all',
                   onSelected: (_) => setState(() => _filter = 'all'),
                 ),
@@ -110,10 +113,11 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
 
   Widget _postCard(String postId, Map<String, dynamic> data) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final reportCount = (data['reportCount'] as num?)?.toInt() ?? 0;
     final status = (data['moderationStatus'] ?? 'active').toString();
     final caption = (data['caption'] ?? '').toString().trim();
-    final author = (data['authorName'] ?? 'Unknown author').toString();
+    final author = (data['authorName'] ?? l10n.unknownAuthor).toString();
     final createdAt = data['createdAt'] is Timestamp
         ? (data['createdAt'] as Timestamp).toDate()
         : null;
@@ -157,7 +161,7 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
                       ),
                       Text(
                         [
-                          'Post $postId',
+                          l10n.postIdLabel(postId),
                           if (createdAt != null) _date.format(createdAt),
                         ].join(' • '),
                         style: Theme.of(context).textTheme.bodySmall,
@@ -166,7 +170,7 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
                   ),
                 ),
                 Chip(
-                  label: Text('$reportCount reports'),
+                  label: Text(l10n.reportCount(reportCount)),
                   backgroundColor: reportCount > 0
                       ? scheme.errorContainer
                       : scheme.surfaceContainerHighest,
@@ -175,14 +179,14 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
             ),
             const SizedBox(height: 10),
             Text(
-              caption.isEmpty ? 'No caption' : caption,
+              caption.isEmpty ? l10n.noCaption : caption,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
             if (mediaUrls.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                '${mediaUrls.length} media attachment${mediaUrls.length == 1 ? '' : 's'}',
+                l10n.mediaAttachmentCount(mediaUrls.length),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -213,14 +217,14 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
                         ? Icons.restore_outlined
                         : Icons.block_outlined,
                   ),
-                  label: Text(status == 'removed' ? 'Restore' : 'Remove'),
+                  label: Text(status == 'removed' ? l10n.restore : l10n.remove),
                 ),
                 OutlinedButton.icon(
                   onPressed: reportCount == 0
                       ? null
                       : () => _clearReports(postId),
                   icon: const Icon(Icons.done_all),
-                  label: const Text('Mark reviewed'),
+                  label: Text(l10n.markReviewed),
                 ),
               ],
             ),
@@ -239,9 +243,10 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
           'moderationUpdatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('Post marked $status.')));
+    ).showSnackBar(SnackBar(content: Text(l10n.postMarkedStatus(status))));
   }
 
   Future<void> _clearReports(String postId) async {
@@ -253,9 +258,10 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
           'reportsReviewedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Reports marked reviewed.')));
+    ).showSnackBar(SnackBar(content: Text(l10n.reportsMarkedReviewed)));
   }
 
   static int _millis(Map<String, dynamic> data) {

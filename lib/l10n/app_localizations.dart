@@ -2732,6 +2732,162 @@ abstract class AppLocalizations {
   /// **'Error loading payment operations:\n\n{message}'**
   String errorLoadingPaymentOperations(String message);
 
+  /// No description provided for @errorLoadingJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading jobs:\n\n{error}'**
+  String errorLoadingJobs(String error);
+
+  /// No description provided for @noJobsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs found'**
+  String get noJobsFound;
+
+  /// No description provided for @inProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get inProgress;
+
+  /// No description provided for @completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completed;
+
+  /// No description provided for @cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cancelled;
+
+  /// No description provided for @allClaims.
+  ///
+  /// In en, this message translates to:
+  /// **'All claims'**
+  String get allClaims;
+
+  /// No description provided for @unclaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclaimed'**
+  String get unclaimed;
+
+  /// No description provided for @claimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get claimed;
+
+  /// No description provided for @serviceAToZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Service A to Z'**
+  String get serviceAToZ;
+
+  /// No description provided for @serviceZToA.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Z to A'**
+  String get serviceZToA;
+
+  /// No description provided for @deleteJobQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Job?'**
+  String get deleteJobQuestion;
+
+  /// No description provided for @deleteJobPermanentWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete this job request. This cannot be undone.'**
+  String get deleteJobPermanentWarning;
+
+  /// No description provided for @errorLoadingModerationQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading moderation queue: {error}'**
+  String errorLoadingModerationQueue(String error);
+
+  /// No description provided for @communityModeration.
+  ///
+  /// In en, this message translates to:
+  /// **'Community moderation'**
+  String get communityModeration;
+
+  /// No description provided for @communityModerationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review reported posts, remove harmful content, restore false positives, or clear reviewed reports.'**
+  String get communityModerationSubtitle;
+
+  /// No description provided for @reported.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported'**
+  String get reported;
+
+  /// No description provided for @removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get removed;
+
+  /// No description provided for @unknownAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown author'**
+  String get unknownAuthor;
+
+  /// No description provided for @postIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Post {postId}'**
+  String postIdLabel(String postId);
+
+  /// No description provided for @reportCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 reports} =1{1 report} other{{count} reports}}'**
+  String reportCount(int count);
+
+  /// No description provided for @noCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'No caption'**
+  String get noCaption;
+
+  /// No description provided for @mediaAttachmentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media attachment} other{{count} media attachments}}'**
+  String mediaAttachmentCount(int count);
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @postMarkedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Post marked {status}.'**
+  String postMarkedStatus(String status);
+
+  /// No description provided for @reportsMarkedReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports marked reviewed.'**
+  String get reportsMarkedReviewed;
+
   /// No description provided for @boostListingTitle.
   ///
   /// In en, this message translates to:

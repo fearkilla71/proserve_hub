@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class JobAdminTab extends StatefulWidget {
   const JobAdminTab({super.key});
 
@@ -32,6 +34,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('job_requests').snapshots(),
       builder: (context, snap) {
@@ -40,7 +43,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Error loading jobs:\n\n${snap.error}',
+                l10n.errorLoadingJobs(snap.error.toString()),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -98,7 +101,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
         });
 
         if (docs.isEmpty) {
-          return const Center(child: Text('No jobs found'));
+          return Center(child: Text(l10n.noJobsFound));
         }
 
         return ListView(
@@ -111,7 +114,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Filters & sorting',
+                      l10n.filtersAndSorting,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -122,35 +125,35 @@ class _JobAdminTabState extends State<JobAdminTab> {
                       runSpacing: 8,
                       children: [
                         ChoiceChip(
-                          label: const Text('All'),
+                          label: Text(l10n.all),
                           selected: _statusFilter == 'all',
                           onSelected: (_) {
                             setState(() => _statusFilter = 'all');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('Open'),
+                          label: Text(l10n.open),
                           selected: _statusFilter == 'open',
                           onSelected: (_) {
                             setState(() => _statusFilter = 'open');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('In progress'),
+                          label: Text(l10n.inProgress),
                           selected: _statusFilter == 'in_progress',
                           onSelected: (_) {
                             setState(() => _statusFilter = 'in_progress');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('Completed'),
+                          label: Text(l10n.completed),
                           selected: _statusFilter == 'completed',
                           onSelected: (_) {
                             setState(() => _statusFilter = 'completed');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('Cancelled'),
+                          label: Text(l10n.cancelled),
                           selected: _statusFilter == 'cancelled',
                           onSelected: (_) {
                             setState(() => _statusFilter = 'cancelled');
@@ -164,21 +167,21 @@ class _JobAdminTabState extends State<JobAdminTab> {
                       runSpacing: 8,
                       children: [
                         ChoiceChip(
-                          label: const Text('All claims'),
+                          label: Text(l10n.allClaims),
                           selected: _claimFilter == 'all',
                           onSelected: (_) {
                             setState(() => _claimFilter = 'all');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('Unclaimed'),
+                          label: Text(l10n.unclaimed),
                           selected: _claimFilter == 'unclaimed',
                           onSelected: (_) {
                             setState(() => _claimFilter = 'unclaimed');
                           },
                         ),
                         ChoiceChip(
-                          label: const Text('Claimed'),
+                          label: Text(l10n.claimed),
                           selected: _claimFilter == 'claimed',
                           onSelected: (_) {
                             setState(() => _claimFilter = 'claimed');
@@ -189,27 +192,27 @@ class _JobAdminTabState extends State<JobAdminTab> {
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       initialValue: _sortBy,
-                      decoration: const InputDecoration(
-                        labelText: 'Sort by',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.sortBy,
+                        border: const OutlineInputBorder(),
                         isDense: true,
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'newest',
-                          child: Text('Newest → Oldest'),
+                          child: Text(l10n.newestToOldest),
                         ),
                         DropdownMenuItem(
                           value: 'oldest',
-                          child: Text('Oldest → Newest'),
+                          child: Text(l10n.oldestToNewest),
                         ),
                         DropdownMenuItem(
                           value: 'service_az',
-                          child: Text('Service A → Z'),
+                          child: Text(l10n.serviceAToZ),
                         ),
                         DropdownMenuItem(
                           value: 'service_za',
-                          child: Text('Service Z → A'),
+                          child: Text(l10n.serviceZToA),
                         ),
                       ],
                       onChanged: (value) {
@@ -226,7 +229,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
               final data =
                   (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
 
-              final service = data['service'] ?? 'Service';
+              final service = data['service'] ?? l10n.service;
               final description = data['description'] ?? '';
               final status = _status(data).toUpperCase();
 
@@ -254,21 +257,19 @@ class _JobAdminTabState extends State<JobAdminTab> {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Delete Job?'),
-                              content: const Text(
-                                'This will permanently delete this job request. This cannot be undone.',
-                              ),
+                              title: Text(l10n.deleteJobQuestion),
+                              content: Text(l10n.deleteJobPermanentWarning),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('Cancel'),
+                                  child: Text(l10n.cancel),
                                 ),
                                 FilledButton(
                                   style: FilledButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
                                   onPressed: () => Navigator.pop(ctx, true),
-                                  child: const Text('Delete'),
+                                  child: Text(l10n.delete),
                                 ),
                               ],
                             ),
