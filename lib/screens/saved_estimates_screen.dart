@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/invoice_models.dart';
 import '../widgets/linked_job_context_card.dart';
 
 /// Contractor-side saved estimates list — reads from
@@ -172,6 +173,8 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
               final complexity = data['complexity'] as String? ?? '';
               final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
               final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
+              final linkedJobId =
+                  _linkedJobIdFromEstimate(data) ?? _sourceJobId;
               final displayDate = updatedAt ?? createdAt;
               final dateStr = displayDate != null
                   ? DateFormat.MMMd().add_jm().format(displayDate)
@@ -231,6 +234,7 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
                                   [
                                     if (clientName.isNotEmpty) clientName,
                                     if (complexity.isNotEmpty) complexity,
+                                    if (linkedJobId != null) 'Linked job',
                                   ].join(' • '),
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
@@ -336,6 +340,8 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
     final markupLow = (data['markupLow'] as num?)?.toDouble() ?? 10;
     final markupMid = (data['markupMid'] as num?)?.toDouble() ?? 20;
     final markupHigh = (data['markupHigh'] as num?)?.toDouble() ?? 30;
+    final linkedJobId = _linkedJobIdFromEstimate(data) ?? _sourceJobId;
+    final quotePrice = totalCost * (1 + markupMid / 100);
 
     final scheme = Theme.of(context).colorScheme;
 
@@ -391,6 +397,14 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
                     style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
+                  ),
+                ],
+                if (linkedJobId != null) ...[
+                  const SizedBox(height: 10),
+                  LinkedJobContextCard(
+                    jobId: linkedJobId,
+                    jobData: widget.sourceJobData,
+                    title: 'Connected job workflow',
                   ),
                 ],
 
@@ -459,9 +473,57 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
                 const SizedBox(height: 20),
 
                 // Actions
+                if (linkedJobId != null) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.request_quote_outlined),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await _createQuoteFromEstimate(
+                          uid: uid,
+                          docId: docId,
+                          data: data,
+                          jobId: linkedJobId,
+                          price: quotePrice,
+                        );
+                      },
+                      label: Text(
+                        'Create quote (\$${quotePrice.toStringAsFixed(0)})',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton.icon(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _createInvoiceFromEstimate(data);
+                    },
+                    label: const Text('Create invoice draft'),
+                  ),
+                ),
+                if (linkedJobId != null) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.dashboard_customize_outlined),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        context.push('/job-command/$linkedJobId');
+                      },
+                      label: const Text('Open Job Command Center'),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
                       Navigator.pop(ctx);
@@ -525,6 +587,171 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
     if (_sourceJobId != null) 'sourceJobId': _sourceJobId,
     if (widget.sourceJobData != null) 'sourceJobData': widget.sourceJobData,
   };
+
+  String? _linkedJobIdFromEstimate(Map<String, dynamic> data) {
+    for (final key in const ['sourceJobId', 'jobId']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  InvoiceDraft _invoiceDraftFromEstimate(Map<String, dynamic> data) {
+    final service = data['service'] as String? ?? 'Estimate';
+    final complexity = data['complexity'] as String? ?? '';
+    final hours = (data['hours'] as num?)?.toDouble() ?? 0;
+    final hourlyRate = (data['hourlyRate'] as num?)?.toDouble() ?? 0;
+    final materialCost = (data['materialCost'] as num?)?.toDouble() ?? 0;
+    final laborCost = (data['laborCost'] as num?)?.toDouble() ?? 0;
+    final totalCost = (data['totalCost'] as num?)?.toDouble() ?? 0;
+
+    final items = <InvoiceLineItem>[
+      if (laborCost > 0)
+        InvoiceLineItem(
+          description: '$service labor',
+          quantity: hours > 0 ? hours.ceil() : 1,
+          unitPrice: hours > 0 ? hourlyRate : laborCost,
+        ),
+      if (materialCost > 0)
+        InvoiceLineItem(
+          description: 'Materials',
+          quantity: 1,
+          unitPrice: materialCost,
+        ),
+      if (laborCost <= 0 && materialCost <= 0 && totalCost > 0)
+        InvoiceLineItem(
+          description: service,
+          quantity: 1,
+          unitPrice: totalCost,
+        ),
+    ];
+
+    return InvoiceDraft.empty().copyWith(
+      jobTitle: '$service estimate',
+      jobDescription: [
+        if (complexity.isNotEmpty) 'Complexity: $complexity',
+        if (totalCost > 0) 'Estimated total: \$${totalCost.toStringAsFixed(2)}',
+      ].join('\n'),
+      clientName: data['clientName'] as String? ?? '',
+      clientEmail: data['clientEmail'] as String? ?? '',
+      items: items.isEmpty ? InvoiceDraft.empty().items : items,
+    );
+  }
+
+  void _createInvoiceFromEstimate(Map<String, dynamic> data) {
+    final sourceJobId = _linkedJobIdFromEstimate(data) ?? _sourceJobId;
+    context.push(
+      '/invoice-maker',
+      extra: {
+        'initialDraft': _invoiceDraftFromEstimate(data),
+        if (sourceJobId != null) 'sourceJobId': sourceJobId,
+        if (widget.sourceJobData != null) 'sourceJobData': widget.sourceJobData,
+      },
+    );
+  }
+
+  Future<void> _createQuoteFromEstimate({
+    required String uid,
+    required String docId,
+    required Map<String, dynamic> data,
+    required String jobId,
+    required double price,
+  }) async {
+    try {
+      final db = FirebaseFirestore.instance;
+      final jobSnap = await db.collection('job_requests').doc(jobId).get();
+      final jobData = jobSnap.data() ?? widget.sourceJobData ?? {};
+      final contractorSnap = await db.collection('contractors').doc(uid).get();
+      final contractor = contractorSnap.data() ?? {};
+      final customerId =
+          jobData['requesterUid']?.toString() ??
+          jobData['clientId']?.toString() ??
+          jobData['customerId']?.toString() ??
+          '';
+      final complexity = data['complexity'] as String? ?? '';
+      final hours = (data['hours'] as num?)?.toDouble() ?? 0;
+      final materialCost = (data['materialCost'] as num?)?.toDouble() ?? 0;
+      final laborCost = (data['laborCost'] as num?)?.toDouble() ?? 0;
+
+      final quoteData = <String, dynamic>{
+        'jobId': jobId,
+        'contractorId': uid,
+        if (customerId.isNotEmpty) 'customerId': customerId,
+        'contractorName':
+            contractor['name']?.toString() ??
+            FirebaseAuth.instance.currentUser?.displayName ??
+            'Contractor',
+        'price': price,
+        'estimatedDuration': hours > 0
+            ? '${(hours / 8).clamp(1, 30).ceil()} days'
+            : '',
+        'notes': [
+          'Created from saved estimate.',
+          if (complexity.isNotEmpty) 'Complexity: $complexity.',
+          if (laborCost > 0) 'Labor: \$${laborCost.toStringAsFixed(2)}.',
+          if (materialCost > 0)
+            'Materials: \$${materialCost.toStringAsFixed(2)}.',
+        ].join('\n'),
+        'pricingMode': 'saved_estimate',
+        'sourceEstimateId': docId,
+        'status': 'pending',
+        'submittedAt': FieldValue.serverTimestamp(),
+        'revisionNumber': 0,
+      };
+
+      final existing = await db
+          .collection('quotes')
+          .where('jobId', isEqualTo: jobId)
+          .where('contractorId', isEqualTo: uid)
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        final ref = existing.docs.first.reference;
+        final revision =
+            (existing.docs.first.data()['revisionNumber'] as num?)?.toInt() ??
+            0;
+        await ref.update({
+          ...quoteData,
+          'revisionNumber': revision + 1,
+          'revisedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        await db.collection('quotes').add(quoteData);
+        await db.collection('job_requests').doc(jobId).update({
+          'quoteCount': FieldValue.increment(1),
+          'lastQuoteAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await db
+          .collection('contractors')
+          .doc(uid)
+          .collection('saved_estimates')
+          .doc(docId)
+          .update({
+            'quoteCreatedAt': FieldValue.serverTimestamp(),
+            'quoteJobId': jobId,
+            'quotePrice': price,
+          });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Quote created from estimate.'),
+          action: SnackBarAction(
+            label: 'Open job',
+            onPressed: () => context.push('/job-command/$jobId'),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not create quote: $e')));
+    }
+  }
 
   Widget _detailRow(BuildContext context, String label, String value) {
     return Padding(
