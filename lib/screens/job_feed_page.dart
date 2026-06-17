@@ -8,6 +8,7 @@ import 'package:proserve_hub/services/lead_iap_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
 import '../utils/geo_utils.dart';
@@ -20,6 +21,44 @@ class JobFeedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const _JobFeedBody();
+  }
+}
+
+class _LeadMarketStatusRow extends StatelessWidget {
+  const _LeadMarketStatusRow({
+    required this.icon,
+    required this.text,
+    this.warning = false,
+  });
+
+  final IconData icon;
+  final String text;
+  final bool warning;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = warning ? scheme.error : scheme.onSurfaceVariant;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: color,
+                fontWeight: warning ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -353,6 +392,132 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       _datePostedDays = 0;
       // Distance stays enabled — contractors always see leads in their radius.
     });
+  }
+
+  Widget _leadMarketEmptyState({
+    required Map<String, dynamic> userData,
+    required int totalCredits,
+    required VoidCallback onBuyCredits,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final hasFilters = _hasActiveFilters();
+    final zip = _currentZip;
+    final hasZip = zip != null && zip.isNotEmpty;
+    final payoutsReady =
+        userData['stripePayoutsEnabled'] == true ||
+        userData['payoutsEnabled'] == true;
+    final detailsSubmitted = userData['stripeDetailsSubmitted'] == true;
+    final hasStripeAccount =
+        (userData['stripeAccountId'] as String?)?.trim().isNotEmpty == true;
+    final payoutText = payoutsReady
+        ? l10n.leadMarketPayoutReady
+        : (detailsSubmitted || hasStripeAccount
+              ? l10n.leadMarketPayoutPending
+              : l10n.leadMarketPayoutBlocked);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: scheme.primaryContainer,
+                  child: Icon(
+                    hasFilters
+                        ? Icons.filter_alt_outlined
+                        : Icons.travel_explore_outlined,
+                    color: scheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasFilters
+                            ? l10n.leadMarketEmptyFiltersTitle
+                            : l10n.leadMarketEmptyMarketTitle,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hasFilters
+                            ? l10n.leadMarketEmptyFiltersSubtitle
+                            : l10n.leadMarketEmptyMarketSubtitle,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _LeadMarketStatusRow(
+              icon: Icons.local_activity_outlined,
+              text: l10n.leadMarketCreditBalance(totalCredits),
+            ),
+            _LeadMarketStatusRow(
+              icon: Icons.near_me_outlined,
+              text: hasZip
+                  ? l10n.leadMarketRadiusStatus(
+                      _distanceMiles.toStringAsFixed(0),
+                      zip,
+                    )
+                  : l10n.leadMarketZipMissing,
+            ),
+            _LeadMarketStatusRow(
+              icon: payoutsReady
+                  ? Icons.verified_user_outlined
+                  : Icons.account_balance_wallet_outlined,
+              text: payoutText,
+              warning: !payoutsReady,
+            ),
+            if (_matchMyServices)
+              _LeadMarketStatusRow(
+                icon: Icons.handyman_outlined,
+                text: l10n.leadMarketServiceFilterOn,
+              ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: _retryFeed,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.refresh),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onBuyCredits,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: Text(l10n.leadMarketBuyCredits),
+                ),
+                if (hasFilters)
+                  OutlinedButton.icon(
+                    onPressed: _clearAdvancedFilters,
+                    icon: const Icon(Icons.filter_alt_off_outlined),
+                    label: Text(l10n.leadMarketClearFilters),
+                  ),
+                if (hasZip)
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      _distanceMiles = (_distanceMiles + 20).clamp(5.0, 100.0);
+                    }),
+                    icon: const Icon(Icons.zoom_out_map_outlined),
+                    label: Text(l10n.leadMarketExpandRadius),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _advancedFiltersCard() {
@@ -1924,38 +2089,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                     invitedSection(uid: user.uid),
                                     unlockedLeadsSection(uid: user.uid),
                                     _availableLeadsHeader(context),
-                                    Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'No leads in your area',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w800,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'No matching leads within ${_distanceMiles.toStringAsFixed(0)} miles of your ZIP. Try expanding your radius.',
-                                            ),
-                                            const SizedBox(height: 12),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: _retryFeed,
-                                                icon: const Icon(Icons.refresh),
-                                                label: const Text('Refresh'),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                    _leadMarketEmptyState(
+                                      userData: userData,
+                                      totalCredits: totalCredits,
+                                      onBuyCredits: showLeadPackSheet,
                                     ),
                                   ],
                                 );
@@ -2060,11 +2197,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           _availableLeadsHeader(context),
                           _advancedFiltersCard(),
                           const SizedBox(height: 12),
-                          const EmptyStateCard(
-                            icon: Icons.inbox_outlined,
-                            title: 'No leads available right now',
-                            subtitle:
-                                'Check back soon—new customer requests will appear here when they are posted.',
+                          _leadMarketEmptyState(
+                            userData: userData,
+                            totalCredits: totalCredits,
+                            onBuyCredits: showLeadPackSheet,
                           ),
                         ],
                       );

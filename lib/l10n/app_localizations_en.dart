@@ -926,6 +926,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolsPayoutsNotConnected => 'Connect payouts';
 
   @override
+  String get toolsPayoutsPending => 'Payouts pending';
+
+  @override
+  String get toolsConnectPayouts => 'Connect payouts';
+
+  @override
+  String get toolsReviewPayoutSetup => 'Review payout setup';
+
+  @override
+  String get toolsPayoutSetupReason =>
+      'Required before you can receive escrow payouts and invoice payments.';
+
+  @override
+  String get toolsPayoutSetupOpenFailed =>
+      'Could not open payout setup. Try again.';
+
+  @override
   String toolsLeadCredits(int count) {
     return '$count lead credits';
   }
@@ -944,6 +961,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolsReviewSetup => 'Review setup';
+
+  @override
+  String get toolsSubscriptionActiveSubtitle =>
+      'Your paid tools are active. Manage billing or keep working from the sections below.';
 
   @override
   String get contractorProTitle => 'Contractor Pro';
@@ -1302,6 +1323,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bidAnalyzerNoAnalyses => 'No analyses yet';
 
   @override
+  String get bidAnalyzerNoAnalysesSubtitle =>
+      'Upload or paste a bid to extract line items, compare pricing, score risk, and save the analysis here.';
+
+  @override
+  String get bidAnalyzerStartAnalysis => 'Start analysis';
+
+  @override
   String get bidAnalyzerFallbackTitle => 'Bid Analysis';
 
   @override
@@ -1334,6 +1362,98 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pullToRefreshTryAgain =>
       'Pull to refresh or try again in a moment.';
+
+  @override
+  String get leadMarketEmptyFiltersTitle => 'No leads match your filters';
+
+  @override
+  String get leadMarketEmptyFiltersSubtitle =>
+      'Your feed loaded, but filters, service matching, or radius are hiding available leads.';
+
+  @override
+  String get leadMarketEmptyMarketTitle =>
+      'No leads available in this market right now';
+
+  @override
+  String get leadMarketEmptyMarketSubtitle =>
+      'You are set up to browse leads. New customer requests will appear here when they are posted.';
+
+  @override
+  String leadMarketCreditBalance(int count) {
+    return '$count lead credits available';
+  }
+
+  @override
+  String leadMarketRadiusStatus(String radius, String zip) {
+    return 'Showing leads within $radius miles of ZIP $zip';
+  }
+
+  @override
+  String get leadMarketZipMissing =>
+      'Add your ZIP or use location to improve local lead matching.';
+
+  @override
+  String get leadMarketPayoutReady => 'Payouts are connected for paid jobs.';
+
+  @override
+  String get leadMarketPayoutPending =>
+      'Payout setup is started but still pending.';
+
+  @override
+  String get leadMarketPayoutBlocked =>
+      'Connect payouts before accepting paid jobs.';
+
+  @override
+  String get leadMarketServiceFilterOn =>
+      'Matching your selected services only.';
+
+  @override
+  String get leadMarketBuyCredits => 'Buy credits';
+
+  @override
+  String get leadMarketClearFilters => 'Clear filters';
+
+  @override
+  String get leadMarketExpandRadius => 'Expand radius';
+
+  @override
+  String get pricingWhyThisPriceTitle => 'Why this price';
+
+  @override
+  String pricingWhyThisPriceBody(
+    String hours,
+    String rate,
+    String complexity,
+    String materials,
+    String markup,
+  ) {
+    return '$hours hours at \$$rate/hr, $complexity complexity, \$$materials materials, and a $markup% standard markup.';
+  }
+
+  @override
+  String get pricingBackToJob => 'Back to Job';
+
+  @override
+  String get pricingSendQuote => 'Send quote';
+
+  @override
+  String get pricingAttachToJob => 'Attach to job';
+
+  @override
+  String get pricingCreateInvoice => 'Create invoice';
+
+  @override
+  String get pricingSaveToClient => 'Save to client';
+
+  @override
+  String get pricingAttachJobFirst =>
+      'Open this calculator from a job before sending a quote.';
+
+  @override
+  String get pricingAttachedToJob => 'Estimate attached to job.';
+
+  @override
+  String get pricingSavedToClient => 'Estimate saved to client.';
 
   @override
   String get service => 'Service';

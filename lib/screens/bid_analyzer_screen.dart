@@ -649,18 +649,45 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
     }
 
     if (_history.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history, size: 64, color: cs.outline),
-            const SizedBox(height: 12),
-            Text(
-              l10n.bidAnalyzerNoAnalyses,
-              style: TextStyle(color: cs.outline),
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    backgroundColor: cs.primaryContainer,
+                    child: Icon(Icons.history, color: cs.onPrimaryContainer),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.bidAnalyzerNoAnalyses,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.bidAnalyzerNoAnalysesSubtitle,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        DefaultTabController.of(context).animateTo(0),
+                    icon: const Icon(Icons.upload_file_outlined),
+                    label: Text(l10n.bidAnalyzerStartAnalysis),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 

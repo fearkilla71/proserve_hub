@@ -932,6 +932,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toolsPayoutsNotConnected => 'Conectar pagos';
 
   @override
+  String get toolsPayoutsPending => 'Pagos pendientes';
+
+  @override
+  String get toolsConnectPayouts => 'Conectar pagos';
+
+  @override
+  String get toolsReviewPayoutSetup => 'Revisar configuración de pagos';
+
+  @override
+  String get toolsPayoutSetupReason =>
+      'Necesario para recibir pagos de depósito seguro y facturas.';
+
+  @override
+  String get toolsPayoutSetupOpenFailed =>
+      'No se pudo abrir la configuración de pagos. Inténtalo de nuevo.';
+
+  @override
   String toolsLeadCredits(int count) {
     return '$count créditos de leads';
   }
@@ -950,6 +967,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get toolsReviewSetup => 'Revisar configuración';
+
+  @override
+  String get toolsSubscriptionActiveSubtitle =>
+      'Tus herramientas pagadas están activas. Administra la facturación o sigue trabajando abajo.';
 
   @override
   String get contractorProTitle => 'Contractor Pro';
@@ -1309,6 +1330,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bidAnalyzerNoAnalyses => 'Aún no hay análisis';
 
   @override
+  String get bidAnalyzerNoAnalysesSubtitle =>
+      'Sube o pega una propuesta para extraer partidas, comparar precios, medir riesgo y guardar el análisis aquí.';
+
+  @override
+  String get bidAnalyzerStartAnalysis => 'Iniciar análisis';
+
+  @override
   String get bidAnalyzerFallbackTitle => 'Análisis de cotización';
 
   @override
@@ -1342,6 +1370,100 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get pullToRefreshTryAgain =>
       'Desliza para actualizar o inténtalo de nuevo en un momento.';
+
+  @override
+  String get leadMarketEmptyFiltersTitle =>
+      'Ningún lead coincide con tus filtros';
+
+  @override
+  String get leadMarketEmptyFiltersSubtitle =>
+      'El feed cargó, pero los filtros, servicios o radio están ocultando leads disponibles.';
+
+  @override
+  String get leadMarketEmptyMarketTitle =>
+      'No hay leads disponibles en este mercado ahora';
+
+  @override
+  String get leadMarketEmptyMarketSubtitle =>
+      'Ya puedes buscar leads. Las nuevas solicitudes de clientes aparecerán aquí cuando se publiquen.';
+
+  @override
+  String leadMarketCreditBalance(int count) {
+    return '$count créditos de leads disponibles';
+  }
+
+  @override
+  String leadMarketRadiusStatus(String radius, String zip) {
+    return 'Mostrando leads a $radius millas del ZIP $zip';
+  }
+
+  @override
+  String get leadMarketZipMissing =>
+      'Agrega tu ZIP o usa ubicación para mejorar los leads locales.';
+
+  @override
+  String get leadMarketPayoutReady =>
+      'Los pagos están conectados para trabajos pagados.';
+
+  @override
+  String get leadMarketPayoutPending =>
+      'La configuración de pagos empezó pero sigue pendiente.';
+
+  @override
+  String get leadMarketPayoutBlocked =>
+      'Conecta pagos antes de aceptar trabajos pagados.';
+
+  @override
+  String get leadMarketServiceFilterOn =>
+      'Mostrando solo tus servicios seleccionados.';
+
+  @override
+  String get leadMarketBuyCredits => 'Comprar créditos';
+
+  @override
+  String get leadMarketClearFilters => 'Limpiar filtros';
+
+  @override
+  String get leadMarketExpandRadius => 'Ampliar radio';
+
+  @override
+  String get pricingWhyThisPriceTitle => 'Por qué este precio';
+
+  @override
+  String pricingWhyThisPriceBody(
+    String hours,
+    String rate,
+    String complexity,
+    String materials,
+    String markup,
+  ) {
+    return '$hours horas a \$$rate/hr, complejidad $complexity, \$$materials en materiales y $markup% de margen estándar.';
+  }
+
+  @override
+  String get pricingBackToJob => 'Volver al trabajo';
+
+  @override
+  String get pricingSendQuote => 'Enviar cotización';
+
+  @override
+  String get pricingAttachToJob => 'Adjuntar al trabajo';
+
+  @override
+  String get pricingCreateInvoice => 'Crear factura';
+
+  @override
+  String get pricingSaveToClient => 'Guardar en cliente';
+
+  @override
+  String get pricingAttachJobFirst =>
+      'Abre esta calculadora desde un trabajo antes de enviar una cotización.';
+
+  @override
+  String get pricingAttachedToJob => 'Presupuesto adjuntado al trabajo.';
+
+  @override
+  String get pricingSavedToClient => 'Presupuesto guardado en el cliente.';
 
   @override
   String get service => 'Servicio';

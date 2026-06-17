@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/invoice_models.dart';
 import '../widgets/linked_job_context_card.dart';
 
@@ -332,6 +333,33 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
     );
   }
 
+  void _sendQuoteFromEstimate() {
+    final jobId = _effectiveSourceJobId;
+    if (jobId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pricingAttachJobFirst),
+        ),
+      );
+      return;
+    }
+    context.push('/submit-quote/$jobId');
+  }
+
+  void _backToJob() {
+    final jobId = _effectiveSourceJobId;
+    if (jobId == null) return;
+    context.push('/job-command/$jobId');
+  }
+
+  Future<void> _saveEstimateWithLabel(String message) async {
+    await _saveEstimate();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   String? get _effectiveSourceJobId {
     final direct = widget.sourceJobId?.trim();
     if (direct != null && direct.isNotEmpty) return direct;
@@ -495,6 +523,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final laborCost = _calculateLaborCost();
     final totalCost = _calculateTotalCost();
     final scheme = Theme.of(context).colorScheme;
@@ -823,6 +852,64 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                       '+${_markupHigh.toStringAsFixed(0)}% markup',
                       Colors.orange,
                     ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l10n.pricingWhyThisPriceTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.pricingWhyThisPriceBody(
+                        _hours.toStringAsFixed(1),
+                        _hourlyRate.toStringAsFixed(0),
+                        _complexity,
+                        _materialCost.toStringAsFixed(0),
+                        _markupMid.toStringAsFixed(0),
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _PricingActionWrap(
+                      children: [
+                        if (_effectiveSourceJobId != null)
+                          FilledButton.tonalIcon(
+                            onPressed: _backToJob,
+                            icon: const Icon(Icons.work_outline),
+                            label: Text(l10n.pricingBackToJob),
+                          ),
+                        FilledButton.icon(
+                          onPressed: _effectiveSourceJobId != null
+                              ? _sendQuoteFromEstimate
+                              : null,
+                          icon: const Icon(Icons.request_quote_outlined),
+                          label: Text(l10n.pricingSendQuote),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _effectiveSourceJobId != null
+                              ? () => _saveEstimateWithLabel(
+                                  l10n.pricingAttachedToJob,
+                                )
+                              : null,
+                          icon: const Icon(Icons.attach_file),
+                          label: Text(l10n.pricingAttachToJob),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _createInvoiceFromEstimate,
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: Text(l10n.pricingCreateInvoice),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              _saveEstimateWithLabel(l10n.pricingSavedToClient),
+                          icon: const Icon(Icons.person_add_alt_1_outlined),
+                          label: Text(l10n.pricingSaveToClient),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1011,5 +1098,16 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
         ],
       ),
     );
+  }
+}
+
+class _PricingActionWrap extends StatelessWidget {
+  const _PricingActionWrap({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(spacing: 8, runSpacing: 8, children: children);
   }
 }

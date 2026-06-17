@@ -1706,6 +1706,36 @@ abstract class AppLocalizations {
   /// **'Connect payouts'**
   String get toolsPayoutsNotConnected;
 
+  /// No description provided for @toolsPayoutsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts pending'**
+  String get toolsPayoutsPending;
+
+  /// No description provided for @toolsConnectPayouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect payouts'**
+  String get toolsConnectPayouts;
+
+  /// No description provided for @toolsReviewPayoutSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Review payout setup'**
+  String get toolsReviewPayoutSetup;
+
+  /// No description provided for @toolsPayoutSetupReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Required before you can receive escrow payouts and invoice payments.'**
+  String get toolsPayoutSetupReason;
+
+  /// No description provided for @toolsPayoutSetupOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open payout setup. Try again.'**
+  String get toolsPayoutSetupOpenFailed;
+
   /// No description provided for @toolsLeadCredits.
   ///
   /// In en, this message translates to:
@@ -1741,6 +1771,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review setup'**
   String get toolsReviewSetup;
+
+  /// No description provided for @toolsSubscriptionActiveSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your paid tools are active. Manage billing or keep working from the sections below.'**
+  String get toolsSubscriptionActiveSubtitle;
 
   /// No description provided for @contractorProTitle.
   ///
@@ -2408,6 +2444,18 @@ abstract class AppLocalizations {
   /// **'No analyses yet'**
   String get bidAnalyzerNoAnalyses;
 
+  /// No description provided for @bidAnalyzerNoAnalysesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload or paste a bid to extract line items, compare pricing, score risk, and save the analysis here.'**
+  String get bidAnalyzerNoAnalysesSubtitle;
+
+  /// No description provided for @bidAnalyzerStartAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Start analysis'**
+  String get bidAnalyzerStartAnalysis;
+
   /// No description provided for @bidAnalyzerFallbackTitle.
   ///
   /// In en, this message translates to:
@@ -2461,6 +2509,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pull to refresh or try again in a moment.'**
   String get pullToRefreshTryAgain;
+
+  /// No description provided for @leadMarketEmptyFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No leads match your filters'**
+  String get leadMarketEmptyFiltersTitle;
+
+  /// No description provided for @leadMarketEmptyFiltersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feed loaded, but filters, service matching, or radius are hiding available leads.'**
+  String get leadMarketEmptyFiltersSubtitle;
+
+  /// No description provided for @leadMarketEmptyMarketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No leads available in this market right now'**
+  String get leadMarketEmptyMarketTitle;
+
+  /// No description provided for @leadMarketEmptyMarketSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You are set up to browse leads. New customer requests will appear here when they are posted.'**
+  String get leadMarketEmptyMarketSubtitle;
+
+  /// No description provided for @leadMarketCreditBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} lead credits available'**
+  String leadMarketCreditBalance(int count);
+
+  /// No description provided for @leadMarketRadiusStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing leads within {radius} miles of ZIP {zip}'**
+  String leadMarketRadiusStatus(String radius, String zip);
+
+  /// No description provided for @leadMarketZipMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your ZIP or use location to improve local lead matching.'**
+  String get leadMarketZipMissing;
+
+  /// No description provided for @leadMarketPayoutReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts are connected for paid jobs.'**
+  String get leadMarketPayoutReady;
+
+  /// No description provided for @leadMarketPayoutPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout setup is started but still pending.'**
+  String get leadMarketPayoutPending;
+
+  /// No description provided for @leadMarketPayoutBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect payouts before accepting paid jobs.'**
+  String get leadMarketPayoutBlocked;
+
+  /// No description provided for @leadMarketServiceFilterOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching your selected services only.'**
+  String get leadMarketServiceFilterOn;
+
+  /// No description provided for @leadMarketBuyCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy credits'**
+  String get leadMarketBuyCredits;
+
+  /// No description provided for @leadMarketClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get leadMarketClearFilters;
+
+  /// No description provided for @leadMarketExpandRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand radius'**
+  String get leadMarketExpandRadius;
+
+  /// No description provided for @pricingWhyThisPriceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this price'**
+  String get pricingWhyThisPriceTitle;
+
+  /// No description provided for @pricingWhyThisPriceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours at \${rate}/hr, {complexity} complexity, \${materials} materials, and a {markup}% standard markup.'**
+  String pricingWhyThisPriceBody(
+    String hours,
+    String rate,
+    String complexity,
+    String materials,
+    String markup,
+  );
+
+  /// No description provided for @pricingBackToJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Job'**
+  String get pricingBackToJob;
+
+  /// No description provided for @pricingSendQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Send quote'**
+  String get pricingSendQuote;
+
+  /// No description provided for @pricingAttachToJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to job'**
+  String get pricingAttachToJob;
+
+  /// No description provided for @pricingCreateInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get pricingCreateInvoice;
+
+  /// No description provided for @pricingSaveToClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to client'**
+  String get pricingSaveToClient;
+
+  /// No description provided for @pricingAttachJobFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this calculator from a job before sending a quote.'**
+  String get pricingAttachJobFirst;
+
+  /// No description provided for @pricingAttachedToJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate attached to job.'**
+  String get pricingAttachedToJob;
+
+  /// No description provided for @pricingSavedToClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate saved to client.'**
+  String get pricingSavedToClient;
 
   /// No description provided for @service.
   ///

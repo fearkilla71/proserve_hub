@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
+import '../services/connect_service.dart';
 import 'contractor_portal_helpers.dart';
 import 'page_header.dart';
 
@@ -71,6 +72,7 @@ class ContractorToolsHub extends StatelessWidget {
           isPro: isPro,
           isEnterprise: isEnterprise,
           onSubscriptionTap: openSubscription,
+          onPayoutSetupTap: () => _startPayoutSetup(context),
         ),
         const SizedBox(height: 12),
         _SubscriptionCard(
@@ -98,6 +100,18 @@ class ContractorToolsHub extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  Future<void> _startPayoutSetup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await ConnectService().startOnboarding();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.toolsPayoutSetupOpenFailed)));
+    }
   }
 
   Future<void> _openTool(BuildContext context, _ToolAction tool) async {
@@ -287,12 +301,14 @@ class _TodayPanel extends StatelessWidget {
     required this.isPro,
     required this.isEnterprise,
     required this.onSubscriptionTap,
+    required this.onPayoutSetupTap,
   });
 
   final Map<String, dynamic>? userData;
   final bool isPro;
   final bool isEnterprise;
   final VoidCallback onSubscriptionTap;
+  final VoidCallback onPayoutSetupTap;
 
   @override
   Widget build(BuildContext context) {
@@ -305,6 +321,19 @@ class _TodayPanel extends StatelessWidget {
     final payoutsReady =
         userData?['stripePayoutsEnabled'] == true ||
         userData?['payoutsEnabled'] == true;
+    final detailsSubmitted = userData?['stripeDetailsSubmitted'] == true;
+    final hasStripeAccount =
+        (userData?['stripeAccountId'] as String?)?.trim().isNotEmpty == true;
+    final payoutLabel = payoutsReady
+        ? l10n.toolsPayoutsReady
+        : (detailsSubmitted || hasStripeAccount
+              ? l10n.toolsPayoutsPending
+              : l10n.toolsPayoutsNotConnected);
+    final setupLabel = !payoutsReady
+        ? (hasStripeAccount
+              ? l10n.toolsReviewPayoutSetup
+              : l10n.toolsConnectPayouts)
+        : l10n.toolsReviewSetup;
 
     return Card(
       color: scheme.primaryContainer.withValues(alpha: 0.55),
@@ -342,9 +371,7 @@ class _TodayPanel extends StatelessWidget {
               children: [
                 _StatusChip(
                   icon: payoutsReady ? Icons.verified : Icons.warning_amber,
-                  label: payoutsReady
-                      ? l10n.toolsPayoutsReady
-                      : l10n.toolsPayoutsNotConnected,
+                  label: payoutLabel,
                   emphasized: !payoutsReady,
                 ),
                 _StatusChip(
@@ -369,12 +396,28 @@ class _TodayPanel extends StatelessWidget {
             ),
             if (!payoutsReady || !isPro) ...[
               const SizedBox(height: 12),
+              if (!payoutsReady) ...[
+                Text(
+                  l10n.toolsPayoutSetupReason,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: onSubscriptionTap,
-                  icon: const Icon(Icons.tune_outlined),
-                  label: Text(l10n.toolsReviewSetup),
+                  onPressed: !payoutsReady
+                      ? onPayoutSetupTap
+                      : onSubscriptionTap,
+                  icon: Icon(
+                    !payoutsReady
+                        ? Icons.account_balance_wallet_outlined
+                        : Icons.tune_outlined,
+                  ),
+                  label: Text(setupLabel),
                 ),
               ),
             ],
@@ -423,9 +466,10 @@ class _SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final compact = isPro || isEnterprise;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(compact ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -449,19 +493,25 @@ class _SubscriptionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: compact ? 4 : 6),
+            if (!compact) ...[
+              Text(
+                l10n.contractorProPrice,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
-              l10n.contractorProPrice,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.contractorProUnlocks,
+              compact
+                  ? l10n.toolsSubscriptionActiveSubtitle
+                  : l10n.contractorProUnlocks,
               style: Theme.of(context).textTheme.bodyMedium,
+              maxLines: compact ? 2 : null,
+              overflow: compact ? TextOverflow.ellipsis : null,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: compact ? 8 : 12),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -520,11 +570,12 @@ class _ToolCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
+                radius: 20,
                 backgroundColor: unlocked
                     ? scheme.primaryContainer
                     : scheme.surfaceContainerHighest,
@@ -544,12 +595,17 @@ class _ToolCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(tool.subtitle),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 2),
+                    Text(
+                      tool.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 8,
+                      runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Chip(
@@ -562,6 +618,8 @@ class _ToolCard extends StatelessWidget {
                           Chip(
                             label: Text(tool.metric!),
                             visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
                         TextButton.icon(
                           onPressed: onTap,

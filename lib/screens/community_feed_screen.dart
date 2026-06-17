@@ -87,12 +87,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
             Future<void> submit() async {
               if (posting || !canPost) return;
+              final caption = captionController.text.trim();
+              if (_containsPublicContactInfo(caption)) {
+                final confirmed = await _confirmPublicContactWarning(context);
+                if (!confirmed) return;
+              }
               setSheetState(() => posting = true);
               try {
-                await _createPost(
-                  caption: captionController.text.trim(),
-                  images: selected,
-                );
+                await _createPost(caption: caption, images: selected);
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -136,6 +138,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Public post: avoid sharing phone numbers, emails, addresses, or private customer details.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (selected.isNotEmpty)
@@ -212,6 +221,40 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final photoRef = storageRef.child(path);
     await photoRef.putData(uploadBytes);
     return await photoRef.getDownloadURL();
+  }
+
+  bool _containsPublicContactInfo(String value) {
+    final text = value.trim();
+    if (text.isEmpty) return false;
+    final email = RegExp(r'\b[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}\b');
+    final phone = RegExp(
+      r'(?:(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})',
+    );
+    final url = RegExp(r'\b(?:https?://|www\.)\S+', caseSensitive: false);
+    return email.hasMatch(text) || phone.hasMatch(text) || url.hasMatch(text);
+  }
+
+  Future<bool> _confirmPublicContactWarning(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Check public contact info'),
+        content: const Text(
+          'This looks like it includes a phone number, email, or link. Community posts are public. Remove private customer/contact details unless you are sure they should be visible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Edit post'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Post anyway'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
   }
 
   Future<Map<String, String>> _resolveAuthorProfile(User user) async {
@@ -1053,6 +1096,30 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               const SizedBox(height: 12),
               Text(caption, style: Theme.of(context).textTheme.bodyMedium),
             ],
+            if (reportCount > 0 || moderationStatus != 'active') ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: moderationStatus == 'active'
+                      ? colorScheme.errorContainer.withValues(alpha: 0.55)
+                      : colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  moderationStatus == 'active'
+                      ? 'This post has been reported and may be reviewed.'
+                      : 'This post is $moderationStatus by moderation.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: moderationStatus == 'active'
+                        ? colorScheme.onErrorContainer
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
             if (urls.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildMedia(urls),
@@ -1387,6 +1454,7 @@ class _ReportDialogState extends State<_ReportDialog> {
     'Offensive content',
     'Harassment',
     'Scam or fraud',
+    'Phone, email, or private info',
     'Other',
   ];
 

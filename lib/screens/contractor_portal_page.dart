@@ -958,6 +958,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                   )
                 : (_tabIndex == 3
                       ? FloatingActionButton(
+                          tooltip: l10n.quickActions,
                           onPressed: () => _showToolsQuickActions(context),
                           child: const Icon(Icons.add),
                         )
