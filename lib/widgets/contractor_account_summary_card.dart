@@ -31,8 +31,15 @@ class ContractorAccountSummaryCard extends StatelessWidget {
       data?['name'],
       fallbackName,
     ]);
-    final contractorName = _firstText([data?['name'], fallbackName]);
-    final contact = _firstText([data?['publicPhone'], fallbackEmail]);
+    final contractorName = _firstText([
+      data?['contactName'],
+      data?['contractorName'],
+      data?['name'],
+      fallbackName,
+    ]);
+    final phone = _formatPhone(_firstText([data?['publicPhone']]));
+    final contact = _firstText([phone, fallbackEmail]);
+    final headline = _firstText([data?['headline']]);
     final logoUrl = _firstText([data?['logoUrl']]);
     final rating = _numFrom(data?['avgRating'] ?? data?['averageRating']);
     final reviewCount = _intFrom(data?['reviewCount'] ?? data?['totalReviews']);
@@ -64,18 +71,32 @@ class ContractorAccountSummaryCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      contractorName == displayName
-                          ? contact
-                          : '$contractorName • $contact',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ProServeColors.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const SizedBox(height: 6),
+                    _BusinessInfoLine(
+                      icon: Icons.person_outline,
+                      text: contractorName == displayName
+                          ? fallbackName
+                          : contractorName,
                     ),
+                    if (contact.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      _BusinessInfoLine(
+                        icon: Icons.phone_outlined,
+                        text: contact,
+                      ),
+                    ],
+                    if (headline.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        headline,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: ProServeColors.accent2,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -161,6 +182,14 @@ class ContractorAccountSummaryCard extends StatelessWidget {
     return '';
   }
 
+  static String _formatPhone(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 10) {
+      return '(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}';
+    }
+    return value.trim();
+  }
+
   static double _numFrom(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value) ?? 0;
@@ -200,6 +229,35 @@ class ContractorAccountSummaryCard extends StatelessWidget {
         )
         .take(3)
         .toList();
+  }
+}
+
+class _BusinessInfoLine extends StatelessWidget {
+  const _BusinessInfoLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        Icon(icon, color: ProServeColors.muted, size: 14),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ProServeColors.muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

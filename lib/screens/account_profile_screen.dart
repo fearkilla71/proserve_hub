@@ -30,6 +30,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   final _bioController = TextEditingController();
   final _yearsExpController = TextEditingController();
   final _publicNameController = TextEditingController();
+  final _cardContractorNameController = TextEditingController();
   final _publicPhoneController = TextEditingController();
   final _headlineController = TextEditingController();
   String _businessName = '';
@@ -63,6 +64,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     super.initState();
     _nameController.addListener(_refreshContractorPreview);
     _publicNameController.addListener(_refreshContractorPreview);
+    _cardContractorNameController.addListener(_refreshContractorPreview);
     _publicPhoneController.addListener(_refreshContractorPreview);
     _yearsExpController.addListener(_refreshContractorPreview);
     _load();
@@ -72,6 +74,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   void dispose() {
     _nameController.removeListener(_refreshContractorPreview);
     _publicNameController.removeListener(_refreshContractorPreview);
+    _cardContractorNameController.removeListener(_refreshContractorPreview);
     _publicPhoneController.removeListener(_refreshContractorPreview);
     _yearsExpController.removeListener(_refreshContractorPreview);
     _nameController.dispose();
@@ -81,6 +84,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     _bioController.dispose();
     _yearsExpController.dispose();
     _publicNameController.dispose();
+    _cardContractorNameController.dispose();
     _publicPhoneController.dispose();
     _headlineController.dispose();
     super.dispose();
@@ -126,6 +130,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _yearsExpController.text = (data['yearsExperience'] ?? '').toString();
         _bioController.text = (data['bio'] ?? '').toString();
         _publicNameController.text = (data['publicName'] ?? '').toString();
+        _cardContractorNameController.text =
+            (data['contactName'] ??
+                    data['contractorName'] ??
+                    userData['name'] ??
+                    '')
+                .toString();
         _publicPhoneController.text = (data['publicPhone'] ?? '').toString();
         _headlineController.text = (data['headline'] ?? '').toString();
         _businessName = (data['businessName'] ?? '').toString();
@@ -194,6 +204,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
             .doc(user.uid)
             .set({
               'publicName': _publicNameController.text.trim(),
+              'contactName': _cardContractorNameController.text.trim(),
+              'contractorName': _cardContractorNameController.text.trim(),
               'publicPhone': _publicPhoneController.text.trim(),
               'headline': _headlineController.text.trim(),
               'bio': _bioController.text.trim(),
@@ -372,6 +384,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
           : _nameController.text.trim(),
       'businessName': _businessName,
       'companyName': _companyName,
+      'contactName': _cardContractorNameController.text.trim().isNotEmpty
+          ? _cardContractorNameController.text.trim()
+          : _nameController.text.trim(),
       'name': _nameController.text.trim(),
       'publicPhone': _publicPhoneController.text.trim(),
       'logoUrl': _logoUrl,
@@ -713,12 +728,32 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             _optionGroup(
                               title: 'Card details',
                               children: [
+                                Text(
+                                  'Use this like a clean business card: company name first, then the contractor name and public phone clients should contact.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: 12),
                                 TextFormField(
                                   controller: _publicNameController,
                                   decoration: _fieldDecoration(
-                                    label: 'Display name',
+                                    label: 'Company / display name',
                                     icon: Icons.storefront_outlined,
-                                    hint: 'e.g. Franco Renovations',
+                                    hint: 'e.g. VeroHue Pro Painting',
+                                  ),
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _cardContractorNameController,
+                                  decoration: _fieldDecoration(
+                                    label: 'Contractor name',
+                                    icon: Icons.person_outline,
+                                    hint: 'e.g. Carvic Franco',
                                   ),
                                   textInputAction: TextInputAction.next,
                                 ),
@@ -726,7 +761,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                 TextFormField(
                                   controller: _publicPhoneController,
                                   decoration: _fieldDecoration(
-                                    label: 'Public phone',
+                                    label: 'Business phone',
                                     icon: Icons.phone_outlined,
                                     hint: '(555) 123-4567',
                                   ),
@@ -741,9 +776,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                 TextFormField(
                                   controller: _headlineController,
                                   decoration: _fieldDecoration(
-                                    label: 'Headline',
+                                    label: 'Business card tagline',
                                     icon: Icons.star_outline,
-                                    hint: 'Short, customer-facing tagline',
+                                    hint: 'e.g. Interior and exterior painting',
                                   ),
                                   textInputAction: TextInputAction.next,
                                 ),
