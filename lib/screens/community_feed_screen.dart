@@ -8,6 +8,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../theme/proserve_theme.dart';
+
 class CommunityFeedScreen extends StatefulWidget {
   final String title;
 
@@ -63,7 +65,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -112,83 +114,163 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               }
             }
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 8,
-                bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'New post',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
+            return SafeArea(
+              top: false,
+              child: Container(
+                margin: const EdgeInsets.all(12),
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 10,
+                  bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                decoration: BoxDecoration(
+                  gradient: ProServeColors.cardGradient,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: ProServeColors.lineStrong),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 28,
+                      offset: const Offset(0, -8),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: captionController,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: 'Share a job update, before/after, or tip...',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Public post: avoid sharing phone numbers, emails, addresses, or private customer details.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (selected.isNotEmpty)
-                    SizedBox(
-                      height: 86,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          final file = selected[index];
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: _LocalImageThumb(file: file, size: 86),
-                          );
-                        },
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(width: 8),
-                        itemCount: selected.length,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: ProServeColors.lineStrong,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: posting ? null : pickImages,
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Add photos'),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: ProServeColors.accent.withValues(
+                              alpha: 0.14,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: ProServeColors.accent,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'New community post',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w900),
+                              ),
+                              Text(
+                                'Share project wins, tips, or before/after work.',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: captionController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText: 'What are you working on?',
                       ),
-                      const Spacer(),
-                      FilledButton.icon(
-                        onPressed: posting ? null : submit,
-                        icon: posting
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.send),
-                        label: const Text('Post'),
+                      onChanged: (_) => setSheetState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: ProServeColors.accent2.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: ProServeColors.accent2.withValues(alpha: 0.24),
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.privacy_tip_outlined,
+                            color: ProServeColors.accent2,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Public post: avoid phone numbers, emails, addresses, or private customer details.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (selected.isNotEmpty)
+                      SizedBox(
+                        height: 88,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            final file = selected[index];
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: _LocalImageThumb(file: file, size: 88),
+                            );
+                          },
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 8),
+                          itemCount: selected.length,
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: posting ? null : pickImages,
+                          icon: const Icon(Icons.photo_library_outlined),
+                          label: Text(
+                            selected.isEmpty
+                                ? 'Add photos'
+                                : '${selected.length} photos',
+                          ),
+                        ),
+                        const Spacer(),
+                        FilledButton.icon(
+                          onPressed: posting ? null : submit,
+                          icon: posting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.send_rounded),
+                          label: const Text('Post'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -322,6 +404,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     if (diff.inDays < 7) return '${diff.inDays}d';
     if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w';
     return DateFormat.MMMd().format(date);
+  }
+
+  String _formatRole(String role) {
+    final normalized = role.trim();
+    if (normalized.isEmpty) return '';
+    return normalized[0].toUpperCase() + normalized.substring(1);
   }
 
   Future<void> _openMediaViewer(List<String> urls, int initialIndex) async {
@@ -707,6 +795,168 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     }
   }
 
+  Widget _buildHeroHeader({required bool isAdmin}) {
+    final isGallery = widget.title.toLowerCase().contains('gallery');
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: ProServeColors.cardGradient,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: ProServeColors.lineStrong),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: ProServeColors.accent.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Icon(
+                  isGallery
+                      ? Icons.photo_library_outlined
+                      : Icons.forum_outlined,
+                  color: ProServeColors.accent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isGallery
+                          ? 'Before/after work, project photos, and homeowner inspiration.'
+                          : 'Trade wins, job updates, tips, and project proof from the ProServe community.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHeaderChip(Icons.verified_user_outlined, 'Public feed'),
+              _buildHeaderChip(
+                Icons.report_gmailerrorred_outlined,
+                'Reportable',
+              ),
+              _buildHeaderChip(Icons.photo_camera_outlined, 'Photos welcome'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _showNewPostSheet,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: const Text('New post'),
+                ),
+              ),
+              if (isAdmin) ...[
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: _showAdminReview,
+                  icon: const Icon(Icons.flag_outlined),
+                  label: const Text('Reports'),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: ProServeColors.bgDeep.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProServeColors.line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: ProServeColors.accent2),
+          const SizedBox(width: 6),
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedStateCard({
+    required IconData icon,
+    required String title,
+    required String body,
+    required Widget action,
+    Color iconColor = ProServeColors.accent,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: ProServeColors.lineStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: iconColor),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 6),
+          Text(body, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 16),
+          action,
+        ],
+      ),
+    );
+  }
+
   Widget _buildMedia(List<String> urls) {
     if (urls.isEmpty) return const SizedBox.shrink();
     if (urls.length == 1) {
@@ -715,9 +965,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ProServeColors.lineStrong),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withValues(alpha: 0.24),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
               ),
@@ -752,9 +1003,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ProServeColors.lineStrong),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: 0.24),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -811,7 +1063,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
   Widget _buildComments(String postId) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final colorScheme = Theme.of(context).colorScheme;
     final showAll = _expandedComments.contains(postId);
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _postsRef
@@ -825,7 +1076,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         if (docs.isEmpty) {
           return Text(
             'No comments yet. Be the first to comment.',
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ProServeColors.muted.withValues(alpha: 0.72),
+            ),
           );
         }
 
@@ -847,8 +1100,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    color: ProServeColors.bgDeep.withValues(alpha: 0.62),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: ProServeColors.line),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -897,7 +1151,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   child: Text(
                     'View all comments',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary,
+                      color: ProServeColors.accent2,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -912,7 +1166,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   Widget _buildInlineCommentComposer(String postId) {
     final controller = _commentControllerFor(postId);
     final focusNode = _commentFocusFor(postId);
-    final colorScheme = Theme.of(context).colorScheme;
 
     Future<void> submit() async {
       final text = controller.text.trim();
@@ -926,8 +1179,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: ProServeColors.bgDeep.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ProServeColors.line),
       ),
       child: Row(
         children: [
@@ -947,11 +1201,49 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.send, size: 18),
-            color: colorScheme.primary,
+            color: ProServeColors.accent,
             onPressed: submit,
             tooltip: 'Post comment',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPostActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    final resolvedColor = color ?? ProServeColors.accent2;
+    return Material(
+      color: ProServeColors.bgDeep.withValues(alpha: 0.64),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: resolvedColor.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: resolvedColor),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: ProServeColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -983,14 +1275,22 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final timeAgo = createdAt is Timestamp ? _formatTimeAgo(createdAt) : '';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       elevation: 0,
-      color: colorScheme.surface,
+      color: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outlineVariant),
+          gradient: ProServeColors.cardGradient,
+          border: Border.all(color: ProServeColors.lineStrong),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -999,10 +1299,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: colorScheme.primaryContainer,
-                  foregroundColor: colorScheme.onPrimaryContainer,
+                  backgroundColor: ProServeColors.accent.withValues(
+                    alpha: 0.16,
+                  ),
+                  foregroundColor: ProServeColors.accent,
                   child: Text(
                     author.isNotEmpty ? author[0].toUpperCase() : '?',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1021,7 +1324,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           (isAdmin && moderationStatus != 'active'))
                         Text(
                           [
-                            if (role.isNotEmpty) role,
+                            if (role.isNotEmpty) _formatRole(role),
                             if (timestamp.isNotEmpty) timestamp,
                             if (isAdmin && moderationStatus != 'active')
                               moderationStatus,
@@ -1040,8 +1343,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
+                      color: ProServeColors.bgDeep.withValues(alpha: 0.62),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: ProServeColors.line),
                     ),
                     child: Text(
                       timeAgo,
@@ -1103,9 +1407,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: moderationStatus == 'active'
-                      ? colorScheme.errorContainer.withValues(alpha: 0.55)
-                      : colorScheme.surfaceContainerHighest,
+                      ? ProServeColors.error.withValues(alpha: 0.10)
+                      : ProServeColors.bgDeep.withValues(alpha: 0.62),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: moderationStatus == 'active'
+                        ? ProServeColors.error.withValues(alpha: 0.24)
+                        : ProServeColors.line,
+                  ),
                 ),
                 child: Text(
                   moderationStatus == 'active'
@@ -1143,28 +1452,42 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
                 return Wrap(
                   spacing: 8,
-                  runSpacing: 4,
+                  runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    TextButton.icon(
+                    _buildPostActionChip(
                       onPressed: () => _toggleLike(doc.id, isLiked),
-                      icon: Icon(
-                        isLiked ? Icons.favorite : Icons.favorite_border,
-                        size: 18,
-                        color: isLiked ? colorScheme.error : null,
-                      ),
-                      label: Text('$likeCount'),
+                      icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                      label: '$likeCount',
+                      color: isLiked
+                          ? ProServeColors.error
+                          : ProServeColors.accent2,
                     ),
-                    TextButton.icon(
+                    _buildPostActionChip(
                       onPressed: () => focusNode.requestFocus(),
-                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                      label: const Text('Comment'),
+                      icon: Icons.chat_bubble_outline,
+                      label: 'Comment',
                     ),
                     if (reportCount > 0)
-                      Text(
-                        '$reportCount reports',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.error,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ProServeColors.error.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: ProServeColors.error.withValues(alpha: 0.24),
+                          ),
+                        ),
+                        child: Text(
+                          '$reportCount reports',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: ProServeColors.error,
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                   ],
@@ -1203,45 +1526,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Share wins, tips, and project updates.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isAdmin)
-                    TextButton.icon(
-                      onPressed: _showAdminReview,
-                      icon: const Icon(Icons.flag_outlined),
-                      label: const Text('Review reports'),
-                    ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _showNewPostSheet,
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: const Text('New Post'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+              _buildHeroHeader(isAdmin: isAdmin),
+              const SizedBox(height: 14),
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 // Minimal query – no orderBy, no where – zero index deps.
                 // Sorting & filtering done client-side.
@@ -1249,36 +1535,16 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 builder: (context, snap) {
                   if (snap.hasError) {
                     debugPrint('Community feed error: ${snap.error}');
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.cloud_off, size: 40),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Could not load community posts.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${snap.error}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: () => setState(() {}),
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
-                            ),
-                          ],
-                        ),
+                    return _buildFeedStateCard(
+                      icon: Icons.cloud_off_outlined,
+                      iconColor: ProServeColors.error,
+                      title: 'Could not load posts',
+                      body:
+                          'The community feed could not refresh right now. Check connection or try again.',
+                      action: OutlinedButton.icon(
+                        onPressed: () => setState(() {}),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
                       ),
                     );
                   }
@@ -1308,64 +1574,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         });
 
                   if (docs.isEmpty) {
-                    return Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer,
-                            Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  Icons.auto_awesome,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Start the conversation',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Share a before/after, a win, or a quick tip to help the community.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 14),
-                          FilledButton.icon(
-                            onPressed: _showNewPostSheet,
-                            icon: const Icon(
-                              Icons.add_photo_alternate_outlined,
-                            ),
-                            label: const Text('Start a post'),
-                          ),
-                        ],
+                    return _buildFeedStateCard(
+                      icon: Icons.auto_awesome,
+                      title: 'Start the conversation',
+                      body:
+                          'Share a before/after, a job win, or a quick field tip to help the community.',
+                      action: FilledButton.icon(
+                        onPressed: _showNewPostSheet,
+                        icon: const Icon(Icons.add_photo_alternate_outlined),
+                        label: const Text('Start a post'),
                       ),
                     );
                   }
