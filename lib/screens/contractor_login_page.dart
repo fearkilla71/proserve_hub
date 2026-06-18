@@ -5,8 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../services/auth_service.dart';
+import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
 import '../widgets/apple_sign_in_button.dart';
+import '../widgets/proserve_entry_flow.dart';
 
 class ContractorLoginPage extends StatefulWidget {
   const ContractorLoginPage({super.key});
@@ -188,13 +190,35 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
   Widget build(BuildContext context) {
     final isApplePlatform = Platform.isIOS || Platform.isMacOS;
     final showGoogleSignIn = !isApplePlatform;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Contractor Sign In')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
+    return ProServeEntryScaffold(
+      roleLabel: 'Contractor portal',
+      title: 'Run Today’s Work.',
+      subtitle:
+          'Sign in to manage leads, quotes, schedules, invoices, escrow, and your contractor tools.',
+      icon: Icons.handyman_outlined,
+      accent: ProServeColors.accent2,
+      benefits: const [
+        EntryBenefit(
+          icon: Icons.work_outline,
+          label: 'Leads',
+          description: 'review unlocked and available jobs',
+        ),
+        EntryBenefit(
+          icon: Icons.receipt_long_outlined,
+          label: 'Tools',
+          description: 'quote, invoice, estimate, and schedule',
+        ),
+        EntryBenefit(
+          icon: Icons.account_balance_wallet_outlined,
+          label: 'Payouts',
+          description: 'track escrow and invoice payment status',
+        ),
+      ],
+      child: ProServeEntryPanel(
+        title: 'Contractor sign in',
+        subtitle: 'Get back to your job dashboard and daily tools.',
+        child: Column(
           children: [
-            // ── Social sign-in buttons first ──
             if (showGoogleSignIn)
               OutlinedButton.icon(
                 onPressed: (loading || _googleLoading)
@@ -215,7 +239,7 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                       ),
                 label: const Text('Continue with Google'),
                 style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
               ),
             if (isApplePlatform) ...[
@@ -228,30 +252,39 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                           : _handleAppleSignIn,
                     ),
             ],
-            const SizedBox(height: 8),
-            const OrDivider(),
-            // ── Email / password ──
+            const SizedBox(height: 14),
+            const ProServeEntryDivider(),
+            const SizedBox(height: 14),
             TextField(
               controller: email,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: password,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
               obscureText: true,
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: loading ? null : submit,
-              child: loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Sign In'),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: loading ? null : submit,
+                child: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Sign in'),
+              ),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -297,13 +330,11 @@ class _ContractorLoginPageState extends State<ContractorLoginPage> {
                 child: const Text('Forgot password?'),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             TextButton(
               onPressed: loading
                   ? null
-                  : () {
-                      context.push('/contractor-signup');
-                    },
+                  : () => context.push('/contractor-signup'),
               child: const Text("Don't have an account? Sign up"),
             ),
           ],

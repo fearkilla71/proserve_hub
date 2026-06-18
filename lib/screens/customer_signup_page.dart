@@ -12,6 +12,7 @@ import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/apple_sign_in_button.dart';
+import '../widgets/proserve_entry_flow.dart';
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
@@ -394,23 +395,22 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     await submit();
   }
 
-  Widget _stepIndicator(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: List.generate(_totalSteps, (index) {
-        final active = index <= _step;
-        return Expanded(
-          child: Container(
-            height: 4,
-            margin: EdgeInsets.only(right: index == _totalSteps - 1 ? 0 : 8),
-            decoration: BoxDecoration(
-              color: active ? scheme.primary : scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        );
-      }),
-    );
+  String _stepTitle() {
+    return switch (_step) {
+      0 => 'Start with email',
+      1 => 'Secure your account',
+      2 => 'Add contact details',
+      _ => 'Verify your phone',
+    };
+  }
+
+  String _stepSubtitle() {
+    return switch (_step) {
+      0 => 'Create a safe customer profile before posting your first project.',
+      1 => 'Protect your quotes, messages, escrow payments, and job history.',
+      2 => 'Contractors use this to confirm details and respond faster.',
+      _ => 'One quick verification step helps protect the marketplace.',
+    };
   }
 
   Widget _buildStepContent() {
@@ -653,188 +653,98 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   @override
   Widget build(BuildContext context) {
     final isApplePlatform = Platform.isIOS || Platform.isMacOS;
-    return Scaffold(
-      backgroundColor: ProServeColors.bg,
-      body: Stack(
-        children: [
-          SafeArea(
+    return Stack(
+      children: [
+        ProServeEntryScaffold(
+          roleLabel: 'Homeowner account',
+          title: 'Post Jobs. Compare Pros. Pay Safely.',
+          subtitle:
+              'Create your customer profile to request quotes, track projects, and keep escrow-protected payments in one place.',
+          icon: Icons.home_outlined,
+          accent: ProServeColors.accent,
+          onBack: loading ? null : _goBackStep,
+          benefits: const [
+            EntryBenefit(
+              icon: Icons.verified_user_outlined,
+              label: 'Verified pros',
+              description: 'compare contractors before choosing',
+            ),
+            EntryBenefit(
+              icon: Icons.price_check_outlined,
+              label: 'Upfront quotes',
+              description: 'see bids and project details clearly',
+            ),
+            EntryBenefit(
+              icon: Icons.lock_outline,
+              label: 'Escrow safety',
+              description: 'pay through protected job milestones',
+            ),
+          ],
+          child: ProServeEntryPanel(
+            title: _stepTitle(),
+            subtitle: _stepSubtitle(),
+            step: _step,
+            totalSteps: _totalSteps,
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: loading ? null : _goBackStep,
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'ProServe Hub',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) {
+                    final offset = Tween<Offset>(
+                      begin: const Offset(0.0, 0.05),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(position: offset, child: child),
+                    );
+                  },
+                  child: _buildStepContent(),
                 ),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
-                    decoration: const BoxDecoration(
-                      color: ProServeColors.card,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _step == 0
-                                ? 'Create your customer account'
-                                : _step == 1
-                                ? 'Create Password'
-                                : _step == 2
-                                ? 'Tell us who you are'
-                                : 'Verify your phone',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _step == 0
-                                ? 'Start getting bids from trusted pros.'
-                                : _step == 1
-                                ? 'Secure your account for faster support.'
-                                : _step == 2
-                                ? 'So contractors can contact you quickly.'
-                                : 'One last step to secure your account.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          _stepIndicator(context),
-                          const SizedBox(height: 20),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            transitionBuilder: (child, animation) {
-                              final offset = Tween<Offset>(
-                                begin: const Offset(0.0, 0.05),
-                                end: Offset.zero,
-                              ).animate(animation);
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: offset,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: _buildStepContent(),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              if (_step > 0)
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: loading ? null : _goBackStep,
-                                    child: const Text('Back'),
-                                  ),
-                                )
-                              else
-                                const Expanded(child: SizedBox.shrink()),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 52,
-                                  child: FilledButton(
-                                    onPressed: loading ? null : _nextOrSubmit,
-                                    child: loading
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(
-                                            _step == 3 && !_phoneVerified
-                                                ? (_phoneVerificationId == null
-                                                      ? 'Send code'
-                                                      : 'Verify')
-                                                : _step == _totalSteps - 1
-                                                ? 'Create account'
-                                                : 'Next',
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          if (_step == 0 && !isApplePlatform) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Expanded(child: Divider()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  child: Text(
-                                    'or',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ),
-                                const Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            GoogleSignInButton(
-                              label: 'Sign up with Google',
-                              onPressed: loading
-                                  ? null
-                                  : () => _handleGoogleSignUp(context),
-                            ),
-                          ],
-                          Center(
-                            child: TextButton(
-                              onPressed: loading
-                                  ? null
-                                  : () {
-                                      context.push('/customer-login');
-                                    },
-                              child: const Text(
-                                'Already have an account? Sign in',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                const SizedBox(height: 24),
+                ProServeEntryActionRow(
+                  secondaryLabel: _step > 0 ? 'Back' : null,
+                  onSecondary: _goBackStep,
+                  primaryLabel: _step == 3 && !_phoneVerified
+                      ? (_phoneVerificationId == null ? 'Send code' : 'Verify')
+                      : _step == _totalSteps - 1
+                      ? 'Create account'
+                      : 'Next',
+                  onPrimary: _nextOrSubmit,
+                  loading: loading,
+                ),
+                const SizedBox(height: 10),
+                if (_step == 0 && !isApplePlatform) ...[
+                  const SizedBox(height: 8),
+                  const ProServeEntryDivider(),
+                  const SizedBox(height: 12),
+                  GoogleSignInButton(
+                    label: 'Sign up with Google',
+                    onPressed: loading
+                        ? null
+                        : () => _handleGoogleSignUp(context),
+                  ),
+                ],
+                Center(
+                  child: TextButton(
+                    onPressed: loading
+                        ? null
+                        : () => context.push('/customer-login'),
+                    child: const Text('Already have an account? Sign in'),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        if (loading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.22),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+      ],
     );
   }
 }

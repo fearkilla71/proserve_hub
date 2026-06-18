@@ -15,6 +15,7 @@ import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/apple_sign_in_button.dart';
+import '../widgets/proserve_entry_flow.dart';
 
 class ContractorSignupPage extends StatefulWidget {
   const ContractorSignupPage({super.key});
@@ -498,25 +499,6 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
     await submit();
   }
 
-  Widget _stepIndicator(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: List.generate(_totalSteps, (index) {
-        final active = index <= _step;
-        return Expanded(
-          child: Container(
-            height: 4,
-            margin: EdgeInsets.only(right: index == _totalSteps - 1 ? 0 : 8),
-            decoration: BoxDecoration(
-              color: active ? scheme.primary : scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
   String _primaryActionLabel() {
     if (_step == 0 && _awaitingEmailVerification) {
       return _emailVerified ? 'Next' : 'Verify';
@@ -528,6 +510,32 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       return _phoneVerificationId == null ? 'Verify' : 'Confirm';
     }
     return _step == _totalSteps - 1 ? 'Create account' : 'Next';
+  }
+
+  String _stepTitle() {
+    return switch (_step) {
+      0 =>
+        _awaitingEmailVerification ? 'Verify your email' : 'Start with email',
+      1 => 'Secure your pro account',
+      2 => 'Build your business profile',
+      3 => 'Verify your phone',
+      _ => 'Choose your lead area',
+    };
+  }
+
+  String _stepSubtitle() {
+    return switch (_step) {
+      0 =>
+        _awaitingEmailVerification
+            ? 'Confirm your email so customers and ProServe can trust the account.'
+            : 'Use the email you want tied to leads, quotes, invoices, and payouts.',
+      1 =>
+        'Protect your contractor tools, customer chats, and payment workflow.',
+      2 => 'Tell homeowners what you do and where your business should appear.',
+      3 =>
+        'Verified contact info helps customers trust and reach your business.',
+      _ => 'Set your ZIP and service radius so leads match your actual market.',
+    };
   }
 
   Widget _buildStepContent() {
@@ -978,197 +986,100 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
   @override
   Widget build(BuildContext context) {
     final isApplePlatform = Platform.isIOS || Platform.isMacOS;
-    return Scaffold(
-      backgroundColor: ProServeColors.bg,
-      body: Stack(
-        children: [
-          SafeArea(
+    return Stack(
+      children: [
+        ProServeEntryScaffold(
+          roleLabel: 'Contractor account',
+          title: 'Win Work. Quote Fast. Get Paid.',
+          subtitle:
+              'Create your pro account to access local leads, job tools, invoices, escrow payouts, and customer follow-up workflows.',
+          icon: Icons.business_center_outlined,
+          accent: ProServeColors.accent2,
+          onBack: loading ? null : _goBackStep,
+          benefits: const [
+            EntryBenefit(
+              icon: Icons.location_searching_outlined,
+              label: 'Local leads',
+              description: 'match your services and ZIP radius',
+            ),
+            EntryBenefit(
+              icon: Icons.calculate_outlined,
+              label: 'Contractor OS',
+              description: 'quote, estimate, invoice, and schedule',
+            ),
+            EntryBenefit(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'Payout ready',
+              description: 'prepare your account to receive payments',
+            ),
+          ],
+          child: ProServeEntryPanel(
+            title: _stepTitle(),
+            subtitle: _stepSubtitle(),
+            step: _step,
+            totalSteps: _totalSteps,
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: loading ? null : _goBackStep,
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'ProServe Hub',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) {
+                    final offset = Tween<Offset>(
+                      begin: const Offset(0.0, 0.05),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(position: offset, child: child),
+                    );
+                  },
+                  child: _buildStepContent(),
                 ),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 26),
-                    decoration: const BoxDecoration(
-                      color: ProServeColors.card,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _step == 0
-                                ? 'Create your contractor account'
-                                : _step == 1
-                                ? 'Create Password'
-                                : _step == 2
-                                ? 'Tell us about your business'
-                                : _step == 3
-                                ? 'Enter your mobile number'
-                                : 'Set your price location',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _step == 0
-                                ? 'Start receiving leads in minutes.'
-                                : _step == 1
-                                ? 'Secure your account to protect your leads.'
-                                : _step == 2
-                                ? 'Help customers trust your business.'
-                                : _step == 3
-                                ? 'We’ll use this to verify your account.'
-                                : 'Choose where you want to receive leads.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          _stepIndicator(context),
-                          const SizedBox(height: 20),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            transitionBuilder: (child, animation) {
-                              final offset = Tween<Offset>(
-                                begin: const Offset(0.0, 0.05),
-                                end: Offset.zero,
-                              ).animate(animation);
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: offset,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: _buildStepContent(),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              if (_step > 0)
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: loading ? null : _goBackStep,
-                                    child: const Text('Back'),
-                                  ),
-                                )
-                              else
-                                const Expanded(child: SizedBox.shrink()),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 52,
-                                  child: FilledButton(
-                                    onPressed:
-                                        loading ||
-                                            (_step == 0 &&
-                                                _awaitingEmailVerification &&
-                                                !_emailVerified)
-                                        ? null
-                                        : _nextOrSubmit,
-                                    child: loading
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(_primaryActionLabel()),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          if (_step == 0 && !isApplePlatform) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Expanded(child: Divider()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  child: Text(
-                                    'or',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ),
-                                const Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            GoogleSignInButton(
-                              label: 'Sign up with Google',
-                              onPressed: loading
-                                  ? null
-                                  : () => _handleGoogleSignUp(context),
-                            ),
-                          ],
-                          Center(
-                            child: TextButton(
-                              onPressed: loading
-                                  ? null
-                                  : () {
-                                      context.push('/contractor-login');
-                                    },
-                              child: const Text(
-                                'Already have an account? Sign in',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                const SizedBox(height: 24),
+                ProServeEntryActionRow(
+                  secondaryLabel: _step > 0 ? 'Back' : null,
+                  onSecondary: _goBackStep,
+                  primaryLabel: _primaryActionLabel(),
+                  onPrimary:
+                      loading ||
+                          (_step == 0 &&
+                              _awaitingEmailVerification &&
+                              !_emailVerified)
+                      ? null
+                      : _nextOrSubmit,
+                  loading: loading,
+                ),
+                const SizedBox(height: 10),
+                if (_step == 0 && !isApplePlatform) ...[
+                  const SizedBox(height: 8),
+                  const ProServeEntryDivider(),
+                  const SizedBox(height: 12),
+                  GoogleSignInButton(
+                    label: 'Sign up with Google',
+                    onPressed: loading
+                        ? null
+                        : () => _handleGoogleSignUp(context),
+                  ),
+                ],
+                Center(
+                  child: TextButton(
+                    onPressed: loading
+                        ? null
+                        : () => context.push('/contractor-login'),
+                    child: const Text('Already have an account? Sign in'),
                   ),
                 ),
               ],
             ),
           ),
-          if (loading)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.2),
-                child: const Center(child: CircularProgressIndicator()),
-              ),
+        ),
+        if (loading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.22),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

@@ -566,6 +566,12 @@ function toStripeHttpsError(err, fallbackMessage) {
       'Stripe secret key is invalid or missing on the server.'
     );
   }
+  if (lowered.includes('signed up for connect') || lowered.includes('dashboard.stripe.com/connect')) {
+    return new functions.https.HttpsError(
+      'failed-precondition',
+      'Stripe Connect is not enabled for this Stripe account yet. Finish Connect setup in Stripe Dashboard before contractors can connect payouts.'
+    );
+  }
   if (lowered.includes('no such') || lowered.includes('resource_missing')) {
     return new functions.https.HttpsError('not-found', message);
   }
@@ -3585,17 +3591,22 @@ async function createConnectOnboardingLinkCore({ uid }) {
   let accountId = existingAccountId;
   if (!accountId) {
     const email = (userData.email || '').toString().trim();
-    const acct = await stripe.accounts.create({
-      type: 'express',
-      country: 'US',
-      ...(email ? { email } : {}),
-      capabilities: {
-        transfers: { requested: true },
-      },
-      metadata: {
-        uid,
-      },
-    });
+    let acct;
+    try {
+      acct = await stripe.accounts.create({
+        type: 'express',
+        country: 'US',
+        ...(email ? { email } : {}),
+        capabilities: {
+          transfers: { requested: true },
+        },
+        metadata: {
+          uid,
+        },
+      });
+    } catch (err) {
+      throw toStripeHttpsError(err, 'Could not create Stripe Connect account');
+    }
 
     accountId = acct.id;
     await userRef.set(
@@ -3615,12 +3626,17 @@ async function createConnectOnboardingLinkCore({ uid }) {
     );
   }
 
-  const link = await stripe.accountLinks.create({
-    account: accountId,
-    refresh_url: getConnectRefreshUrl(),
-    return_url: getConnectReturnUrl(),
-    type: 'account_onboarding',
-  });
+  let link;
+  try {
+    link = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: getConnectRefreshUrl(),
+      return_url: getConnectReturnUrl(),
+      type: 'account_onboarding',
+    });
+  } catch (err) {
+    throw toStripeHttpsError(err, 'Could not create Stripe Connect onboarding link');
+  }
 
   return {
     url: link.url,
