@@ -1904,6 +1904,12 @@ abstract class AppLocalizations {
   /// **'Payout setup is temporarily unavailable. Please try again or contact support.'**
   String get toolsPayoutSetupUnavailable;
 
+  /// No description provided for @toolsPayoutSetupRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many payout setup attempts. Please wait a bit and try again.'**
+  String get toolsPayoutSetupRateLimited;
+
   /// No description provided for @toolsLeadCredits.
   ///
   /// In en, this message translates to:

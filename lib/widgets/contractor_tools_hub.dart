@@ -109,26 +109,24 @@ class ContractorToolsHub extends StatelessWidget {
       await ConnectService().startOnboarding();
     } catch (e) {
       if (!context.mounted) return;
-      final details = _payoutSetupErrorDetails(e, l10n);
-      final message = details.isEmpty
-          ? l10n.toolsPayoutSetupOpenFailed
-          : details == l10n.toolsPayoutSetupUnavailable
-          ? details
-          : '${l10n.toolsPayoutSetupOpenFailed} $details';
+      final message = _payoutSetupErrorMessage(e, l10n);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
-  String _payoutSetupErrorDetails(Object error, AppLocalizations l10n) {
+  String _payoutSetupErrorMessage(Object error, AppLocalizations l10n) {
     if (error is FirebaseFunctionsException) {
+      if (error.code == 'resource-exhausted') {
+        return l10n.toolsPayoutSetupRateLimited;
+      }
       final message = (error.message ?? '').trim();
       if (error.code == 'internal' || message.toUpperCase() == 'INTERNAL') {
         return l10n.toolsPayoutSetupUnavailable;
       }
       if (message.isNotEmpty) return message;
-      return error.code.trim();
+      return l10n.toolsPayoutSetupOpenFailed;
     }
     final text = error.toString().trim();
     final normalized = text

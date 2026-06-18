@@ -1031,6 +1031,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Payout setup is temporarily unavailable. Please try again or contact support.';
 
   @override
+  String get toolsPayoutSetupRateLimited =>
+      'Too many payout setup attempts. Please wait a bit and try again.';
+
+  @override
   String toolsLeadCredits(int count) {
     return '$count lead credits';
   }
