@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../services/location_service.dart';
 import '../widgets/address_autocomplete_field.dart';
-import '../widgets/card_aura_painter.dart';
-import '../widgets/contractor_card.dart';
+import '../widgets/contractor_account_summary_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../models/contractor_badge.dart';
 import '../widgets/badge_widget.dart';
@@ -35,6 +32,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   final _publicNameController = TextEditingController();
   final _publicPhoneController = TextEditingController();
   final _headlineController = TextEditingController();
+  String _businessName = '';
+  String _companyName = '';
+  String _logoUrl = '';
   String _cardTheme = 'navy';
   int? _gradientStart;
   int? _gradientEnd;
@@ -58,22 +58,22 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   bool _isAdmin = false;
   String _role = 'customer';
 
-  final List<_ThemePreset> _themePresets = const [
-    _ThemePreset('navy', 'Navy', Color(0xFF0F172A), Color(0xFF2563EB)),
-    _ThemePreset('forest', 'Forest', Color(0xFF0F3D2E), Color(0xFF3BAA6B)),
-    _ThemePreset('amber', 'Amber', Color(0xFF4E2A0C), Color(0xFFFFA726)),
-    _ThemePreset('slate', 'Slate', Color(0xFF1F2937), Color(0xFF64748B)),
-    _ThemePreset('rose', 'Rose', Color(0xFF4A1D2D), Color(0xFFF472B6)),
-  ];
-
   @override
   void initState() {
     super.initState();
+    _nameController.addListener(_refreshContractorPreview);
+    _publicNameController.addListener(_refreshContractorPreview);
+    _publicPhoneController.addListener(_refreshContractorPreview);
+    _yearsExpController.addListener(_refreshContractorPreview);
     _load();
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_refreshContractorPreview);
+    _publicNameController.removeListener(_refreshContractorPreview);
+    _publicPhoneController.removeListener(_refreshContractorPreview);
+    _yearsExpController.removeListener(_refreshContractorPreview);
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
@@ -84,6 +84,10 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     _publicPhoneController.dispose();
     _headlineController.dispose();
     super.dispose();
+  }
+
+  void _refreshContractorPreview() {
+    if (mounted && !_loading) setState(() {});
   }
 
   Future<void> _load() async {
@@ -124,6 +128,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _publicNameController.text = (data['publicName'] ?? '').toString();
         _publicPhoneController.text = (data['publicPhone'] ?? '').toString();
         _headlineController.text = (data['headline'] ?? '').toString();
+        _businessName = (data['businessName'] ?? '').toString();
+        _companyName = (data['companyName'] ?? '').toString();
+        _logoUrl = (data['logoUrl'] ?? '').toString();
 
         _cardTheme =
             (data['cardTheme'] as String?)?.trim().toLowerCase() ?? _cardTheme;
@@ -358,123 +365,23 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     );
   }
 
-  Widget _themePresetChip(_ThemePreset preset) {
-    final selected = _cardTheme == preset.key;
-    return ChoiceChip(
-      selected: selected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [preset.start, preset.end]),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(preset.label),
-        ],
-      ),
-      onSelected: (isSelected) {
-        if (!isSelected) return;
-        setState(() {
-          _cardTheme = preset.key;
-          _gradientStart = preset.start.toARGB32();
-          _gradientEnd = preset.end.toARGB32();
-        });
-      },
-    );
-  }
-
-  List<Color> _defaultGradientForTheme(String theme) {
-    final match = _themePresets
-        .where((preset) => preset.key == theme)
-        .toList(growable: false);
-    if (match.isNotEmpty) {
-      return [match.first.start, match.first.end];
-    }
-    return [const Color(0xFF0F172A), const Color(0xFF2563EB)];
-  }
-
-  ContractorCardData _previewCardData() {
-    final defaultGradient = _defaultGradientForTheme(_cardTheme);
-    final gradientStart = _gradientStart != null
-        ? Color(_gradientStart!)
-        : defaultGradient[0];
-    final gradientEnd = _gradientEnd != null
-        ? Color(_gradientEnd!)
-        : defaultGradient[1];
-    return ContractorCardData(
-      displayName: _publicNameController.text.trim().isNotEmpty
+  Map<String, dynamic> _previewSummaryData() {
+    return {
+      'publicName': _publicNameController.text.trim().isNotEmpty
           ? _publicNameController.text.trim()
-          : 'Summit Builders Co.',
-      contractorName: _nameController.text.trim().isNotEmpty
-          ? _nameController.text.trim()
-          : 'John Smith',
-      contactLine: _publicPhoneController.text.trim().isNotEmpty
-          ? _publicPhoneController.text.trim()
-          : 'Licensed / Insured',
-      logoUrl: '',
-      headline: _headlineController.text.trim().isNotEmpty
-          ? _headlineController.text.trim()
-          : 'Luxury kitchen and bath transformations',
-      bio: _bioController.text.trim(),
-      ratingValue: 4.9,
-      reviewCount: 38,
-      yearsExp: int.tryParse(_yearsExpController.text.trim()) ?? 7,
-      badges: _selectedBadges.isNotEmpty
-          ? _selectedBadges
-          : ['licensed', 'insured', 'top_rated'],
-      themeKey: _cardTheme,
-      gradientStart: gradientStart,
-      gradientEnd: gradientEnd,
-      avatarStyle: _avatarStyle,
-      avatarShape: _avatarShape,
-      texture: _texture,
-      textureOpacity: _textureOpacity,
-      showBanner: _showBanner,
-      bannerIcon: _bannerIcon,
-      avatarGlow: _avatarGlow,
-      aura: auraFromString(_cardAura),
-      latestReview: 'Quick response and flawless finish.',
-      totalJobsCompleted: _totalJobsCompleted,
-      servicesOffered: _selectedServices,
-    );
-  }
-
-  void _randomizeCard() {
-    final rand = math.Random();
-    final preset = _themePresets[rand.nextInt(_themePresets.length)];
-    const bannerIcons = ['spark', 'bolt', 'shield', 'star', 'check'];
-
-    final badgePool = profileBadges.map((b) => b.id).toList()..shuffle(rand);
-    final badgeCount = 2 + rand.nextInt(3);
-
-    setState(() {
-      _cardTheme = preset.key;
-      _gradientStart = preset.start.toARGB32();
-      _gradientEnd = preset.end.toARGB32();
-      _showBanner = rand.nextBool();
-      _bannerIcon = bannerIcons[rand.nextInt(bannerIcons.length)];
-      _selectedBadges = badgePool.take(badgeCount).toList();
-    });
-  }
-
-  Widget _bannerIconChip(String key, String label, IconData icon) {
-    final selected = _bannerIcon == key;
-    return ChoiceChip(
-      selected: selected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
-      ),
-      onSelected: (isSelected) {
-        if (!isSelected) return;
-        setState(() => _bannerIcon = key);
-      },
-    );
+          : _nameController.text.trim(),
+      'businessName': _businessName,
+      'companyName': _companyName,
+      'name': _nameController.text.trim(),
+      'publicPhone': _publicPhoneController.text.trim(),
+      'logoUrl': _logoUrl,
+      'headline': _headlineController.text.trim(),
+      'yearsExperience': int.tryParse(_yearsExpController.text.trim()) ?? 0,
+      'avgRating': _avgRating,
+      'reviewCount': _reviewCount,
+      'badges': _selectedBadges,
+      'servicesOffered': _selectedServices,
+    };
   }
 
   Widget _optionGroup({required String title, required List<Widget> children}) {
@@ -791,20 +698,18 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                         initiallyExpanded: true,
                         child: Column(
                           children: [
-                            ContractorCard(
-                              data: _previewCardData(),
-                              showEdit: false,
+                            ContractorAccountSummaryCard(
+                              data: _previewSummaryData(),
+                              fallbackName:
+                                  _nameController.text.trim().isNotEmpty
+                                  ? _nameController.text.trim()
+                                  : 'Contractor',
+                              fallbackEmail:
+                                  FirebaseAuth.instance.currentUser?.email ??
+                                  '',
+                              showAction: false,
                             ),
                             const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: OutlinedButton.icon(
-                                onPressed: _randomizeCard,
-                                icon: const Icon(Icons.shuffle),
-                                label: const Text('Randomize card'),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
                             _optionGroup(
                               title: 'Card details',
                               children: [
@@ -842,85 +747,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   ),
                                   textInputAction: TextInputAction.next,
                                 ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Theme presets',
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _themePresets
-                                      .map(_themePresetChip)
-                                      .toList(),
-                                ),
-                              ],
-                            ),
-                            _optionGroup(
-                              title: 'Status Banner',
-                              children: [
-                                Text(
-                                  'Shows your tier level, jobs completed, and a decorative icon at the top of your card.',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                SwitchListTile(
-                                  value: _showBanner,
-                                  onChanged: (value) {
-                                    setState(() => _showBanner = value);
-                                  },
-                                  title: const Text('Show status banner'),
-                                  subtitle: const Text(
-                                    'Displays your rank and stats',
-                                  ),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                if (_showBanner) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Banner accent icon',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      _bannerIconChip(
-                                        'spark',
-                                        'Spark',
-                                        Icons.auto_awesome,
-                                      ),
-                                      _bannerIconChip(
-                                        'bolt',
-                                        'Bolt',
-                                        Icons.bolt,
-                                      ),
-                                      _bannerIconChip(
-                                        'shield',
-                                        'Shield',
-                                        Icons.shield_outlined,
-                                      ),
-                                      _bannerIconChip(
-                                        'star',
-                                        'Star',
-                                        Icons.star_outline,
-                                      ),
-                                      _bannerIconChip(
-                                        'check',
-                                        'Verified',
-                                        Icons.verified_outlined,
-                                      ),
-                                    ],
-                                  ),
-                                ],
                               ],
                             ),
                             _optionGroup(
@@ -1088,15 +914,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       ),
     );
   }
-}
-
-class _ThemePreset {
-  const _ThemePreset(this.key, this.label, this.start, this.end);
-
-  final String key;
-  final String label;
-  final Color start;
-  final Color end;
 }
 
 const List<String> _allServices = [
