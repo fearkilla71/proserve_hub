@@ -1898,6 +1898,12 @@ abstract class AppLocalizations {
   /// **'Could not open payout setup. Try again.'**
   String get toolsPayoutSetupOpenFailed;
 
+  /// No description provided for @toolsPayoutSetupUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout setup is temporarily unavailable. Please try again or contact support.'**
+  String get toolsPayoutSetupUnavailable;
+
   /// No description provided for @toolsLeadCredits.
   ///
   /// In en, this message translates to:

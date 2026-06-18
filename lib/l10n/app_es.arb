@@ -313,6 +313,7 @@
   "toolsReviewPayoutSetup": "Revisar configuración de pagos",
   "toolsPayoutSetupReason": "Necesario para recibir pagos de depósito seguro y facturas.",
   "toolsPayoutSetupOpenFailed": "No se pudo abrir la configuración de pagos. Inténtalo de nuevo.",
+  "toolsPayoutSetupUnavailable": "La configuración de pagos no está disponible temporalmente. Inténtalo de nuevo o contacta a soporte.",
   "toolsLeadCredits": "{count} créditos de leads",
   "toolsProActive": "Pro activo",
   "toolsProLocked": "Pro bloqueado",

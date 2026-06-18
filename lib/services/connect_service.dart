@@ -20,7 +20,10 @@ class ConnectService {
         throw Exception('Invalid onboarding URL');
       }
 
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      var ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      }
       if (!ok) {
         throw Exception('Could not open onboarding link');
       }

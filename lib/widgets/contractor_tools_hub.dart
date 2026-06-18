@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:go_router/go_router.dart';
 
 import '../constants/service_types.dart';
@@ -106,12 +107,37 @@ class ContractorToolsHub extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     try {
       await ConnectService().startOnboarding();
-    } catch (_) {
+    } catch (e) {
       if (!context.mounted) return;
+      final details = _payoutSetupErrorDetails(e, l10n);
+      final message = details.isEmpty
+          ? l10n.toolsPayoutSetupOpenFailed
+          : details == l10n.toolsPayoutSetupUnavailable
+          ? details
+          : '${l10n.toolsPayoutSetupOpenFailed} $details';
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.toolsPayoutSetupOpenFailed)));
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+
+  String _payoutSetupErrorDetails(Object error, AppLocalizations l10n) {
+    if (error is FirebaseFunctionsException) {
+      final message = (error.message ?? '').trim();
+      if (error.code == 'internal' || message.toUpperCase() == 'INTERNAL') {
+        return l10n.toolsPayoutSetupUnavailable;
+      }
+      if (message.isNotEmpty) return message;
+      return error.code.trim();
+    }
+    final text = error.toString().trim();
+    final normalized = text
+        .replaceFirst(RegExp(r'^Exception:\s*'), '')
+        .replaceFirst(RegExp(r'^FirebaseFunctionsException\s*:\s*'), '');
+    if (normalized.toUpperCase() == 'INTERNAL') {
+      return l10n.toolsPayoutSetupUnavailable;
+    }
+    return normalized;
   }
 
   Future<void> _openTool(BuildContext context, _ToolAction tool) async {

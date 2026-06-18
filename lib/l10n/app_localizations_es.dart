@@ -1035,6 +1035,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo abrir la configuración de pagos. Inténtalo de nuevo.';
 
   @override
+  String get toolsPayoutSetupUnavailable =>
+      'La configuración de pagos no está disponible temporalmente. Inténtalo de nuevo o contacta a soporte.';
+
+  @override
   String toolsLeadCredits(int count) {
     return '$count créditos de leads';
   }

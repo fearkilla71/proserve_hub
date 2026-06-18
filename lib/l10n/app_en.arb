@@ -552,6 +552,7 @@
   "toolsReviewPayoutSetup": "Review payout setup",
   "toolsPayoutSetupReason": "Required before you can receive escrow payouts and invoice payments.",
   "toolsPayoutSetupOpenFailed": "Could not open payout setup. Try again.",
+  "toolsPayoutSetupUnavailable": "Payout setup is temporarily unavailable. Please try again or contact support.",
   "toolsLeadCredits": "{count} lead credits",
   "@toolsLeadCredits": { "placeholders": { "count": { "type": "int" } } },
   "toolsProActive": "Pro active",
