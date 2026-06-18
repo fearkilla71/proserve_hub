@@ -3080,6 +3080,108 @@ abstract class AppLocalizations {
   /// **'Inspector'**
   String get contractorHomeToolInspector;
 
+  /// No description provided for @contractorHomeToolsBasicSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketplace tools available. Upgrade for estimating and invoicing.'**
+  String get contractorHomeToolsBasicSubtitle;
+
+  /// No description provided for @contractorHomeToolsProSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate, invoice, render, and manage jobs faster.'**
+  String get contractorHomeToolsProSubtitle;
+
+  /// No description provided for @contractorHomeToolsEnterpriseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations tools for crews, bids, quality, and multi-location growth.'**
+  String get contractorHomeToolsEnterpriseSubtitle;
+
+  /// No description provided for @contractorHomeToolBrowseLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Leads'**
+  String get contractorHomeToolBrowseLeads;
+
+  /// No description provided for @contractorHomeToolSubmitQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Quote'**
+  String get contractorHomeToolSubmitQuote;
+
+  /// No description provided for @contractorHomeToolBuyCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy Credits'**
+  String get contractorHomeToolBuyCredits;
+
+  /// No description provided for @contractorHomeToolCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get contractorHomeToolCommunity;
+
+  /// No description provided for @contractorHomeToolVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get contractorHomeToolVerify;
+
+  /// No description provided for @contractorHomeToolUpgradePro.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade Pro'**
+  String get contractorHomeToolUpgradePro;
+
+  /// No description provided for @contractorHomeToolPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get contractorHomeToolPricing;
+
+  /// No description provided for @contractorHomeToolSavedEstimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimates'**
+  String get contractorHomeToolSavedEstimates;
+
+  /// No description provided for @contractorHomeToolRender.
+  ///
+  /// In en, this message translates to:
+  /// **'Render'**
+  String get contractorHomeToolRender;
+
+  /// No description provided for @contractorHomeToolInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get contractorHomeToolInvoices;
+
+  /// No description provided for @contractorHomeToolSmartSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduler'**
+  String get contractorHomeToolSmartSchedule;
+
+  /// No description provided for @contractorHomeToolMultiLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Locations'**
+  String get contractorHomeToolMultiLocation;
+
+  /// No description provided for @contractorHomeToolSubMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub Market'**
+  String get contractorHomeToolSubMarket;
+
+  /// No description provided for @contractorHomeToolPaymentLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Links'**
+  String get contractorHomeToolPaymentLinks;
+
   /// No description provided for @contractorHomeReviews.
   ///
   /// In en, this message translates to:

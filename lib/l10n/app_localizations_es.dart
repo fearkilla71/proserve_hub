@@ -1692,6 +1692,60 @@ class AppLocalizationsEs extends AppLocalizations {
   String get contractorHomeToolInspector => 'Inspector';
 
   @override
+  String get contractorHomeToolsBasicSubtitle =>
+      'Herramientas de marketplace disponibles. Mejora para estimar y facturar.';
+
+  @override
+  String get contractorHomeToolsProSubtitle =>
+      'Estima, factura, crea renders y gestiona trabajos más rápido.';
+
+  @override
+  String get contractorHomeToolsEnterpriseSubtitle =>
+      'Operaciones para equipos, cotizaciones, calidad y crecimiento multiubicación.';
+
+  @override
+  String get contractorHomeToolBrowseLeads => 'Ver leads';
+
+  @override
+  String get contractorHomeToolSubmitQuote => 'Enviar cotización';
+
+  @override
+  String get contractorHomeToolBuyCredits => 'Comprar créditos';
+
+  @override
+  String get contractorHomeToolCommunity => 'Comunidad';
+
+  @override
+  String get contractorHomeToolVerify => 'Verificar';
+
+  @override
+  String get contractorHomeToolUpgradePro => 'Mejorar Pro';
+
+  @override
+  String get contractorHomeToolPricing => 'Precios';
+
+  @override
+  String get contractorHomeToolSavedEstimates => 'Estimados';
+
+  @override
+  String get contractorHomeToolRender => 'Render';
+
+  @override
+  String get contractorHomeToolInvoices => 'Facturas';
+
+  @override
+  String get contractorHomeToolSmartSchedule => 'Agenda';
+
+  @override
+  String get contractorHomeToolMultiLocation => 'Ubicaciones';
+
+  @override
+  String get contractorHomeToolSubMarket => 'Submercado';
+
+  @override
+  String get contractorHomeToolPaymentLinks => 'Links de pago';
+
+  @override
   String contractorHomeReviews(int count) {
     return '$count reseñas';
   }

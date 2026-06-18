@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/intl.dart';
 
 import 'contractor_login_page.dart';
@@ -11,8 +12,10 @@ import 'community_feed_screen.dart';
 import 'job_feed_page.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/lead_iap_service.dart';
 import '../services/fcm_service.dart';
 import '../services/escrow_service.dart';
+import '../services/stripe_service.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/page_header.dart';
 import '../theme/proserve_theme.dart';
@@ -23,6 +26,7 @@ import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/contractor_tools_hub.dart';
 import '../widgets/tools_quick_actions_sheet.dart';
 import '../widgets/contractor_account_summary_card.dart';
+import '../widgets/lead_pack_purchase_sheet.dart';
 import '../widgets/proserve_refined_ui.dart';
 import '../models/escrow_booking.dart';
 import 'onboarding_screen.dart';
@@ -225,6 +229,228 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     );
   }
 
+  Future<void> _buyLeadCredits() async {
+    final chosen = await showLeadPackPurchaseSheet(context);
+    if (chosen == null || chosen.trim().isEmpty) return;
+
+    if (LeadIapService.supported && LeadIapService.isIapPack(chosen)) {
+      try {
+        final iap = LeadIapService.instance;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Opening store...'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        void handleUpdate(PurchaseDetails purchase) {
+          if (!mounted) return;
+          if (purchase.status == PurchaseStatus.purchased ||
+              purchase.status == PurchaseStatus.restored) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Lead credits added!')),
+            );
+            iap.onPurchaseUpdate = null;
+          } else if (purchase.status == PurchaseStatus.error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(purchase.error?.message ?? 'Purchase failed'),
+              ),
+            );
+            iap.onPurchaseUpdate = null;
+          } else if (purchase.status == PurchaseStatus.canceled) {
+            iap.onPurchaseUpdate = null;
+          }
+        }
+
+        iap.onPurchaseUpdate = handleUpdate;
+        await iap.buy(chosen);
+      } catch (e) {
+        if (!mounted) return;
+        final message = e.toString().replaceFirst('Exception: ', '').trim();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+      return;
+    }
+
+    try {
+      await StripeService().buyLeadPack(packId: chosen);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Complete checkout to add lead credits.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '').trim();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  String _homeToolsSubtitle(AppLocalizations l10n, String tier) {
+    return switch (tier) {
+      'enterprise' => l10n.contractorHomeToolsEnterpriseSubtitle,
+      'pro' => l10n.contractorHomeToolsProSubtitle,
+      _ => l10n.contractorHomeToolsBasicSubtitle,
+    };
+  }
+
+  List<_DashboardTool> _homeToolsForTier(
+    BuildContext context,
+    AppLocalizations l10n,
+    String tier,
+  ) {
+    if (tier == 'enterprise') {
+      return [
+        _DashboardTool(
+          label: l10n.contractorHomeToolBidAnalyzer,
+          icon: Icons.analytics_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/bid-analyzer'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolSmartSchedule,
+          icon: Icons.event_available_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/smart-scheduling'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolInspector,
+          icon: Icons.camera_enhance_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/quality-inspector'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolMultiLocation,
+          icon: Icons.dashboard_customize_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/multi-location-dashboard'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolSubMarket,
+          icon: Icons.storefront_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/sub-marketplace'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolPaymentLinks,
+          icon: Icons.payments_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/invoice-maker'),
+          ),
+        ),
+      ];
+    }
+
+    if (tier == 'pro') {
+      return [
+        _DashboardTool(
+          label: l10n.contractorHomeToolPricing,
+          icon: Icons.request_quote_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/pricing-calculator'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.invoice,
+          icon: Icons.receipt_long_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/invoice-maker'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolEstimator,
+          icon: Icons.calculate_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/cost-estimator/painting'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolSavedEstimates,
+          icon: Icons.folder_copy_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/saved-estimates'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolRender,
+          icon: Icons.palette_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/render-tool'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolInvoices,
+          icon: Icons.folder_open_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/invoice-drafts'),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      _DashboardTool(
+        label: l10n.contractorHomeToolBrowseLeads,
+        icon: Icons.local_activity_outlined,
+        color: ProServeColors.accent2,
+        onTap: () => setState(() => _tabIndex = 1),
+      ),
+      _DashboardTool(
+        label: l10n.contractorHomeToolSubmitQuote,
+        icon: Icons.description_outlined,
+        color: ProServeColors.accent2,
+        onTap: () => setState(() => _tabIndex = 1),
+      ),
+      _DashboardTool(
+        label: l10n.contractorHomeToolBuyCredits,
+        icon: Icons.confirmation_number_outlined,
+        color: ProServeColors.accent,
+        onTap: _buyLeadCredits,
+      ),
+      _DashboardTool(
+        label: l10n.contractorHomeToolCommunity,
+        icon: Icons.forum_outlined,
+        color: ProServeColors.accent2,
+        onTap: () => setState(() => _tabIndex = 4),
+      ),
+      _DashboardTool(
+        label: l10n.contractorHomeToolVerify,
+        icon: Icons.verified_user_outlined,
+        color: ProServeColors.warning,
+        onTap: () => context.push('/contractor-profile-settings'),
+      ),
+      _DashboardTool(
+        label: l10n.contractorHomeToolUpgradePro,
+        icon: Icons.workspace_premium_outlined,
+        color: ProServeColors.accent,
+        onTap: () => context.push('/contractor-subscription'),
+      ),
+    ];
+  }
+
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).padding.bottom;
@@ -402,6 +628,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           .snapshots(),
       builder: (context, snap) {
         final data = snap.data?.data();
+        final subscriptionTier = effectiveSubscriptionTier(data);
         final rawName = (data?['name'] as String?)?.trim() ?? '';
         final fallback = (user.email ?? '').split('@').first.trim();
         final name = rawName.isNotEmpty
@@ -444,53 +671,13 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
               const SizedBox(height: 18),
               _DashboardSectionHeader(
                 title: l10n.tools,
+                subtitle: _homeToolsSubtitle(l10n, subscriptionTier),
                 actionLabel: l10n.contractorHomeViewAll,
                 onAction: () => setState(() => _tabIndex = 3),
               ),
               const SizedBox(height: 10),
               _ContractorToolGrid(
-                tools: [
-                  _DashboardTool(
-                    label: l10n.contractorHomeToolQuote,
-                    icon: Icons.description_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => context.push('/pricing-calculator'),
-                  ),
-                  _DashboardTool(
-                    label: l10n.invoice,
-                    icon: Icons.receipt_long_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => context.push('/invoice-maker'),
-                  ),
-                  _DashboardTool(
-                    label: l10n.contractorHomeToolEstimator,
-                    icon: Icons.calculate_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => context.push('/cost-estimator/painting'),
-                  ),
-                  _DashboardTool(
-                    label: l10n.contractorHomeToolScheduler,
-                    icon: Icons.calendar_month_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => context.push('/availability-calendar'),
-                  ),
-                  _DashboardTool(
-                    label: l10n.contractorHomeToolBidAnalyzer,
-                    icon: Icons.query_stats_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => _openEnterpriseToolOrSubscribe(
-                      open: () async => context.push('/bid-analyzer'),
-                    ),
-                  ),
-                  _DashboardTool(
-                    label: l10n.contractorHomeToolInspector,
-                    icon: Icons.shield_outlined,
-                    color: ProServeColors.accent2,
-                    onTap: () => _openEnterpriseToolOrSubscribe(
-                      open: () async => context.push('/quality-inspector'),
-                    ),
-                  ),
-                ],
+                tools: _homeToolsForTier(context, l10n, subscriptionTier),
               ),
               const SizedBox(height: 18),
               _DashboardSectionHeader(
@@ -1188,24 +1375,44 @@ class _DashboardStatusCard extends StatelessWidget {
 class _DashboardSectionHeader extends StatelessWidget {
   const _DashboardSectionHeader({
     required this.title,
+    this.subtitle,
     required this.actionLabel,
     required this.onAction,
   });
 
   final String title;
+  final String? subtitle;
   final String actionLabel;
   final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: ProServeColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         TextButton(onPressed: onAction, child: Text(actionLabel)),
