@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import 'contractor_login_page.dart';
 import 'community_feed_screen.dart';
+import 'job_feed_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/fcm_service.dart';
@@ -264,8 +265,8 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             label: l10n.home,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.search_outlined),
-            selectedIcon: const Icon(Icons.search),
+            icon: const Icon(Icons.local_activity_outlined),
+            selectedIcon: const Icon(Icons.local_activity),
             label: l10n.jobs,
           ),
           NavigationDestination(
@@ -506,147 +507,6 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     );
   }
 
-  /// Combines two state-level streams (claimedBy + paidBy) into a single
-  /// merged list. Streams are created once in [initState] so they are never
-  /// recreated on rebuild, which prevents the flash/flicker issue.
-  Widget _buildClaimedJobsList(String uid) {
-    final l10n = AppLocalizations.of(context)!;
-    if (_claimedStream == null || _paidStream == null) {
-      return AnimatedStateSwitcher(
-        stateKey: 'claimed_empty',
-        child: EmptyStateCard(
-          icon: Icons.work_outline,
-          title: l10n.contractorPortalNoClaimedJobs,
-          subtitle: l10n.contractorPortalNoClaimedJobsSubtitle,
-        ),
-      );
-    }
-
-    // Use a combined stream so both queries are stable references.
-    final combined = _combinedJobStream(_claimedStream!, _paidStream!);
-
-    return StreamBuilder<List<QueryDocumentSnapshot>>(
-      stream: combined,
-      builder: (context, snap) {
-        if (snap.hasError) {
-          debugPrint('[Jobs] combined stream error: ${snap.error}');
-          return AnimatedStateSwitcher(
-            stateKey: 'claimed_error',
-            child: EmptyStateCard(
-              icon: Icons.error_outline,
-              title: l10n.contractorPortalCouldNotLoadJobs,
-              subtitle: l10n.checkConnectionTryAgain,
-            ),
-          );
-        }
-
-        if (!snap.hasData) {
-          return AnimatedStateSwitcher(
-            stateKey: 'claimed_loading',
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: const [
-                    ListTileSkeleton(),
-                    Divider(height: 1),
-                    ListTileSkeleton(),
-                    Divider(height: 1),
-                    ListTileSkeleton(),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-
-        final docs = snap.data!;
-        if (docs.isEmpty) {
-          return AnimatedStateSwitcher(
-            stateKey: 'claimed_empty',
-            child: EmptyStateCard(
-              icon: Icons.work_outline,
-              title: l10n.contractorPortalNoClaimedJobs,
-              subtitle: l10n.contractorPortalNoClaimedJobsSubtitle,
-            ),
-          );
-        }
-
-        return AnimatedStateSwitcher(
-          stateKey: 'claimed_list_${docs.length}',
-          child: Column(
-            children: docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final service = (data['service'] ?? l10n.service).toString();
-              final location = (data['location'] ?? l10n.unknown).toString();
-              final claimedAt = formatTimestamp(data['claimedAt']);
-              final createdAt = formatTimestamp(data['createdAt']);
-
-              final subtitleParts = <String>[];
-              subtitleParts.add(l10n.contractorPortalLocationLabel(location));
-              if (claimedAt.isNotEmpty) {
-                subtitleParts.add(l10n.contractorPortalClaimedLabel(claimedAt));
-              }
-              if (claimedAt.isEmpty && createdAt.isNotEmpty) {
-                subtitleParts.add(l10n.contractorPortalCreatedLabel(createdAt));
-              }
-
-              final isEscrow =
-                  data['instantBook'] == true ||
-                  (data['escrowId'] ?? '').toString().isNotEmpty;
-
-              return Card(
-                child: ListTile(
-                  leading: isEscrow
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                ProServeColors.accent,
-                                ProServeColors.accent.withValues(alpha: 0.7),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.shield_outlined,
-                                size: 12,
-                                color: Colors.black87,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                l10n.escrow,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : null,
-                  title: Text(service),
-                  subtitle: Text(subtitleParts.join('\n')),
-                  onTap: () {
-                    context.push('/job-command/${doc.id}');
-                  },
-                ),
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
   /// Merges two Firestore query streams into a single de-duplicated,
   /// sorted list. Emits whenever either source stream emits.
   Stream<List<QueryDocumentSnapshot>> _combinedJobStream(
@@ -729,32 +589,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     if (user == null) {
       return Center(child: Text(l10n.signInRequired));
     }
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      children: [
-        PageHeader(
-          title: l10n.jobs,
-          subtitle: l10n.contractorPortalJobsSubtitle,
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-        ),
-        Text(
-          l10n.contractorPortalMyClaimedJobs,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 10),
-        _buildClaimedJobsList(user.uid),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.tonal(
-            onPressed: () {
-              context.push('/job-feed');
-            },
-            child: Text(l10n.contractorPortalBrowseJobs),
-          ),
-        ),
-      ],
-    );
+    return const JobFeedPage();
   }
 
   Widget _buildToolsTab(BuildContext context) {

@@ -431,7 +431,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   child: Icon(
                     hasFilters
                         ? Icons.filter_alt_outlined
-                        : Icons.travel_explore_outlined,
+                        : Icons.local_activity_outlined,
                     color: scheme.onPrimaryContainer,
                   ),
                 ),
@@ -1350,7 +1350,48 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           if (!snap.hasData) return const SizedBox.shrink();
 
           final docs = snap.data!.docs.toList();
-          if (docs.isEmpty) return const SizedBox.shrink();
+          if (docs.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: ProServeColors.accent.withValues(
+                          alpha: 0.12,
+                        ),
+                        child: const Icon(
+                          Icons.local_activity_outlined,
+                          color: ProServeColors.accent,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'No claimed jobs yet',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Unlocked and accepted leads will appear here as you start conversations.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
 
           // Sort newest first client-side.
           docs.sort((a, b) {
@@ -1372,7 +1413,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'My unlocked leads',
+                      'My claimed jobs',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -1388,7 +1429,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                               .toString();
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.lock_open),
+                            leading: const Icon(
+                              Icons.local_activity_outlined,
+                              color: ProServeColors.accent,
+                            ),
                             title: Text(service),
                             subtitle: Text(location),
                             trailing: const Icon(Icons.chevron_right),
@@ -1409,7 +1453,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Available Leads'),
+        title: const Text('Jobs'),
         actions: [
           if (user != null)
             StreamBuilder<DocumentSnapshot>(
@@ -1443,7 +1487,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.group_outlined,
+                            Icons.local_activity_outlined,
                             size: 14,
                             color: Theme.of(
                               context,
