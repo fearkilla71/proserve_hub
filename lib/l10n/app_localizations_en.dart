@@ -1610,6 +1610,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contractorPortalWelcomeFallback => 'there';
 
   @override
+  String get contractorHomeToday => 'Today';
+
+  @override
+  String get contractorHomeViewAll => 'View all';
+
+  @override
+  String get contractorHomeNewLeads => 'New leads';
+
+  @override
+  String contractorHomeActiveCount(int count) {
+    return '$count Active';
+  }
+
+  @override
+  String get contractorHomePayouts => 'Payouts';
+
+  @override
+  String get contractorHomeNextPayout => 'Next payout';
+
+  @override
+  String get contractorHomePayoutReady => 'Ready';
+
+  @override
+  String get contractorHomePayoutPending => 'Pending';
+
+  @override
+  String get contractorHomePayoutSetup => 'Setup';
+
+  @override
+  String get contractorHomePayoutUnderReview => 'Under review';
+
+  @override
+  String get contractorHomeVerifyTitle => 'Verify account';
+
+  @override
+  String get contractorHomeVerifySubtitle =>
+      'Finish verification to build trust';
+
+  @override
+  String get contractorHomeAccountAllGood => 'Account status all good';
+
+  @override
+  String get contractorHomeCompleteSetup => 'Complete setup';
+
+  @override
+  String get contractorHomeToolQuote => 'Quote';
+
+  @override
+  String get contractorHomeToolEstimator => 'Estimator';
+
+  @override
+  String get contractorHomeToolScheduler => 'Scheduler';
+
+  @override
+  String get contractorHomeToolBidAnalyzer => 'Bid Analyzer';
+
+  @override
+  String get contractorHomeToolInspector => 'Inspector';
+
+  @override
+  String contractorHomeReviews(int count) {
+    return '$count reviews';
+  }
+
+  @override
+  String get contractorHomeNoReviews => 'No reviews';
+
+  @override
+  String contractorHomeYears(int count) {
+    return '$count yrs';
+  }
+
+  @override
+  String get contractorHomeExperience => 'Experience';
+
+  @override
+  String get contractorHomeTier => 'Tier';
+
+  @override
   String get contractorPortalProRequiredTitle => 'Contractor Pro required';
 
   @override

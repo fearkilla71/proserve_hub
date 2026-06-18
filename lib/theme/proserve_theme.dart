@@ -293,14 +293,18 @@ class ProServeTheme {
 
       // Bottom navigation
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: ProServeColors.bgDeep.withValues(alpha: 0.9),
-        indicatorColor: ProServeColors.accent.withValues(alpha: 0.15),
+        height: 70,
+        backgroundColor: ProServeColors.bgDeep.withValues(alpha: 0.96),
+        indicatorColor: ProServeColors.accent.withValues(alpha: 0.16),
         surfaceTintColor: Colors.transparent,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: ProServeColors.accent);
+            return const IconThemeData(color: ProServeColors.accent, size: 25);
           }
-          return const IconThemeData(color: ProServeColors.muted);
+          return IconThemeData(
+            color: ProServeColors.muted.withValues(alpha: 0.82),
+            size: 23,
+          );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -319,11 +323,14 @@ class ProServeTheme {
       ),
 
       // Floating action button
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: ProServeColors.accent,
-        foregroundColor: Color(0xFF041016),
-        elevation: 4,
-        shape: CircleBorder(),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ProServeColors.accent2,
+        foregroundColor: const Color(0xFF041016),
+        elevation: 2,
+        focusElevation: 2,
+        hoverElevation: 3,
+        highlightElevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
 
       // Chips

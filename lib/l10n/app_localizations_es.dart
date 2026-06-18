@@ -1624,6 +1624,85 @@ class AppLocalizationsEs extends AppLocalizations {
   String get contractorPortalWelcomeFallback => 'ahí';
 
   @override
+  String get contractorHomeToday => 'Hoy';
+
+  @override
+  String get contractorHomeViewAll => 'Ver todo';
+
+  @override
+  String get contractorHomeNewLeads => 'Leads nuevos';
+
+  @override
+  String contractorHomeActiveCount(int count) {
+    return '$count activos';
+  }
+
+  @override
+  String get contractorHomePayouts => 'Cobros';
+
+  @override
+  String get contractorHomeNextPayout => 'Próximo cobro';
+
+  @override
+  String get contractorHomePayoutReady => 'Listo';
+
+  @override
+  String get contractorHomePayoutPending => 'Pendiente';
+
+  @override
+  String get contractorHomePayoutSetup => 'Configurar';
+
+  @override
+  String get contractorHomePayoutUnderReview => 'En revisión';
+
+  @override
+  String get contractorHomeVerifyTitle => 'Verificar cuenta';
+
+  @override
+  String get contractorHomeVerifySubtitle =>
+      'Termina la verificación para generar confianza';
+
+  @override
+  String get contractorHomeAccountAllGood => 'Estado de cuenta correcto';
+
+  @override
+  String get contractorHomeCompleteSetup => 'Completar perfil';
+
+  @override
+  String get contractorHomeToolQuote => 'Cotización';
+
+  @override
+  String get contractorHomeToolEstimator => 'Estimador';
+
+  @override
+  String get contractorHomeToolScheduler => 'Agenda';
+
+  @override
+  String get contractorHomeToolBidAnalyzer => 'Analizador';
+
+  @override
+  String get contractorHomeToolInspector => 'Inspector';
+
+  @override
+  String contractorHomeReviews(int count) {
+    return '$count reseñas';
+  }
+
+  @override
+  String get contractorHomeNoReviews => 'Sin reseñas';
+
+  @override
+  String contractorHomeYears(int count) {
+    return '$count años';
+  }
+
+  @override
+  String get contractorHomeExperience => 'Experiencia';
+
+  @override
+  String get contractorHomeTier => 'Nivel';
+
+  @override
   String get contractorPortalProRequiredTitle => 'Contractor Pro requerido';
 
   @override

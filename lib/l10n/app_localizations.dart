@@ -2954,6 +2954,150 @@ abstract class AppLocalizations {
   /// **'there'**
   String get contractorPortalWelcomeFallback;
 
+  /// No description provided for @contractorHomeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get contractorHomeToday;
+
+  /// No description provided for @contractorHomeViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get contractorHomeViewAll;
+
+  /// No description provided for @contractorHomeNewLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'New leads'**
+  String get contractorHomeNewLeads;
+
+  /// No description provided for @contractorHomeActiveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Active'**
+  String contractorHomeActiveCount(int count);
+
+  /// No description provided for @contractorHomePayouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts'**
+  String get contractorHomePayouts;
+
+  /// No description provided for @contractorHomeNextPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Next payout'**
+  String get contractorHomeNextPayout;
+
+  /// No description provided for @contractorHomePayoutReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get contractorHomePayoutReady;
+
+  /// No description provided for @contractorHomePayoutPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get contractorHomePayoutPending;
+
+  /// No description provided for @contractorHomePayoutSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get contractorHomePayoutSetup;
+
+  /// No description provided for @contractorHomePayoutUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get contractorHomePayoutUnderReview;
+
+  /// No description provided for @contractorHomeVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify account'**
+  String get contractorHomeVerifyTitle;
+
+  /// No description provided for @contractorHomeVerifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish verification to build trust'**
+  String get contractorHomeVerifySubtitle;
+
+  /// No description provided for @contractorHomeAccountAllGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Account status all good'**
+  String get contractorHomeAccountAllGood;
+
+  /// No description provided for @contractorHomeCompleteSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete setup'**
+  String get contractorHomeCompleteSetup;
+
+  /// No description provided for @contractorHomeToolQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get contractorHomeToolQuote;
+
+  /// No description provided for @contractorHomeToolEstimator.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimator'**
+  String get contractorHomeToolEstimator;
+
+  /// No description provided for @contractorHomeToolScheduler.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduler'**
+  String get contractorHomeToolScheduler;
+
+  /// No description provided for @contractorHomeToolBidAnalyzer.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid Analyzer'**
+  String get contractorHomeToolBidAnalyzer;
+
+  /// No description provided for @contractorHomeToolInspector.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspector'**
+  String get contractorHomeToolInspector;
+
+  /// No description provided for @contractorHomeReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reviews'**
+  String contractorHomeReviews(int count);
+
+  /// No description provided for @contractorHomeNoReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews'**
+  String get contractorHomeNoReviews;
+
+  /// No description provided for @contractorHomeYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} yrs'**
+  String contractorHomeYears(int count);
+
+  /// No description provided for @contractorHomeExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience'**
+  String get contractorHomeExperience;
+
+  /// No description provided for @contractorHomeTier.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier'**
+  String get contractorHomeTier;
+
   /// No description provided for @contractorPortalProRequiredTitle.
   ///
   /// In en, this message translates to:
