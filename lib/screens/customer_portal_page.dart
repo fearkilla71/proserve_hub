@@ -241,23 +241,17 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
     final l10n = AppLocalizations.of(context)!;
-    const navHeight = 80.0;
-    final contentBottomPadding = navHeight + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
           SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: contentBottomPadding),
-              child: child,
-            ),
+            child: child,
           ),
           Positioned(
             left: 0,
             right: 0,
-            bottom: navHeight + bottomInset,
+            bottom: 0,
             child: const PersistentJobStateBar(role: JobBarRole.customer),
           ),
         ],
@@ -270,6 +264,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
+        height: 76,
+        backgroundColor: ProServeColors.bgDeep,
+        surfaceTintColor: Colors.transparent,
         selectedIndex: _tabIndex,
         onDestinationSelected: (i) => setState(() => _tabIndex = i),
         destinations: [
@@ -1052,15 +1049,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         return PopScope(
           canPop: false,
           child: _tabScaffold(
-            fab: _tabIndex == 0
-                ? FloatingActionButton(
-                    tooltip: l10n.messages,
-                    onPressed: () {
-                      context.push('/conversations');
-                    },
-                    child: const Icon(Icons.mail_outline),
-                  )
-                : null,
             child: IndexedStack(
               index: _tabIndex,
               children: [
