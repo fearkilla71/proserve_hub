@@ -244,8 +244,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final l10n = AppLocalizations.of(context)!;
     const navHeight = 80.0;
-    const persistentBarReserve = 92.0;
-    final contentBottomPadding = navHeight + persistentBarReserve + bottomInset;
+    final contentBottomPadding = navHeight + bottomInset;
     return Scaffold(
       body: Stack(
         children: [
@@ -266,7 +265,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
       floatingActionButton: fab == null
           ? null
           : Padding(
-              padding: EdgeInsets.only(bottom: persistentBarReserve),
+              padding: const EdgeInsets.only(bottom: 8),
               child: fab,
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
