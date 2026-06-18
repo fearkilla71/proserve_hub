@@ -1285,7 +1285,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       function validStatus(s) {
-        return s is string && s in ['active', 'removed'];
+        return s is string && s in ['active', 'hidden', 'removed'];
+      }
+
+      function isCommunityPostAuthor(postId) {
+        return isSignedIn()
+          && exists(/databases/$(database)/documents/community_posts/$(postId))
+          && get(/databases/$(database)/documents/community_posts/$(postId)).data.authorId == request.auth.uid;
       }
 
       allow create: if isSignedIn()
@@ -1343,7 +1349,7 @@ service cloud.firestore {
         allow update: if isAdmin();
         allow delete: if isAdmin() || (
           isSignedIn() && resource.data.authorId == request.auth.uid
-        );
+        ) || isCommunityPostAuthor(postId);
       }
 
       match /likes/{likeId} {
@@ -1354,7 +1360,8 @@ service cloud.firestore {
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.createdAt is timestamp;
 
-        allow delete: if isSignedIn() && likeId == request.auth.uid;
+        allow delete: if (isSignedIn() && likeId == request.auth.uid)
+          || isCommunityPostAuthor(postId);
 
         allow update: if false;
       }

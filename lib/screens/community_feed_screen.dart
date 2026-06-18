@@ -625,7 +625,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     await _postsRef.doc(postId).update({'moderationStatus': status});
   }
 
-  Future<void> _deletePost(String postId) async {
+  Future<void> _deletePost(String postId, {required bool isAdmin}) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -646,7 +646,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     if (!mounted || confirmed != true) return;
 
     try {
-      // Delete subcollections first (comments, likes, reports)
+      // Delete visible child docs first. Reports stay admin-readable only, so
+      // regular post authors do not list reporter details during cleanup.
       final batch = FirebaseFirestore.instance.batch();
       final comments = await _postsRef.doc(postId).collection('comments').get();
       for (final c in comments.docs) {
@@ -656,9 +657,11 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       for (final l in likes.docs) {
         batch.delete(l.reference);
       }
-      final reports = await _postsRef.doc(postId).collection('reports').get();
-      for (final r in reports.docs) {
-        batch.delete(r.reference);
+      if (isAdmin) {
+        final reports = await _postsRef.doc(postId).collection('reports').get();
+        for (final r in reports.docs) {
+          batch.delete(r.reference);
+        }
       }
       await batch.commit();
 
@@ -1361,7 +1364,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       _reportPost(doc.id);
                     }
                     if (value == 'delete') {
-                      _deletePost(doc.id);
+                      _deletePost(doc.id, isAdmin: isAdmin);
                     }
                     if (value == 'hide') {
                       _setModerationStatus(doc.id, 'removed');

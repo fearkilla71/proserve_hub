@@ -404,6 +404,75 @@ describe('Firestore user security rules', () => {
     }));
   });
 
+  it('allows community post authors to delete their post cleanup docs without reading reports', async () => {
+    await seed(['users', 'authorA'], { uid: 'authorA', role: 'contractor' });
+    await seed(['users', 'memberB'], { uid: 'memberB', role: 'contractor' });
+    await seed(['community_posts', 'postA'], {
+      authorId: 'authorA',
+      authorName: 'Author A',
+      authorRole: 'contractor',
+      caption: 'Finished project',
+      mediaUrls: [],
+      likeCount: 1,
+      reportCount: 1,
+      moderationStatus: 'active',
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA', 'comments', 'commentB'], {
+      authorId: 'memberB',
+      authorName: 'Member B',
+      authorRole: 'contractor',
+      text: 'Looks good',
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA', 'likes', 'memberB'], {
+      userId: 'memberB',
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA', 'reports', 'reportB'], {
+      authorId: 'memberB',
+      reason: 'Other',
+      details: 'Needs review',
+      createdAt: new Date(),
+    });
+
+    await assertSucceeds(deleteDoc(doc(db('authorA'), 'community_posts/postA/comments/commentB')));
+    await assertSucceeds(deleteDoc(doc(db('authorA'), 'community_posts/postA/likes/memberB')));
+    await assertFails(getDoc(doc(db('authorA'), 'community_posts/postA/reports/reportB')));
+    await assertSucceeds(deleteDoc(doc(db('authorA'), 'community_posts/postA')));
+  });
+
+  it('blocks unrelated users from deleting community post child docs', async () => {
+    await seed(['users', 'authorA'], { uid: 'authorA', role: 'contractor' });
+    await seed(['users', 'memberB'], { uid: 'memberB', role: 'contractor' });
+    await seed(['users', 'memberC'], { uid: 'memberC', role: 'contractor' });
+    await seed(['community_posts', 'postA'], {
+      authorId: 'authorA',
+      authorName: 'Author A',
+      authorRole: 'contractor',
+      caption: 'Finished project',
+      mediaUrls: [],
+      likeCount: 1,
+      reportCount: 0,
+      moderationStatus: 'active',
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA', 'comments', 'commentB'], {
+      authorId: 'memberB',
+      authorName: 'Member B',
+      authorRole: 'contractor',
+      text: 'Looks good',
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA', 'likes', 'memberB'], {
+      userId: 'memberB',
+      createdAt: new Date(),
+    });
+
+    await assertFails(deleteDoc(doc(db('memberC'), 'community_posts/postA/comments/commentB')));
+    await assertFails(deleteDoc(doc(db('memberC'), 'community_posts/postA/likes/memberB')));
+  });
+
   it('allows admins to inspect payment operations and review escrow records', async () => {
     await seed(['admins', 'adminA'], { role: 'operator' });
     await seed(['users', 'contractorA'], {
