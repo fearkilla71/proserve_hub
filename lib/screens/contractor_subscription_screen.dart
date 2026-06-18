@@ -10,7 +10,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/stripe_service.dart';
 import '../services/subscription_service.dart';
+import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
+import '../widgets/proserve_refined_ui.dart';
 
 class ContractorSubscriptionScreen extends StatefulWidget {
   const ContractorSubscriptionScreen({super.key});
@@ -375,10 +377,9 @@ class _ContractorSubscriptionScreenState
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              // Status card
-              Card(
+              ProServeSurfaceCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -391,9 +392,13 @@ class _ContractorSubscriptionScreenState
                                   ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                           ),
-                          Chip(
-                            label: Text(_tierName(l10n, currentTier)),
-                            visualDensity: VisualDensity.compact,
+                          ProServeStatusPill(
+                            label: _tierName(l10n, currentTier),
+                            icon: currentTier == 'enterprise'
+                                ? Icons.workspace_premium_outlined
+                                : currentTier == 'pro'
+                                ? Icons.verified_outlined
+                                : Icons.person_outline,
                           ),
                         ],
                       ),
@@ -424,26 +429,12 @@ class _ContractorSubscriptionScreenState
               const SizedBox(height: 16),
 
               if (_iapError != null) ...[
-                Card(
-                  color: scheme.errorContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _iapError!,
-                            style: TextStyle(color: scheme.onErrorContainer),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: _loadProducts,
-                          child: Text(l10n.retry),
-                        ),
-                      ],
-                    ),
-                  ),
+                ProServeNoticeBanner(
+                  message: _iapError!,
+                  actionLabel: l10n.retry,
+                  onAction: _loadProducts,
+                  icon: Icons.storefront_outlined,
+                  tone: ProServeNoticeTone.warning,
                 ),
                 const SizedBox(height: 12),
               ],
@@ -453,16 +444,11 @@ class _ContractorSubscriptionScreenState
                 final isActive = tier.id == currentTier;
                 final isUpgrade = _tierIndex(tier.id) > _tierIndex(currentTier);
 
-                return Card(
-                  shape: tier.recommended
-                      ? RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: scheme.primary, width: 2),
-                        )
-                      : null,
+                return ProServeSurfaceCard(
+                  highlight: tier.recommended,
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.zero,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -476,28 +462,16 @@ class _ContractorSubscriptionScreenState
                               ),
                             ),
                             if (tier.recommended)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: scheme.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  l10n.subscriptionPopular,
-                                  style: TextStyle(
-                                    color: scheme.onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11,
-                                  ),
-                                ),
+                              ProServeStatusPill(
+                                label: l10n.subscriptionPopular,
+                                icon: Icons.trending_up,
+                                color: ProServeColors.accent,
                               ),
                             if (isActive)
-                              Chip(
-                                label: Text(l10n.subscriptionCurrent),
-                                visualDensity: VisualDensity.compact,
+                              ProServeStatusPill(
+                                label: l10n.subscriptionCurrent,
+                                icon: Icons.check_circle_outline,
+                                color: ProServeColors.accent2,
                               ),
                           ],
                         ),
@@ -618,9 +592,9 @@ class _ContractorSubscriptionScreenState
                 ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 12),
-              Card(
+              ProServeSurfaceCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
