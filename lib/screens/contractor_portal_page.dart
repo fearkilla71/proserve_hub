@@ -22,6 +22,7 @@ import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/contractor_tools_hub.dart';
 import '../widgets/tools_quick_actions_sheet.dart';
 import '../widgets/contractor_account_summary_card.dart';
+import '../widgets/proserve_refined_ui.dart';
 import '../models/escrow_booking.dart';
 import 'onboarding_screen.dart';
 
@@ -785,6 +786,69 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     );
   }
 
+  List<Widget> _planActionRows(BuildContext context, String uid) {
+    final l10n = AppLocalizations.of(context)!;
+    final actions = <_PlanAction>[
+      _PlanAction(
+        icon: Icons.account_circle_outlined,
+        title: l10n.editProfile,
+        subtitle: l10n.updatePublicContractorInfo,
+        onTap: () => context.push('/customer-profile'),
+      ),
+      _PlanAction(
+        icon: Icons.verified_outlined,
+        title: l10n.getVerified,
+        subtitle: l10n.improveTrustWinMoreWork,
+        onTap: () => context.push('/verification'),
+      ),
+      _PlanAction(
+        icon: Icons.analytics_outlined,
+        title: l10n.analytics,
+        subtitle: l10n.contractorPortalTrackPerformance,
+        onTap: () => context.push('/contractor-analytics'),
+      ),
+      _PlanAction(
+        icon: Icons.calendar_month_outlined,
+        title: l10n.availability,
+        subtitle: l10n.keepScheduleUpToDate,
+        onTap: () => context.push('/availability-calendar'),
+      ),
+      _PlanAction(
+        icon: Icons.map_outlined,
+        title: l10n.serviceArea,
+        subtitle: l10n.controlWhereYouGetLeads,
+        onTap: () => context.push('/service-area'),
+      ),
+      _PlanAction(
+        icon: Icons.photo_library_outlined,
+        title: l10n.contractorPortalPortfolio,
+        subtitle: l10n.showcaseBestWork,
+        onTap: () =>
+            context.push('/portfolio/$uid', extra: {'isEditable': true}),
+      ),
+      _PlanAction(
+        icon: Icons.business_outlined,
+        title: l10n.businessProfile,
+        subtitle: l10n.manageCompanyDetails,
+        onTap: () => context.push('/business-profile'),
+      ),
+      _PlanAction(
+        icon: Icons.question_answer_outlined,
+        title: l10n.qAndA,
+        subtitle: l10n.answerCustomerQuestions,
+        onTap: () => context.push('/qanda/$uid', extra: {'isContractor': true}),
+      ),
+    ];
+
+    return [
+      for (var i = 0; i < actions.length; i++) ...[
+        _PlanActionRow(action: actions[i]),
+        if (i != actions.length - 1)
+          const Divider(height: 1, color: ProServeColors.line),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -857,30 +921,27 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                         if (isLoading) {
                           return const AnimatedStateSwitcher(
                             stateKey: 'plan_user_loading',
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SkeletonLoader(width: 160, height: 16),
-                                    SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: [
-                                        SkeletonLoader(width: 120, height: 28),
-                                        SkeletonLoader(width: 110, height: 28),
-                                        SkeletonLoader(width: 110, height: 28),
-                                      ],
-                                    ),
-                                    SizedBox(height: 16),
-                                    SkeletonLoader(
-                                      width: double.infinity,
-                                      height: 44,
-                                    ),
-                                  ],
-                                ),
+                            child: ProServeSurfaceCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonLoader(width: 160, height: 16),
+                                  SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      SkeletonLoader(width: 120, height: 28),
+                                      SkeletonLoader(width: 110, height: 28),
+                                      SkeletonLoader(width: 110, height: 28),
+                                    ],
+                                  ),
+                                  SizedBox(height: 16),
+                                  SkeletonLoader(
+                                    width: double.infinity,
+                                    height: 44,
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -909,185 +970,99 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                             ? l10n.approved
                             : l10n.pendingAdminApproval;
                         final statusTone = approved
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.tertiary;
+                            ? ProServeColors.accent
+                            : ProServeColors.warning;
 
                         final payoutsLabel = payoutsEnabled
                             ? l10n.payoutsConnected
                             : (detailsSubmitted
                                   ? l10n.payoutsPending
                                   : l10n.payoutsSetup);
+                        final payoutsTone = payoutsEnabled
+                            ? ProServeColors.accent
+                            : ProServeColors.warning;
 
                         return AnimatedStateSwitcher(
                           stateKey: 'plan_user_loaded',
                           child: Column(
                             children: [
-                              Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              l10n.accountOverview,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                            ),
+                              ProServeSurfaceCard(
+                                highlight: approved,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            l10n.accountOverview,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w900,
+                                                ),
                                           ),
-                                          Icon(
-                                            approved
-                                                ? Icons.verified
-                                                : Icons.pending_actions,
-                                            color: statusTone,
+                                        ),
+                                        Icon(
+                                          approved
+                                              ? Icons.verified
+                                              : Icons.pending_actions,
+                                          color: statusTone,
+                                          size: 30,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        ProServeStatusPill(
+                                          label: statusText,
+                                          icon: approved
+                                              ? Icons.verified
+                                              : Icons.pending_actions,
+                                          color: statusTone,
+                                        ),
+                                        ProServeStatusPill(
+                                          label: payoutsLabel,
+                                          icon: payoutsEnabled
+                                              ? Icons
+                                                    .account_balance_wallet_outlined
+                                              : Icons.payments_outlined,
+                                          color: payoutsTone,
+                                        ),
+                                        ProServeStatusPill(
+                                          label: l10n.nonExclusiveCredits(
+                                            nonExclusiveCredits,
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: [
-                                          contractorStatusPill(
-                                            context: context,
-                                            label: statusText,
-                                            icon: approved
-                                                ? Icons.verified
-                                                : Icons.pending_actions,
-                                            sideColor: statusTone,
+                                          icon: Icons.local_offer_outlined,
+                                          color: ProServeColors.accent2,
+                                        ),
+                                        ProServeStatusPill(
+                                          label: l10n.exclusiveCredits(
+                                            exclusiveCredits,
                                           ),
-                                          contractorStatusPill(
-                                            context: context,
-                                            label: payoutsLabel,
-                                            icon: payoutsEnabled
-                                                ? Icons
-                                                      .account_balance_wallet_outlined
-                                                : Icons.payments_outlined,
+                                          icon: Icons.lock_outline,
+                                          color: ProServeColors.accent2,
+                                        ),
+                                        if (stripeAccountId.isEmpty)
+                                          ProServeStatusPill(
+                                            label: l10n.payoutsNotConnected,
+                                            icon: Icons.link_off,
+                                            color: ProServeColors.warning,
                                           ),
-                                          contractorStatusPill(
-                                            context: context,
-                                            label: l10n.nonExclusiveCredits(
-                                              nonExclusiveCredits,
-                                            ),
-                                            icon: Icons.local_offer_outlined,
-                                          ),
-                                          contractorStatusPill(
-                                            context: context,
-                                            label: l10n.exclusiveCredits(
-                                              exclusiveCredits,
-                                            ),
-                                            icon: Icons.lock_outline,
-                                          ),
-                                          if (stripeAccountId.isEmpty)
-                                            contractorStatusPill(
-                                              context: context,
-                                              label: l10n.payoutsNotConnected,
-                                              icon: Icons.link_off,
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Card(
+                              ProServeSurfaceCard(
+                                padding: EdgeInsets.zero,
                                 child: Column(
-                                  children: [
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.account_circle_outlined,
-                                      title: l10n.editProfile,
-                                      subtitle: l10n.updatePublicContractorInfo,
-                                      onTap: () {
-                                        context.push('/customer-profile');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.verified_outlined,
-                                      title: l10n.getVerified,
-                                      subtitle: l10n.improveTrustWinMoreWork,
-                                      onTap: () {
-                                        context.push('/verification');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.analytics_outlined,
-                                      title: l10n.analytics,
-                                      subtitle:
-                                          l10n.contractorPortalTrackPerformance,
-                                      onTap: () {
-                                        context.push('/contractor-analytics');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.calendar_month_outlined,
-                                      title: l10n.availability,
-                                      subtitle: l10n.keepScheduleUpToDate,
-                                      onTap: () {
-                                        context.push('/availability-calendar');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.map_outlined,
-                                      title: l10n.serviceArea,
-                                      subtitle: l10n.controlWhereYouGetLeads,
-                                      onTap: () {
-                                        context.push('/service-area');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.photo_library_outlined,
-                                      title: l10n.contractorPortalPortfolio,
-                                      subtitle: l10n.showcaseBestWork,
-                                      onTap: () {
-                                        context.push(
-                                          '/portfolio/${user.uid}',
-                                          extra: {'isEditable': true},
-                                        );
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.business_outlined,
-                                      title: l10n.businessProfile,
-                                      subtitle: l10n.manageCompanyDetails,
-                                      onTap: () {
-                                        context.push('/business-profile');
-                                      },
-                                    ),
-                                    const Divider(height: 1),
-                                    contractorActionTile(
-                                      context: context,
-                                      icon: Icons.question_answer_outlined,
-                                      title: l10n.qAndA,
-                                      subtitle: l10n.answerCustomerQuestions,
-                                      onTap: () {
-                                        context.push(
-                                          '/qanda/${user.uid}',
-                                          extra: {'isContractor': true},
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                  children: _planActionRows(context, user.uid),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -1439,6 +1414,87 @@ class _ContractorToolGrid extends StatelessWidget {
         final tool = tools[index];
         return _DashboardToolTile(tool: tool);
       },
+    );
+  }
+}
+
+class _PlanAction {
+  const _PlanAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+}
+
+class _PlanActionRow extends StatelessWidget {
+  const _PlanActionRow({required this.action});
+
+  final _PlanAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent2.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: ProServeColors.accent2.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Icon(action.icon, color: ProServeColors.accent2),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      action.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      action.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ProServeColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.chevron_right,
+                color: ProServeColors.muted,
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
