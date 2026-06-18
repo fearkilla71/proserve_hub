@@ -202,6 +202,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tell us what you need, compare quotes, and track the job here.';
 
   @override
+  String get customerTodayTitle => 'Today';
+
+  @override
+  String get customerTodaySubtitle =>
+      'Post a project, compare trusted pros, pay safely, and track the work.';
+
+  @override
+  String get customerStartProject => 'Start a project';
+
+  @override
+  String get customerActiveProjects => 'Active projects';
+
+  @override
+  String get customerQuotesWaiting => 'Quotes waiting';
+
+  @override
+  String get customerProtectedPayments => 'Protected payments';
+
+  @override
+  String get customerReviewsDue => 'Reviews due';
+
+  @override
+  String get customerCoreFlowTitle => 'Your project flow';
+
+  @override
+  String get customerCoreFlowSubtitle =>
+      'Start, compare, pay, track, and review from one place.';
+
+  @override
+  String get customerMoreToolsTitle => 'More homeowner tools';
+
+  @override
+  String get customerMoreToolsSubtitle =>
+      'Saved pros, rewards, support, reminders, and neighborhood proof.';
+
+  @override
   String get customerQuickStartRequestSubtitle => 'Smart 4-step flow';
 
   @override
@@ -302,6 +338,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get customerActionEmptyBody =>
       'No active projects yet. Start with photos, ZIP code, and service type.';
+
+  @override
+  String get customerActionEmptyTrust =>
+      'Local pros send quotes, escrow protects payment, and Job Command Center keeps chat, photos, invoices, and review in one place.';
 
   @override
   String get customerActionAllClearBody =>
@@ -2528,6 +2568,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get compareQuotesHeaderBody =>
       'Compare price, reviews, completed jobs, notes, warranty, scope, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.';
+
+  @override
+  String get quoteTagBestValue => 'Best value';
+
+  @override
+  String get quoteTagLowestPrice => 'Lowest price';
+
+  @override
+  String get quoteTagMostTrusted => 'Most trusted';
 
   @override
   String get quotesLower => 'quotes';

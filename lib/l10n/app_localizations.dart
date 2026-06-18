@@ -476,6 +476,72 @@ abstract class AppLocalizations {
   /// **'Tell us what you need, compare quotes, and track the job here.'**
   String get customerHomeHeroSubtitle;
 
+  /// No description provided for @customerTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get customerTodayTitle;
+
+  /// No description provided for @customerTodaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a project, compare trusted pros, pay safely, and track the work.'**
+  String get customerTodaySubtitle;
+
+  /// No description provided for @customerStartProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a project'**
+  String get customerStartProject;
+
+  /// No description provided for @customerActiveProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Active projects'**
+  String get customerActiveProjects;
+
+  /// No description provided for @customerQuotesWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes waiting'**
+  String get customerQuotesWaiting;
+
+  /// No description provided for @customerProtectedPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected payments'**
+  String get customerProtectedPayments;
+
+  /// No description provided for @customerReviewsDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews due'**
+  String get customerReviewsDue;
+
+  /// No description provided for @customerCoreFlowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your project flow'**
+  String get customerCoreFlowTitle;
+
+  /// No description provided for @customerCoreFlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start, compare, pay, track, and review from one place.'**
+  String get customerCoreFlowSubtitle;
+
+  /// No description provided for @customerMoreToolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More homeowner tools'**
+  String get customerMoreToolsTitle;
+
+  /// No description provided for @customerMoreToolsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved pros, rewards, support, reminders, and neighborhood proof.'**
+  String get customerMoreToolsSubtitle;
+
   /// Customer quick action subtitle
   ///
   /// In en, this message translates to:
@@ -637,6 +703,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No active projects yet. Start with photos, ZIP code, and service type.'**
   String get customerActionEmptyBody;
+
+  /// No description provided for @customerActionEmptyTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'Local pros send quotes, escrow protects payment, and Job Command Center keeps chat, photos, invoices, and review in one place.'**
+  String get customerActionEmptyTrust;
 
   /// Customer action center all clear body
   ///
@@ -4513,6 +4585,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compare price, reviews, completed jobs, notes, warranty, scope, and timeline before accepting. After you accept, the Job Command Center keeps the whole job in one place.'**
   String get compareQuotesHeaderBody;
+
+  /// No description provided for @quoteTagBestValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Best value'**
+  String get quoteTagBestValue;
+
+  /// No description provided for @quoteTagLowestPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest price'**
+  String get quoteTagLowestPrice;
+
+  /// No description provided for @quoteTagMostTrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Most trusted'**
+  String get quoteTagMostTrusted;
 
   /// No description provided for @quotesLower.
   ///

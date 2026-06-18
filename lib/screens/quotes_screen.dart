@@ -131,17 +131,27 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 itemCount: quotes.length + 1,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
+                  final quoteData = quotes
+                      .map((doc) => doc.data() as Map<String, dynamic>)
+                      .toList();
+                  final prices =
+                      quoteData
+                          .map((q) => (q['price'] as num?)?.toDouble())
+                          .whereType<double>()
+                          .toList()
+                        ..sort();
+                  final lowPrice = prices.isEmpty ? null : prices.first;
                   if (index == 0) {
-                    return _buildDecisionHeader(
-                      quotes
-                          .map((doc) => doc.data() as Map<String, dynamic>)
-                          .toList(),
-                    );
+                    return _buildDecisionHeader(quoteData);
                   }
 
                   final quoteDoc = quotes[index - 1];
                   final quote = quoteDoc.data() as Map<String, dynamic>;
-                  return _buildQuoteCard(quoteDoc.id, quote);
+                  return _buildQuoteCard(
+                    quoteDoc.id,
+                    quote,
+                    lowPrice: lowPrice,
+                  );
                 },
               );
             },
@@ -245,7 +255,11 @@ class _QuotesScreenState extends State<QuotesScreen> {
     );
   }
 
-  Widget _buildQuoteCard(String quoteId, Map<String, dynamic> quote) {
+  Widget _buildQuoteCard(
+    String quoteId,
+    Map<String, dynamic> quote, {
+    required double? lowPrice,
+  }) {
     final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final contractorId = quote['contractorId'] as String;
@@ -307,6 +321,11 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     contractor?['verified'] == true;
                 final insured = contractor?['insured'] == true;
                 final licensed = contractor?['licensed'] == true;
+                final valueTagged =
+                    lowPrice != null && verified && price <= lowPrice * 1.15;
+                final lowestTagged =
+                    lowPrice != null && (price - lowPrice).abs() < 0.01;
+                final trustedTagged = rating >= 4.7 && reviewCount >= 10;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,6 +418,33 @@ class _QuotesScreenState extends State<QuotesScreen> {
                         ),
                       ],
                     ),
+                    if (valueTagged || lowestTagged || trustedTagged) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          if (valueTagged)
+                            _decisionTag(
+                              Icons.workspace_premium_outlined,
+                              l10n.quoteTagBestValue,
+                              Colors.green,
+                            ),
+                          if (lowestTagged)
+                            _decisionTag(
+                              Icons.sell_outlined,
+                              l10n.quoteTagLowestPrice,
+                              Colors.blue,
+                            ),
+                          if (trustedTagged)
+                            _decisionTag(
+                              Icons.verified_outlined,
+                              l10n.quoteTagMostTrusted,
+                              Colors.teal,
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 );
               },
@@ -601,6 +647,16 @@ class _QuotesScreenState extends State<QuotesScreen> {
       label: Text(label),
       visualDensity: VisualDensity.compact,
       backgroundColor: active ? Colors.green.withValues(alpha: 0.10) : null,
+    );
+  }
+
+  Widget _decisionTag(IconData icon, String label, Color color) {
+    return Chip(
+      avatar: Icon(icon, size: 16, color: color),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      backgroundColor: color.withValues(alpha: 0.11),
+      side: BorderSide(color: color.withValues(alpha: 0.35)),
     );
   }
 

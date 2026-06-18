@@ -204,6 +204,42 @@ class AppLocalizationsEs extends AppLocalizations {
       'Cuéntanos qué necesitas, compara cotizaciones y sigue el trabajo aquí.';
 
   @override
+  String get customerTodayTitle => 'Hoy';
+
+  @override
+  String get customerTodaySubtitle =>
+      'Publica un proyecto, compara pros de confianza, paga seguro y sigue el trabajo.';
+
+  @override
+  String get customerStartProject => 'Iniciar proyecto';
+
+  @override
+  String get customerActiveProjects => 'Proyectos activos';
+
+  @override
+  String get customerQuotesWaiting => 'Cotizaciones pendientes';
+
+  @override
+  String get customerProtectedPayments => 'Pagos protegidos';
+
+  @override
+  String get customerReviewsDue => 'Reseñas pendientes';
+
+  @override
+  String get customerCoreFlowTitle => 'Flujo del proyecto';
+
+  @override
+  String get customerCoreFlowSubtitle =>
+      'Inicia, compara, paga, sigue y reseña desde un solo lugar.';
+
+  @override
+  String get customerMoreToolsTitle => 'Más herramientas';
+
+  @override
+  String get customerMoreToolsSubtitle =>
+      'Pros guardados, recompensas, soporte, recordatorios y prueba social.';
+
+  @override
   String get customerQuickStartRequestSubtitle => 'Flujo simple de 4 pasos';
 
   @override
@@ -304,6 +340,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get customerActionEmptyBody =>
       'Aún no tienes proyectos activos. Empieza con fotos, código postal y tipo de servicio.';
+
+  @override
+  String get customerActionEmptyTrust =>
+      'Pros locales envían cotizaciones, escrow protege el pago y el Centro del trabajo mantiene chat, fotos, facturas y reseña en un solo lugar.';
 
   @override
   String get customerActionAllClearBody =>
@@ -2549,6 +2589,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get compareQuotesHeaderBody =>
       'Compara precio, reseñas, trabajos completados, notas, garantía, alcance y tiempo antes de aceptar. Después de aceptar, el Centro del trabajo mantiene todo en un solo lugar.';
+
+  @override
+  String get quoteTagBestValue => 'Mejor valor';
+
+  @override
+  String get quoteTagLowestPrice => 'Precio más bajo';
+
+  @override
+  String get quoteTagMostTrusted => 'Más confiable';
 
   @override
   String get quotesLower => 'cotizaciones';

@@ -304,72 +304,18 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     );
   }
 
-  Widget _buildHomeHero(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _buildCustomerTodayDashboard({
+    required BuildContext context,
+    required String userId,
+  }) {
     final l10n = AppLocalizations.of(context)!;
-    return Card(
-      color: scheme.primaryContainer.withValues(alpha: 0.72),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.customerHomeHeroTitle,
-              style: GoogleFonts.bebasNeue(
-                fontSize: 26,
-                letterSpacing: 1.2,
-                color: scheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.customerHomeHeroSubtitle,
-              style: GoogleFonts.manrope(
-                fontSize: 14,
-                color: scheme.onPrimaryContainer.withValues(alpha: 0.82),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _HeroPill(label: l10n.verifiedPros),
-                _HeroPill(label: l10n.upfrontPricing),
-                _HeroPill(label: l10n.projectTracking),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => context.push('/smart-request'),
-                    child: Text(l10n.startRequest),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => setState(() => _tabIndex = 1),
-                    child: Text(l10n.browsePros),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/instant-quote'),
-                icon: const Icon(Icons.camera_alt, size: 18),
-                label: Text(l10n.snapForInstantQuote),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return _CustomerTodayDashboard(
+      requestsQuery: _myRequestsQuery(userId),
+      canLeaveReview: _canLeaveReview,
+      onStartProject: () => context.push('/smart-request'),
+      onBrowsePros: () => setState(() => _tabIndex = 1),
+      onProjects: () => setState(() => _tabIndex = 2),
+      l10n: l10n,
     );
   }
 
@@ -484,7 +430,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 16),
             _fadeSlide(
-              child: _buildHomeHero(context),
+              child: _buildCustomerTodayDashboard(
+                context: context,
+                userId: user.uid,
+              ),
               fade: _heroFade,
               slide: _heroSlide,
             ),
@@ -500,33 +449,43 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               slide: _nextSlide,
             ),
             const SizedBox(height: 12),
-            _fadeSlide(
-              child: const EscrowBookingsCard(isCustomer: true),
-              fade: _nextFade,
-              slide: _nextSlide,
-            ),
-            const SizedBox(height: 12),
-
-            // ── Maintenance Reminders (Feature E) ──
-            const MaintenanceReminderCard(),
-            const SizedBox(height: 12),
-
-            // ── Seasonal Deals & Flash Offers (Feature F) ──
-            const SeasonalDealsCarousel(),
-            const SizedBox(height: 12),
-
-            // ── Neighborhood Social Proof (Feature G) ──
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 0),
-              child: NeighborhoodSocialProof(),
-            ),
-            const SizedBox(height: 16),
-
-            Text(
-              l10n.quickActions,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: ProServeColors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: ProServeColors.accent.withValues(alpha: 0.20),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.route_outlined,
+                    color: ProServeColors.accent,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.customerCoreFlowTitle,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.customerCoreFlowSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: ProServeColors.muted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -585,101 +544,20 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.savedPros,
-                    subtitle: l10n.customerQuickSavedProsSubtitle,
-                    icon: Icons.favorite_border,
-                    onTap: () {
-                      context.push('/favorites');
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.referral,
-                    subtitle: l10n.customerQuickReferralSubtitle,
-                    icon: Icons.card_giftcard,
-                    onTap: () {
-                      context.push('/referral');
-                    },
-                  ),
-                ),
-              ],
+            _CustomerMoreToolsSection(
+              quickActionTile: _quickActionTile,
+              parentContext: context,
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.loyalty,
-                    subtitle: l10n.customerQuickLoyaltySubtitle,
-                    icon: Icons.loyalty_outlined,
-                    onTap: () {
-                      context.push('/loyalty-rewards');
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.leaderboard,
-                    subtitle: l10n.customerQuickLeaderboardSubtitle,
-                    icon: Icons.emoji_events_outlined,
-                    onTap: () {
-                      context.push('/leaderboard');
-                    },
-                  ),
-                ),
-              ],
-            ),
+            const EscrowBookingsCard(isCustomer: true),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.savedProjects,
-                    subtitle: l10n.customerQuickSavedProjectsSubtitle,
-                    icon: Icons.dashboard_customize_outlined,
-                    onTap: () {
-                      context.push('/project-boards');
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.myEstimates,
-                    subtitle: l10n.customerQuickMyEstimatesSubtitle,
-                    icon: Icons.calculate_outlined,
-                    onTap: () {
-                      context.push('/saved-estimates');
-                    },
-                  ),
-                ),
-              ],
-            ),
+            const MaintenanceReminderCard(),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: _quickActionTile(
-                context: context,
-                title: l10n.aiSupport,
-                subtitle: l10n.customerQuickAiSupportSubtitle,
-                icon: Icons.support_agent,
-                onTap: () {
-                  context.push('/ai-support-chat');
-                },
-              ),
+            const SeasonalDealsCarousel(),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 0),
+              child: NeighborhoodSocialProof(),
             ),
           ],
         );
@@ -1852,27 +1730,350 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 }
 
-class _HeroPill extends StatelessWidget {
-  const _HeroPill({required this.label});
+class _CustomerTodayDashboard extends StatelessWidget {
+  const _CustomerTodayDashboard({
+    required this.requestsQuery,
+    required this.canLeaveReview,
+    required this.onStartProject,
+    required this.onBrowsePros,
+    required this.onProjects,
+    required this.l10n,
+  });
 
-  final String label;
+  final Query<Map<String, dynamic>> requestsQuery;
+  final bool Function(Map<String, dynamic> data) canLeaveReview;
+  final VoidCallback onStartProject;
+  final VoidCallback onBrowsePros;
+  final VoidCallback onProjects;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.surface.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: scheme.outlineVariant),
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: requestsQuery.snapshots(),
+      builder: (context, snapshot) {
+        final docs =
+            snapshot.data?.docs.where((doc) {
+              final status = (doc.data()['status'] ?? '')
+                  .toString()
+                  .toLowerCase();
+              return status != 'cancelled' && status != 'deleted';
+            }).toList() ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        final activeProjects = docs.length;
+        final quotesWaiting = docs.where((doc) {
+          final data = doc.data();
+          final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
+          return quoteCount > 0 && data['claimed'] != true;
+        }).length;
+        final protectedPayments = docs.where((doc) {
+          final data = doc.data();
+          return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
+              data['instantBook'] == true;
+        }).length;
+        final reviewsDue = docs.where((doc) => canLeaveReview(doc.data())).length;
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: ProServeColors.cardGradient,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: ProServeColors.lineStrong),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.customerTodayTitle,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.customerTodaySubtitle,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: ProServeColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: ProServeColors.accent.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: ProServeColors.accent.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.verified_user_outlined,
+                      color: ProServeColors.accent,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.55,
+                children: [
+                  _CustomerMetricTile(
+                    label: l10n.customerActiveProjects,
+                    value: activeProjects.toString(),
+                    icon: Icons.work_outline,
+                    onTap: onProjects,
+                  ),
+                  _CustomerMetricTile(
+                    label: l10n.customerQuotesWaiting,
+                    value: quotesWaiting.toString(),
+                    icon: Icons.request_quote_outlined,
+                    onTap: onProjects,
+                  ),
+                  _CustomerMetricTile(
+                    label: l10n.customerProtectedPayments,
+                    value: protectedPayments.toString(),
+                    icon: Icons.shield_outlined,
+                    onTap: onProjects,
+                  ),
+                  _CustomerMetricTile(
+                    label: l10n.customerReviewsDue,
+                    value: reviewsDue.toString(),
+                    icon: Icons.star_outline,
+                    onTap: onProjects,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: onStartProject,
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: Text(l10n.customerStartProject),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onBrowsePros,
+                      icon: const Icon(Icons.search),
+                      label: Text(l10n.browsePros),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CustomerMetricTile extends StatelessWidget {
+  const _CustomerMetricTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          decoration: BoxDecoration(
+            color: ProServeColors.bgDeep.withValues(alpha: 0.48),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ProServeColors.lineStrong),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: ProServeColors.accent2, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      value,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: ProServeColors.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Text(
-        label,
-        style: GoogleFonts.manrope(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: scheme.onPrimaryContainer,
+    );
+  }
+}
+
+class _CustomerMoreToolsSection extends StatelessWidget {
+  const _CustomerMoreToolsSection({
+    required this.quickActionTile,
+    required this.parentContext,
+  });
+
+  final Widget Function({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  })
+  quickActionTile;
+  final BuildContext parentContext;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(parentContext)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: ProServeColors.line),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          leading: const Icon(
+            Icons.apps_outlined,
+            color: ProServeColors.accent,
+          ),
+          title: Text(
+            l10n.customerMoreToolsTitle,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(l10n.customerMoreToolsSubtitle),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.savedPros,
+                    subtitle: l10n.customerQuickSavedProsSubtitle,
+                    icon: Icons.favorite_border,
+                    onTap: () => parentContext.push('/favorites'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.referral,
+                    subtitle: l10n.customerQuickReferralSubtitle,
+                    icon: Icons.card_giftcard,
+                    onTap: () => parentContext.push('/referral'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.loyalty,
+                    subtitle: l10n.customerQuickLoyaltySubtitle,
+                    icon: Icons.loyalty_outlined,
+                    onTap: () => parentContext.push('/loyalty-rewards'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.leaderboard,
+                    subtitle: l10n.customerQuickLeaderboardSubtitle,
+                    icon: Icons.emoji_events_outlined,
+                    onTap: () => parentContext.push('/leaderboard'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.savedProjects,
+                    subtitle: l10n.customerQuickSavedProjectsSubtitle,
+                    icon: Icons.dashboard_customize_outlined,
+                    onTap: () => parentContext.push('/project-boards'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: quickActionTile(
+                    context: parentContext,
+                    title: l10n.myEstimates,
+                    subtitle: l10n.customerQuickMyEstimatesSubtitle,
+                    icon: Icons.calculate_outlined,
+                    onTap: () => parentContext.push('/saved-estimates'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            quickActionTile(
+              context: parentContext,
+              title: l10n.aiSupport,
+              subtitle: l10n.customerQuickAiSupportSubtitle,
+              icon: Icons.support_agent,
+              onTap: () => parentContext.push('/ai-support-chat'),
+            ),
+          ],
         ),
       ),
     );
@@ -1945,7 +2146,12 @@ class _CustomerActionCenter extends StatelessWidget {
               data['instantBook'] == true;
         }).length;
 
-        return Card(
+        return Container(
+          decoration: BoxDecoration(
+            gradient: ProServeColors.cardGradient,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: ProServeColors.lineStrong),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -2211,6 +2417,38 @@ class _EmptyCustomerAction extends StatelessWidget {
         Text(
           l10n.customerActionEmptyBody,
           style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: ProServeColors.accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: ProServeColors.accent.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.shield_outlined,
+                color: ProServeColors.accent,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.customerActionEmptyTrust,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: ProServeColors.ink,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         FilledButton.icon(
