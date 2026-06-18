@@ -1180,6 +1180,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Extract line items, score margin risk, and generate counter-bids.';
 
   @override
+  String get toolQuoteTemplatesTitle => 'Quote Templates';
+
+  @override
+  String get toolQuoteTemplatesSubtitle =>
+      'Reuse scopes, terms, warranties, exclusions, and branded quote language.';
+
+  @override
+  String get toolProfitLossTitle => 'Profit & Loss';
+
+  @override
+  String get toolProfitLossSubtitle =>
+      'Track revenue, expenses, profit margin, and job profitability.';
+
+  @override
+  String get toolCrewRosterTitle => 'Crew Roster';
+
+  @override
+  String get toolCrewRosterSubtitle =>
+      'Manage crew roles, availability, assignments, and labor history.';
+
+  @override
+  String get toolCrewScheduleTitle => 'Crew Schedule';
+
+  @override
+  String get toolCrewScheduleSubtitle =>
+      'Assign crews to jobs and review the weekly operations board.';
+
+  @override
   String get toolSelectServiceType => 'Select Service Type';
 
   @override
@@ -1222,6 +1250,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolActionReviewLocations => 'Review locations';
 
   @override
+  String get toolActionOpenTemplates => 'Open templates';
+
+  @override
+  String get toolActionReviewProfit => 'Review profit';
+
+  @override
+  String get toolActionManageCrew => 'Manage crew';
+
+  @override
+  String get toolActionAssignCrew => 'Assign crew';
+
+  @override
   String get toolMetricRiskScore => 'Risk score';
 
   @override
@@ -1256,6 +1296,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolMetricOwnerSummary => 'Owner summary';
+
+  @override
+  String get toolMetricReusableTerms => 'Reusable terms';
+
+  @override
+  String get toolMetricJobProfit => 'Job profit';
+
+  @override
+  String get toolMetricCrewRoles => 'Crew roles';
+
+  @override
+  String get toolMetricScheduleBoard => 'Schedule board';
 
   @override
   String get email => 'Email';
@@ -1730,6 +1782,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contractorHomeToolPaymentLinks => 'Pay Links';
+
+  @override
+  String get contractorHomeToolProfitLoss => 'P&L';
+
+  @override
+  String get contractorHomeToolCrewRoster => 'Crew';
 
   @override
   String contractorHomeReviews(int count) {

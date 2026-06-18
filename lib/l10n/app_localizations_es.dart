@@ -1188,6 +1188,34 @@ class AppLocalizationsEs extends AppLocalizations {
       'Extrae partidas, mide riesgo de margen y genera contraofertas.';
 
   @override
+  String get toolQuoteTemplatesTitle => 'Plantillas de cotización';
+
+  @override
+  String get toolQuoteTemplatesSubtitle =>
+      'Reutiliza alcances, términos, garantías, exclusiones y texto de marca.';
+
+  @override
+  String get toolProfitLossTitle => 'Pérdidas y ganancias';
+
+  @override
+  String get toolProfitLossSubtitle =>
+      'Controla ingresos, gastos, margen y rentabilidad por trabajo.';
+
+  @override
+  String get toolCrewRosterTitle => 'Equipo';
+
+  @override
+  String get toolCrewRosterSubtitle =>
+      'Administra roles, disponibilidad, asignaciones e historial de mano de obra.';
+
+  @override
+  String get toolCrewScheduleTitle => 'Agenda de equipo';
+
+  @override
+  String get toolCrewScheduleSubtitle =>
+      'Asigna equipos a trabajos y revisa el tablero semanal de operaciones.';
+
+  @override
   String get toolSelectServiceType => 'Seleccionar tipo de servicio';
 
   @override
@@ -1230,6 +1258,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toolActionReviewLocations => 'Revisar ubicaciones';
 
   @override
+  String get toolActionOpenTemplates => 'Abrir plantillas';
+
+  @override
+  String get toolActionReviewProfit => 'Revisar ganancia';
+
+  @override
+  String get toolActionManageCrew => 'Administrar equipo';
+
+  @override
+  String get toolActionAssignCrew => 'Asignar equipo';
+
+  @override
   String get toolMetricRiskScore => 'Riesgo';
 
   @override
@@ -1264,6 +1304,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get toolMetricOwnerSummary => 'Resumen del dueño';
+
+  @override
+  String get toolMetricReusableTerms => 'Términos reutilizables';
+
+  @override
+  String get toolMetricJobProfit => 'Ganancia por trabajo';
+
+  @override
+  String get toolMetricCrewRoles => 'Roles del equipo';
+
+  @override
+  String get toolMetricScheduleBoard => 'Tablero semanal';
 
   @override
   String get email => 'Correo electrónico';
@@ -1744,6 +1796,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get contractorHomeToolPaymentLinks => 'Links de pago';
+
+  @override
+  String get contractorHomeToolProfitLoss => 'P&G';
+
+  @override
+  String get contractorHomeToolCrewRoster => 'Equipo';
 
   @override
   String contractorHomeReviews(int count) {

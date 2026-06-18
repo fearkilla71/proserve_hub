@@ -209,6 +209,15 @@ class ContractorToolsHub extends StatelessWidget {
         title: l10n.toolsSectionEstimateQuote,
         tools: [
           _ToolAction(
+            icon: Icons.article_outlined,
+            title: l10n.toolQuoteTemplatesTitle,
+            subtitle: l10n.toolQuoteTemplatesSubtitle,
+            route: '/quote-templates',
+            access: _ToolAccess.pro,
+            primaryAction: l10n.toolActionOpenTemplates,
+            metric: l10n.toolMetricReusableTerms,
+          ),
+          _ToolAction(
             icon: Icons.calculate_outlined,
             title: l10n.toolPricingCalculatorTitle,
             subtitle: l10n.toolPricingCalculatorSubtitle,
@@ -258,11 +267,29 @@ class ContractorToolsHub extends StatelessWidget {
             primaryAction: l10n.toolActionTrackInvoices,
             metric: l10n.toolMetricOverdueBadges,
           ),
+          _ToolAction(
+            icon: Icons.insights_outlined,
+            title: l10n.toolProfitLossTitle,
+            subtitle: l10n.toolProfitLossSubtitle,
+            route: '/pnl-dashboard',
+            access: _ToolAccess.enterprise,
+            primaryAction: l10n.toolActionReviewProfit,
+            metric: l10n.toolMetricJobProfit,
+          ),
         ],
       ),
       _ToolSection(
         title: l10n.toolsSectionManageJobs,
         tools: [
+          _ToolAction(
+            icon: Icons.groups_2_outlined,
+            title: l10n.toolCrewRosterTitle,
+            subtitle: l10n.toolCrewRosterSubtitle,
+            route: '/crew-roster',
+            access: _ToolAccess.enterprise,
+            primaryAction: l10n.toolActionManageCrew,
+            metric: l10n.toolMetricCrewRoles,
+          ),
           _ToolAction(
             icon: Icons.event_available_outlined,
             title: l10n.toolSmartSchedulingTitle,
@@ -271,6 +298,15 @@ class ContractorToolsHub extends StatelessWidget {
             access: _ToolAccess.enterprise,
             primaryAction: l10n.toolActionBuildSchedule,
             metric: l10n.toolMetricConflictWarnings,
+          ),
+          _ToolAction(
+            icon: Icons.calendar_month_outlined,
+            title: l10n.toolCrewScheduleTitle,
+            subtitle: l10n.toolCrewScheduleSubtitle,
+            route: '/crew-schedule',
+            access: _ToolAccess.enterprise,
+            primaryAction: l10n.toolActionAssignCrew,
+            metric: l10n.toolMetricScheduleBoard,
           ),
           _ToolAction(
             icon: Icons.camera_enhance_outlined,

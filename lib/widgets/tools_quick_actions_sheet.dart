@@ -78,6 +78,19 @@ Future<void> showToolsQuickActions({
                   ),
                   divider,
                   tile(
+                    icon: Icons.article_outlined,
+                    title: l10n.toolQuoteTemplatesTitle,
+                    subtitle: l10n.toolQuoteTemplatesSubtitle,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await openProToolOrSubscribe(
+                        open: () async =>
+                            parentContext.push('/quote-templates'),
+                      );
+                    },
+                  ),
+                  divider,
+                  tile(
                     icon: Icons.calculate,
                     title: l10n.toolPricingCalculatorTitle,
                     subtitle: l10n.toolPricingCalculatorSubtitle,
@@ -152,6 +165,30 @@ Future<void> showToolsQuickActions({
                   ),
                   divider,
                   tile(
+                    icon: Icons.insights_outlined,
+                    title: l10n.toolProfitLossTitle,
+                    subtitle: l10n.toolProfitLossSubtitle,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await openEnterpriseToolOrSubscribe(
+                        open: () async => parentContext.push('/pnl-dashboard'),
+                      );
+                    },
+                  ),
+                  divider,
+                  tile(
+                    icon: Icons.groups_2_outlined,
+                    title: l10n.toolCrewRosterTitle,
+                    subtitle: l10n.toolCrewRosterSubtitle,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await openEnterpriseToolOrSubscribe(
+                        open: () async => parentContext.push('/crew-roster'),
+                      );
+                    },
+                  ),
+                  divider,
+                  tile(
                     icon: Icons.auto_awesome,
                     title: l10n.toolSmartSchedulingTitle,
                     subtitle: l10n.toolSmartSchedulingSubtitle,
@@ -160,6 +197,18 @@ Future<void> showToolsQuickActions({
                       await openEnterpriseToolOrSubscribe(
                         open: () async =>
                             parentContext.push('/smart-scheduling'),
+                      );
+                    },
+                  ),
+                  divider,
+                  tile(
+                    icon: Icons.calendar_month_outlined,
+                    title: l10n.toolCrewScheduleTitle,
+                    subtitle: l10n.toolCrewScheduleSubtitle,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await openEnterpriseToolOrSubscribe(
+                        open: () async => parentContext.push('/crew-schedule'),
                       );
                     },
                   ),

@@ -308,6 +308,22 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     if (tier == 'enterprise') {
       return [
         _DashboardTool(
+          label: l10n.contractorHomeToolProfitLoss,
+          icon: Icons.insights_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/pnl-dashboard'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.contractorHomeToolCrewRoster,
+          icon: Icons.groups_2_outlined,
+          color: ProServeColors.accent,
+          onTap: () => _openEnterpriseToolOrSubscribe(
+            open: () async => context.push('/crew-roster'),
+          ),
+        ),
+        _DashboardTool(
           label: l10n.contractorHomeToolBidAnalyzer,
           icon: Icons.analytics_outlined,
           color: ProServeColors.accent,
@@ -337,22 +353,6 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           color: ProServeColors.accent2,
           onTap: () => _openEnterpriseToolOrSubscribe(
             open: () async => context.push('/multi-location-dashboard'),
-          ),
-        ),
-        _DashboardTool(
-          label: l10n.contractorHomeToolSubMarket,
-          icon: Icons.storefront_outlined,
-          color: ProServeColors.accent2,
-          onTap: () => _openEnterpriseToolOrSubscribe(
-            open: () async => context.push('/sub-marketplace'),
-          ),
-        ),
-        _DashboardTool(
-          label: l10n.contractorHomeToolPaymentLinks,
-          icon: Icons.payments_outlined,
-          color: ProServeColors.accent2,
-          onTap: () => _openEnterpriseToolOrSubscribe(
-            open: () async => context.push('/invoice-maker'),
           ),
         ),
       ];

@@ -2168,6 +2168,54 @@ abstract class AppLocalizations {
   /// **'Extract line items, score margin risk, and generate counter-bids.'**
   String get toolBidAnalyzerSubtitle;
 
+  /// No description provided for @toolQuoteTemplatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote Templates'**
+  String get toolQuoteTemplatesTitle;
+
+  /// No description provided for @toolQuoteTemplatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reuse scopes, terms, warranties, exclusions, and branded quote language.'**
+  String get toolQuoteTemplatesSubtitle;
+
+  /// No description provided for @toolProfitLossTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & Loss'**
+  String get toolProfitLossTitle;
+
+  /// No description provided for @toolProfitLossSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track revenue, expenses, profit margin, and job profitability.'**
+  String get toolProfitLossSubtitle;
+
+  /// No description provided for @toolCrewRosterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew Roster'**
+  String get toolCrewRosterTitle;
+
+  /// No description provided for @toolCrewRosterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage crew roles, availability, assignments, and labor history.'**
+  String get toolCrewRosterSubtitle;
+
+  /// No description provided for @toolCrewScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew Schedule'**
+  String get toolCrewScheduleTitle;
+
+  /// No description provided for @toolCrewScheduleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign crews to jobs and review the weekly operations board.'**
+  String get toolCrewScheduleSubtitle;
+
   /// No description provided for @toolSelectServiceType.
   ///
   /// In en, this message translates to:
@@ -2252,6 +2300,30 @@ abstract class AppLocalizations {
   /// **'Review locations'**
   String get toolActionReviewLocations;
 
+  /// No description provided for @toolActionOpenTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Open templates'**
+  String get toolActionOpenTemplates;
+
+  /// No description provided for @toolActionReviewProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review profit'**
+  String get toolActionReviewProfit;
+
+  /// No description provided for @toolActionManageCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage crew'**
+  String get toolActionManageCrew;
+
+  /// No description provided for @toolActionAssignCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign crew'**
+  String get toolActionAssignCrew;
+
   /// No description provided for @toolMetricRiskScore.
   ///
   /// In en, this message translates to:
@@ -2323,6 +2395,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Owner summary'**
   String get toolMetricOwnerSummary;
+
+  /// No description provided for @toolMetricReusableTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Reusable terms'**
+  String get toolMetricReusableTerms;
+
+  /// No description provided for @toolMetricJobProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Job profit'**
+  String get toolMetricJobProfit;
+
+  /// No description provided for @toolMetricCrewRoles.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew roles'**
+  String get toolMetricCrewRoles;
+
+  /// No description provided for @toolMetricScheduleBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule board'**
+  String get toolMetricScheduleBoard;
 
   /// No description provided for @email.
   ///
@@ -3181,6 +3277,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pay Links'**
   String get contractorHomeToolPaymentLinks;
+
+  /// No description provided for @contractorHomeToolProfitLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'P&L'**
+  String get contractorHomeToolProfitLoss;
+
+  /// No description provided for @contractorHomeToolCrewRoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew'**
+  String get contractorHomeToolCrewRoster;
 
   /// No description provided for @contractorHomeReviews.
   ///
