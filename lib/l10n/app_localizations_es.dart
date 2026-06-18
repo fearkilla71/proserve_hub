@@ -1467,6 +1467,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bidAnalyzerYours => 'Tú';
 
   @override
+  String get bidAnalyzerInternalCost => 'Costo';
+
+  @override
   String get bidAnalyzerCounterBidTitle => 'Contraoferta sugerida';
 
   @override
@@ -1499,6 +1502,89 @@ class AppLocalizationsEs extends AppLocalizations {
   String bidAnalyzerLocalSummaryTotal(String total) {
     return ' (total: $total)';
   }
+
+  @override
+  String get bidAnalyzerUploadPdf => 'Subir PDF';
+
+  @override
+  String get bidAnalyzerUploadImage => 'Subir imagen';
+
+  @override
+  String get bidAnalyzerPasteText => 'Pegar texto';
+
+  @override
+  String bidAnalyzerSelectedFile(String fileName) {
+    return 'Seleccionado: $fileName';
+  }
+
+  @override
+  String bidAnalyzerUploadFallback(String fileName) {
+    return '$fileName está adjunto. Si la extracción de texto no está disponible en este dispositivo, pega el texto de la cotización abajo antes de analizar.';
+  }
+
+  @override
+  String bidAnalyzerRiskScore(String level) {
+    return 'Riesgo: $level';
+  }
+
+  @override
+  String get bidAnalyzerRiskLow => 'Bajo';
+
+  @override
+  String get bidAnalyzerRiskMedium => 'Medio';
+
+  @override
+  String get bidAnalyzerRiskHigh => 'Alto';
+
+  @override
+  String get bidAnalyzerUnderbidWarning =>
+      'Posible cotización baja: el precio sugerido puede dejar poco margen.';
+
+  @override
+  String get bidAnalyzerMissingScopeWarning =>
+      'Faltan detalles de alcance: algunas partidas necesitan revisión manual de precio o alcance.';
+
+  @override
+  String get bidAnalyzerMaterialLaborWarning =>
+      'Materiales y mano de obra no están separados claramente; verifica el costo antes de enviar.';
+
+  @override
+  String get bidAnalyzerMargin => 'Margen';
+
+  @override
+  String get bidAnalyzerNextActions => 'Siguientes acciones';
+
+  @override
+  String get bidAnalyzerCreateCounterQuote => 'Crear contraoferta';
+
+  @override
+  String get bidAnalyzerSaveAnalysis => 'Guardar análisis';
+
+  @override
+  String get bidAnalyzerAttachToJob => 'Adjuntar al trabajo';
+
+  @override
+  String get bidAnalyzerOpenQuoteTemplates => 'Abrir plantillas';
+
+  @override
+  String get bidAnalyzerCounterCopied =>
+      'Contraoferta copiada. Usa una plantilla para enviarla profesionalmente.';
+
+  @override
+  String get bidAnalyzerAttachToJobUnavailable =>
+      'Abre el Analizador desde un trabajo para adjuntar este análisis.';
+
+  @override
+  String get bidAnalyzerUseCaseCompetitor =>
+      'Compara una cotización competidora antes de contraofertar.';
+
+  @override
+  String get bidAnalyzerUseCaseRfp =>
+      'Divide un RFP o alcance grande en partidas.';
+
+  @override
+  String get bidAnalyzerUseCaseScope =>
+      'Encuentra detalles faltantes de mano de obra, materiales o garantía antes de enviar.';
 
   @override
   String get notNow => 'Ahora no';

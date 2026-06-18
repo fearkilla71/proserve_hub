@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
@@ -37,6 +41,8 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
   String? _counterBidSuggestion;
   double? _theirTotal;
   double? _yourTotal;
+  String? _sourceFileName;
+  String? _sourceJobId;
 
   // ── History ──
   List<Map<String, dynamic>> _history = [];
@@ -61,7 +67,44 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     if (data?.text != null && data!.text!.isNotEmpty) {
       _inputCtrl.text = data.text!;
+      _sourceFileName = null;
       setState(() {});
+    }
+  }
+
+  Future<void> _pickBidFile({required bool imageOnly}) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        withData: true,
+        type: imageOnly ? FileType.image : FileType.custom,
+        allowedExtensions: imageOnly
+            ? null
+            : const ['pdf', 'txt', 'csv', 'doc', 'docx'],
+      );
+      final file = result?.files.single;
+      if (file == null) return;
+
+      final name = file.name;
+      final bytes = file.bytes;
+      final extension = file.extension?.toLowerCase();
+      if (bytes != null && (extension == 'txt' || extension == 'csv')) {
+        _inputCtrl.text = utf8.decode(bytes, allowMalformed: true);
+        setState(() => _sourceFileName = name);
+        return;
+      }
+
+      setState(() => _sourceFileName = name);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.bidAnalyzerUploadFallback(name))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorWithMessage(e.toString()))),
+      );
     }
   }
 
@@ -157,13 +200,16 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             .replaceAll(moneyMatch.group(0)!, '')
             .replaceAll(RegExp(r'^\s*[-•*]\s*'), '')
             .trim();
+        final internalCost = amount * 0.72;
+        final suggestedPrice = amount * 1.08;
 
         items.add({
           'description': desc.isEmpty ? 'Line item' : desc,
           'theirPrice': amount,
-          'yourPrice': null,
-          'difference': null,
-          'flag': 'unknown',
+          'internalCost': internalCost,
+          'yourPrice': suggestedPrice,
+          'difference': suggestedPrice - amount,
+          'flag': suggestedPrice < amount * 0.95 ? 'under' : 'match',
         });
         total += amount;
       }
@@ -218,6 +264,8 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             'lineItemCount': _lineItems.length,
             'theirTotal': _theirTotal,
             'yourTotal': _yourTotal,
+            'riskLevel': _riskLevel(AppLocalizations.of(context)!).label,
+            'sourceFileName': _sourceFileName,
             'summary': _summary,
             'counterBid': _counterBidSuggestion,
             'createdAt': FieldValue.serverTimestamp(),
@@ -321,6 +369,38 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ActionChip(
+                      avatar: const Icon(Icons.picture_as_pdf_outlined),
+                      label: Text(l10n.bidAnalyzerUploadPdf),
+                      onPressed: () => _pickBidFile(imageOnly: false),
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.image_outlined),
+                      label: Text(l10n.bidAnalyzerUploadImage),
+                      onPressed: () => _pickBidFile(imageOnly: true),
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.content_paste),
+                      label: Text(l10n.bidAnalyzerPasteText),
+                      onPressed: _pasteFromClipboard,
+                    ),
+                  ],
+                ),
+                if (_sourceFileName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.bidAnalyzerSelectedFile(_sourceFileName!),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
                 TextField(
                   controller: _inputCtrl,
                   maxLines: 8,
@@ -384,6 +464,11 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
           const SizedBox(height: 16),
           _buildCounterBidCard(cs),
         ],
+
+        if (_summary != null || _lineItems.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildResultActions(cs),
+        ],
       ],
     );
   }
@@ -439,9 +524,65 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                   ],
                 ),
               ),
+            _buildRiskSummary(cs),
+            const SizedBox(height: 12),
             Text(_summary!, style: TextStyle(color: cs.onPrimaryContainer)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRiskSummary(ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
+    final risk = _riskLevel(l10n);
+    final warnings = _riskWarnings(l10n);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: risk.color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: risk.color.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(risk.icon, color: risk.color, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                l10n.bidAnalyzerRiskScore(risk.label),
+                style: TextStyle(
+                  color: risk.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          if (warnings.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...warnings.map(
+              (warning) => Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_amber, color: risk.color, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        warning,
+                        style: TextStyle(color: cs.onPrimaryContainer),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -514,6 +655,18 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 Expanded(
                   flex: 2,
                   child: Text(
+                    l10n.bidAnalyzerInternalCost,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: cs.outline,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
                     l10n.bidAnalyzerYours,
                     textAlign: TextAlign.right,
                     style: TextStyle(
@@ -523,7 +676,19 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 28),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    l10n.bidAnalyzerMargin,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: cs.outline,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 34),
               ],
             ),
             const Divider(),
@@ -561,7 +726,17 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                       flex: 2,
                       child: Text(
                         item['theirPrice'] != null
-                            ? '\$${(item['theirPrice'] as num).toStringAsFixed(0)}'
+                            ? _money(item['theirPrice'])
+                            : '—',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        item['internalCost'] != null
+                            ? _money(item['internalCost'])
                             : '—',
                         textAlign: TextAlign.right,
                         style: const TextStyle(fontSize: 13),
@@ -571,14 +746,26 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                       flex: 2,
                       child: Text(
                         item['yourPrice'] != null
-                            ? '\$${(item['yourPrice'] as num).toStringAsFixed(0)}'
+                            ? _money(item['yourPrice'])
                             : '—',
                         textAlign: TextAlign.right,
                         style: const TextStyle(fontSize: 13),
                       ),
                     ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _marginLabel(item),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _marginColor(item, cs),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                     SizedBox(
-                      width: 28,
+                      width: 34,
                       child: Icon(flagIcon, size: 16, color: flagColor),
                     ),
                   ],
@@ -638,6 +825,75 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
     );
   }
 
+  Widget _buildResultActions(ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.bidAnalyzerNextActions,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: _openCounterQuote,
+                  icon: const Icon(Icons.reply_all_outlined),
+                  label: Text(l10n.bidAnalyzerCreateCounterQuote),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _saveAnalysis(_inputCtrl.text.trim()),
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(l10n.bidAnalyzerSaveAnalysis),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _attachToJob,
+                  icon: const Icon(Icons.attach_file_outlined),
+                  label: Text(l10n.bidAnalyzerAttachToJob),
+                ),
+                TextButton.icon(
+                  onPressed: () => context.push('/quote-templates'),
+                  icon: const Icon(Icons.article_outlined),
+                  label: Text(l10n.bidAnalyzerOpenQuoteTemplates),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openCounterQuote() {
+    final l10n = AppLocalizations.of(context)!;
+    if (_counterBidSuggestion?.trim().isNotEmpty == true) {
+      Clipboard.setData(ClipboardData(text: _counterBidSuggestion!.trim()));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.bidAnalyzerCounterCopied)));
+    }
+    context.push('/quote-templates');
+  }
+
+  void _attachToJob() {
+    final l10n = AppLocalizations.of(context)!;
+    if (_sourceJobId?.trim().isNotEmpty == true) {
+      context.push('/job-command/${_sourceJobId!.trim()}');
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.bidAnalyzerAttachToJobUnavailable)),
+    );
+  }
+
   // ── History Tab ───────────────────────────────────────────────────────────
 
   Widget _buildHistoryTab() {
@@ -660,7 +916,10 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                 children: [
                   CircleAvatar(
                     backgroundColor: cs.primaryContainer,
-                    child: Icon(Icons.history, color: cs.onPrimaryContainer),
+                    child: Icon(
+                      Icons.analytics_outlined,
+                      color: cs.onPrimaryContainer,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -676,6 +935,8 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
                       color: cs.onSurfaceVariant,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _sampleUseCases(l10n),
                   const SizedBox(height: 14),
                   FilledButton.icon(
                     onPressed: () =>
@@ -699,6 +960,7 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
         final a = _history[i];
         final ts = (a['createdAt'] as Timestamp?)?.toDate();
         final theirTotal = (a['theirTotal'] as num?)?.toDouble();
+        final risk = a['riskLevel']?.toString();
 
         return Card(
           child: ListTile(
@@ -715,7 +977,8 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
             ),
             subtitle: Text(
               '${l10n.bidAnalyzerHistoryItems('${a['lineItemCount'] ?? '?'}')}'
-              '${theirTotal != null ? ' · \$${theirTotal.toStringAsFixed(0)}' : ''}',
+              '${theirTotal != null ? ' · \$${theirTotal.toStringAsFixed(0)}' : ''}'
+              '${risk?.isNotEmpty == true ? ' · $risk' : ''}',
             ),
             trailing: ts != null
                 ? Text(
@@ -764,9 +1027,161 @@ class _BidAnalyzerScreenState extends State<BidAnalyzerScreen> {
               const SizedBox(height: 4),
               Text(analysis['counterBid'].toString()),
             ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context.push('/quote-templates');
+                  },
+                  icon: const Icon(Icons.reply_all_outlined),
+                  label: Text(l10n.bidAnalyzerCreateCounterQuote),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text:
+                            '${analysis['summary'] ?? ''}\n\n${analysis['counterBid'] ?? ''}'
+                                .trim(),
+                      ),
+                    );
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.copiedToClipboard)),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: Text(l10n.copyToClipboard),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _sampleUseCases(AppLocalizations l10n) {
+    final cases = [
+      l10n.bidAnalyzerUseCaseCompetitor,
+      l10n.bidAnalyzerUseCaseRfp,
+      l10n.bidAnalyzerUseCaseScope,
+    ];
+    return Column(
+      children: cases
+          .map(
+            (text) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle_outline, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(text)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  String _money(dynamic value) {
+    if (value is num) return '\$${value.toStringAsFixed(0)}';
+    final parsed = double.tryParse(value?.toString() ?? '');
+    return parsed == null ? '—' : '\$${parsed.toStringAsFixed(0)}';
+  }
+
+  String _marginLabel(Map<String, dynamic> item) {
+    final their = _numValue(item['theirPrice']);
+    final yours = _numValue(item['yourPrice']);
+    final internal = _numValue(item['internalCost'] ?? item['estimatedCost']);
+    final price = yours ?? their;
+    if (price == null || internal == null || price <= 0) return '—';
+    final margin = ((price - internal) / price) * 100;
+    return '${margin.round()}%';
+  }
+
+  Color _marginColor(Map<String, dynamic> item, ColorScheme cs) {
+    final label = _marginLabel(item);
+    if (label == '—') return cs.onSurfaceVariant;
+    final value = int.tryParse(label.replaceAll('%', '')) ?? 0;
+    if (value < 20) return cs.error;
+    if (value < 35) return Colors.amber;
+    return Colors.green;
+  }
+
+  double? _numValue(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '');
+  }
+
+  _BidRisk _riskLevel(AppLocalizations l10n) {
+    final warnings = _riskWarnings(l10n);
+    final underFlags = _lineItems
+        .where((item) => item['flag']?.toString().toLowerCase() == 'under')
+        .length;
+    final reviewItems = _lineItems
+        .where(
+          (item) => item['theirPrice'] == null || item['yourPrice'] == null,
+        )
+        .length;
+    if (warnings.length >= 2 || underFlags >= 2) {
+      return _BidRisk(
+        l10n.bidAnalyzerRiskHigh,
+        Icons.error_outline,
+        Colors.redAccent,
+      );
+    }
+    if (warnings.isNotEmpty || reviewItems >= 3 || underFlags == 1) {
+      return _BidRisk(
+        l10n.bidAnalyzerRiskMedium,
+        Icons.warning_amber,
+        Colors.amber,
+      );
+    }
+    return _BidRisk(
+      l10n.bidAnalyzerRiskLow,
+      Icons.verified_outlined,
+      Colors.green,
+    );
+  }
+
+  List<String> _riskWarnings(AppLocalizations l10n) {
+    final warnings = <String>[];
+    final underbid = _lineItems.any(
+      (item) => item['flag']?.toString().toLowerCase() == 'under',
+    );
+    if (underbid ||
+        (_yourTotal != null &&
+            _theirTotal != null &&
+            _yourTotal! < _theirTotal! * 0.9)) {
+      warnings.add(l10n.bidAnalyzerUnderbidWarning);
+    }
+    final missingScope = _lineItems.any(
+      (item) => item['theirPrice'] == null || item['yourPrice'] == null,
+    );
+    if (missingScope) warnings.add(l10n.bidAnalyzerMissingScopeWarning);
+    final materialLabor = _lineItems.any((item) {
+      final desc = item['description']?.toString().toLowerCase() ?? '';
+      final hasCost = item['theirPrice'] != null || item['yourPrice'] != null;
+      return hasCost && (desc.contains('material') || desc.contains('labor'));
+    });
+    if (!materialLabor && _lineItems.length > 2) {
+      warnings.add(l10n.bidAnalyzerMaterialLaborWarning);
+    }
+    return warnings;
+  }
+}
+
+class _BidRisk {
+  const _BidRisk(this.label, this.icon, this.color);
+
+  final String label;
+  final IconData icon;
+  final Color color;
 }

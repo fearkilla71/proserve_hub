@@ -2696,6 +2696,12 @@ abstract class AppLocalizations {
   /// **'Yours'**
   String get bidAnalyzerYours;
 
+  /// No description provided for @bidAnalyzerInternalCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get bidAnalyzerInternalCost;
+
   /// No description provided for @bidAnalyzerCounterBidTitle.
   ///
   /// In en, this message translates to:
@@ -2749,6 +2755,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **' (total: {total})'**
   String bidAnalyzerLocalSummaryTotal(String total);
+
+  /// No description provided for @bidAnalyzerUploadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload PDF'**
+  String get bidAnalyzerUploadPdf;
+
+  /// No description provided for @bidAnalyzerUploadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload image'**
+  String get bidAnalyzerUploadImage;
+
+  /// No description provided for @bidAnalyzerPasteText.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste text'**
+  String get bidAnalyzerPasteText;
+
+  /// No description provided for @bidAnalyzerSelectedFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {fileName}'**
+  String bidAnalyzerSelectedFile(String fileName);
+
+  /// No description provided for @bidAnalyzerUploadFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} is attached. If text extraction is not available on this device, paste the bid text below before analyzing.'**
+  String bidAnalyzerUploadFallback(String fileName);
+
+  /// No description provided for @bidAnalyzerRiskScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk: {level}'**
+  String bidAnalyzerRiskScore(String level);
+
+  /// No description provided for @bidAnalyzerRiskLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get bidAnalyzerRiskLow;
+
+  /// No description provided for @bidAnalyzerRiskMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get bidAnalyzerRiskMedium;
+
+  /// No description provided for @bidAnalyzerRiskHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get bidAnalyzerRiskHigh;
+
+  /// No description provided for @bidAnalyzerUnderbidWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Potential underbid: your suggested price may leave too little margin.'**
+  String get bidAnalyzerUnderbidWarning;
+
+  /// No description provided for @bidAnalyzerMissingScopeWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing scope detail: some line items need manual price or scope review.'**
+  String get bidAnalyzerMissingScopeWarning;
+
+  /// No description provided for @bidAnalyzerMaterialLaborWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Material and labor are not clearly separated; verify job cost before sending.'**
+  String get bidAnalyzerMaterialLaborWarning;
+
+  /// No description provided for @bidAnalyzerMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get bidAnalyzerMargin;
+
+  /// No description provided for @bidAnalyzerNextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Next actions'**
+  String get bidAnalyzerNextActions;
+
+  /// No description provided for @bidAnalyzerCreateCounterQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Create counter-quote'**
+  String get bidAnalyzerCreateCounterQuote;
+
+  /// No description provided for @bidAnalyzerSaveAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Save analysis'**
+  String get bidAnalyzerSaveAnalysis;
+
+  /// No description provided for @bidAnalyzerAttachToJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to job'**
+  String get bidAnalyzerAttachToJob;
+
+  /// No description provided for @bidAnalyzerOpenQuoteTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Open quote templates'**
+  String get bidAnalyzerOpenQuoteTemplates;
+
+  /// No description provided for @bidAnalyzerCounterCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter-quote copied. Use a quote template to send it professionally.'**
+  String get bidAnalyzerCounterCopied;
+
+  /// No description provided for @bidAnalyzerAttachToJobUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Bid Analyzer from a job to attach this analysis.'**
+  String get bidAnalyzerAttachToJobUnavailable;
+
+  /// No description provided for @bidAnalyzerUseCaseCompetitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare a competitor bid before you counter.'**
+  String get bidAnalyzerUseCaseCompetitor;
+
+  /// No description provided for @bidAnalyzerUseCaseRfp.
+  ///
+  /// In en, this message translates to:
+  /// **'Break down an RFP or large scope into line items.'**
+  String get bidAnalyzerUseCaseRfp;
+
+  /// No description provided for @bidAnalyzerUseCaseScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Find missing labor, material, or warranty details before sending.'**
+  String get bidAnalyzerUseCaseScope;
 
   /// No description provided for @notNow.
   ///

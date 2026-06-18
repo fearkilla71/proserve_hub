@@ -1458,6 +1458,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bidAnalyzerYours => 'Yours';
 
   @override
+  String get bidAnalyzerInternalCost => 'Cost';
+
+  @override
   String get bidAnalyzerCounterBidTitle => 'Suggested Counter-Bid';
 
   @override
@@ -1490,6 +1493,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String bidAnalyzerLocalSummaryTotal(String total) {
     return ' (total: $total)';
   }
+
+  @override
+  String get bidAnalyzerUploadPdf => 'Upload PDF';
+
+  @override
+  String get bidAnalyzerUploadImage => 'Upload image';
+
+  @override
+  String get bidAnalyzerPasteText => 'Paste text';
+
+  @override
+  String bidAnalyzerSelectedFile(String fileName) {
+    return 'Selected: $fileName';
+  }
+
+  @override
+  String bidAnalyzerUploadFallback(String fileName) {
+    return '$fileName is attached. If text extraction is not available on this device, paste the bid text below before analyzing.';
+  }
+
+  @override
+  String bidAnalyzerRiskScore(String level) {
+    return 'Risk: $level';
+  }
+
+  @override
+  String get bidAnalyzerRiskLow => 'Low';
+
+  @override
+  String get bidAnalyzerRiskMedium => 'Medium';
+
+  @override
+  String get bidAnalyzerRiskHigh => 'High';
+
+  @override
+  String get bidAnalyzerUnderbidWarning =>
+      'Potential underbid: your suggested price may leave too little margin.';
+
+  @override
+  String get bidAnalyzerMissingScopeWarning =>
+      'Missing scope detail: some line items need manual price or scope review.';
+
+  @override
+  String get bidAnalyzerMaterialLaborWarning =>
+      'Material and labor are not clearly separated; verify job cost before sending.';
+
+  @override
+  String get bidAnalyzerMargin => 'Margin';
+
+  @override
+  String get bidAnalyzerNextActions => 'Next actions';
+
+  @override
+  String get bidAnalyzerCreateCounterQuote => 'Create counter-quote';
+
+  @override
+  String get bidAnalyzerSaveAnalysis => 'Save analysis';
+
+  @override
+  String get bidAnalyzerAttachToJob => 'Attach to job';
+
+  @override
+  String get bidAnalyzerOpenQuoteTemplates => 'Open quote templates';
+
+  @override
+  String get bidAnalyzerCounterCopied =>
+      'Counter-quote copied. Use a quote template to send it professionally.';
+
+  @override
+  String get bidAnalyzerAttachToJobUnavailable =>
+      'Open Bid Analyzer from a job to attach this analysis.';
+
+  @override
+  String get bidAnalyzerUseCaseCompetitor =>
+      'Compare a competitor bid before you counter.';
+
+  @override
+  String get bidAnalyzerUseCaseRfp =>
+      'Break down an RFP or large scope into line items.';
+
+  @override
+  String get bidAnalyzerUseCaseScope =>
+      'Find missing labor, material, or warranty details before sending.';
 
   @override
   String get notNow => 'Not now';
