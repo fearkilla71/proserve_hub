@@ -6,6 +6,16 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+class ConnectOnboardingException implements Exception {
+  const ConnectOnboardingException(this.userMessage, {this.cause});
+
+  final String userMessage;
+  final Object? cause;
+
+  @override
+  String toString() => userMessage;
+}
+
 class ConnectService {
   Future<void> startOnboarding() async {
     try {
@@ -30,8 +40,61 @@ class ConnectService {
     } catch (e, stack) {
       debugPrint('[ConnectService.startOnboarding] ERROR: $e');
       debugPrint('[ConnectService.startOnboarding] STACK: $stack');
-      rethrow;
+      if (e is ConnectOnboardingException) rethrow;
+      throw ConnectOnboardingException(_friendlyConnectMessage(e), cause: e);
     }
+  }
+
+  String _friendlyConnectMessage(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final message = (error.message ?? '').trim();
+      if (error.code == 'resource-exhausted') {
+        final retryHint = _extractRetryHint(message);
+        return retryHint == null
+            ? 'Payout setup is temporarily unavailable. Please retry in a few minutes.'
+            : 'Payout setup is temporarily unavailable. Try again after $retryHint.';
+      }
+      if (error.code == 'unauthenticated') {
+        return 'Sign in again before connecting payouts.';
+      }
+      if (error.code == 'failed-precondition') {
+        return message.isEmpty
+            ? 'Payout setup is not ready for this account yet.'
+            : message;
+      }
+      if (error.code == 'internal' || message.toUpperCase() == 'INTERNAL') {
+        return 'Payout setup is temporarily unavailable. Please try again or contact support.';
+      }
+      if (message.isNotEmpty) return message;
+    }
+
+    final text = error
+        .toString()
+        .replaceFirst(RegExp(r'^Exception:\s*'), '')
+        .trim();
+    final lower = text.toLowerCase();
+    if (lower.contains('rate limit')) {
+      final retryHint = _extractRetryHint(text);
+      return retryHint == null
+          ? 'Payout setup is temporarily unavailable. Please retry in a few minutes.'
+          : 'Payout setup is temporarily unavailable. Try again after $retryHint.';
+    }
+    if (lower.contains('internal')) {
+      return 'Payout setup is temporarily unavailable. Please try again or contact support.';
+    }
+    if (lower.contains('sign in') || lower.contains('auth')) {
+      return 'Sign in again before connecting payouts.';
+    }
+    if (text.isNotEmpty) return text;
+    return 'Could not open payout setup. Try again.';
+  }
+
+  String? _extractRetryHint(String message) {
+    final match = RegExp(
+      r'after\s+([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z?)',
+      caseSensitive: false,
+    ).firstMatch(message);
+    return match?.group(1);
   }
 
   Future<Map<String, dynamic>> _createOnboardingLink() async {

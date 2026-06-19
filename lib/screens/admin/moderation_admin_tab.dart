@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../services/admin_action_service.dart';
+import '../../widgets/admin_action_history_card.dart';
 
 class ModerationAdminTab extends StatefulWidget {
   const ModerationAdminTab({super.key});
@@ -228,6 +230,12 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            AdminActionHistoryCard(
+              parentRef: FirebaseFirestore.instance
+                  .collection('community_posts')
+                  .doc(postId),
+            ),
           ],
         ),
       ),
@@ -235,13 +243,24 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
   }
 
   Future<void> _updatePost(String postId, String status) async {
-    await FirebaseFirestore.instance
+    final ref = FirebaseFirestore.instance
         .collection('community_posts')
-        .doc(postId)
-        .set({
-          'moderationStatus': status,
-          'moderationUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        .doc(postId);
+    final before = await ref.get();
+    final previousStatus = (before.data()?['moderationStatus'] ?? 'active')
+        .toString();
+    await ref.set({
+      'moderationStatus': status,
+      'moderationUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await AdminActionService.instance.logAction(
+      parentRef: ref,
+      action: status == 'removed' ? 'post_removed' : 'post_restored',
+      note: 'Moderation status changed from $previousStatus to $status.',
+      targetId: postId,
+      previous: {'moderationStatus': previousStatus},
+      next: {'moderationStatus': status},
+    );
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(
@@ -250,13 +269,23 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
   }
 
   Future<void> _clearReports(String postId) async {
-    await FirebaseFirestore.instance
+    final ref = FirebaseFirestore.instance
         .collection('community_posts')
-        .doc(postId)
-        .set({
-          'reportCount': 0,
-          'reportsReviewedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        .doc(postId);
+    final before = await ref.get();
+    final previousCount = (before.data()?['reportCount'] as num?)?.toInt() ?? 0;
+    await ref.set({
+      'reportCount': 0,
+      'reportsReviewedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await AdminActionService.instance.logAction(
+      parentRef: ref,
+      action: 'reports_reviewed',
+      note: 'Cleared $previousCount community report(s).',
+      targetId: postId,
+      previous: {'reportCount': previousCount},
+      next: {'reportCount': 0},
+    );
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(

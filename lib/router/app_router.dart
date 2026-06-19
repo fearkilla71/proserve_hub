@@ -103,6 +103,7 @@ import '../screens/quality_inspector_screen.dart';
 import '../screens/multi_location_dashboard_screen.dart';
 import '../screens/sub_marketplace_screen.dart';
 import '../screens/bid_analyzer_screen.dart';
+import '../screens/store_screenshot_demo_screen.dart';
 import '../widgets/offline_banner.dart';
 import '../state/app_state.dart';
 
@@ -254,6 +255,7 @@ GoRouter createRouter() {
     '/contractor-signup',
     '/select-service',
     '/instant-quote',
+    '/screenshot-demo',
   };
 
   return GoRouter(
@@ -369,6 +371,10 @@ GoRouter createRouter() {
       GoRoute(
         path: '/admin-ops',
         builder: (context, state) => const AdminOperationsScreen(),
+      ),
+      GoRoute(
+        path: '/screenshot-demo',
+        builder: (context, state) => const StoreScreenshotDemoScreen(),
       ),
       GoRoute(
         path: '/favorites',

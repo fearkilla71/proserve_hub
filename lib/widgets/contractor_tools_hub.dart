@@ -117,6 +117,9 @@ class ContractorToolsHub extends StatelessWidget {
   }
 
   String _payoutSetupErrorMessage(Object error, AppLocalizations l10n) {
+    if (error is ConnectOnboardingException) {
+      return error.userMessage;
+    }
     if (error is FirebaseFunctionsException) {
       if (error.code == 'resource-exhausted') {
         return l10n.toolsPayoutSetupRateLimited;

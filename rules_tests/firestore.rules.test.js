@@ -501,6 +501,29 @@ describe('Firestore user security rules', () => {
       type: 'escrow_payment',
       createdAt: new Date(),
     });
+    await seed(['disputes', 'jobA'], {
+      jobId: 'jobA',
+      requesterUid: 'customerA',
+      contractorUid: 'contractorA',
+      reportedBy: 'customerA',
+      reportedAgainst: 'contractorA',
+      category: 'payment',
+      reason: 'Payment issue',
+      details: 'Escrow needs review.',
+      status: 'open',
+      messages: [],
+      createdAt: new Date(),
+    });
+    await seed(['community_posts', 'postA'], {
+      authorId: 'contractorA',
+      authorName: 'Contractor A',
+      caption: 'Reported post',
+      mediaUrls: [],
+      likeCount: 0,
+      reportCount: 2,
+      moderationStatus: 'active',
+      createdAt: new Date(),
+    });
 
     await assertSucceeds(getDoc(doc(db('adminA'), 'escrow_bookings/escrowA')));
     await assertSucceeds(updateDoc(doc(db('adminA'), 'escrow_bookings/escrowA'), {
@@ -535,6 +558,18 @@ describe('Firestore user security rules', () => {
       operatorUid: 'adminA',
       createdAt: new Date(),
     }));
+    await assertSucceeds(setDoc(doc(db('adminA'), 'disputes/jobA/admin_actions/actionA'), {
+      action: 'dispute_status_updated',
+      note: 'Started review.',
+      adminUid: 'adminA',
+      createdAt: new Date(),
+    }));
+    await assertSucceeds(setDoc(doc(db('adminA'), 'community_posts/postA/admin_actions/actionA'), {
+      action: 'post_removed',
+      note: 'Removed reported post.',
+      adminUid: 'adminA',
+      createdAt: new Date(),
+    }));
     await assertFails(updateDoc(doc(db('adminA'), 'payments/paymentA'), {
       status: 'reviewed',
     }));
@@ -542,6 +577,18 @@ describe('Firestore user security rules', () => {
       type: 'note',
       note: 'Contractor should not write admin action.',
       operatorUid: 'contractorA',
+      createdAt: new Date(),
+    }));
+    await assertFails(setDoc(doc(db('contractorA'), 'disputes/jobA/admin_actions/actionB'), {
+      action: 'dispute_status_updated',
+      note: 'Contractor should not write dispute admin action.',
+      adminUid: 'contractorA',
+      createdAt: new Date(),
+    }));
+    await assertFails(setDoc(doc(db('contractorA'), 'community_posts/postA/admin_actions/actionB'), {
+      action: 'post_removed',
+      note: 'Contractor should not write moderation admin action.',
+      adminUid: 'contractorA',
       createdAt: new Date(),
     }));
   });

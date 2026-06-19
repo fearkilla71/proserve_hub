@@ -22,6 +22,7 @@ class OfflineSyncService {
 
   final ValueNotifier<bool> isOnline = ValueNotifier(true);
   final ValueNotifier<int> pendingSyncCount = ValueNotifier(0);
+  final ValueNotifier<int> failedSyncCount = ValueNotifier(0);
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   bool _initialized = false;
@@ -58,6 +59,12 @@ class OfflineSyncService {
     _connectivitySub?.cancel();
     isOnline.dispose();
     pendingSyncCount.dispose();
+    failedSyncCount.dispose();
+  }
+
+  Future<void> retryPendingSync() async {
+    if (!isOnline.value || _writeQueue.isEmpty) return;
+    await _flushQueue();
   }
 
   // ── Write queue ───────────────────────────────────────────────────────
@@ -124,6 +131,7 @@ class OfflineSyncService {
     final copy = List<_QueuedWrite>.from(_writeQueue);
     _writeQueue.clear();
     pendingSyncCount.value = 0;
+    failedSyncCount.value = 0;
 
     int failures = 0;
     for (final w in copy) {
@@ -136,6 +144,7 @@ class OfflineSyncService {
       }
     }
     pendingSyncCount.value = _writeQueue.length;
+    failedSyncCount.value = failures;
     await _persistQueue();
 
     if (failures == 0) {

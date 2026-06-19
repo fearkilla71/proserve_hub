@@ -799,6 +799,10 @@ service cloud.firestore {
 
       // Dispute lifecycle is admin-managed.
       allow update, delete: if isAdmin();
+
+      match /admin_actions/{actionId} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // --- ESCROW BOOKINGS (AI instant-booking with escrow) ---
@@ -1378,6 +1382,10 @@ service cloud.firestore {
           && request.resource.data.createdAt is timestamp;
 
         allow update, delete: if isAdmin();
+      }
+
+      match /admin_actions/{actionId} {
+        allow read, write: if isAdmin();
       }
     }
 

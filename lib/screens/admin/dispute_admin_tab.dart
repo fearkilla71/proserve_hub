@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../services/admin_action_service.dart';
+import '../../widgets/admin_action_history_card.dart';
 
 class DisputeAdminTab extends StatefulWidget {
   const DisputeAdminTab({super.key});
@@ -61,6 +63,21 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
             .doc(jobId)
             .set(jobUpdates, SetOptions(merge: true));
       }
+
+      await AdminActionService.instance.logAction(
+        parentRef: FirebaseFirestore.instance
+            .collection('disputes')
+            .doc(disputeId),
+        action: newStatus == 'resolved'
+            ? 'dispute_resolved'
+            : 'dispute_status_updated',
+        note: (resolution ?? '').trim().isNotEmpty
+            ? resolution!.trim()
+            : 'Dispute status changed to $newStatus.',
+        targetId: disputeId,
+        previous: {'status': disputeData?['status']},
+        next: {'status': newStatus},
+      );
 
       if (context.mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -365,6 +382,12 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+                        AdminActionHistoryCard(
+                          parentRef: FirebaseFirestore.instance
+                              .collection('disputes')
+                              .doc(disputeId),
                         ),
                       ],
                     ),
