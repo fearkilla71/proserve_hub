@@ -226,11 +226,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get customerReviewsDue => 'Reseñas pendientes';
 
   @override
-  String get customerCoreFlowTitle => 'Flujo del proyecto';
+  String get customerCoreFlowTitle => 'Accesos del proyecto';
 
   @override
   String get customerCoreFlowSubtitle =>
-      'Inicia, compara, paga, sigue y reseña desde un solo lugar.';
+      'Busca pros, mensajes y seguimiento del proyecto.';
 
   @override
   String get customerMoreToolsTitle => 'Más herramientas';
@@ -273,6 +273,106 @@ class AppLocalizationsEs extends AppLocalizations {
   String get customerQuickAiSupportSubtitle => 'Ayuda instantánea 24/7';
 
   @override
+  String get customerProjectsTitle => 'Proyectos';
+
+  @override
+  String get customerProjectsSubtitle =>
+      'Sigue solicitudes, cotizaciones, pagos y trabajos terminados.';
+
+  @override
+  String get projectNewProject => 'Nuevo';
+
+  @override
+  String get projectFilterActive => 'Activos';
+
+  @override
+  String get projectFilterQuotes => 'Cotizaciones';
+
+  @override
+  String get projectFilterProtected => 'Protegidos';
+
+  @override
+  String get projectFilterCompleted => 'Terminados';
+
+  @override
+  String get projectFilterAll => 'Todos';
+
+  @override
+  String get projectEmptyActiveTitle => 'Sin proyectos activos';
+
+  @override
+  String get projectEmptyActiveBody =>
+      'No hay proyectos activos ahora. Empieza desde Inicio o Buscar Pros.';
+
+  @override
+  String get projectEmptyQuotesTitle => 'Sin cotizaciones';
+
+  @override
+  String get projectEmptyQuotesBody =>
+      'Las cotizaciones aparecerán aquí cuando respondan los contratistas.';
+
+  @override
+  String get projectEmptyProtectedTitle => 'Sin pagos protegidos';
+
+  @override
+  String get projectEmptyProtectedBody =>
+      'Los proyectos con escrow aparecerán cuando el pago esté protegido.';
+
+  @override
+  String get projectEmptyCompletedTitle => 'Sin proyectos terminados';
+
+  @override
+  String get projectEmptyCompletedBody =>
+      'Los trabajos terminados e historial de reseñas aparecerán aquí.';
+
+  @override
+  String get projectOfflineCached =>
+      'Mostrando proyectos guardados. Puede que estés sin conexión.';
+
+  @override
+  String get projectToolsTitle => 'Herramientas';
+
+  @override
+  String get projectToolsSubtitle =>
+      'Estimador, analíticas y detalles de pagos protegidos.';
+
+  @override
+  String get projectLeaveReview => 'Dejar reseña';
+
+  @override
+  String get projectCheckPayment => 'Revisar pago';
+
+  @override
+  String get projectCompareQuotes => 'Comparar';
+
+  @override
+  String get projectViewSummary => 'Ver resumen';
+
+  @override
+  String get projectOpenCommandCenter => 'Abrir centro';
+
+  @override
+  String get projectViewProject => 'Ver proyecto';
+
+  @override
+  String get projectLocationLabel => 'Ubicación';
+
+  @override
+  String get projectContractorLabel => 'Contratista';
+
+  @override
+  String get projectCreatedLabel => 'Creado';
+
+  @override
+  String get projectAssignedLabel => 'Asignado';
+
+  @override
+  String get projectProtectedPayment => 'Pago protegido';
+
+  @override
+  String get projectNearbyContractors => 'Contratistas cercanos';
+
+  @override
   String get couldNotLoadRequests => 'No se pudieron cargar tus solicitudes';
 
   @override
@@ -283,7 +383,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get customerActionCenterSubtitle =>
-      'Tus próximos pasos desde la solicitud hasta el pago, finalización y reseña.';
+      'Tu próximo paso para terminar el proyecto de forma segura.';
 
   @override
   String get customerActionCenterNoQuotesTip =>
@@ -339,7 +439,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get customerActionEmptyBody =>
-      'Aún no tienes proyectos activos. Empieza con fotos, código postal y tipo de servicio.';
+      'Aún no tienes proyectos activos. Empieza una vez con fotos, código postal y tipo de servicio.';
 
   @override
   String get customerActionEmptyTrust =>

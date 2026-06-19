@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../constants/service_types.dart';
+
 /// Service for saving & loading reusable quote/estimate templates.
 class QuoteTemplateService {
   QuoteTemplateService._();
@@ -126,11 +128,5 @@ class QuoteTemplateService {
     };
   }
 
-  static const serviceTypes = <String, String>{
-    'painting': 'Interior Painting',
-    'exterior_painting': 'Exterior Painting',
-    'cabinet_painting': 'Cabinet Painting',
-    'drywall': 'Drywall Repair',
-    'pressure_washing': 'Pressure Washing',
-  };
+  static const serviceTypes = kQuickServices;
 }

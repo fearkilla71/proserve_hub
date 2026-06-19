@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/service_types.dart';
 import '../services/location_service.dart';
 import '../widgets/address_autocomplete_field.dart';
 import '../widgets/contractor_account_summary_card.dart';
@@ -159,9 +160,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         _cardAura = (data['cardAura'] as String?)?.trim() ?? _cardAura;
         _selectedBadges =
             (data['badges'] as List?)?.whereType<String>().toList() ?? [];
-        _selectedServices =
-            (data['servicesOffered'] as List?)?.whereType<String>().toList() ??
-            [];
+        _selectedServices = contractorServicesFromData(data);
         _totalJobsCompleted =
             (data['totalJobsCompleted'] as num?)?.toInt() ??
             (data['completedJobs'] as num?)?.toInt() ??
@@ -223,7 +222,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
               'avatarGlow': _avatarGlow,
               'cardAura': _cardAura,
               'badges': _selectedBadges,
-              'servicesOffered': _selectedServices,
+              'services': normalizeServiceList(_selectedServices),
+              'servicesOffered': normalizeServiceList(_selectedServices),
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
       }
@@ -395,8 +395,60 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       'avgRating': _avgRating,
       'reviewCount': _reviewCount,
       'badges': _selectedBadges,
-      'servicesOffered': _selectedServices,
+      'services': normalizeServiceList(_selectedServices),
+      'servicesOffered': normalizeServiceList(_selectedServices),
     };
+  }
+
+  Widget _serviceChip(String svc) {
+    final normalized = canonicalServiceName(svc);
+    final selected = _selectedServices.any(
+      (service) => serviceMatches(service, normalized),
+    );
+    return FilterChip(
+      label: Text(normalized),
+      selected: selected,
+      onSelected: (isSelected) {
+        setState(() {
+          if (isSelected) {
+            _selectedServices = normalizeServiceList([
+              ..._selectedServices,
+              normalized,
+            ]);
+          } else {
+            _selectedServices = _selectedServices
+                .where((service) => !serviceMatches(service, normalized))
+                .toList();
+          }
+        });
+      },
+      selectedColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: 0.2),
+      checkmarkColor: Theme.of(context).colorScheme.primary,
+    );
+  }
+
+  Widget _serviceCategoryChips(String title, List<String> services) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 10, bottom: 8),
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: services.map(_serviceChip).toList(),
+        ),
+      ],
+    );
   }
 
   Widget _optionGroup({required String title, required List<Widget> children}) {
@@ -668,38 +720,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   ),
                             ),
                             const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: _allServices.map((svc) {
-                                final selected = _selectedServices.contains(
-                                  svc,
-                                );
-                                return FilterChip(
-                                  label: Text(svc),
-                                  selected: selected,
-                                  onSelected: (isSelected) {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedServices = [
-                                          ..._selectedServices,
-                                          svc,
-                                        ];
-                                      } else {
-                                        _selectedServices = _selectedServices
-                                            .where((s) => s != svc)
-                                            .toList();
-                                      }
-                                    });
-                                  },
-                                  selectedColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.2),
-                                  checkmarkColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                );
-                              }).toList(),
+                            ...kHomeServiceCategories.entries.map(
+                              (entry) =>
+                                  _serviceCategoryChips(entry.key, entry.value),
                             ),
                           ],
                         ),
@@ -950,30 +973,3 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     );
   }
 }
-
-const List<String> _allServices = [
-  'Interior Painting',
-  'Exterior Painting',
-  'Drywall Repair',
-  'Pressure Washing',
-  'Cabinets',
-  'HVAC',
-  'Pool Installation',
-  'Garage Door',
-  'Window Replacement',
-  'Solar Panels',
-  'Pest Control',
-  'Tree Service',
-  'Roofing',
-  'Plumbing',
-  'Electrical',
-  'Flooring',
-  'Landscaping',
-  'Fencing',
-  'Bathroom Remodel',
-  'Kitchen Remodel',
-  'Deck & Patio',
-  'Concrete & Masonry',
-  'Demolition',
-  'General Handyman',
-];

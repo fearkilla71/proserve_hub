@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/service_types.dart';
 import 'contractor_card.dart';
 import 'card_aura_painter.dart';
 
@@ -108,13 +109,7 @@ Widget buildContractorCardFromDoc({
           .where((c) => c.isNotEmpty)
           .toList() ??
       <String>[];
-  final servicesOffered =
-      (data?['servicesOffered'] as List?)
-          ?.whereType<String>()
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList() ??
-      <String>[];
+  final servicesOffered = contractorServicesFromData(data);
   final memberSince = (data?['memberSince'] as String?)?.trim() ?? '';
 
   final reviewStream = FirebaseFirestore.instance

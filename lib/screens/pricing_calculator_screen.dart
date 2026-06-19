@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 import '../models/invoice_models.dart';
 import '../widgets/linked_job_context_card.dart';
@@ -54,16 +55,14 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   /// Built-in fallback services (always available).
   static const _builtInServices = <String>[
     'Painting',
-    'Exterior Painting',
-    'Cabinet Painting',
-    'Drywall Repair',
-    'Pressure Washing',
+    ...kContractorServiceCatalog,
   ];
 
   static const _builtInRates = <String, double>{
     'Painting': 60.0,
+    'Interior Painting': 60.0,
     'Exterior Painting': 55.0,
-    'Cabinet Painting': 70.0,
+    'Cabinets': 70.0,
     'Drywall Repair': 65.0,
     'Pressure Washing': 55.0,
   };
@@ -75,7 +74,10 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
 
   /// Merged list shown in the dropdown.
   List<String> get _allServices {
-    final set = <String>{..._builtInServices, ..._dynamicServices};
+    final set = <String>{
+      ..._builtInServices,
+      ...normalizeServiceList(_dynamicServices),
+    };
     return set.toList()..sort();
   }
 
@@ -164,7 +166,11 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   // ── Calculations ────────────────────────────────────────────────────────
 
   double _rateForService(String service) {
-    return _builtInRates[service] ?? _dynamicRates[service] ?? 75.0;
+    final canonical = canonicalServiceName(service);
+    return _builtInRates[canonical] ??
+        _dynamicRates[service] ??
+        _dynamicRates[canonical] ??
+        75.0;
   }
 
   double _calculateLaborCost() {
@@ -383,15 +389,9 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   }
 
   static String _normalizeService(String value) {
-    final lower = value.toLowerCase();
-    if (lower.contains('cabinet')) return 'Cabinet Painting';
-    if (lower.contains('exterior')) return 'Exterior Painting';
-    if (lower.contains('drywall')) return 'Drywall Repair';
-    if (lower.contains('pressure') || lower.contains('wash')) {
-      return 'Pressure Washing';
-    }
-    if (lower.contains('paint')) return 'Painting';
-    return _capitalize(value);
+    final canonical = canonicalServiceName(value);
+    if (serviceMatches(canonical, 'Interior Painting')) return 'Painting';
+    return canonical;
   }
 
   // ── Markup editor ───────────────────────────────────────────────────────

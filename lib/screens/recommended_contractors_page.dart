@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
 
+import '../constants/service_types.dart';
 import '../models/marketplace_models.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/zip_locations.dart';
@@ -31,40 +32,15 @@ class _RecommendedContractorsPageState
   String _sortBy = 'match'; // match, distance, rating, response
 
   bool _serviceMatches(String contractorService, String requestedService) {
-    final s = contractorService.trim().toLowerCase();
-    final req = requestedService.trim().toLowerCase();
-    if (req.isEmpty) return true;
-
-    if (req.contains('interior') && req.contains('paint')) {
-      return s.contains('interior') && s.contains('paint');
-    }
-    if (req.contains('exterior') && req.contains('paint')) {
-      return s.contains('exterior') && s.contains('paint');
-    }
-    if (req.contains('paint')) {
-      return s.contains('paint');
-    }
-    if (req.contains('drywall')) {
-      return s.contains('drywall');
-    }
-    if (req.contains('pressure')) {
-      return s.contains('pressure') ||
-          (s.contains('wash') && !s.contains('dish'));
-    }
-    if (req.contains('cabinet')) {
-      return s.contains('cabinet');
-    }
-
-    return s == req;
+    if (requestedService.trim().isEmpty) return true;
+    return serviceMatches(contractorService, requestedService);
   }
 
   bool _contractorSupportsService(
     Map<String, dynamic> contractor,
     String requestedService,
   ) {
-    final raw = contractor['services'];
-    if (raw is! List) return false;
-    final services = raw.map((e) => e.toString()).toList();
+    final services = contractorServicesFromData(contractor);
     return services.any((s) => _serviceMatches(s, requestedService));
   }
 
@@ -743,10 +719,7 @@ class ContractorProfilePage extends StatelessWidget {
           }
 
           final name = (data['name'] ?? 'Contractor').toString();
-          final servicesRaw = data['services'];
-          final services = servicesRaw is List
-              ? servicesRaw.map((e) => e.toString()).toList()
-              : <String>[];
+          final services = contractorServicesFromData(data);
           final verified = data['verified'] == true;
           final completedJobs =
               data['completedJobs'] ?? data['totalJobsCompleted'] ?? 0;

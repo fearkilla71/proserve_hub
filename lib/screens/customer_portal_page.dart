@@ -18,7 +18,6 @@ import '../services/trusted_pros_service.dart';
 import '../widgets/escrow_bookings_card.dart';
 import '../widgets/maintenance_reminder_card.dart';
 import '../widgets/neighborhood_social_proof.dart';
-import '../widgets/profile_completion_card.dart';
 import '../widgets/seasonal_deals_carousel.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/persistent_job_state_bar.dart';
@@ -35,6 +34,8 @@ class _RequestsFetchResult {
   final bool usedFallback;
 }
 
+enum _CustomerProjectFilter { active, quotes, protected, completed, all }
+
 class CustomerPortalPage extends StatefulWidget {
   const CustomerPortalPage({super.key});
 
@@ -45,13 +46,12 @@ class CustomerPortalPage extends StatefulWidget {
 class _CustomerPortalPageState extends State<CustomerPortalPage>
     with SingleTickerProviderStateMixin {
   int _tabIndex = 0;
+  _CustomerProjectFilter _projectFilter = _CustomerProjectFilter.active;
 
   Future<_RequestsFetchResult>? _myRequestsDiagnose;
   late final AnimationController _homeIntroController;
   late final Animation<double> _heroFade;
   late final Animation<Offset> _heroSlide;
-  late final Animation<double> _nextFade;
-  late final Animation<Offset> _nextSlide;
 
   @override
   void initState() {
@@ -69,17 +69,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           CurvedAnimation(
             parent: _homeIntroController,
             curve: const Interval(0.0, 0.65, curve: Curves.easeOut),
-          ),
-        );
-    _nextFade = CurvedAnimation(
-      parent: _homeIntroController,
-      curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
-    );
-    _nextSlide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: _homeIntroController,
-            curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
           ),
         );
     _homeIntroController.forward();
@@ -194,52 +183,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     return claimed && contractorId.isNotEmpty && status == 'completed';
   }
 
-  Widget _buildReviewAction({
-    required BuildContext context,
-    required String jobId,
-    required String contractorId,
-  }) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('reviews')
-          .where('jobId', isEqualTo: jobId)
-          .snapshots(),
-      builder: (context, reviewSnap) {
-        if (!reviewSnap.hasData) {
-          return const SizedBox.shrink();
-        }
-
-        final me = FirebaseAuth.instance.currentUser?.uid ?? '';
-        final alreadyReviewed = reviewSnap.data!.docs.any((d) {
-          final data = d.data();
-          final customerId = (data['customerId'] as String?)?.trim() ?? '';
-          return customerId == me;
-        });
-
-        if (alreadyReviewed) {
-          return SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Review Submitted'),
-            ),
-          );
-        }
-
-        return SizedBox(
-          width: double.infinity,
-          child: FilledButton.tonal(
-            onPressed: () {
-              context.push('/submit-review/$jobId/$contractorId');
-            },
-            child: const Text('Leave a Review'),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
@@ -297,21 +240,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCustomerTodayDashboard({
-    required BuildContext context,
-    required String userId,
-  }) {
-    final l10n = AppLocalizations.of(context)!;
-    return _CustomerTodayDashboard(
-      requestsQuery: _myRequestsQuery(userId),
-      canLeaveReview: _canLeaveReview,
-      onStartProject: () => context.push('/smart-request'),
-      onBrowsePros: () => setState(() => _tabIndex = 1),
-      onProjects: () => setState(() => _tabIndex = 2),
-      l10n: l10n,
     );
   }
 
@@ -426,99 +354,24 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
             ),
             const SizedBox(height: 16),
             _fadeSlide(
-              child: _buildCustomerTodayDashboard(
-                context: context,
+              child: _CustomerActionCenter(
                 userId: user.uid,
+                requestsQuery: _myRequestsQuery(user.uid),
+                canLeaveReview: _canLeaveReview,
+                onStartProject: () => context.push('/smart-request'),
+                onProjectTab: () => setState(() => _tabIndex = 2),
               ),
               fade: _heroFade,
               slide: _heroSlide,
             ),
             const SizedBox(height: 12),
-            _fadeSlide(
-              child: _CustomerActionCenter(
-                userId: user.uid,
-                requestsQuery: _myRequestsQuery(user.uid),
-                canLeaveReview: _canLeaveReview,
-                onProjectTab: () => setState(() => _tabIndex = 2),
-              ),
-              fade: _nextFade,
-              slide: _nextSlide,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: ProServeColors.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: ProServeColors.accent.withValues(alpha: 0.20),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.route_outlined,
-                    color: ProServeColors.accent,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.customerCoreFlowTitle,
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        l10n.customerCoreFlowSubtitle,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: ProServeColors.muted),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
+            _CustomerShortcutPanel(
+              title: l10n.customerCoreFlowTitle,
+              subtitle: l10n.customerCoreFlowSubtitle,
               children: [
                 Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.startRequest,
-                    subtitle: l10n.customerQuickStartRequestSubtitle,
-                    icon: Icons.add_circle_outline,
-                    onTap: () {
-                      context.push('/smart-request');
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
-                    title: l10n.browsePros,
-                    subtitle: l10n.customerQuickBrowseProsSubtitle,
-                    icon: Icons.search,
-                    onTap: () {
-                      setState(() => _tabIndex = 1);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _quickActionTile(
-                    context: context,
+                  child: _CustomerShortcutTile(
                     title: l10n.messages,
-                    subtitle: l10n.customerQuickMessagesSubtitle,
                     icon: Icons.chat_bubble_outline,
                     onTap: () {
                       context.push('/conversations');
@@ -527,10 +380,18 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _quickActionTile(
-                    context: context,
+                  child: _CustomerShortcutTile(
+                    title: l10n.browsePros,
+                    icon: Icons.search,
+                    onTap: () {
+                      setState(() => _tabIndex = 1);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _CustomerShortcutTile(
                     title: l10n.projectTracker,
-                    subtitle: l10n.customerQuickProjectTrackerSubtitle,
                     icon: Icons.receipt_long,
                     onTap: () {
                       setState(() => _tabIndex = 2);
@@ -1034,7 +895,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snap) {
@@ -1054,289 +914,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               children: [
                 _buildHomeTab(context: context, user: user),
                 _buildSearchTab(context),
-                ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    Text(
-                      l10n.project,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 12),
-                    const ProfileCompletionCard(),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () {
-                          context.push('/select-service');
-                        },
-                        child: Text(l10n.startNewRequest),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.tonal(
-                        onPressed: () {
-                          context.push('/ai-estimator');
-                        },
-                        child: Text(l10n.aiEstimator),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          context.push('/customer-analytics');
-                        },
-                        child: Text(l10n.analytics),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const EscrowBookingsCard(isCustomer: true),
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.myRequests,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: _myRequestsQuery(
-                        user.uid,
-                      ).snapshots(includeMetadataChanges: true),
-                      builder: (context, jobsSnap) {
-                        if (jobsSnap.hasError) {
-                          final pretty = _prettyFirestoreError(jobsSnap.error!);
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.couldNotLoadRequests,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(pretty),
-                                  const SizedBox(height: 12),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton.icon(
-                                      onPressed: _retryMyRequests,
-                                      icon: const Icon(Icons.refresh),
-                                      label: Text(l10n.retry),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (!jobsSnap.hasData) {
-                          return FutureBuilder<void>(
-                            future: Future<void>.delayed(
-                              const Duration(seconds: 6),
-                            ),
-                            builder: (context, delaySnap) {
-                              if (delaySnap.connectionState !=
-                                  ConnectionState.done) {
-                                return Column(
-                                  children: const [
-                                    SkeletonCard(),
-                                    SkeletonCard(),
-                                    SkeletonCard(),
-                                  ],
-                                );
-                              }
-
-                              _myRequestsDiagnose ??=
-                                  _runMyRequestsDiagnosticFetch(user.uid);
-
-                              return FutureBuilder<_RequestsFetchResult>(
-                                future: _myRequestsDiagnose,
-                                builder: (context, diagSnap) {
-                                  if (diagSnap.connectionState !=
-                                      ConnectionState.done) {
-                                    return Column(
-                                      children: const [
-                                        SkeletonCard(),
-                                        SkeletonCard(),
-                                      ],
-                                    );
-                                  }
-
-                                  if (diagSnap.hasError) {
-                                    final pretty = _prettyFirestoreError(
-                                      diagSnap.error!,
-                                    );
-                                    return Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              l10n.stillLoadingRequests,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w800,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(pretty),
-                                            const SizedBox(height: 12),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: _retryMyRequests,
-                                                icon: const Icon(Icons.refresh),
-                                                label: Text(l10n.retry),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  final result = diagSnap.data;
-                                  final docs = result?.docs ?? const [];
-                                  if (docs.isEmpty) {
-                                    return _buildEmptyRequestsState(context);
-                                  }
-
-                                  // Render what we got from the one-shot
-                                  // fetch so the screen is usable even if the
-                                  // realtime stream is stuck.
-                                  final sorted = docs.toList();
-                                  sorted.sort((a, b) {
-                                    final at = a.data()['createdAt'];
-                                    final bt = b.data()['createdAt'];
-                                    final aMs = at is Timestamp
-                                        ? at.millisecondsSinceEpoch
-                                        : 0;
-                                    final bMs = bt is Timestamp
-                                        ? bt.millisecondsSinceEpoch
-                                        : 0;
-                                    return bMs.compareTo(aMs);
-                                  });
-
-                                  return Column(
-                                    children: [
-                                      if (result?.usedFallback == true)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 8,
-                                          ),
-                                          child: Text(
-                                            l10n.showingLegacyRequests,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall,
-                                          ),
-                                        ),
-                                      ...sorted.map((doc) {
-                                        return _buildRequestCard(
-                                          context: context,
-                                          docId: doc.id,
-                                          data: doc.data(),
-                                        );
-                                      }),
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          onPressed: _retryMyRequests,
-                                          icon: const Icon(Icons.refresh),
-                                          label: Text(l10n.refresh),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        }
-
-                        final docs = jobsSnap.data!.docs.where((d) {
-                          final s = (d.data()['status'] ?? '')
-                              .toString()
-                              .toLowerCase();
-                          return s != 'cancelled' && s != 'deleted';
-                        }).toList();
-                        docs.sort((a, b) {
-                          final ad = a.data();
-                          final bd = b.data();
-                          final at = ad['createdAt'];
-                          final bt = bd['createdAt'];
-                          final aMs = at is Timestamp
-                              ? at.millisecondsSinceEpoch
-                              : 0;
-                          final bMs = bt is Timestamp
-                              ? bt.millisecondsSinceEpoch
-                              : 0;
-                          return bMs.compareTo(aMs);
-                        });
-
-                        if (docs.isEmpty) {
-                          return _buildEmptyRequestsState(context);
-                        }
-
-                        final isFromCache = jobsSnap.data!.metadata.isFromCache;
-
-                        return Column(
-                          children: [
-                            if (isFromCache)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.cloud_off,
-                                      size: 16,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Showing cached data — you appear to be offline',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ...docs.map((doc) {
-                              return _buildRequestCard(
-                                context: context,
-                                docId: doc.id,
-                                data: doc.data(),
-                              );
-                            }),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                _buildProjectsTab(context: context, user: user),
                 _buildTeamTab(context),
                 const CommunityFeedScreen(title: 'Project Gallery'),
               ],
@@ -1347,46 +925,272 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     );
   }
 
-  // ────────────────── Empty Requests State ────────────────────
-
-  Widget _buildEmptyRequestsState(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _buildProjectsTab({required BuildContext context, required User user}) {
     final l10n = AppLocalizations.of(context)!;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Column(
-          children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 56,
-              color: scheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.noRequestsYet,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.noRequestsYetSubtitle,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => context.push('/smart-request'),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.startRequest),
-            ),
-          ],
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: _myRequestsQuery(user.uid).snapshots(
+            includeMetadataChanges: true,
+          ),
+          builder: (context, jobsSnap) {
+            if (jobsSnap.hasError) {
+              return _ProjectStateCard(
+                icon: Icons.error_outline,
+                title: l10n.couldNotLoadRequests,
+                body: _prettyFirestoreError(jobsSnap.error!),
+                actionLabel: l10n.retry,
+                onAction: _retryMyRequests,
+              );
+            }
+
+            if (!jobsSnap.hasData) {
+              return FutureBuilder<void>(
+                future: Future<void>.delayed(const Duration(seconds: 6)),
+                builder: (context, delaySnap) {
+                  if (delaySnap.connectionState != ConnectionState.done) {
+                    return Column(
+                      children: const [
+                        SkeletonCard(),
+                        SkeletonCard(),
+                        SkeletonCard(),
+                      ],
+                    );
+                  }
+
+                  _myRequestsDiagnose ??= _runMyRequestsDiagnosticFetch(
+                    user.uid,
+                  );
+
+                  return FutureBuilder<_RequestsFetchResult>(
+                    future: _myRequestsDiagnose,
+                    builder: (context, diagSnap) {
+                      if (diagSnap.connectionState != ConnectionState.done) {
+                        return Column(
+                          children: const [SkeletonCard(), SkeletonCard()],
+                        );
+                      }
+                      if (diagSnap.hasError) {
+                        return _ProjectStateCard(
+                          icon: Icons.cloud_off_outlined,
+                          title: l10n.stillLoadingRequests,
+                          body: _prettyFirestoreError(diagSnap.error!),
+                          actionLabel: l10n.retry,
+                          onAction: _retryMyRequests,
+                        );
+                      }
+                      final docs = _sortedProjectDocs(
+                        diagSnap.data?.docs ?? const [],
+                      );
+                      return _buildProjectContent(
+                        context: context,
+                        docs: docs,
+                        usedFallback: diagSnap.data?.usedFallback == true,
+                        isFromCache: false,
+                      );
+                    },
+                  );
+                },
+              );
+            }
+
+            final docs = _sortedProjectDocs(jobsSnap.data!.docs);
+            return _buildProjectContent(
+              context: context,
+              docs: docs,
+              usedFallback: false,
+              isFromCache: jobsSnap.data!.metadata.isFromCache,
+            );
+          },
         ),
-      ),
+      ],
     );
+  }
+
+  Widget _buildProjectContent({
+    required BuildContext context,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    required bool usedFallback,
+    required bool isFromCache,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final filtered = docs.where((doc) => _matchesProjectFilter(doc.data()));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ProjectHeaderCard(
+          activeCount: docs.where((doc) => _isActiveProject(doc.data())).length,
+          quotesCount: docs.where((doc) => _hasWaitingQuotes(doc.data())).length,
+          protectedCount: docs
+              .where((doc) => _hasProtectedPayment(doc.data()))
+              .length,
+          reviewCount: docs.where((doc) => _canLeaveReview(doc.data())).length,
+          onNewProject: () => context.push('/select-service'),
+        ),
+        const SizedBox(height: 12),
+        _ProjectFilterBar(
+          selected: _projectFilter,
+          labelFor: (filter) => _projectFilterLabel(l10n, filter),
+          onSelected: (filter) {
+            setState(() => _projectFilter = filter);
+          },
+        ),
+        const SizedBox(height: 12),
+        if (usedFallback)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.showingLegacyRequests,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (isFromCache)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ProjectNotice(message: l10n.projectOfflineCached),
+          ),
+        if (docs.isEmpty)
+          _ProjectStateCard(
+            icon: Icons.folder_open_outlined,
+            title: l10n.noRequestsYet,
+            body: l10n.noRequestsYetSubtitle,
+            actionLabel: l10n.customerStartProject,
+            onAction: () => context.push('/smart-request'),
+          )
+        else if (filtered.isEmpty)
+          _ProjectStateCard(
+            icon: Icons.filter_alt_off_outlined,
+            title: _projectEmptyTitle(l10n),
+            body: _projectEmptyBody(l10n),
+            actionLabel: l10n.projectFilterAll,
+            onAction: () {
+              setState(() => _projectFilter = _CustomerProjectFilter.all);
+            },
+          )
+        else
+          ...filtered.map(
+            (doc) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildRequestCard(
+                context: context,
+                docId: doc.id,
+                data: doc.data(),
+              ),
+            ),
+          ),
+        const SizedBox(height: 4),
+        _ProjectToolsSection(
+          onEstimator: () => context.push('/ai-estimator'),
+          onAnalytics: () => context.push('/customer-analytics'),
+        ),
+      ],
+    );
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _sortedProjectDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final activeDocs = docs.where((d) {
+      final s = (d.data()['status'] ?? '').toString().toLowerCase();
+      return s != 'cancelled' && s != 'deleted';
+    }).toList();
+    activeDocs.sort((a, b) {
+      final at = a.data()['createdAt'];
+      final bt = b.data()['createdAt'];
+      final aMs = at is Timestamp ? at.millisecondsSinceEpoch : 0;
+      final bMs = bt is Timestamp ? bt.millisecondsSinceEpoch : 0;
+      return bMs.compareTo(aMs);
+    });
+    return activeDocs;
+  }
+
+  bool _matchesProjectFilter(Map<String, dynamic> data) {
+    switch (_projectFilter) {
+      case _CustomerProjectFilter.active:
+        return _isActiveProject(data);
+      case _CustomerProjectFilter.quotes:
+        return _hasWaitingQuotes(data);
+      case _CustomerProjectFilter.protected:
+        return _hasProtectedPayment(data);
+      case _CustomerProjectFilter.completed:
+        return _isCompletedProject(data);
+      case _CustomerProjectFilter.all:
+        return true;
+    }
+  }
+
+  bool _isActiveProject(Map<String, dynamic> data) {
+    final status = (data['status'] ?? '').toString().toLowerCase();
+    return !_isCompletedProject(data) &&
+        status != 'cancelled' &&
+        status != 'deleted';
+  }
+
+  bool _hasWaitingQuotes(Map<String, dynamic> data) {
+    final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
+    return quoteCount > 0 && data['claimed'] != true;
+  }
+
+  bool _hasProtectedPayment(Map<String, dynamic> data) {
+    return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
+        data['instantBook'] == true;
+  }
+
+  bool _isCompletedProject(Map<String, dynamic> data) {
+    final status = (data['status'] ?? '').toString().toLowerCase();
+    return status == 'completed' ||
+        status == 'completion_approved' ||
+        status == 'released';
+  }
+
+  String _projectFilterLabel(
+    AppLocalizations l10n,
+    _CustomerProjectFilter filter,
+  ) {
+    switch (filter) {
+      case _CustomerProjectFilter.active:
+        return l10n.projectFilterActive;
+      case _CustomerProjectFilter.quotes:
+        return l10n.projectFilterQuotes;
+      case _CustomerProjectFilter.protected:
+        return l10n.projectFilterProtected;
+      case _CustomerProjectFilter.completed:
+        return l10n.projectFilterCompleted;
+      case _CustomerProjectFilter.all:
+        return l10n.projectFilterAll;
+    }
+  }
+
+  String _projectEmptyTitle(AppLocalizations l10n) {
+    switch (_projectFilter) {
+      case _CustomerProjectFilter.active:
+        return l10n.projectEmptyActiveTitle;
+      case _CustomerProjectFilter.quotes:
+        return l10n.projectEmptyQuotesTitle;
+      case _CustomerProjectFilter.protected:
+        return l10n.projectEmptyProtectedTitle;
+      case _CustomerProjectFilter.completed:
+        return l10n.projectEmptyCompletedTitle;
+      case _CustomerProjectFilter.all:
+        return l10n.noRequestsYet;
+    }
+  }
+
+  String _projectEmptyBody(AppLocalizations l10n) {
+    switch (_projectFilter) {
+      case _CustomerProjectFilter.active:
+        return l10n.projectEmptyActiveBody;
+      case _CustomerProjectFilter.quotes:
+        return l10n.projectEmptyQuotesBody;
+      case _CustomerProjectFilter.protected:
+        return l10n.projectEmptyProtectedBody;
+      case _CustomerProjectFilter.completed:
+        return l10n.projectEmptyCompletedBody;
+      case _CustomerProjectFilter.all:
+        return l10n.noRequestsYetSubtitle;
+    }
   }
 
   // ────────────────── Request Card Builder ──────────────────────
@@ -1396,7 +1200,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     required String docId,
     required Map<String, dynamic> data,
   }) {
-    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final service = (data['service'] ?? 'Service').toString();
     final location = (data['location'] ?? 'Unknown').toString();
     final description = (data['description'] ?? '').toString();
@@ -1417,94 +1221,129 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     final escrowPrice = data['escrowPrice'];
     final status = (data['status'] ?? 'open').toString();
     final escrowId = (data['escrowId'] ?? '').toString();
+    final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
 
-    // Status pipeline
     final statusInfo = _getStatusInfo(
       status,
       claimed,
       claimedByName,
       isEscrow: isEscrow,
     );
+    final dateLabel = claimedAt.isNotEmpty
+        ? '${l10n.projectAssignedLabel}: $claimedAt'
+        : (createdAt.isNotEmpty
+              ? '${l10n.projectCreatedLabel}: $createdAt'
+              : '');
+    final primaryLabel = canReview
+        ? l10n.projectLeaveReview
+        : escrowId.isNotEmpty
+        ? l10n.projectCheckPayment
+        : quoteCount > 0 && !claimed
+        ? l10n.projectCompareQuotes
+        : _isCompletedProject(data)
+        ? l10n.projectViewSummary
+        : claimed || status == 'accepted' || status == 'in_progress'
+        ? l10n.projectOpenCommandCenter
+        : l10n.projectViewProject;
+    final primaryIcon = canReview
+        ? Icons.rate_review_outlined
+        : escrowId.isNotEmpty
+        ? Icons.shield_outlined
+        : quoteCount > 0 && !claimed
+        ? Icons.compare_arrows_outlined
+        : Icons.dashboard_customize_outlined;
+    final primaryRoute = canReview
+        ? '/submit-review/$docId/$contractorId'
+        : escrowId.isNotEmpty
+        ? '/escrow-status/$escrowId'
+        : quoteCount > 0 && !claimed
+        ? '/quotes/$docId'
+        : '/job-command/$docId';
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header row with service title + status badge ──
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
-            child: Row(
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => context.push('/job-command/$docId'),
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: ProServeColors.card,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: ProServeColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                // Escrow vs Regular badge
-                if (isEscrow) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          ProServeColors.accent,
-                          ProServeColors.accent.withValues(alpha: 0.7),
-                        ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        service,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.shield_outlined,
-                          size: 12,
-                          color: Colors.black87,
-                        ),
-                        const SizedBox(width: 4),
+                      if (dateLabel.isNotEmpty) ...[
+                        const SizedBox(height: 2),
                         Text(
-                          'Escrow',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
+                          dateLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: ProServeColors.muted),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ProServeColors.muted.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Regular',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: ProServeColors.muted,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(
-                    service,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    ],
                   ),
                 ),
-                // Unread badge + nearby icon
+                _ProjectStatusChip(label: statusInfo.label, color: statusInfo.color),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ProjectInfoPill(
+                  icon: Icons.place_outlined,
+                  text: '${l10n.projectLocationLabel}: $location',
+                ),
+                if (quoteCount > 0)
+                  _ProjectInfoPill(
+                    icon: Icons.request_quote_outlined,
+                    text: '$quoteCount ${l10n.quotes}',
+                  ),
+                if (claimedByName.isNotEmpty)
+                  _ProjectInfoPill(
+                    icon: Icons.handshake_outlined,
+                    text: '${l10n.projectContractorLabel}: $claimedByName',
+                  ),
+                if (isEscrow)
+                  _ProjectInfoPill(
+                    icon: Icons.shield_outlined,
+                    text: escrowPrice is num
+                        ? '${l10n.escrow}: ${NumberFormat.simpleCurrency().format(escrowPrice)}'
+                        : l10n.projectProtectedPayment,
+                  ),
+              ],
+            ),
+            if (description.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                description.trim(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: ProServeColors.muted),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('chats')
@@ -1524,152 +1363,40 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                         : 0;
 
                     if (unreadMe <= 0) return const SizedBox.shrink();
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.error,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        unreadMe.toString(),
-                        style: TextStyle(
-                          color: scheme.onError,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ProjectInfoPill(
+                        icon: Icons.mark_chat_unread_outlined,
+                        text: '$unreadMe ${l10n.messages}',
                       ),
                     );
                   },
                 ),
                 if (zip.isNotEmpty)
                   IconButton(
-                    tooltip: 'Nearby Contractors',
-                    icon: const Icon(Icons.near_me_outlined, size: 20),
-                    onPressed: () {
-                      context.push('/nearby-contractors/$zip');
-                    },
+                    tooltip: l10n.projectNearbyContractors,
+                    icon: const Icon(
+                      Icons.near_me_outlined,
+                      size: 20,
+                      color: ProServeColors.muted,
+                    ),
+                    onPressed: () => context.push('/nearby-contractors/$zip'),
                     visualDensity: VisualDensity.compact,
                   ),
-              ],
-            ),
-          ),
-
-          // ── Status indicator row ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Row(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: statusInfo.color,
-                    boxShadow: [
-                      BoxShadow(
-                        color: statusInfo.color.withValues(alpha: 0.4),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: () => context.push(primaryRoute),
+                      icon: Icon(primaryIcon, size: 18),
+                      label: Text(primaryLabel, overflow: TextOverflow.ellipsis),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  statusInfo.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: statusInfo.color,
-                  ),
-                ),
-                if (isEscrow && escrowPrice is num) ...[
-                  const Spacer(),
-                  Text(
-                    '\$${escrowPrice.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: ProServeColors.accent,
-                    ),
-                  ),
-                ],
               ],
             ),
-          ),
-
-          // ── Details ──
-          InkWell(
-            onTap: () {
-              if (isEscrow && escrowId.isNotEmpty) {
-                context.push('/escrow-status/$escrowId');
-              } else {
-                context.push('/job-command/$docId');
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Location: $location',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (claimedAt.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Assigned at: $claimedAt',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  if (claimedAt.isEmpty && createdAt.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Created at: $createdAt',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  if (description.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        description.trim(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Review button ──
-          if (canReview)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: _buildReviewAction(
-                context: context,
-                jobId: docId,
-                contractorId: contractorId,
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1717,218 +1444,498 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   }
 }
 
-class _CustomerTodayDashboard extends StatelessWidget {
-  const _CustomerTodayDashboard({
-    required this.requestsQuery,
-    required this.canLeaveReview,
-    required this.onStartProject,
-    required this.onBrowsePros,
-    required this.onProjects,
-    required this.l10n,
+class _ProjectHeaderCard extends StatelessWidget {
+  const _ProjectHeaderCard({
+    required this.activeCount,
+    required this.quotesCount,
+    required this.protectedCount,
+    required this.reviewCount,
+    required this.onNewProject,
   });
 
-  final Query<Map<String, dynamic>> requestsQuery;
-  final bool Function(Map<String, dynamic> data) canLeaveReview;
-  final VoidCallback onStartProject;
-  final VoidCallback onBrowsePros;
-  final VoidCallback onProjects;
-  final AppLocalizations l10n;
+  final int activeCount;
+  final int quotesCount;
+  final int protectedCount;
+  final int reviewCount;
+  final VoidCallback onNewProject;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: requestsQuery.snapshots(),
-      builder: (context, snapshot) {
-        final docs =
-            snapshot.data?.docs.where((doc) {
-              final status = (doc.data()['status'] ?? '')
-                  .toString()
-                  .toLowerCase();
-              return status != 'cancelled' && status != 'deleted';
-            }).toList() ??
-            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        final activeProjects = docs.length;
-        final quotesWaiting = docs.where((doc) {
-          final data = doc.data();
-          final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
-          return quoteCount > 0 && data['claimed'] != true;
-        }).length;
-        final protectedPayments = docs.where((doc) {
-          final data = doc.data();
-          return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
-              data['instantBook'] == true;
-        }).length;
-        final reviewsDue = docs.where((doc) => canLeaveReview(doc.data())).length;
-
-        return Container(
-          decoration: BoxDecoration(
-            gradient: ProServeColors.cardGradient,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: ProServeColors.lineStrong),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.20),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: ProServeColors.cardGradient,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ProServeColors.lineStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.customerTodayTitle,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.customerTodaySubtitle,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: ProServeColors.muted),
-                        ),
-                      ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.customerProjectsTitle,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
-                  ),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: ProServeColors.accent.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: ProServeColors.accent.withValues(alpha: 0.28),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.customerProjectsSubtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ProServeColors.muted,
                       ),
                     ),
-                    child: const Icon(
-                      Icons.verified_user_outlined,
-                      color: ProServeColors.accent,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 14),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 2.55,
-                children: [
-                  _CustomerMetricTile(
-                    label: l10n.customerActiveProjects,
-                    value: activeProjects.toString(),
-                    icon: Icons.work_outline,
-                    onTap: onProjects,
-                  ),
-                  _CustomerMetricTile(
-                    label: l10n.customerQuotesWaiting,
-                    value: quotesWaiting.toString(),
-                    icon: Icons.request_quote_outlined,
-                    onTap: onProjects,
-                  ),
-                  _CustomerMetricTile(
-                    label: l10n.customerProtectedPayments,
-                    value: protectedPayments.toString(),
-                    icon: Icons.shield_outlined,
-                    onTap: onProjects,
-                  ),
-                  _CustomerMetricTile(
-                    label: l10n.customerReviewsDue,
-                    value: reviewsDue.toString(),
-                    icon: Icons.star_outline,
-                    onTap: onProjects,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: onStartProject,
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: Text(l10n.customerStartProject),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onBrowsePros,
-                      icon: const Icon(Icons.search),
-                      label: Text(l10n.browsePros),
-                    ),
-                  ),
-                ],
+              OutlinedButton.icon(
+                onPressed: onNewProject,
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                label: Text(l10n.projectNewProject),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ProjectMetricPill(
+                value: activeCount,
+                label: l10n.projectFilterActive,
+                icon: Icons.work_outline,
+              ),
+              _ProjectMetricPill(
+                value: quotesCount,
+                label: l10n.projectFilterQuotes,
+                icon: Icons.request_quote_outlined,
+              ),
+              _ProjectMetricPill(
+                value: protectedCount,
+                label: l10n.projectFilterProtected,
+                icon: Icons.shield_outlined,
+              ),
+              _ProjectMetricPill(
+                value: reviewCount,
+                label: l10n.customerReviewsDue,
+                icon: Icons.star_outline,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _CustomerMetricTile extends StatelessWidget {
-  const _CustomerMetricTile({
-    required this.label,
+class _ProjectMetricPill extends StatelessWidget {
+  const _ProjectMetricPill({
     required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final int value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: ProServeColors.bgDeep.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProServeColors.lineStrong),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: ProServeColors.accent2),
+          const SizedBox(width: 6),
+          Text(
+            '$value $label',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: ProServeColors.ink,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectFilterBar extends StatelessWidget {
+  const _ProjectFilterBar({
+    required this.selected,
+    required this.labelFor,
+    required this.onSelected,
+  });
+
+  final _CustomerProjectFilter selected;
+  final String Function(_CustomerProjectFilter filter) labelFor;
+  final ValueChanged<_CustomerProjectFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _CustomerProjectFilter.values.map((filter) {
+          final selectedFilter = selected == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(labelFor(filter)),
+              selected: selectedFilter,
+              onSelected: (_) => onSelected(filter),
+              backgroundColor: ProServeColors.card,
+              selectedColor: ProServeColors.accent.withValues(alpha: 0.18),
+              side: BorderSide(
+                color: selectedFilter
+                    ? ProServeColors.accent
+                    : ProServeColors.lineStrong,
+              ),
+              labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: selectedFilter
+                    ? ProServeColors.accent
+                    : ProServeColors.ink,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _ProjectStateCard extends StatelessWidget {
+  const _ProjectStateCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: ProServeColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: ProServeColors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: ProServeColors.accent),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: ProServeColors.muted),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onAction,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(actionLabel!),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectNotice extends StatelessWidget {
+  const _ProjectNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: ProServeColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ProServeColors.warning.withValues(alpha: 0.26)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_outlined,
+            size: 18,
+            color: ProServeColors.warning,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: ProServeColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectToolsSection extends StatelessWidget {
+  const _ProjectToolsSection({
+    required this.onEstimator,
+    required this.onAnalytics,
+  });
+
+  final VoidCallback onEstimator;
+  final VoidCallback onAnalytics;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: ProServeColors.line),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          leading: const Icon(
+            Icons.construction_outlined,
+            color: ProServeColors.accent,
+          ),
+          title: Text(
+            l10n.projectToolsTitle,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(l10n.projectToolsSubtitle),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onEstimator,
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                    label: Text(l10n.aiEstimator),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onAnalytics,
+                    icon: const Icon(Icons.query_stats_outlined),
+                    label: Text(l10n.analytics),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const EscrowBookingsCard(isCustomer: true),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectStatusChip extends StatelessWidget {
+  const _ProjectStatusChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.34)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectInfoPill extends StatelessWidget {
+  const _ProjectInfoPill({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: ProServeColors.bgDeep.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProServeColors.lineStrong),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: ProServeColors.accent2),
+          const SizedBox(width: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 190),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: ProServeColors.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerShortcutPanel extends StatelessWidget {
+  const _CustomerShortcutPanel({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ProServeColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: ProServeColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: ProServeColors.ink,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: ProServeColors.muted),
+          ),
+          const SizedBox(height: 12),
+          Row(children: children),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerShortcutTile extends StatelessWidget {
+  const _CustomerShortcutTile({
+    required this.title,
     required this.icon,
     required this.onTap,
   });
 
-  final String label;
-  final String value;
+  final String title;
   final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
+    return Semantics(
+      button: true,
+      label: title,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          height: 78,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           decoration: BoxDecoration(
-            color: ProServeColors.bgDeep.withValues(alpha: 0.48),
+            color: ProServeColors.bgDeep.withValues(alpha: 0.40),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: ProServeColors.lineStrong),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: ProServeColors.accent2, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: ProServeColors.muted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+              Icon(icon, color: ProServeColors.accent, size: 22),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: ProServeColors.ink,
                 ),
               ),
             ],
@@ -2072,12 +2079,14 @@ class _CustomerActionCenter extends StatelessWidget {
     required this.userId,
     required this.requestsQuery,
     required this.canLeaveReview,
+    required this.onStartProject,
     required this.onProjectTab,
   });
 
   final String userId;
   final Query<Map<String, dynamic>> requestsQuery;
   final bool Function(Map<String, dynamic> data) canLeaveReview;
+  final VoidCallback onStartProject;
   final VoidCallback onProjectTab;
 
   @override
@@ -2114,7 +2123,7 @@ class _CustomerActionCenter extends StatelessWidget {
                 .toList()
               ..sort((a, b) => b.priority.compareTo(a.priority));
 
-        final topItems = actionable.take(3).toList();
+        final topItem = actionable.isNotEmpty ? actionable.first : null;
         final openJobs = docs.where((doc) {
           final data = doc.data();
           final claimed = data['claimed'] == true;
@@ -2132,6 +2141,8 @@ class _CustomerActionCenter extends StatelessWidget {
           return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
               data['instantBook'] == true;
         }).length;
+        final reviewsDue = docs.where((doc) => canLeaveReview(doc.data())).length;
+        final latestProject = docs.isNotEmpty ? docs.first : null;
 
         return Container(
           decoration: BoxDecoration(
@@ -2164,7 +2175,7 @@ class _CustomerActionCenter extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.actionCenter,
+                            l10n.customerTodayTitle,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w900),
                           ),
@@ -2186,15 +2197,19 @@ class _CustomerActionCenter extends StatelessWidget {
                   children: [
                     _ActionMetricChip(
                       value: docs.length.toString(),
-                      label: l10n.active,
+                      label: l10n.customerActiveProjects,
                     ),
                     _ActionMetricChip(
                       value: pendingQuotes.toString(),
-                      label: l10n.quotes,
+                      label: l10n.customerQuotesWaiting,
                     ),
                     _ActionMetricChip(
                       value: protectedJobs.toString(),
-                      label: l10n.protected,
+                      label: l10n.customerProtectedPayments,
+                    ),
+                    _ActionMetricChip(
+                      value: reviewsDue.toString(),
+                      label: l10n.customerReviewsDue,
                     ),
                   ],
                 ),
@@ -2202,18 +2217,20 @@ class _CustomerActionCenter extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting)
                   const LinearProgressIndicator()
                 else if (docs.isEmpty)
-                  _EmptyCustomerAction(onProjectTab: onProjectTab)
-                else if (topItems.isEmpty)
+                  _EmptyCustomerAction(onStartProject: onStartProject)
+                else if (topItem == null)
                   _ActionCenterAllClear(onProjectTab: onProjectTab)
                 else
-                  ...topItems.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _CustomerActionTile(item: item),
-                    ),
+                  _CustomerActionTile(item: topItem, prominent: true),
+                if (latestProject != null) ...[
+                  const SizedBox(height: 10),
+                  _RecentCustomerProjectCard(
+                    doc: latestProject,
+                    onTap: () => context.push('/job-command/${latestProject.id}'),
                   ),
+                ],
                 if (openJobs > 0 && pendingQuotes == 0) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.customerActionCenterNoQuotesTip,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2221,15 +2238,6 @@ class _CustomerActionCenter extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onProjectTab,
-                    icon: const Icon(Icons.receipt_long_outlined),
-                    label: Text(l10n.viewAllProjects),
-                  ),
-                ),
               ],
             ),
           ),
@@ -2329,9 +2337,10 @@ class _CustomerActionItem {
 }
 
 class _CustomerActionTile extends StatelessWidget {
-  const _CustomerActionTile({required this.item});
+  const _CustomerActionTile({required this.item, this.prominent = false});
 
   final _CustomerActionItem item;
+  final bool prominent;
 
   @override
   Widget build(BuildContext context) {
@@ -2342,12 +2351,27 @@ class _CustomerActionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
+          color: prominent
+              ? ProServeColors.accent.withValues(alpha: 0.10)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: scheme.outlineVariant),
+          border: Border.all(
+            color: prominent
+                ? ProServeColors.accent.withValues(alpha: 0.32)
+                : scheme.outlineVariant,
+          ),
         ),
         child: Row(
           children: [
-            Icon(item.icon, color: scheme.primary),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: ProServeColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(item.icon, color: ProServeColors.accent, size: 20),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -2367,7 +2391,7 @@ class _CustomerActionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right),
+            const Icon(Icons.chevron_right, color: ProServeColors.muted),
           ],
         ),
       ),
@@ -2386,14 +2410,20 @@ class _ActionMetricChip extends StatelessWidget {
     return Chip(
       label: Text('$value $label'),
       visualDensity: VisualDensity.compact,
+      backgroundColor: ProServeColors.bgDeep.withValues(alpha: 0.40),
+      side: BorderSide(color: ProServeColors.lineStrong),
+      labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: ProServeColors.ink,
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }
 
 class _EmptyCustomerAction extends StatelessWidget {
-  const _EmptyCustomerAction({required this.onProjectTab});
+  const _EmptyCustomerAction({required this.onStartProject});
 
-  final VoidCallback onProjectTab;
+  final VoidCallback onStartProject;
 
   @override
   Widget build(BuildContext context) {
@@ -2439,11 +2469,84 @@ class _EmptyCustomerAction extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         FilledButton.icon(
-          onPressed: () => context.push('/smart-request'),
+          onPressed: onStartProject,
           icon: const Icon(Icons.add_circle_outline),
-          label: Text(l10n.postYourFirstJob),
+          label: Text(l10n.customerStartProject),
         ),
       ],
+    );
+  }
+}
+
+class _RecentCustomerProjectCard extends StatelessWidget {
+  const _RecentCustomerProjectCard({required this.doc, required this.onTap});
+
+  final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = doc.data();
+    final service = (data['service'] ?? 'Project').toString();
+    final status = (data['status'] ?? 'open').toString().replaceAll('_', ' ');
+    final quoteCount = (data['quoteCount'] as num?)?.toInt() ?? 0;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: ProServeColors.bgDeep.withValues(alpha: 0.36),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: ProServeColors.lineStrong),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: ProServeColors.accent2.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.folder_open_outlined,
+                color: ProServeColors.accent2,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    service,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    quoteCount > 0
+                        ? '$quoteCount quotes waiting'
+                        : 'Status: $status',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: ProServeColors.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: ProServeColors.muted),
+          ],
+        ),
+      ),
     );
   }
 }

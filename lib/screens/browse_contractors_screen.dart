@@ -7,6 +7,7 @@ import '../services/location_service.dart';
 import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
 import '../theme/proserve_theme.dart';
+import '../constants/service_types.dart';
 
 class BrowseContractorsScreen extends StatefulWidget {
   const BrowseContractorsScreen({super.key, this.showBackButton = true});
@@ -33,14 +34,10 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
   double _distanceMiles = 25;
   bool _loadingLocation = false;
 
-  final List<String> _serviceTypes = [
+  final List<String> _serviceTypes = const [
     'All Services',
-    'Interior Painting',
-    'Exterior Painting',
     'Painting',
-    'Drywall Repair',
-    'Pressure Washing',
-    'Cabinets',
+    ...kContractorServiceCatalog,
   ];
 
   @override
@@ -97,33 +94,9 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
     }
   }
 
-  bool _serviceMatchesFilter(List<String> servicesLower, String selected) {
+  bool _serviceMatchesFilter(List<String> services, String selected) {
     if (selected == 'All Services') return true;
-    final sel = selected.trim().toLowerCase();
-    if (sel == 'interior painting') {
-      return servicesLower.any(
-        (s) => s.contains('interior') && s.contains('paint'),
-      );
-    }
-    if (sel == 'exterior painting') {
-      return servicesLower.any(
-        (s) => s.contains('exterior') && s.contains('paint'),
-      );
-    }
-    if (sel.contains('paint')) {
-      return servicesLower.any((s) => s.contains('paint'));
-    }
-    if (sel.contains('drywall')) {
-      return servicesLower.any((s) => s.contains('drywall'));
-    }
-    if (sel.contains('pressure')) {
-      return servicesLower.any(
-        (s) =>
-            s.contains('pressure') ||
-            (s.contains('wash') && !s.contains('dish')),
-      );
-    }
-    return servicesLower.contains(sel);
+    return services.any((service) => serviceMatches(service, selected));
   }
 
   @override
@@ -245,9 +218,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                           Text(
                             _filtersExpanded ? 'Hide' : 'Show',
                             style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  color: ProServeColors.accent,
-                                ),
+                                ?.copyWith(color: ProServeColors.accent),
                           ),
                           const SizedBox(width: 6),
                           AnimatedRotation(
@@ -519,10 +490,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                  ),
+                                  const Icon(Icons.star, color: Colors.amber),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Slider(
@@ -587,8 +555,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                     .length;
                 final hasServicesCount = allDocs.where((d) {
                   final data = d.data() as Map<String, dynamic>;
-                  final services = data['services'];
-                  return services is List && services.isNotEmpty;
+                  return contractorServicesFromData(data).isNotEmpty;
                 }).length;
 
                 var contractors = allDocs;
@@ -602,12 +569,8 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
 
                   // Filter by service type
                   if (_selectedService != 'All Services') {
-                    final services = data['services'];
-                    if (services is! List) return false;
-                    final servicesList = services
-                        .cast<String>()
-                        .map((s) => s.toLowerCase())
-                        .toList();
+                    final servicesList = contractorServicesFromData(data);
+                    if (servicesList.isEmpty) return false;
                     if (!_serviceMatchesFilter(
                       servicesList,
                       _selectedService,
@@ -752,15 +715,11 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                           final contractorId = contractors[index - 1].id;
 
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: _ContractorCard(
                               contractorId: contractorId,
                               contractor: contractor,
-                              distanceMiles: _distanceForContractor(
-                                contractor,
-                              ),
+                              distanceMiles: _distanceForContractor(contractor),
                             ),
                           );
                         },
@@ -875,9 +834,9 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
 
   Widget _buildMapView(
     BuildContext context,
-    List<QueryDocumentSnapshot> contractors,
-    {Widget? header}
-  ) {
+    List<QueryDocumentSnapshot> contractors, {
+    Widget? header,
+  }) {
     // Sort by distance for map view.
     final sorted = List<QueryDocumentSnapshot>.from(contractors)
       ..sort((a, b) {
@@ -930,9 +889,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Your location: ZIP $_currentZip',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -952,10 +909,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.location_off,
-                    color: ProServeColors.warning,
-                  ),
+                  const Icon(Icons.location_off, color: ProServeColors.warning),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -1099,7 +1053,9 @@ class _TrustChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: ProServeColors.accent.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.20)),
+        border: Border.all(
+          color: ProServeColors.accent.withValues(alpha: 0.20),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1171,9 +1127,9 @@ class _BrowseEmptyState extends StatelessWidget {
               Text(
                 reason,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: ProServeColors.muted,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: ProServeColors.muted),
               ),
               const SizedBox(height: 16),
               Row(
@@ -1263,11 +1219,7 @@ class _ContractorCardState extends State<_ContractorCard> {
         (contractor['totalReviews'] as num?)?.toInt() ??
         (contractor['reviewCount'] as num?)?.toInt() ??
         0;
-    final services =
-        (contractor['services'] as List<dynamic>?)
-            ?.map((s) => s.toString())
-            .toList() ??
-        [];
+    final services = contractorServicesFromData(contractor);
     final profileImage = contractor['profileImage'] as String?;
     final featured = contractor['featured'] == true;
 
@@ -1289,113 +1241,142 @@ class _ContractorCardState extends State<_ContractorCard> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(22),
-        onTap: () {
-          context.push('/contractor/$contractorId');
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Image
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: ProServeColors.accent.withValues(alpha: 0.16),
-                backgroundImage: profileImage != null
-                    ? CachedNetworkImageProvider(profileImage)
-                    : null,
-                child: profileImage == null
-                    ? Text(
-                        displayName.isNotEmpty ? displayName[0] : '?',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          color: ProServeColors.accent,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 16),
-
-              // Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            displayName,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w900),
-                            overflow: TextOverflow.ellipsis,
+          onTap: () {
+            context.push('/contractor/$contractorId');
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Image
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: ProServeColors.accent.withValues(
+                    alpha: 0.16,
+                  ),
+                  backgroundImage: profileImage != null
+                      ? CachedNetworkImageProvider(profileImage)
+                      : null,
+                  child: profileImage == null
+                      ? Text(
+                          displayName.isNotEmpty ? displayName[0] : '?',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            color: ProServeColors.accent,
+                            fontWeight: FontWeight.w900,
                           ),
-                        ),
-                        if (featured) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 16),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              displayName,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            decoration: BoxDecoration(
-                              color: ProServeColors.accent.withValues(
-                                alpha: 0.16,
+                          ),
+                          if (featured) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
+                              decoration: BoxDecoration(
                                 color: ProServeColors.accent.withValues(
-                                  alpha: 0.28,
+                                  alpha: 0.16,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: ProServeColors.accent.withValues(
+                                    alpha: 0.28,
+                                  ),
+                                ),
+                              ),
+                              child: const Text(
+                                'FEATURED',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: ProServeColors.accent,
                                 ),
                               ),
                             ),
-                            child: const Text(
-                              'FEATURED',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: ProServeColors.accent,
+                          ],
+                        ],
+                      ),
+                      if (location.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: ProServeColors.muted,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                location,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: ProServeColors.muted,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ],
-                    ),
-                    if (location.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: ProServeColors.muted,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              location,
+                      if (distanceMiles != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.route_outlined,
+                              size: 16,
+                              color: ProServeColors.accent2,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${formatDistance(distanceMiles)} away',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: ProServeColors.muted,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (distanceMiles != null) ...[
-                      const SizedBox(height: 4),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
-                            Icons.route_outlined,
-                            size: 16,
-                            color: ProServeColors.accent2,
+                          Icon(Icons.star, size: 18, color: Colors.amber[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            averageRating > 0
+                                ? averageRating.toStringAsFixed(1)
+                                : 'New',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${formatDistance(distanceMiles)} away',
+                            totalReviews > 0
+                                ? '($totalReviews reviews)'
+                                : 'No reviews yet',
                             style: TextStyle(
                               fontSize: 14,
                               color: ProServeColors.muted,
@@ -1403,92 +1384,65 @@ class _ContractorCardState extends State<_ContractorCard> {
                           ),
                         ],
                       ),
-                    ],
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.star, size: 18, color: Colors.amber[700]),
-                        const SizedBox(width: 4),
-                        Text(
-                          averageRating > 0
-                              ? averageRating.toStringAsFixed(1)
-                              : 'New',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          totalReviews > 0
-                              ? '($totalReviews reviews)'
-                              : 'No reviews yet',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: ProServeColors.muted,
-                          ),
+                      if (services.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: services.take(3).map((service) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ProServeColors.bgDeep.withValues(
+                                  alpha: 0.72,
+                                ),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: ProServeColors.line),
+                              ),
+                              child: Text(
+                                service,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: ProServeColors.ink,
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ],
-                    ),
-                    if (services.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: services.take(3).map((service) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: ProServeColors.bgDeep.withValues(
-                                alpha: 0.72,
-                              ),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: ProServeColors.line),
-                            ),
-                            child: Text(
-                              service,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: ProServeColors.ink,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
                     ],
+                  ),
+                ),
+
+                // Favorite + Arrow
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      tooltip: _isFav
+                          ? 'Remove from favorites'
+                          : 'Save contractor',
+                      icon: Icon(
+                        _isFav ? Icons.favorite : Icons.favorite_border,
+                        color: _isFav
+                            ? ProServeColors.error
+                            : ProServeColors.muted,
+                      ),
+                      onPressed: _toggleFav,
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: ProServeColors.muted,
+                    ),
                   ],
                 ),
-              ),
-
-              // Favorite + Arrow
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  IconButton(
-                    tooltip: _isFav
-                        ? 'Remove from favorites'
-                        : 'Save contractor',
-                    icon: Icon(
-                      _isFav ? Icons.favorite : Icons.favorite_border,
-                      color: _isFav
-                          ? ProServeColors.error
-                          : ProServeColors.muted,
-                    ),
-                    onPressed: _toggleFav,
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: ProServeColors.muted,
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

@@ -34,7 +34,7 @@ class _ContractorSubcontractBoardScreenState
   final _searchController = TextEditingController();
   bool _showSearch = false;
 
-  static const _tradeTypes = kPaintingServices;
+  static const _tradeTypes = kContractorServiceCatalog;
 
   @override
   void dispose() {

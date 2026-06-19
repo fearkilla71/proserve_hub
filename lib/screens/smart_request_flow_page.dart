@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/pricing_engine.dart';
 
@@ -70,25 +71,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
 
-  static const _services = <Map<String, String>>[
-    {'type': 'interior_painting', 'name': 'Interior Painting'},
-    {'type': 'exterior_painting', 'name': 'Exterior Painting'},
-    {'type': 'drywall_repair', 'name': 'Drywall Repair'},
-    {'type': 'pressure_washing', 'name': 'Pressure Washing'},
-    {'type': 'cabinets', 'name': 'Cabinet Painting'},
-    {'type': 'roofing', 'name': 'Roofing'},
-    {'type': 'plumbing', 'name': 'Plumbing'},
-    {'type': 'electrical', 'name': 'Electrical'},
-    {'type': 'flooring', 'name': 'Flooring'},
-    {'type': 'landscaping', 'name': 'Landscaping'},
-    {'type': 'fencing', 'name': 'Fencing'},
-    {'type': 'general_handyman', 'name': 'General Handyman'},
-    {'type': 'hvac', 'name': 'HVAC'},
-    {'type': 'bathroom_remodel', 'name': 'Bathroom Remodel'},
-    {'type': 'kitchen_remodel', 'name': 'Kitchen Remodel'},
-    {'type': 'deck_patio', 'name': 'Deck & Patio'},
-    {'type': 'concrete_masonry', 'name': 'Concrete & Masonry'},
-  ];
+  static final _services = kQuickServices.entries
+      .map((entry) => {'type': entry.key, 'name': entry.value})
+      .toList(growable: false);
 
   @override
   void initState() {

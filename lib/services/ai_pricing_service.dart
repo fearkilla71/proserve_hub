@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../utils/pricing_engine.dart';
 
 /// AI-powered pricing service that generates fair market prices.
@@ -11,6 +13,35 @@ class AiPricingService {
 
   /// Platform fee percentage (5%).
   static const double platformFeeRate = 0.05;
+  static const int pricingInputVersion = 1;
+
+  /// Build the stable input payload used to decide whether a saved AI price can
+  /// be reused. Keep this intentionally narrow so unrelated document metadata
+  /// does not change the customer's locked price.
+  Map<String, dynamic> buildPricingInput({
+    required String service,
+    required double quantity,
+    required String zip,
+    required bool urgent,
+    required Map<String, dynamic> jobDetails,
+  }) {
+    return {
+      'version': pricingInputVersion,
+      'service': service.trim(),
+      'zip': zip.trim(),
+      'quantity': quantity,
+      'urgent': urgent,
+      'jobDetails': jobDetails,
+    };
+  }
+
+  /// Returns a deterministic hash for a pricing input. Map key order, int vs
+  /// double representation, and incidental whitespace should not cause a new
+  /// price.
+  String hashPricingInput(Map<String, dynamic> input) {
+    final normalized = _normalizeForHash(input);
+    return _fnv1a64(jsonEncode(normalized));
+  }
 
   /// Generate an AI price for a job request.
   ///
@@ -319,5 +350,40 @@ class AiPricingService {
   /// Round to 2 decimal places.
   double _roundCents(double value) {
     return (value * 100).round() / 100;
+  }
+
+  dynamic _normalizeForHash(dynamic value) {
+    if (value == null || value is bool) return value;
+    if (value is num) {
+      return double.parse(value.toDouble().toStringAsFixed(4));
+    }
+    if (value is String) return value.trim();
+    if (value is Iterable) {
+      return value.map(_normalizeForHash).toList(growable: false);
+    }
+    if (value is Map) {
+      final entries = value.entries
+          .where((entry) => entry.key.toString() != 'loyaltyDiscount')
+          .map((entry) => MapEntry(entry.key.toString(), entry.value))
+          .toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+      return {
+        for (final entry in entries) entry.key: _normalizeForHash(entry.value),
+      };
+    }
+    return value.toString().trim();
+  }
+
+  String _fnv1a64(String input) {
+    const int prime = 0x100000001b3;
+    const int mask = 0xFFFFFFFFFFFFFFFF;
+    var hash = 0xcbf29ce484222325;
+
+    for (final unit in input.codeUnits) {
+      hash ^= unit;
+      hash = (hash * prime) & mask;
+    }
+
+    return hash.toRadixString(16).padLeft(16, '0');
   }
 }

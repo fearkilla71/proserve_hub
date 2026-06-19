@@ -40,7 +40,8 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
   final List<String> _selectedServices = ['Interior Painting'];
 
-  static const List<String> _availableServices = kPaintingServices;
+  static const Map<String, List<String>> _serviceCategories =
+      kHomeServiceCategories;
 
   bool loading = false;
   bool _obscurePassword = true;
@@ -128,6 +129,74 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
+    );
+  }
+
+  Widget _serviceCategoryChips(String title, List<String> services) {
+    final supported = title == 'Core instant-price services';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: supported
+                      ? ProServeColors.accent
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (supported)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: ProServeColors.accent.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: const Text(
+                  'Instant price',
+                  style: TextStyle(
+                    color: ProServeColors.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: services.map(_serviceChip).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _serviceChip(String svc) {
+    final selected = _selectedServices.contains(svc);
+    return FilterChip(
+      label: Text(svc),
+      selected: selected,
+      onSelected: (val) {
+        setState(() {
+          if (val) {
+            if (!_selectedServices.contains(svc)) {
+              _selectedServices.add(svc);
+            }
+          } else {
+            _selectedServices.remove(svc);
+          }
+        });
+      },
     );
   }
 
@@ -650,25 +719,22 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: _availableServices.map((svc) {
-                final selected = _selectedServices.contains(svc);
-                return FilterChip(
-                  label: Text(svc),
-                  selected: selected,
-                  onSelected: (val) {
-                    setState(() {
-                      if (val) {
-                        _selectedServices.add(svc);
-                      } else {
-                        _selectedServices.remove(svc);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Pick every trade you want customers to find you for. Instant pricing is available first for the core services.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: ProServeColors.muted,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            ..._serviceCategories.entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _serviceCategoryChips(entry.key, entry.value),
+              ),
             ),
           ],
         );

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/service_types.dart';
 import '../screens/verification_screen.dart';
 
 class ProfileCompletionCard extends StatelessWidget {
@@ -70,8 +71,7 @@ class ProfileCompletionCard extends StatelessWidget {
         missing.add('Bio/description');
       }
 
-      final services = c['services'];
-      if (services is List && services.isNotEmpty) {
+      if (contractorServicesFromData(c).isNotEmpty) {
         completed++;
       } else {
         missing.add('Services offered');

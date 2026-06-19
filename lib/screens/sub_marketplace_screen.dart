@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../constants/service_types.dart';
+
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Subcontractor Marketplace
 ///
@@ -137,18 +139,9 @@ class _SubMarketplaceScreenState extends State<SubMarketplaceScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: serviceType,
                   decoration: const InputDecoration(labelText: 'Service Type'),
-                  items:
-                      [
-                            'Interior Painting',
-                            'Exterior Painting',
-                            'Cabinet Painting',
-                            'Drywall Repair',
-                            'Pressure Washing',
-                          ]
-                          .map(
-                            (s) => DropdownMenuItem(value: s, child: Text(s)),
-                          )
-                          .toList(),
+                  items: kContractorServiceCatalog
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
                   onChanged: (v) =>
                       setDialogState(() => serviceType = v ?? serviceType),
                 ),

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:typed_data';
+import '../constants/service_types.dart';
 import '../widgets/before_after_slider.dart';
 
 class PortfolioScreen extends StatefulWidget {
@@ -34,23 +35,18 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   static const List<String> _serviceCategories = [
     'All',
     'Painting',
-    'Exterior Painting',
-    'Cabinet Painting',
-    'Drywall Repair',
-    'Pressure Washing',
-    'HVAC',
-    'Pool Installation',
-    'Garage Door',
-    'Window Replacement',
-    'Solar Panels',
-    'Pest Control',
-    'Tree Service',
+    ...kContractorServiceCatalog,
   ];
 
   List<Map<String, dynamic>> get _filteredItems {
     if (_selectedCategory == 'All') return _portfolioItems;
     return _portfolioItems
-        .where((item) => item['serviceCategory'] == _selectedCategory)
+        .where(
+          (item) => serviceMatches(
+            item['serviceCategory'].toString(),
+            _selectedCategory,
+          ),
+        )
         .toList();
   }
 
@@ -757,20 +753,7 @@ class _AddPhotoDialogState extends State<_AddPhotoDialog> {
   String _category = 'Painting';
   String _photoType = 'single'; // single | before | after
 
-  static const _categories = [
-    'Painting',
-    'Exterior Painting',
-    'Cabinet Painting',
-    'Drywall Repair',
-    'Pressure Washing',
-    'HVAC',
-    'Pool Installation',
-    'Garage Door',
-    'Window Replacement',
-    'Solar Panels',
-    'Pest Control',
-    'Tree Service',
-  ];
+  static const _categories = ['Painting', ...kContractorServiceCatalog];
 
   @override
   void dispose() {

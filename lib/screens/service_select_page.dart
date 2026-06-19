@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/service_types.dart';
+
 /// Maps icon name strings stored in Firestore to [IconData].
 IconData _iconFromName(String? name) {
   switch (name) {
@@ -58,81 +60,51 @@ IconData _iconFromName(String? name) {
   }
 }
 
+String _iconNameForService(String slug, String name) {
+  final key = '${slug}_$name'.toLowerCase();
+  if (key.contains('paint')) return 'format_paint';
+  if (key.contains('drywall')) return 'build';
+  if (key.contains('pressure') || key.contains('wash')) return 'water';
+  if (key.contains('cabinet') || key.contains('kitchen')) {
+    return key.contains('remodel') ? 'countertops' : 'kitchen';
+  }
+  if (key.contains('hvac')) return 'hvac';
+  if (key.contains('pool')) return 'pool';
+  if (key.contains('garage')) return 'garage';
+  if (key.contains('window')) return 'window';
+  if (key.contains('solar')) return 'solar';
+  if (key.contains('pest')) return 'pest';
+  if (key.contains('tree')) return 'tree';
+  if (key.contains('roof')) return 'roofing';
+  if (key.contains('plumb')) return 'plumbing';
+  if (key.contains('electric')) return 'electrical_services';
+  if (key.contains('floor')) return 'layers';
+  if (key.contains('landscap') || key.contains('lawn')) return 'grass';
+  if (key.contains('fenc')) return 'fence';
+  if (key.contains('bathroom')) return 'bathtub';
+  if (key.contains('deck') || key.contains('patio')) return 'deck';
+  if (key.contains('concrete') || key.contains('masonry')) return 'foundation';
+  if (key.contains('demolition')) return 'construction';
+  if (key.contains('handyman')) return 'handyman';
+  return 'handyman';
+}
+
 /// Hardcoded fallback when Firestore is unreachable.
-const List<Map<String, dynamic>> _fallbackServices = [
-  {
-    'name': 'Interior Painting',
-    'icon': 'format_paint',
-    'type': 'interior_painting',
-  },
-  {
-    'name': 'Exterior Painting',
-    'icon': 'home_work_outlined',
-    'type': 'exterior_painting',
-  },
-  {'name': 'Drywall Repair', 'icon': 'build', 'type': 'drywall_repair'},
-  {'name': 'Pressure Washing', 'icon': 'water', 'type': 'pressure_washing'},
-  {'name': 'Cabinets', 'icon': 'kitchen', 'type': 'cabinets'},
-  {'name': 'HVAC', 'icon': 'hvac', 'type': 'hvac'},
-  {'name': 'Pool Installation', 'icon': 'pool', 'type': 'pool_installation'},
-  {'name': 'Garage Door', 'icon': 'garage', 'type': 'garage_door'},
-  {
-    'name': 'Window Replacement',
-    'icon': 'window',
-    'type': 'window_replacement',
-  },
-  {'name': 'Solar Panels', 'icon': 'solar', 'type': 'solar_panels'},
-  {'name': 'Pest Control', 'icon': 'pest', 'type': 'pest_control'},
-  {'name': 'Tree Service', 'icon': 'tree', 'type': 'tree_service'},
-  {'name': 'Roofing', 'icon': 'roofing', 'type': 'roofing'},
-  {'name': 'Plumbing', 'icon': 'plumbing', 'type': 'plumbing'},
-  {'name': 'Electrical', 'icon': 'electrical_services', 'type': 'electrical'},
-  {'name': 'Flooring', 'icon': 'layers', 'type': 'flooring'},
-  {'name': 'Landscaping', 'icon': 'grass', 'type': 'landscaping'},
-  {'name': 'Fencing', 'icon': 'fence', 'type': 'fencing'},
-  {'name': 'Bathroom Remodel', 'icon': 'bathtub', 'type': 'bathroom_remodel'},
-  {'name': 'Kitchen Remodel', 'icon': 'countertops', 'type': 'kitchen_remodel'},
-  {'name': 'Deck & Patio', 'icon': 'deck', 'type': 'deck_patio'},
-  {
-    'name': 'Concrete & Masonry',
-    'icon': 'foundation',
-    'type': 'concrete_masonry',
-  },
-  {'name': 'Demolition', 'icon': 'construction', 'type': 'demolition'},
-  {'name': 'General Handyman', 'icon': 'handyman', 'type': 'general_handyman'},
-];
+final List<Map<String, dynamic>> _fallbackServices = kQuickServices.entries
+    .map(
+      (entry) => {
+        'name': entry.value,
+        'icon': _iconNameForService(entry.key, entry.value),
+        'type': entry.key,
+      },
+    )
+    .toList(growable: false);
 
 class ServiceSelectPage extends StatelessWidget {
   const ServiceSelectPage({super.key});
 
   /// Services that have AI chat estimates enabled.
-  static const _aiChatServices = {
-    'interior_painting': 'Interior Painting',
-    'exterior_painting': 'Exterior Painting',
-    'drywall_repair': 'Drywall Repair',
-    'pressure_washing': 'Pressure Washing',
-    'cabinets': 'Cabinet Painting',
-    'painting': 'Painting',
-    'hvac': 'HVAC',
-    'pool_installation': 'Pool Installation',
-    'garage_door': 'Garage Door',
-    'window_replacement': 'Window Replacement',
-    'solar_panels': 'Solar Panels',
-    'pest_control': 'Pest Control',
-    'tree_service': 'Tree Service',
-    'roofing': 'Roofing',
-    'plumbing': 'Plumbing',
-    'electrical': 'Electrical',
-    'flooring': 'Flooring',
-    'landscaping': 'Landscaping',
-    'fencing': 'Fencing',
-    'bathroom_remodel': 'Bathroom Remodel',
-    'kitchen_remodel': 'Kitchen Remodel',
-    'deck_patio': 'Deck & Patio',
-    'concrete_masonry': 'Concrete & Masonry',
-    'demolition': 'Demolition',
-    'general_handyman': 'General Handyman',
-  };
+  static const _aiChatServices = kQuickServices;
 
   void _navigateToFlow(BuildContext context, String type) {
     // Route all supported services to the conversational AI estimator.

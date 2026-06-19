@@ -521,13 +521,13 @@ abstract class AppLocalizations {
   /// No description provided for @customerCoreFlowTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your project flow'**
+  /// **'Project shortcuts'**
   String get customerCoreFlowTitle;
 
   /// No description provided for @customerCoreFlowSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Start, compare, pay, track, and review from one place.'**
+  /// **'Browse pros, messages, and project tracking.'**
   String get customerCoreFlowSubtitle;
 
   /// No description provided for @customerMoreToolsTitle.
@@ -608,6 +608,192 @@ abstract class AppLocalizations {
   /// **'Get instant help 24/7'**
   String get customerQuickAiSupportSubtitle;
 
+  /// No description provided for @customerProjectsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get customerProjectsTitle;
+
+  /// No description provided for @customerProjectsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track requests, quotes, payments, and completed work.'**
+  String get customerProjectsSubtitle;
+
+  /// No description provided for @projectNewProject.
+  ///
+  /// In en, this message translates to:
+  /// **'New project'**
+  String get projectNewProject;
+
+  /// No description provided for @projectFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get projectFilterActive;
+
+  /// No description provided for @projectFilterQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes'**
+  String get projectFilterQuotes;
+
+  /// No description provided for @projectFilterProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected'**
+  String get projectFilterProtected;
+
+  /// No description provided for @projectFilterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get projectFilterCompleted;
+
+  /// No description provided for @projectFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get projectFilterAll;
+
+  /// No description provided for @projectEmptyActiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects'**
+  String get projectEmptyActiveTitle;
+
+  /// No description provided for @projectEmptyActiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects right now. Start from Home or Browse Pros.'**
+  String get projectEmptyActiveBody;
+
+  /// No description provided for @projectEmptyQuotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No quotes yet'**
+  String get projectEmptyQuotesTitle;
+
+  /// No description provided for @projectEmptyQuotesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes will appear here after contractors respond.'**
+  String get projectEmptyQuotesBody;
+
+  /// No description provided for @projectEmptyProtectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No protected payments'**
+  String get projectEmptyProtectedTitle;
+
+  /// No description provided for @projectEmptyProtectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow projects will appear here once payment is protected.'**
+  String get projectEmptyProtectedBody;
+
+  /// No description provided for @projectEmptyCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed projects'**
+  String get projectEmptyCompletedTitle;
+
+  /// No description provided for @projectEmptyCompletedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed work and review history will appear here.'**
+  String get projectEmptyCompletedBody;
+
+  /// No description provided for @projectOfflineCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing cached project data. You may be offline.'**
+  String get projectOfflineCached;
+
+  /// No description provided for @projectToolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project tools'**
+  String get projectToolsTitle;
+
+  /// No description provided for @projectToolsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimator, analytics, and protected payment details.'**
+  String get projectToolsSubtitle;
+
+  /// No description provided for @projectLeaveReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave review'**
+  String get projectLeaveReview;
+
+  /// No description provided for @projectCheckPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Check payment'**
+  String get projectCheckPayment;
+
+  /// No description provided for @projectCompareQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare quotes'**
+  String get projectCompareQuotes;
+
+  /// No description provided for @projectViewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'View summary'**
+  String get projectViewSummary;
+
+  /// No description provided for @projectOpenCommandCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Open command center'**
+  String get projectOpenCommandCenter;
+
+  /// No description provided for @projectViewProject.
+  ///
+  /// In en, this message translates to:
+  /// **'View project'**
+  String get projectViewProject;
+
+  /// No description provided for @projectLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get projectLocationLabel;
+
+  /// No description provided for @projectContractorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor'**
+  String get projectContractorLabel;
+
+  /// No description provided for @projectCreatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get projectCreatedLabel;
+
+  /// No description provided for @projectAssignedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get projectAssignedLabel;
+
+  /// No description provided for @projectProtectedPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected payment'**
+  String get projectProtectedPayment;
+
+  /// No description provided for @projectNearbyContractors.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby contractors'**
+  String get projectNearbyContractors;
+
   /// Customer requests error title
   ///
   /// In en, this message translates to:
@@ -629,7 +815,7 @@ abstract class AppLocalizations {
   /// Customer action center subtitle
   ///
   /// In en, this message translates to:
-  /// **'Your next steps from request to paid, completed, and reviewed.'**
+  /// **'Your next step to get the project done safely.'**
   String get customerActionCenterSubtitle;
 
   /// Customer action center no quotes tip
@@ -701,7 +887,7 @@ abstract class AppLocalizations {
   /// Customer action center empty body
   ///
   /// In en, this message translates to:
-  /// **'No active projects yet. Start with photos, ZIP code, and service type.'**
+  /// **'No active projects yet. Start once with photos, ZIP code, and service type.'**
   String get customerActionEmptyBody;
 
   /// No description provided for @customerActionEmptyTrust.

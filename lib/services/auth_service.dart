@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../constants/service_types.dart';
 import '../utils/zip_locations.dart';
 import 'zip_lookup_service.dart';
 
@@ -115,6 +116,7 @@ class AuthService {
     required String phone,
   }) async {
     try {
+      final normalizedServices = normalizeServiceList(services);
       final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -138,12 +140,14 @@ class AuthService {
         name: name,
         phone: phone,
         company: company,
-        services: services,
+        services: normalizedServices,
         zip: zip,
         radius: radius,
       );
 
       await _db.collection('contractors').doc(user.uid).set({
+        'services': normalizedServices,
+        'servicesOffered': normalizedServices,
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
       }, SetOptions(merge: true));
@@ -201,12 +205,13 @@ class AuthService {
     required String phone,
   }) async {
     final uid = user.uid;
+    final normalizedServices = normalizeServiceList(services);
 
     await _completeUserProfile(
       role: 'contractor',
       name: name,
       company: company,
-      services: services,
+      services: normalizedServices,
       zip: zip,
       radius: radius,
       phone: phone,
@@ -220,7 +225,8 @@ class AuthService {
 
     await _db.collection('contractors').doc(uid).set({
       'name': company.trim().isEmpty ? name : company,
-      'services': services,
+      'services': normalizedServices,
+      'servicesOffered': normalizedServices,
       'zip': zip,
       // Legacy field used by the existing Nearby Contractors page.
       'radius': radius,

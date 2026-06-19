@@ -9,6 +9,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../constants/service_types.dart';
 import '../theme/proserve_theme.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -27,18 +28,7 @@ class _SavedProjectBoardsScreenState extends State<SavedProjectBoardsScreen> {
   String _search = '';
   String _serviceFilter = 'all';
 
-  static const _serviceOptions = {
-    'all': 'All',
-    'interior_painting': 'Interior',
-    'exterior_painting': 'Exterior',
-    'drywall_repair': 'Drywall',
-    'pressure_washing': 'Pressure Wash',
-    'cabinets': 'Cabinets',
-    'roofing': 'Roofing',
-    'flooring': 'Flooring',
-    'plumbing': 'Plumbing',
-    'electrical': 'Electrical',
-  };
+  static const _serviceOptions = {'all': 'All', ...kQuickServices};
 
   @override
   Widget build(BuildContext context) {
@@ -141,8 +131,7 @@ class _SavedProjectBoardsScreenState extends State<SavedProjectBoardsScreen> {
           final boards = allBoards.where((doc) {
             final data = doc.data();
             if (_serviceFilter != 'all') {
-              final svc =
-                  (data['service'] ?? '').toString().toLowerCase();
+              final svc = (data['service'] ?? '').toString().toLowerCase();
               if (svc != _serviceFilter) return false;
             }
             if (_search.isNotEmpty) {

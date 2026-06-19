@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -52,6 +53,17 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
   bool _accepting = false;
   String? _error;
   Map<String, dynamic>? _pricing;
+  Map<String, dynamic> _resolvedJobDetails = {};
+  String _resolvedService = '';
+  String _resolvedZip = '';
+  double _resolvedQuantity = 0;
+  bool _resolvedUrgent = false;
+  bool _snapshotSaved = false;
+  bool _priceFromSnapshot = false;
+  bool _priceRecalculated = false;
+  double? _previousAiPrice;
+  DateTime? _priceLockExpiry;
+  String? _pricingInputHash;
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -80,6 +92,12 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
   Future<void> _generatePrice() async {
     try {
+      final jobRef = FirebaseFirestore.instance
+          .collection('job_requests')
+          .doc(widget.jobId);
+      final jobSnap = await jobRef.get();
+      final jobData = jobSnap.data() ?? <String, dynamic>{};
+
       // Get loyalty discount based on customer's escrow streak
       double loyaltyDiscount = 0.0;
       try {
@@ -89,17 +107,84 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         }
       } catch (_) {}
 
+      final resolved = _resolvePricingInput(jobData);
+      final pricingInput = AiPricingService.instance.buildPricingInput(
+        service: resolved.service,
+        quantity: resolved.quantity,
+        zip: resolved.zip,
+        urgent: resolved.urgent,
+        jobDetails: resolved.jobDetails,
+      );
+      final inputHash = AiPricingService.instance.hashPricingInput(
+        pricingInput,
+      );
+
+      final savedSnapshot = _mapFrom(jobData['aiPricingSnapshot']);
+      final savedHash = jobData['aiPricingInputHash']?.toString();
+      final savedExpiry = _dateTimeFrom(jobData['aiPricingExpiresAt']);
+
+      if (savedSnapshot != null && savedHash == inputHash) {
+        if (mounted) {
+          setState(() {
+            _pricing = savedSnapshot;
+            _resolvedService = resolved.service;
+            _resolvedZip = resolved.zip;
+            _resolvedQuantity = resolved.quantity;
+            _resolvedUrgent = resolved.urgent;
+            _resolvedJobDetails = resolved.jobDetails;
+            _snapshotSaved = true;
+            _priceFromSnapshot = true;
+            _priceRecalculated = false;
+            _priceLockExpiry =
+                savedExpiry ?? DateTime.now().add(const Duration(hours: 24));
+            _pricingInputHash = inputHash;
+            _loading = false;
+          });
+        }
+        return;
+      }
+
+      final previousPrice = savedSnapshot == null
+          ? null
+          : (savedSnapshot['aiPrice'] as num?)?.toDouble();
       final pricing = await AiPricingService.instance.generatePrice(
-        service: widget.service,
-        quantity: widget.quantity,
-        zip: widget.zip,
-        urgent: widget.urgent,
-        jobDetails: widget.jobDetails,
+        service: resolved.service,
+        quantity: resolved.quantity,
+        zip: resolved.zip,
+        urgent: resolved.urgent,
+        jobDetails: resolved.jobDetails,
         loyaltyDiscount: loyaltyDiscount,
       );
+      final lockExpiry = DateTime.now().add(const Duration(hours: 24));
+      var snapshotSaved = false;
+
+      try {
+        await jobRef.set({
+          'aiPricingSnapshot': pricing,
+          'aiPricingInputHash': inputHash,
+          'aiPricingInput': pricingInput,
+          'aiPricingGeneratedAt': FieldValue.serverTimestamp(),
+          'aiPricingExpiresAt': Timestamp.fromDate(lockExpiry),
+        }, SetOptions(merge: true));
+        snapshotSaved = true;
+      } catch (_) {
+        snapshotSaved = false;
+      }
+
       if (mounted) {
         setState(() {
           _pricing = pricing;
+          _resolvedService = resolved.service;
+          _resolvedZip = resolved.zip;
+          _resolvedQuantity = resolved.quantity;
+          _resolvedUrgent = resolved.urgent;
+          _resolvedJobDetails = resolved.jobDetails;
+          _snapshotSaved = snapshotSaved;
+          _priceFromSnapshot = false;
+          _priceRecalculated = previousPrice != null;
+          _previousAiPrice = previousPrice;
+          _priceLockExpiry = lockExpiry;
+          _pricingInputHash = inputHash;
           _loading = false;
         });
       }
@@ -113,6 +198,84 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
     }
   }
 
+  _ResolvedPricingInput _resolvePricingInput(Map<String, dynamic> jobData) {
+    final docService = (jobData['service'] ?? '').toString();
+    final docZip = (jobData['zip'] ?? jobData['locationZip'] ?? '').toString();
+    final docQuantity = _toDouble(jobData['quantity']);
+    final docUrgency = (jobData['urgency'] ?? '').toString().toLowerCase();
+
+    final service = docService.trim().isNotEmpty
+        ? docService.trim()
+        : widget.service.trim();
+    final zip = docZip.trim().isNotEmpty ? docZip.trim() : widget.zip.trim();
+    final quantity = docQuantity > 0 ? docQuantity : widget.quantity;
+    final urgent =
+        widget.urgent ||
+        docUrgency.contains('urgent') ||
+        docUrgency.contains('asap') ||
+        jobData['urgent'] == true;
+
+    final details = <String, dynamic>{};
+    void addIfPresent(String key, dynamic value) {
+      if (value == null) return;
+      if (value is String && value.trim().isEmpty) return;
+      if (value is Map && value.isEmpty) return;
+      if (value is Iterable && value.isEmpty) return;
+      details[key] = value;
+    }
+
+    addIfPresent('description', jobData['description']);
+    addIfPresent('jobDetails', jobData['jobDetails']);
+    addIfPresent('propertyType', jobData['propertyType']);
+    addIfPresent('paintingScope', jobData['paintingScope']);
+    addIfPresent('paintingQuestions', jobData['paintingQuestions']);
+    addIfPresent('cabinetQuestions', jobData['cabinetQuestions']);
+    addIfPresent('drywallQuestions', jobData['drywallQuestions']);
+    addIfPresent('pressureWashingQuestions', jobData['pressureWashingQuestions']);
+    addIfPresent('exteriorQuestions', jobData['exteriorQuestions']);
+    addIfPresent('rooms', jobData['rooms']);
+    addIfPresent('photos', jobData['photos']);
+
+    for (final entry in widget.jobDetails.entries) {
+      if (!details.containsKey(entry.key)) {
+        addIfPresent(entry.key, entry.value);
+      }
+    }
+
+    return _ResolvedPricingInput(
+      service: service,
+      zip: zip,
+      quantity: quantity,
+      urgent: urgent,
+      jobDetails: details,
+    );
+  }
+
+  String get _effectiveService =>
+      _resolvedService.isNotEmpty ? _resolvedService : widget.service;
+
+  String get _effectiveZip => _resolvedZip.isNotEmpty ? _resolvedZip : widget.zip;
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  Map<String, dynamic>? _mapFrom(dynamic value) {
+    if (value is Map<String, dynamic>) return Map<String, dynamic>.from(value);
+    if (value is Map) {
+      return value.map((key, val) => MapEntry(key.toString(), val));
+    }
+    return null;
+  }
+
+  DateTime? _dateTimeFrom(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
   Future<void> _acceptPrice() async {
     if (_pricing == null || _accepting) return;
     HapticFeedback.heavyImpact();
@@ -120,18 +283,24 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
 
     try {
       final aiPrice = (_pricing!['aiPrice'] as num).toDouble();
-      final priceLockExpiry = DateTime.now().add(const Duration(hours: 24));
+      final priceLockExpiry =
+          _priceLockExpiry ?? DateTime.now().add(const Duration(hours: 24));
       final escrowId = await EscrowService.instance.createOffer(
         jobId: widget.jobId,
-        service: widget.service,
-        zip: widget.zip,
+        service: _effectiveService,
+        zip: _effectiveZip,
         aiPrice: aiPrice,
         priceBreakdown: {
           'low': (_pricing!['low'] as num).toDouble(),
           'recommended': (_pricing!['recommended'] as num).toDouble(),
           'premium': (_pricing!['premium'] as num).toDouble(),
         },
-        jobDetails: widget.jobDetails,
+        jobDetails: {
+          ...(_resolvedJobDetails.isNotEmpty
+              ? _resolvedJobDetails
+              : widget.jobDetails),
+          if (_pricingInputHash != null) 'pricingInputHash': _pricingInputHash,
+        },
         priceLockExpiry: priceLockExpiry,
         estimatedMarketPrice: (_pricing!['estimatedMarketPrice'] as num?)
             ?.toDouble(),
@@ -348,7 +517,8 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         (_pricing!['savingsPercent'] as num?)?.toDouble() ?? 0;
     final discountPercent = (_pricing!['discountPercent'] as num?)?.toDouble();
     final originalAiPrice = (_pricing!['originalAiPrice'] as num?)?.toDouble();
-    final priceLockExpiry = DateTime.now().add(const Duration(hours: 24));
+    final priceLockExpiry =
+        _priceLockExpiry ?? DateTime.now().add(const Duration(hours: 24));
 
     return ListView(
       key: const ValueKey('offer'),
@@ -385,6 +555,10 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         ),
 
         const SizedBox(height: 16),
+
+        _buildPriceSnapshotNotice(scheme, aiPrice),
+
+        const SizedBox(height: 12),
 
         // ── Savings comparison (shows how much cheaper than contractor) ──
         if (estimatedMarketPrice > 0)
@@ -427,7 +601,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           child: Column(
             children: [
               Text(
-                widget.service,
+                _effectiveService,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -462,6 +636,10 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         ),
 
         const SizedBox(height: 16),
+
+        _buildProjectDetailsCard(scheme),
+
+        const SizedBox(height: 12),
 
         // ── Price breakdown ──
         Card(
@@ -778,7 +956,7 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
         MultiQuoteInviteCard(
           jobId: widget.jobId,
           candidateCount: 3,
-          expiresAt: DateTime.now().add(const Duration(hours: 24)),
+          expiresAt: priceLockExpiry,
         ),
 
         const SizedBox(height: 12),
@@ -850,6 +1028,197 @@ class _AiPriceOfferScreenState extends State<AiPriceOfferScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPriceSnapshotNotice(ColorScheme scheme, double aiPrice) {
+    final previousPrice = _previousAiPrice;
+    final recalculated = _priceRecalculated && previousPrice != null;
+    final icon = recalculated
+        ? Icons.sync
+        : _snapshotSaved
+        ? Icons.lock_clock
+        : Icons.info_outline;
+    final title = recalculated
+        ? 'Price updated because project details changed.'
+        : _priceFromSnapshot
+        ? 'No changes made. Your price is still locked.'
+        : _snapshotSaved
+        ? 'Price locked for this project.'
+        : 'Price generated. We could not save the lock yet.';
+    final detail = recalculated
+        ? '${_currencyFmt.format(previousPrice)} → ${_currencyFmt.format(aiPrice)}. Review the details below before paying.'
+        : _snapshotSaved
+        ? 'Reopening this project will use this same price unless the scope changes.'
+        : 'You can still continue, but reopen this screen with a network connection before paying.';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: recalculated
+            ? ProServeColors.warning.withValues(alpha: 0.08)
+            : ProServeColors.success.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: recalculated
+              ? ProServeColors.warning.withValues(alpha: 0.24)
+              : ProServeColors.success.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: recalculated
+                  ? ProServeColors.warning
+                  : ProServeColors.success,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  detail,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectDetailsCard(ColorScheme scheme) {
+    final chips = <_DetailChipData>[
+      if (_effectiveService.isNotEmpty)
+        _DetailChipData(Icons.handyman_outlined, _effectiveService),
+      if (_effectiveZip.isNotEmpty)
+        _DetailChipData(Icons.location_on_outlined, 'ZIP $_effectiveZip'),
+      if (_resolvedQuantity > 0)
+        _DetailChipData(
+          Icons.straighten,
+          _resolvedQuantity == _resolvedQuantity.roundToDouble()
+              ? '${_resolvedQuantity.round()} units'
+              : '${_resolvedQuantity.toStringAsFixed(1)} units',
+        ),
+      if (_resolvedUrgent) _DetailChipData(Icons.speed, 'Urgent'),
+    ];
+    final description = (_resolvedJobDetails['description'] ?? '').toString();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ProServeColors.card.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.fact_check_outlined,
+                  color: ProServeColors.accent,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Review project details',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/job-command/${widget.jobId}'),
+                child: const Text('Open'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: chips.map((chip) => _detailChip(scheme, chip)).toList(),
+          ),
+          if (description.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              description.trim(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Text(
+            'Why this price: service scope, ZIP market rate, quantity, urgency, selected project details, and active loyalty discount.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ProServeColors.muted,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailChip(ColorScheme scheme, _DetailChipData chip) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: ProServeColors.bg.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(chip.icon, size: 14, color: ProServeColors.accent2),
+          const SizedBox(width: 6),
+          Text(
+            chip.label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1066,4 +1435,27 @@ class _GuaranteePill extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ResolvedPricingInput {
+  final String service;
+  final String zip;
+  final double quantity;
+  final bool urgent;
+  final Map<String, dynamic> jobDetails;
+
+  const _ResolvedPricingInput({
+    required this.service,
+    required this.zip,
+    required this.quantity,
+    required this.urgent,
+    required this.jobDetails,
+  });
+}
+
+class _DetailChipData {
+  final IconData icon;
+  final String label;
+
+  const _DetailChipData(this.icon, this.label);
 }

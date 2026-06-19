@@ -8,6 +8,7 @@ import 'package:proserve_hub/services/lead_iap_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
+import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
@@ -98,30 +99,8 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   int _datePostedDays = 0; // 0 = any, 1/3/7/30 = within N days
 
   static const List<String> _serviceTypes = [
-    'Interior Painting',
-    'Exterior Painting',
-    'Power Washing & Staining',
-    'Cabinet Painting',
-    'Drywall Repair & Texture',
-    'Wallpaper Removal & Install',
-    'Popcorn Ceiling Removal',
-    'Epoxy Flooring',
-    'Trim & Crown Molding',
-    'Tile & Backsplash',
-    'Fence Staining',
-    'Commercial Painting',
-    'Roofing',
-    'Plumbing',
-    'Electrical',
-    'Flooring',
-    'Landscaping',
-    'Fencing',
-    'Bathroom Remodel',
-    'Kitchen Remodel',
-    'Deck & Patio',
-    'Concrete & Masonry',
-    'Demolition',
-    'General Handyman',
+    'Painting',
+    ...kContractorServiceCatalog,
   ];
 
   Future<QuerySnapshot<Map<String, dynamic>>>? _diagnoseFetch;
@@ -143,12 +122,17 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           .doc(user.uid)
           .get();
       final data = doc.data() ?? <String, dynamic>{};
+      final contractorDoc = await FirebaseFirestore.instance
+          .collection('contractors')
+          .doc(user.uid)
+          .get();
+      final contractorData = contractorDoc.data() ?? <String, dynamic>{};
       final zip = (data['zip'] as String?)?.trim();
       final tier = effectiveSubscriptionTier(data);
-      final services =
-          (data['servicesOffered'] as List?)?.whereType<String>().toList() ??
-          <String>[];
-      final profileRadius = (data['radius'] as num?)?.toDouble();
+      final services = contractorServicesFromData({...data, ...contractorData});
+      final profileRadius =
+          (contractorData['radius'] as num?)?.toDouble() ??
+          (data['radius'] as num?)?.toDouble();
       if (!mounted) return;
       setState(() {
         _userTier = tier;
@@ -761,24 +745,20 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
     // ── My-services filter ──
     if (_matchMyServices && _myServices.isNotEmpty) {
-      final svc = (data['service'] ?? '').toString().toLowerCase();
-      final svcName = (data['serviceName'] ?? '').toString().toLowerCase();
-      final matched = _myServices.any((mine) {
-        final lower = mine.toLowerCase();
-        return svc == lower ||
-            svcName == lower ||
-            svc.contains(lower) ||
-            svcName.contains(lower);
-      });
+      final svc = (data['service'] ?? '').toString();
+      final svcName = (data['serviceName'] ?? '').toString();
+      final matched = _myServices.any(
+        (mine) => serviceMatches(mine, svc) || serviceMatches(mine, svcName),
+      );
       if (!matched) return false;
     }
 
     // Service filter (manual override)
     if (_serviceFilter != null) {
-      final svc = (data['service'] ?? '').toString().toLowerCase();
-      final svcName = (data['serviceName'] ?? '').toString().toLowerCase();
-      final filterLower = _serviceFilter!.toLowerCase();
-      if (!svc.contains(filterLower) && !svcName.contains(filterLower)) {
+      final svc = (data['service'] ?? '').toString();
+      final svcName = (data['serviceName'] ?? '').toString();
+      if (!serviceMatches(_serviceFilter!, svc) &&
+          !serviceMatches(_serviceFilter!, svcName)) {
         return false;
       }
     }
@@ -1545,11 +1525,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
                 // Keep tier and services in sync reactively.
                 final latestTier = effectiveSubscriptionTier(userData);
-                final latestServices =
-                    (userData['servicesOffered'] as List?)
-                        ?.whereType<String>()
-                        .toList() ??
-                    <String>[];
+                final latestServices = contractorServicesFromData(userData);
                 if (latestTier != _userTier ||
                     latestServices.length != _myServices.length) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {

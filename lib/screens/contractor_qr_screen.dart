@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../constants/service_types.dart';
+
 /// Contractor digital business card with a QR code that links
 /// to their profile / booking page. Clients can scan to view.
 class ContractorQrScreen extends StatefulWidget {
@@ -56,9 +58,7 @@ class _ContractorQrScreenState extends State<ContractorQrScreen> {
         'Contractor';
     final email = profile['email'] as String? ?? '';
     final phone = profile['phone'] as String? ?? '';
-    final services =
-        (profile['serviceTypes'] as List?)?.map((e) => e.toString()).toList() ??
-        [];
+    final services = contractorServicesFromData(profile);
 
     return Scaffold(
       appBar: AppBar(

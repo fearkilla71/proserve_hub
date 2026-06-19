@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../constants/service_types.dart';
 import '../services/contract_generator_service.dart';
 
 /// Screen for generating and managing service contracts / SOW documents.
@@ -141,28 +142,14 @@ class _ContractGeneratorScreenState extends State<ContractGeneratorScreen> {
                         prefixIcon: Icon(Icons.work),
                         border: OutlineInputBorder(),
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'painting',
-                          child: Text('Interior Painting'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'exterior_painting',
-                          child: Text('Exterior Painting'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'cabinet_painting',
-                          child: Text('Cabinet Painting'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'drywall',
-                          child: Text('Drywall Repair'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'pressure_washing',
-                          child: Text('Pressure Washing'),
-                        ),
-                      ],
+                      items: kQuickServices.entries
+                          .map(
+                            (entry) => DropdownMenuItem(
+                              value: entry.key,
+                              child: Text(entry.value),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) {
                         if (v != null) {
                           setSheetState(() => serviceType = v);

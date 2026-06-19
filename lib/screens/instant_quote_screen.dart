@@ -9,6 +9,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../constants/service_types.dart';
 import '../widgets/price_guarantee_badge.dart';
 
 /// Camera-first screen: snap → instant AI price → CTA to full request flow.
@@ -29,17 +30,7 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
   Map<String, dynamic>? _result;
   String? _error;
 
-  static const _quickServices = <String, String>{
-    'interior_painting': 'Interior Painting',
-    'exterior_painting': 'Exterior Painting',
-    'drywall_repair': 'Drywall Repair',
-    'pressure_washing': 'Pressure Washing',
-    'cabinets': 'Cabinet Painting',
-    'roofing': 'Roofing',
-    'flooring': 'Flooring',
-    'plumbing': 'Plumbing',
-    'electrical': 'Electrical',
-  };
+  static const _quickServices = kQuickServices;
 
   @override
   void initState() {

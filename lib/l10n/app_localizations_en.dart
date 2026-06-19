@@ -224,11 +224,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerReviewsDue => 'Reviews due';
 
   @override
-  String get customerCoreFlowTitle => 'Your project flow';
+  String get customerCoreFlowTitle => 'Project shortcuts';
 
   @override
   String get customerCoreFlowSubtitle =>
-      'Start, compare, pay, track, and review from one place.';
+      'Browse pros, messages, and project tracking.';
 
   @override
   String get customerMoreToolsTitle => 'More homeowner tools';
@@ -271,6 +271,106 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerQuickAiSupportSubtitle => 'Get instant help 24/7';
 
   @override
+  String get customerProjectsTitle => 'Projects';
+
+  @override
+  String get customerProjectsSubtitle =>
+      'Track requests, quotes, payments, and completed work.';
+
+  @override
+  String get projectNewProject => 'New project';
+
+  @override
+  String get projectFilterActive => 'Active';
+
+  @override
+  String get projectFilterQuotes => 'Quotes';
+
+  @override
+  String get projectFilterProtected => 'Protected';
+
+  @override
+  String get projectFilterCompleted => 'Completed';
+
+  @override
+  String get projectFilterAll => 'All';
+
+  @override
+  String get projectEmptyActiveTitle => 'No active projects';
+
+  @override
+  String get projectEmptyActiveBody =>
+      'No active projects right now. Start from Home or Browse Pros.';
+
+  @override
+  String get projectEmptyQuotesTitle => 'No quotes yet';
+
+  @override
+  String get projectEmptyQuotesBody =>
+      'Quotes will appear here after contractors respond.';
+
+  @override
+  String get projectEmptyProtectedTitle => 'No protected payments';
+
+  @override
+  String get projectEmptyProtectedBody =>
+      'Escrow projects will appear here once payment is protected.';
+
+  @override
+  String get projectEmptyCompletedTitle => 'No completed projects';
+
+  @override
+  String get projectEmptyCompletedBody =>
+      'Completed work and review history will appear here.';
+
+  @override
+  String get projectOfflineCached =>
+      'Showing cached project data. You may be offline.';
+
+  @override
+  String get projectToolsTitle => 'Project tools';
+
+  @override
+  String get projectToolsSubtitle =>
+      'Estimator, analytics, and protected payment details.';
+
+  @override
+  String get projectLeaveReview => 'Leave review';
+
+  @override
+  String get projectCheckPayment => 'Check payment';
+
+  @override
+  String get projectCompareQuotes => 'Compare quotes';
+
+  @override
+  String get projectViewSummary => 'View summary';
+
+  @override
+  String get projectOpenCommandCenter => 'Open command center';
+
+  @override
+  String get projectViewProject => 'View project';
+
+  @override
+  String get projectLocationLabel => 'Location';
+
+  @override
+  String get projectContractorLabel => 'Contractor';
+
+  @override
+  String get projectCreatedLabel => 'Created';
+
+  @override
+  String get projectAssignedLabel => 'Assigned';
+
+  @override
+  String get projectProtectedPayment => 'Protected payment';
+
+  @override
+  String get projectNearbyContractors => 'Nearby contractors';
+
+  @override
   String get couldNotLoadRequests => 'Couldn\'t load your requests';
 
   @override
@@ -281,7 +381,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customerActionCenterSubtitle =>
-      'Your next steps from request to paid, completed, and reviewed.';
+      'Your next step to get the project done safely.';
 
   @override
   String get customerActionCenterNoQuotesTip =>
@@ -337,7 +437,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customerActionEmptyBody =>
-      'No active projects yet. Start with photos, ZIP code, and service type.';
+      'No active projects yet. Start once with photos, ZIP code, and service type.';
 
   @override
   String get customerActionEmptyTrust =>
