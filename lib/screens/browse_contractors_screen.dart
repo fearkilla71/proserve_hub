@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/contractor_reputation_card.dart';
 import '../services/location_service.dart';
 import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
+import '../theme/proserve_theme.dart';
 
 class BrowseContractorsScreen extends StatefulWidget {
   const BrowseContractorsScreen({super.key, this.showBackButton = true});
@@ -173,67 +173,43 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: widget.showBackButton,
-        title: const Text('Browse Contractors'),
-        actions: [
-          IconButton(
-            tooltip: _mapView ? 'List view' : 'Map view',
-            icon: Icon(_mapView ? Icons.view_list : Icons.map_outlined),
-            onPressed: () => setState(() => _mapView = !_mapView),
-          ),
-          IconButton(
-            tooltip: 'Saved contractors',
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () => context.push('/favorites'),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by name or location...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        tooltip: 'Clear search',
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+      backgroundColor: ProServeColors.bg,
+      appBar: widget.showBackButton
+          ? AppBar(
+              automaticallyImplyLeading: true,
+              title: const Text('Browse Pros'),
+              backgroundColor: ProServeColors.bgDeep,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                IconButton(
+                  tooltip: _mapView ? 'List view' : 'Map view',
+                  icon: Icon(_mapView ? Icons.view_list : Icons.map_outlined),
+                  onPressed: () => setState(() => _mapView = !_mapView),
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
-            ),
-          ),
-        ),
-      ),
+                IconButton(
+                  tooltip: 'Saved contractors',
+                  icon: const Icon(Icons.favorite_border),
+                  onPressed: () => context.push('/favorites'),
+                ),
+              ],
+            )
+          : null,
       body: Column(
         children: [
+          _buildBrowseHeader(context),
           // Filters
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Card(
-              margin: EdgeInsets.zero,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: ProServeColors.card,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: ProServeColors.line),
+              ),
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(18),
                 onTap: () {
                   setState(() => _filtersExpanded = !_filtersExpanded);
                 },
@@ -243,7 +219,21 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.tune),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: ProServeColors.accent.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.tune,
+                              color: ProServeColors.accent,
+                              size: 20,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -256,7 +246,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                             _filtersExpanded ? 'Hide' : 'Show',
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: ProServeColors.accent,
                                 ),
                           ),
                           const SizedBox(width: 6),
@@ -407,7 +397,16 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Card(
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: ProServeColors.bgDeep.withValues(
+                                    alpha: 0.55,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: ProServeColors.line,
+                                  ),
+                                ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
@@ -416,7 +415,10 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(Icons.near_me_outlined),
+                                          const Icon(
+                                            Icons.near_me_outlined,
+                                            color: ProServeColors.accent2,
+                                          ),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -517,7 +519,10 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(Icons.star),
+                                  const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Slider(
@@ -556,7 +561,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: scheme.outline.withValues(alpha: 0.12)),
 
           // Results
           Expanded(
@@ -678,55 +683,85 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                     verified: verifiedCount,
                     hasServices: hasServicesCount,
                   );
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No contractors found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          reason,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                  return _BrowseEmptyState(
+                    reason: reason,
+                    onClear: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _selectedService = 'All Services';
+                        _minRating = 0;
+                        _verifiedOnly = false;
+                        _distanceEnabled = false;
+                      });
+                    },
+                    onStartProject: () => context.push('/smart-request'),
                   );
                 }
 
-                return _mapView
-                    ? _buildMapView(context, contractors)
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: contractors.length,
-                        itemBuilder: (context, index) {
-                          final contractor =
-                              contractors[index].data() as Map<String, dynamic>;
-                          final contractorId = contractors[index].id;
+                final resultHeader = Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _mapView
+                              ? 'Pros by distance'
+                              : '${contractors.length} trusted pros',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ProServeColors.accent.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: ProServeColors.accent.withValues(
+                              alpha: 0.22,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          _verifiedOnly ? 'Verified only' : 'All pros',
+                          style: const TextStyle(
+                            color: ProServeColors.accent,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
 
-                          return _ContractorCard(
-                            contractorId: contractorId,
-                            contractor: contractor,
-                            distanceMiles: _distanceForContractor(contractor),
+                return _mapView
+                    ? _buildMapView(context, contractors, header: resultHeader)
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        itemCount: contractors.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) return resultHeader;
+                          final contractor =
+                              contractors[index - 1].data()
+                                  as Map<String, dynamic>;
+                          final contractorId = contractors[index - 1].id;
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            child: _ContractorCard(
+                              contractorId: contractorId,
+                              contractor: contractor,
+                              distanceMiles: _distanceForContractor(
+                                contractor,
+                              ),
+                            ),
                           );
                         },
                       );
@@ -738,12 +773,111 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
     );
   }
 
+  Widget _buildBrowseHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [ProServeColors.bgDeep, ProServeColors.bg],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BROWSE PROS',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Find verified local contractors, compare proof, and save your shortlist.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ProServeColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton.filledTonal(
+                tooltip: _mapView ? 'List view' : 'Map view',
+                onPressed: () => setState(() => _mapView = !_mapView),
+                icon: Icon(_mapView ? Icons.view_list : Icons.map_outlined),
+              ),
+              const SizedBox(width: 8),
+              IconButton.outlined(
+                tooltip: 'Saved contractors',
+                onPressed: () => context.push('/favorites'),
+                icon: const Icon(Icons.favorite_border),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: ProServeColors.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: ProServeColors.line),
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search name, city, ZIP, or trade',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: const [
+              _TrustChip(icon: Icons.verified_user_outlined, label: 'Verified'),
+              _TrustChip(icon: Icons.star_outline, label: 'Reviewed'),
+              _TrustChip(icon: Icons.lock_outline, label: 'Escrow-safe'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMapView(
     BuildContext context,
     List<QueryDocumentSnapshot> contractors,
+    {Widget? header}
   ) {
-    final scheme = Theme.of(context).colorScheme;
-
     // Sort by distance for map view.
     final sorted = List<QueryDocumentSnapshot>.from(contractors)
       ..sort((a, b) {
@@ -776,23 +910,28 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(bottom: 24),
       children: [
+        if (header != null) header,
         // Your location
         if (_currentZip != null && _currentZip!.isNotEmpty)
-          Card(
-            color: scheme.primaryContainer,
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: ProServeColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: ProServeColors.line),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  Icon(Icons.my_location, color: scheme.primary),
+                  const Icon(Icons.my_location, color: ProServeColors.accent),
                   const SizedBox(width: 12),
                   Text(
                     'Your location: ZIP $_currentZip',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: scheme.onPrimaryContainer,
                     ),
                   ),
                 ],
@@ -800,18 +939,27 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
             ),
           ),
         if (_currentZip == null || _currentZip!.isEmpty)
-          Card(
-            color: scheme.errorContainer,
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: ProServeColors.warning.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ProServeColors.warning.withValues(alpha: 0.24),
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  Icon(Icons.location_off, color: scheme.onErrorContainer),
+                  const Icon(
+                    Icons.location_off,
+                    color: ProServeColors.warning,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Set your ZIP code in filters to see distance-based results.',
-                      style: TextStyle(color: scheme.onErrorContainer),
                     ),
                   ),
                 ],
@@ -938,6 +1086,123 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
   }
 }
 
+class _TrustChip extends StatelessWidget {
+  const _TrustChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: ProServeColors.accent.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ProServeColors.accent.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: ProServeColors.accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ProServeColors.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrowseEmptyState extends StatelessWidget {
+  const _BrowseEmptyState({
+    required this.reason,
+    required this.onClear,
+    required this.onStartProject,
+  });
+
+  final String reason;
+  final VoidCallback onClear;
+  final VoidCallback onStartProject;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: ProServeColors.card,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: ProServeColors.line),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.manage_search,
+                  size: 34,
+                  color: ProServeColors.accent,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'No pros match this search',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                reason,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: ProServeColors.muted,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onClear,
+                      icon: const Icon(Icons.filter_alt_off_outlined),
+                      label: const Text('Clear filters'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: onStartProject,
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text('Start project'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ContractorCard extends StatefulWidget {
   final String contractorId;
   final Map<String, dynamic> contractor;
@@ -1006,9 +1271,24 @@ class _ContractorCardState extends State<_ContractorCard> {
     final profileImage = contractor['profileImage'] as String?;
     final featured = contractor['featured'] == true;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        gradient: ProServeColors.cardGradient,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: ProServeColors.line),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
         onTap: () {
           context.push('/contractor/$contractorId');
         },
@@ -1020,14 +1300,18 @@ class _ContractorCardState extends State<_ContractorCard> {
               // Profile Image
               CircleAvatar(
                 radius: 40,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                backgroundColor: ProServeColors.accent.withValues(alpha: 0.16),
                 backgroundImage: profileImage != null
                     ? CachedNetworkImageProvider(profileImage)
                     : null,
                 child: profileImage == null
                     ? Text(
                         displayName.isNotEmpty ? displayName[0] : '?',
-                        style: const TextStyle(fontSize: 32),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          color: ProServeColors.accent,
+                          fontWeight: FontWeight.w900,
+                        ),
                       )
                     : null,
               ),
@@ -1043,10 +1327,8 @@ class _ContractorCardState extends State<_ContractorCard> {
                         Flexible(
                           child: Text(
                             displayName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -1058,29 +1340,28 @@ class _ContractorCardState extends State<_ContractorCard> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: ProServeColors.accent.withValues(
+                                alpha: 0.16,
+                              ),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: ProServeColors.accent.withValues(
+                                  alpha: 0.28,
+                                ),
+                              ),
                             ),
-                            child: Text(
+                            child: const Text(
                               'FEATURED',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onPrimary,
+                                color: ProServeColors.accent,
                               ),
                             ),
                           ),
                         ],
                       ],
                     ),
-                    if (contractor['reputation'] is Map<String, dynamic>) ...[
-                      const SizedBox(height: 4),
-                      ContractorReputationCard(
-                        reputationData:
-                            contractor['reputation'] as Map<String, dynamic>,
-                        compact: true,
-                      ),
-                    ],
                     if (location.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
@@ -1088,9 +1369,7 @@ class _ContractorCardState extends State<_ContractorCard> {
                           Icon(
                             Icons.location_on,
                             size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            color: ProServeColors.muted,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -1098,9 +1377,7 @@ class _ContractorCardState extends State<_ContractorCard> {
                               location,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                color: ProServeColors.muted,
                               ),
                             ),
                           ),
@@ -1114,18 +1391,14 @@ class _ContractorCardState extends State<_ContractorCard> {
                           Icon(
                             Icons.route_outlined,
                             size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            color: ProServeColors.accent2,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${formatDistance(distanceMiles)} away',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                              color: ProServeColors.muted,
                             ),
                           ),
                         ],
@@ -1137,7 +1410,9 @@ class _ContractorCardState extends State<_ContractorCard> {
                         Icon(Icons.star, size: 18, color: Colors.amber[700]),
                         const SizedBox(width: 4),
                         Text(
-                          averageRating.toStringAsFixed(1),
+                          averageRating > 0
+                              ? averageRating.toStringAsFixed(1)
+                              : 'New',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1145,12 +1420,12 @@ class _ContractorCardState extends State<_ContractorCard> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '($totalReviews reviews)',
+                          totalReviews > 0
+                              ? '($totalReviews reviews)'
+                              : 'No reviews yet',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            color: ProServeColors.muted,
                           ),
                         ),
                       ],
@@ -1161,13 +1436,26 @@ class _ContractorCardState extends State<_ContractorCard> {
                         spacing: 8,
                         runSpacing: 4,
                         children: services.take(3).map((service) {
-                          return Chip(
-                            label: Text(
-                              service,
-                              style: const TextStyle(fontSize: 12),
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
                             ),
-                            padding: EdgeInsets.zero,
-                            visualDensity: VisualDensity.compact,
+                            decoration: BoxDecoration(
+                              color: ProServeColors.bgDeep.withValues(
+                                alpha: 0.72,
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: ProServeColors.line),
+                            ),
+                            child: Text(
+                              service,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: ProServeColors.ink,
+                              ),
+                            ),
                           );
                         }).toList(),
                       ),
@@ -1187,19 +1475,20 @@ class _ContractorCardState extends State<_ContractorCard> {
                     icon: Icon(
                       _isFav ? Icons.favorite : Icons.favorite_border,
                       color: _isFav
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                          ? ProServeColors.error
+                          : ProServeColors.muted,
                     ),
                     onPressed: _toggleFav,
                   ),
-                  Icon(
+                  const Icon(
                     Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: ProServeColors.muted,
                   ),
                 ],
               ),
             ],
           ),
+        ),
         ),
       ),
     );
