@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/service_types.dart';
+import '../constants/service_guidance.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/pricing_engine.dart';
 
@@ -74,6 +75,12 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   static final _services = kQuickServices.entries
       .map((entry) => {'type': entry.key, 'name': entry.value})
       .toList(growable: false);
+
+  ServiceGuidance get _currentGuidance =>
+      guidanceForService(_selectedServiceName ?? _selectedServiceType);
+
+  bool get _selectedSupportsInstantPrice =>
+      supportsInstantPrice(_selectedServiceName ?? _selectedServiceType ?? '');
 
   @override
   void initState() {
@@ -469,22 +476,29 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
       // Calculate budget using PricingEngine.
       final serviceLabel = _selectedServiceName ?? 'Painting';
+      final instantPriceSupported = supportsInstantPrice(serviceLabel);
       double budget;
       try {
-        final result = await PricingEngine.calculate(
-          service: serviceLabel,
-          zip: zip,
-          quantity: sqft,
-          urgent: urgent,
-        );
-        budget = result['recommended'] ?? (sqft * 2.5);
-        if (_budgetPref == 'low') {
-          budget = result['low'] ?? (budget * 0.88);
-        } else if (_budgetPref == 'premium') {
-          budget = result['premium'] ?? (budget * 1.15);
+        if (instantPriceSupported) {
+          final result = await PricingEngine.calculate(
+            service: serviceLabel,
+            zip: zip,
+            quantity: sqft,
+            urgent: urgent,
+          );
+          budget = result['recommended'] ?? (sqft * 2.5);
+          if (_budgetPref == 'low') {
+            budget = result['low'] ?? (budget * 0.88);
+          } else if (_budgetPref == 'premium') {
+            budget = result['premium'] ?? (budget * 1.15);
+          }
+        } else {
+          budget = _manualQuoteBudgetHint(serviceLabel, sqft);
         }
       } catch (_) {
-        budget = sqft * 2.5;
+        budget = instantPriceSupported
+            ? sqft * 2.5
+            : _manualQuoteBudgetHint(serviceLabel, sqft);
       }
 
       // Build description.
@@ -507,6 +521,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         'quantity': sqft,
         'urgency': urgent ? 'asap' : 'standard',
         'budget': budget,
+        'pricingMode': instantPriceSupported ? 'instant_price' : 'manual_quote',
+        'instantPriceSupported': instantPriceSupported,
+        'manualQuoteReason': instantPriceSupported
+            ? null
+            : guidanceForService(serviceLabel).manualQuoteReason,
         'propertyType': _propertyType == 'business' ? 'Business' : 'Home',
         'description': desc.toString(),
         'requesterUid': uid,
@@ -545,27 +564,50 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       await _clearDraft();
       if (!mounted) return;
 
-      // Navigate to AI price offer.
-      context.go(
-        '/ai-price-offer/${jobRef.id}',
-        extra: {
-          'service': serviceLabel,
-          'zip': zip,
-          'quantity': sqft,
-          'urgent': urgent,
-          'jobDetails': {
-            'sqft': sqft,
-            'propertyType': _propertyType,
-            'condition': _condition,
+      if (instantPriceSupported) {
+        // Navigate to AI price offer.
+        context.go(
+          '/ai-price-offer/${jobRef.id}',
+          extra: {
+            'service': serviceLabel,
+            'zip': zip,
+            'quantity': sqft,
+            'urgent': urgent,
+            'jobDetails': {
+              'sqft': sqft,
+              'propertyType': _propertyType,
+              'condition': _condition,
+            },
           },
-        },
-      );
+        );
+      } else {
+        context.go('/recommended/${jobRef.id}');
+      }
     } catch (e) {
       if (!mounted) return;
       _showError(AppLocalizations.of(context)!.smartRequestSubmitFailed('$e'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  double _manualQuoteBudgetHint(String service, double quantity) {
+    final canonical = canonicalServiceName(service);
+    final base = switch (canonical) {
+      'House Cleaning' => 180.0 + quantity * 0.06,
+      'Deep Cleaning' => 280.0 + quantity * 0.09,
+      'Move-Out Cleaning' => 320.0 + quantity * 0.11,
+      'Moving Services' => 450.0 + quantity * 0.18,
+      'Plumbing' => 225.0 + quantity * 0.04,
+      'HVAC' => 300.0 + quantity * 0.08,
+      'Roofing' => 600.0 + quantity * 0.65,
+      _ => 250.0 + quantity * 0.12,
+    };
+    return switch (_budgetPref) {
+      'low' => base * 0.85,
+      'premium' => base * 1.25,
+      _ => base,
+    };
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -831,6 +873,28 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           }).toList(),
         ),
 
+        if (_selectedServiceName != null) ...[
+          const SizedBox(height: 16),
+          _ServiceGuidanceCard(
+            title: _selectedServiceName!,
+            subtitle: _selectedSupportsInstantPrice
+                ? 'Instant price supported. We will still collect photos and details for better contractor matching.'
+                : '${_currentGuidance.manualQuoteReason ?? 'This service needs pro review before pricing.'} We will send this as a quote request to matching pros.',
+            icon: _selectedSupportsInstantPrice
+                ? Icons.bolt_outlined
+                : Icons.request_quote_outlined,
+            bullets: _currentGuidance.customerQuestions.take(3).toList(),
+          ),
+          const SizedBox(height: 12),
+          _ServiceGuidanceCard(
+            title: 'Helpful photos',
+            subtitle: _currentGuidance.summary,
+            icon: Icons.photo_library_outlined,
+            bullets: _currentGuidance.photoTips,
+            compact: true,
+          ),
+        ],
+
         const SizedBox(height: 32),
 
         FilledButton.icon(
@@ -883,6 +947,15 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         Text(
           l10n.smartRequestReviewAdjust,
           style: TextStyle(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 12),
+        _ServiceGuidanceCard(
+          title: '${_selectedServiceName ?? 'Project'} details checklist',
+          subtitle: _selectedSupportsInstantPrice
+              ? 'Review these details before pricing or sending to pros.'
+              : 'This request will go to qualified pros for manual quotes. Clear answers help prevent callbacks and low-quality bids.',
+          icon: Icons.checklist_outlined,
+          bullets: _currentGuidance.customerQuestions,
         ),
 
         if (_aiError != null) ...[
@@ -937,9 +1010,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
         const SizedBox(height: 24),
 
-        // Estimated sqft
+        // Estimated size
         Text(
-          l10n.smartRequestEstimatedSize,
+          _selectedSupportsInstantPrice
+              ? l10n.smartRequestEstimatedSize
+              : 'Approximate size or quantity',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -950,7 +1025,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
             hintText: 'e.g. 1500',
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.square_foot),
-            suffixText: 'sqft',
+            suffixText: _selectedSupportsInstantPrice ? 'sqft' : null,
             helperText: _aiDetails['notes'] as String?,
           ),
         ),
@@ -985,9 +1060,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
         const SizedBox(height: 20),
 
-        // Condition
+        // Condition / urgency quality
         Text(
-          l10n.smartRequestSurfaceCondition,
+          _selectedSupportsInstantPrice
+              ? l10n.smartRequestSurfaceCondition
+              : 'Project condition',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -1224,6 +1301,31 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           ),
         ),
 
+        const SizedBox(height: 12),
+        _ServiceGuidanceCard(
+          title: _selectedSupportsInstantPrice
+              ? 'Pricing path'
+              : 'Manual quote path',
+          subtitle: _selectedSupportsInstantPrice
+              ? 'This service can show an instant AI price, then you can invite pros or continue with quotes.'
+              : 'Pros will review your details, photos, and service checklist before sending quotes.',
+          icon: _selectedSupportsInstantPrice
+              ? Icons.auto_awesome
+              : Icons.groups_2_outlined,
+          bullets: _selectedSupportsInstantPrice
+              ? const [
+                  'AI price snapshot',
+                  'Recommended pros',
+                  'Protected payment after acceptance',
+                ]
+              : const [
+                  'Qualified pro matching',
+                  'Quote comparison',
+                  'Protected payment after acceptance',
+                ],
+          compact: true,
+        ),
+
         const SizedBox(height: 20),
 
         // Contact info
@@ -1432,6 +1534,101 @@ class _PhotoPlaceholder extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ServiceGuidanceCard extends StatelessWidget {
+  const _ServiceGuidanceCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.bullets,
+    this.compact = false,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<String> bullets;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: scheme.primaryContainer.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.primary.withValues(alpha: 0.25)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 12 : 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 20, color: scheme.primary),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (bullets.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ...bullets.map(
+                (bullet) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 16,
+                        color: scheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          bullet,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

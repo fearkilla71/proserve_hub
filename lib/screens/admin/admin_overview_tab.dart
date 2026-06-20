@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../constants/service_types.dart';
+
 class AdminOverviewTab extends StatelessWidget {
   const AdminOverviewTab({super.key});
 
@@ -58,6 +60,7 @@ class AdminOverviewTab extends StatelessWidget {
                             .where((doc) => _paymentNeedsAttention(doc.data()))
                             .length;
                         final reportAlerts = reports.length;
+                        final serviceDemand = _serviceDemand(jobs);
 
                         final issues =
                             <_OpsIssue>[
@@ -179,6 +182,8 @@ class AdminOverviewTab extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 16),
+                            _ServiceDemandCard(items: serviceDemand),
+                            const SizedBox(height: 16),
                             Text(
                               'Operations queue',
                               style: Theme.of(context).textTheme.titleMedium
@@ -220,6 +225,39 @@ class AdminOverviewTab extends StatelessWidget {
             .toString()
             .trim()
             .isNotEmpty);
+  }
+
+  static List<_ServiceDemand> _serviceDemand(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> jobs,
+  ) {
+    final counts = <String, ({int total, int unclaimed})>{};
+    for (final doc in jobs) {
+      final data = doc.data();
+      final service = canonicalServiceName(
+        (data['service'] ?? data['serviceType'] ?? 'Service').toString(),
+      );
+      final current = counts[service] ?? (total: 0, unclaimed: 0);
+      counts[service] = (
+        total: current.total + 1,
+        unclaimed: current.unclaimed + (_isClaimed(data) ? 0 : 1),
+      );
+    }
+    final items =
+        counts.entries
+            .map(
+              (entry) => _ServiceDemand(
+                service: entry.key,
+                total: entry.value.total,
+                unclaimed: entry.value.unclaimed,
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final unclaimed = b.unclaimed.compareTo(a.unclaimed);
+            if (unclaimed != 0) return unclaimed;
+            return b.total.compareTo(a.total);
+          });
+    return items.take(6).toList();
   }
 
   static bool _isActiveDispute(Map<String, dynamic> data) {
@@ -408,6 +446,82 @@ class _IssueCard extends StatelessWidget {
   }
 }
 
+class _ServiceDemandCard extends StatelessWidget {
+  const _ServiceDemandCard({required this.items});
+
+  final List<_ServiceDemand> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.category_outlined, color: scheme.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Service demand',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Watch unclaimed demand so new service categories do not outrun contractor coverage.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            if (items.isEmpty)
+              const Text('No customer job requests yet.')
+            else
+              ...items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.service,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Chip(
+                        visualDensity: VisualDensity.compact,
+                        label: Text('${item.total} total'),
+                      ),
+                      const SizedBox(width: 6),
+                      Chip(
+                        visualDensity: VisualDensity.compact,
+                        backgroundColor: item.unclaimed > 0
+                            ? scheme.errorContainer.withValues(alpha: 0.55)
+                            : scheme.primaryContainer.withValues(alpha: 0.45),
+                        label: Text('${item.unclaimed} unclaimed'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.title, required this.subtitle});
 
@@ -453,6 +567,18 @@ class _ErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ServiceDemand {
+  const _ServiceDemand({
+    required this.service,
+    required this.total,
+    required this.unclaimed,
+  });
+
+  final String service;
+  final int total;
+  final int unclaimed;
 }
 
 class _OpsIssue {

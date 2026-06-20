@@ -9,6 +9,7 @@ import 'package:proserve_hub/services/stripe_service.dart';
 import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
 import '../constants/service_types.dart';
+import '../constants/service_guidance.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
@@ -56,6 +57,40 @@ class _LeadMarketStatusRow extends StatelessWidget {
                 color: color,
                 fontWeight: warning ? FontWeight.w700 : FontWeight.w500,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeadSignalChip extends StatelessWidget {
+  const _LeadSignalChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: scheme.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -797,6 +832,12 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     final service = (data['service'] ?? 'Service').toString();
     final description = (data['description'] ?? '').toString().trim();
     final location = (data['location'] ?? 'Unknown').toString();
+    final guidance = guidanceForService(service);
+    final pricingMode = (data['pricingMode'] ?? '').toString();
+    final manualQuote =
+        pricingMode == 'manual_quote' ||
+        data['instantPriceSupported'] == false ||
+        !supportsInstantPrice(service);
 
     final budgetRaw = data['budget'];
     final budget = budgetRaw is num ? budgetRaw.toDouble() : 0.0;
@@ -948,6 +989,43 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _LeadSignalChip(
+                  icon: manualQuote
+                      ? Icons.request_quote_outlined
+                      : Icons.bolt_outlined,
+                  label: manualQuote ? 'Manual quote' : 'Instant price ready',
+                ),
+                if (_myServices.any((mine) => serviceMatches(mine, service)))
+                  const _LeadSignalChip(
+                    icon: Icons.handyman_outlined,
+                    label: 'Matches your services',
+                  ),
+                ...guidance.matchSignals
+                    .take(1)
+                    .map(
+                      (signal) => _LeadSignalChip(
+                        icon: Icons.verified_outlined,
+                        label: signal,
+                      ),
+                    ),
+              ],
+            ),
+            if (manualQuote) ...[
+              const SizedBox(height: 10),
+              Text(
+                guidance.manualQuoteReason ??
+                    'Customer details should be reviewed before quoting.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
             const SizedBox(height: 12),

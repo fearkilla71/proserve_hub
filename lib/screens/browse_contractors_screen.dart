@@ -8,6 +8,7 @@ import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
 import '../theme/proserve_theme.dart';
 import '../constants/service_types.dart';
+import '../constants/service_guidance.dart';
 
 class BrowseContractorsScreen extends StatefulWidget {
   const BrowseContractorsScreen({super.key, this.showBackButton = true});
@@ -720,6 +721,7 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
                               contractorId: contractorId,
                               contractor: contractor,
                               distanceMiles: _distanceForContractor(contractor),
+                              selectedService: _selectedService,
                             ),
                           );
                         },
@@ -1163,11 +1165,13 @@ class _ContractorCard extends StatefulWidget {
   final String contractorId;
   final Map<String, dynamic> contractor;
   final double? distanceMiles;
+  final String selectedService;
 
   const _ContractorCard({
     required this.contractorId,
     required this.contractor,
     this.distanceMiles,
+    required this.selectedService,
   });
 
   @override
@@ -1222,6 +1226,18 @@ class _ContractorCardState extends State<_ContractorCard> {
     final services = contractorServicesFromData(contractor);
     final profileImage = contractor['profileImage'] as String?;
     final featured = contractor['featured'] == true;
+    final selectedService = widget.selectedService;
+    final serviceFiltered = selectedService != 'All Services';
+    String? matchedService;
+    if (serviceFiltered) {
+      for (final service in services) {
+        if (serviceMatches(service, selectedService)) {
+          matchedService = service;
+          break;
+        }
+      }
+    }
+    final guidance = guidanceForService(matchedService ?? selectedService);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1414,6 +1430,37 @@ class _ContractorCardState extends State<_ContractorCard> {
                           }).toList(),
                         ),
                       ],
+                      if (serviceFiltered) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            _MatchSignalChip(
+                              icon: Icons.handyman_outlined,
+                              label: matchedService != null
+                                  ? 'Offers $matchedService'
+                                  : 'Related service',
+                            ),
+                            if (distanceMiles != null)
+                              _MatchSignalChip(
+                                icon: Icons.near_me_outlined,
+                                label: '${formatDistance(distanceMiles)} away',
+                              ),
+                            ...guidance.matchSignals
+                                .where(
+                                  (signal) => signal != 'Offers this service',
+                                )
+                                .take(1)
+                                .map(
+                                  (signal) => _MatchSignalChip(
+                                    icon: Icons.verified_outlined,
+                                    label: signal,
+                                  ),
+                                ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1444,6 +1491,42 @@ class _ContractorCardState extends State<_ContractorCard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MatchSignalChip extends StatelessWidget {
+  const _MatchSignalChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: ProServeColors.accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: ProServeColors.accent.withValues(alpha: 0.26),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: ProServeColors.accent),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: ProServeColors.ink,
+            ),
+          ),
+        ],
       ),
     );
   }

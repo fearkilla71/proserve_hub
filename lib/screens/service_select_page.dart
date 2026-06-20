@@ -55,6 +55,48 @@ IconData _iconFromName(String? name) {
       return Icons.construction;
     case 'handyman':
       return Icons.handyman;
+    case 'cleaning':
+      return Icons.cleaning_services;
+    case 'appliance':
+      return Icons.kitchen;
+    case 'door':
+      return Icons.door_front_door;
+    case 'chimney':
+      return Icons.fireplace;
+    case 'driveway':
+      return Icons.add_road;
+    case 'sprinkler':
+      return Icons.water_drop;
+    case 'hot_tub':
+      return Icons.hot_tub;
+    case 'gutter':
+      return Icons.roofing;
+    case 'yard':
+      return Icons.yard;
+    case 'inspection':
+      return Icons.fact_check;
+    case 'mold':
+      return Icons.health_and_safety;
+    case 'security':
+      return Icons.videocam;
+    case 'generator':
+      return Icons.power;
+    case 'septic':
+      return Icons.water_damage;
+    case 'water_softener':
+      return Icons.water;
+    case 'well':
+      return Icons.opacity;
+    case 'locksmith':
+      return Icons.lock;
+    case 'moving':
+      return Icons.local_shipping;
+    case 'assembly':
+      return Icons.chair;
+    case 'tv':
+      return Icons.tv;
+    case 'smart_home':
+      return Icons.settings_remote;
     default:
       return Icons.home_repair_service;
   }
@@ -65,6 +107,8 @@ String _iconNameForService(String slug, String name) {
   if (key.contains('paint')) return 'format_paint';
   if (key.contains('drywall')) return 'build';
   if (key.contains('pressure') || key.contains('wash')) return 'water';
+  if (key.contains('cleaning')) return 'cleaning';
+  if (key.contains('appliance')) return 'appliance';
   if (key.contains('cabinet') || key.contains('kitchen')) {
     return key.contains('remodel') ? 'countertops' : 'kitchen';
   }
@@ -72,6 +116,7 @@ String _iconNameForService(String slug, String name) {
   if (key.contains('pool')) return 'pool';
   if (key.contains('garage')) return 'garage';
   if (key.contains('window')) return 'window';
+  if (key.contains('door')) return 'door';
   if (key.contains('solar')) return 'solar';
   if (key.contains('pest')) return 'pest';
   if (key.contains('tree')) return 'tree';
@@ -84,7 +129,33 @@ String _iconNameForService(String slug, String name) {
   if (key.contains('bathroom')) return 'bathtub';
   if (key.contains('deck') || key.contains('patio')) return 'deck';
   if (key.contains('concrete') || key.contains('masonry')) return 'foundation';
-  if (key.contains('demolition')) return 'construction';
+  if (key.contains('foundation')) return 'foundation';
+  if (key.contains('demolition') ||
+      key.contains('excavation') ||
+      key.contains('asphalt') ||
+      key.contains('driveway') ||
+      key.contains('paving')) {
+    return 'construction';
+  }
+  if (key.contains('chimney') || key.contains('fireplace')) return 'chimney';
+  if (key.contains('sprinkler') || key.contains('irrigation')) {
+    return 'sprinkler';
+  }
+  if (key.contains('hot_tub') || key.contains('spa')) return 'hot_tub';
+  if (key.contains('gutter')) return 'gutter';
+  if (key.contains('yard')) return 'yard';
+  if (key.contains('inspection')) return 'inspection';
+  if (key.contains('mold')) return 'mold';
+  if (key.contains('security')) return 'security';
+  if (key.contains('generator')) return 'generator';
+  if (key.contains('septic')) return 'septic';
+  if (key.contains('softener')) return 'water_softener';
+  if (key.contains('well')) return 'well';
+  if (key.contains('locksmith')) return 'locksmith';
+  if (key.contains('moving')) return 'moving';
+  if (key.contains('assembly') || key.contains('furniture')) return 'assembly';
+  if (key.contains('tv')) return 'tv';
+  if (key.contains('smart_home')) return 'smart_home';
   if (key.contains('handyman')) return 'handyman';
   return 'handyman';
 }
@@ -104,10 +175,10 @@ class ServiceSelectPage extends StatelessWidget {
   const ServiceSelectPage({super.key});
 
   /// Services that have AI chat estimates enabled.
-  static const _aiChatServices = kQuickServices;
+  static const _aiChatServices = kServiceTypeSlugMap;
 
   void _navigateToFlow(BuildContext context, String type) {
-    // Route all supported services to the conversational AI estimator.
+    // Route instant-price services to the conversational AI estimator.
     if (_aiChatServices.containsKey(type)) {
       context.push(
         '/ai-estimate-chat',
@@ -116,13 +187,10 @@ class ServiceSelectPage extends StatelessWidget {
       return;
     }
 
-    final label = _labelForType(type);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$label is not available in this build yet. Choose another service or contact support.',
-        ),
-      ),
+    // Broader release services still work through the smart/manual quote flow.
+    context.push(
+      '/smart-request',
+      extra: {'serviceType': type, 'serviceName': _labelForType(type)},
     );
   }
 

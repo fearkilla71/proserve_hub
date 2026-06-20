@@ -30,7 +30,7 @@ class _InstantQuoteScreenState extends State<InstantQuoteScreen> {
   Map<String, dynamic>? _result;
   String? _error;
 
-  static const _quickServices = kQuickServices;
+  static const _quickServices = kServiceTypeSlugMap;
 
   @override
   void initState() {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../constants/service_guidance.dart';
 import '../services/quote_template_service.dart';
 
 /// Screen for creating, editing, and applying quote/estimate templates.
@@ -233,6 +234,29 @@ class _QuoteTemplatesScreenState extends State<QuoteTemplatesScreen> {
                           ),
                         ),
                         const Spacer(),
+                        TextButton.icon(
+                          icon: const Icon(Icons.auto_fix_high, size: 18),
+                          label: const Text('Starter'),
+                          onPressed: () {
+                            final guidance = guidanceForService(
+                              QuoteTemplateService.serviceTypes[serviceType] ??
+                                  serviceType,
+                            );
+                            setSheetState(() {
+                              lineItems
+                                ..clear()
+                                ..addAll(
+                                  guidance.quoteLineItems.map(
+                                    (item) => {
+                                      'description': item,
+                                      'quantity': 1,
+                                      'unitPrice': 0.0,
+                                    },
+                                  ),
+                                );
+                            });
+                          },
+                        ),
                         TextButton.icon(
                           icon: const Icon(Icons.add, size: 18),
                           label: const Text('Add'),

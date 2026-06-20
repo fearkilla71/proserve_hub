@@ -219,18 +219,6 @@ class _SavedProjectBoardsScreenState extends State<SavedProjectBoardsScreen> {
     final notesCtrl = TextEditingController();
     String? selectedService;
 
-    const services = {
-      'interior_painting': 'Interior Painting',
-      'exterior_painting': 'Exterior Painting',
-      'drywall_repair': 'Drywall Repair',
-      'pressure_washing': 'Pressure Washing',
-      'cabinets': 'Cabinet Painting',
-      'roofing': 'Roofing',
-      'flooring': 'Flooring',
-      'plumbing': 'Plumbing',
-      'electrical': 'Electrical',
-    };
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -268,7 +256,7 @@ class _SavedProjectBoardsScreenState extends State<SavedProjectBoardsScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: services.entries.map((e) {
+                    children: kQuickServices.entries.map((e) {
                       final sel = selectedService == e.key;
                       return ChoiceChip(
                         label: Text(e.value),
