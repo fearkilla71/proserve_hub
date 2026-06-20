@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
+import '../theme/proserve_theme.dart';
 import '../utils/optimistic_ui.dart';
 import '../utils/app_error_handler.dart';
 
@@ -82,34 +83,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
             });
 
           if (quotes.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.description_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.noQuotesYet,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.noQuotesYetSubtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildNoQuotesState();
           }
 
           final contractorIds = quotes
@@ -251,6 +225,169 @@ class _QuotesScreenState extends State<QuotesScreen> {
     return Chip(
       label: Text('$value $label'),
       visualDensity: VisualDensity.compact,
+    );
+  }
+
+  Widget _buildNoQuotesState() {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: ProServeColors.cardGradient,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: ProServeColors.accent.withValues(alpha: 0.22),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: ProServeColors.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.request_quote_outlined,
+                      color: ProServeColors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.noQuotesYet,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.noQuotesYetSubtitle,
+                          style: TextStyle(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _quoteWaitStep(
+                Icons.assignment_outlined,
+                l10n.noQuotesStepRequestTitle,
+                l10n.noQuotesStepRequestBody,
+              ),
+              _quoteWaitStep(
+                Icons.group_add_outlined,
+                l10n.noQuotesStepInviteTitle,
+                l10n.noQuotesStepInviteBody,
+              ),
+              _quoteWaitStep(
+                Icons.shield_outlined,
+                l10n.noQuotesStepProtectTitle,
+                l10n.noQuotesStepProtectBody,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: ProServeColors.accent.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.verified_user_outlined,
+                      color: ProServeColors.accent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.noQuotesTrustLine,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push('/recommended/${widget.jobId}'),
+                  icon: const Icon(Icons.person_search_outlined),
+                  label: Text(l10n.noQuotesInvitePros),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/job-command/${widget.jobId}'),
+                  icon: const Icon(Icons.dashboard_customize_outlined),
+                  label: Text(l10n.openJobCommandCenter),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _quoteWaitStep(IconData icon, String title, String body) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: ProServeColors.accent2, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -2656,6 +2656,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Contractors will submit quotes for your job request.';
 
   @override
+  String get noQuotesStepRequestTitle => 'Your request is posted';
+
+  @override
+  String get noQuotesStepRequestBody =>
+      'Pros can review your details, photos, ZIP code, and service scope before responding.';
+
+  @override
+  String get noQuotesStepInviteTitle => 'Invite matched pros';
+
+  @override
+  String get noQuotesStepInviteBody =>
+      'Review recommended contractors and invite the best matches to speed up responses.';
+
+  @override
+  String get noQuotesStepProtectTitle => 'Accept with protected payment';
+
+  @override
+  String get noQuotesStepProtectBody =>
+      'When you accept a quote, the job moves into the Job Command Center for chat, escrow, photos, invoice, and review.';
+
+  @override
+  String get noQuotesTrustLine =>
+      'You can keep inviting pros while you wait. No payment is due until you accept a quote or choose an instant-price offer.';
+
+  @override
+  String get noQuotesInvitePros => 'Invite matched pros';
+
+  @override
   String get quoteAccepted => 'Quote accepted';
 
   @override

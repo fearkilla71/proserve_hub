@@ -4748,6 +4748,54 @@ abstract class AppLocalizations {
   /// **'Contractors will submit quotes for your job request.'**
   String get noQuotesYetSubtitle;
 
+  /// No description provided for @noQuotesStepRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is posted'**
+  String get noQuotesStepRequestTitle;
+
+  /// No description provided for @noQuotesStepRequestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pros can review your details, photos, ZIP code, and service scope before responding.'**
+  String get noQuotesStepRequestBody;
+
+  /// No description provided for @noQuotesStepInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite matched pros'**
+  String get noQuotesStepInviteTitle;
+
+  /// No description provided for @noQuotesStepInviteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review recommended contractors and invite the best matches to speed up responses.'**
+  String get noQuotesStepInviteBody;
+
+  /// No description provided for @noQuotesStepProtectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept with protected payment'**
+  String get noQuotesStepProtectTitle;
+
+  /// No description provided for @noQuotesStepProtectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When you accept a quote, the job moves into the Job Command Center for chat, escrow, photos, invoice, and review.'**
+  String get noQuotesStepProtectBody;
+
+  /// No description provided for @noQuotesTrustLine.
+  ///
+  /// In en, this message translates to:
+  /// **'You can keep inviting pros while you wait. No payment is due until you accept a quote or choose an instant-price offer.'**
+  String get noQuotesTrustLine;
+
+  /// No description provided for @noQuotesInvitePros.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite matched pros'**
+  String get noQuotesInvitePros;
+
   /// No description provided for @quoteAccepted.
   ///
   /// In en, this message translates to:

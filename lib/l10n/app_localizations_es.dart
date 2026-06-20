@@ -2677,6 +2677,34 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los contratistas enviarán cotizaciones para tu solicitud de trabajo.';
 
   @override
+  String get noQuotesStepRequestTitle => 'Tu solicitud está publicada';
+
+  @override
+  String get noQuotesStepRequestBody =>
+      'Los pros pueden revisar tus detalles, fotos, código postal y alcance del servicio antes de responder.';
+
+  @override
+  String get noQuotesStepInviteTitle => 'Invita pros recomendados';
+
+  @override
+  String get noQuotesStepInviteBody =>
+      'Revisa contratistas recomendados e invita a los mejores para acelerar las respuestas.';
+
+  @override
+  String get noQuotesStepProtectTitle => 'Acepta con pago protegido';
+
+  @override
+  String get noQuotesStepProtectBody =>
+      'Cuando aceptes una cotización, el trabajo pasa al Centro del trabajo con chat, escrow, fotos, factura y reseña.';
+
+  @override
+  String get noQuotesTrustLine =>
+      'Puedes seguir invitando pros mientras esperas. No pagas hasta aceptar una cotización o elegir una oferta de precio instantáneo.';
+
+  @override
+  String get noQuotesInvitePros => 'Invitar pros recomendados';
+
+  @override
   String get quoteAccepted => 'Cotización aceptada';
 
   @override
