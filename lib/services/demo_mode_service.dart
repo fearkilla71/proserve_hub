@@ -4,8 +4,47 @@ class DemoModeService {
   DemoModeService._();
 
   static const _enabledByDefine = bool.fromEnvironment('PROSERVE_DEMO_MODE');
+  static const demoJobId = 'demo-job';
+  static const demoEscrowId = 'demo-escrow';
+  static const demoCustomerId = 'demo-customer';
+  static const demoContractorId = 'demo-contractor';
 
   static bool get isAvailable => kDebugMode || _enabledByDefine;
+
+  static bool isDemoJobId(String id) => isAvailable && id == demoJobId;
+
+  static bool isDemoEscrowId(String id) => isAvailable && id == demoEscrowId;
+
+  static bool isDemoCapturePath(String path) {
+    if (!isAvailable) return false;
+    return path == '/screenshot-demo' ||
+        path == '/quotes/$demoJobId' ||
+        path == '/job-command/$demoJobId' ||
+        path == '/invoice/$demoJobId' ||
+        path == '/escrow-status/$demoEscrowId';
+  }
+
+  static Map<String, dynamic> get demoJobData => {
+    'service': 'Interior Painting',
+    'title': 'Interior Painting',
+    'location': '77093',
+    'zip': '77093',
+    'description':
+        'Paint living room, kitchen, hallway, and two bedrooms with minor wall repair and trim touch-ups.',
+    'requesterUid': demoCustomerId,
+    'claimedBy': demoContractorId,
+    'contractorId': demoContractorId,
+    'claimed': true,
+    'status': 'escrow_funded',
+    'price': 4860,
+    'quoteCount': 3,
+    'unreadCount': 2,
+    'escrowId': demoEscrowId,
+    'escrowPrice': 4860,
+    'preferredDate': DateTime.now()
+        .add(const Duration(days: 5))
+        .toIso8601String(),
+  };
 
   static const captureRoutes = <DemoCaptureRoute>[
     DemoCaptureRoute(

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/escrow_booking.dart';
+import '../services/demo_mode_service.dart';
 import '../services/escrow_service.dart';
 import '../theme/proserve_theme.dart';
 
@@ -264,53 +265,84 @@ class _EscrowStatusScreenState extends State<EscrowStatusScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isDemo = DemoModeService.isDemoEscrowId(widget.escrowId);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.escrowStatusTitle), centerTitle: true),
-      body: StreamBuilder<EscrowBooking?>(
-        stream: EscrowService.instance.watchBooking(widget.escrowId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingSkeleton(Theme.of(context).colorScheme);
-          }
+      body: isDemo
+          ? _buildContent(_demoBooking())
+          : StreamBuilder<EscrowBooking?>(
+              stream: EscrowService.instance.watchBooking(widget.escrowId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildLoadingSkeleton(Theme.of(context).colorScheme);
+                }
 
-          final booking = snapshot.data;
-          if (booking == null) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.bookingNotFound,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                final booking = snapshot.data;
+                if (booking == null) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.bookingNotFound,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.bookingNotFoundSubtitle,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          onPressed: () => context.pop(),
+                          child: Text(l10n.goBack),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.bookingNotFoundSubtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: () => context.pop(),
-                    child: Text(l10n.goBack),
-                  ),
-                ],
-              ),
-            );
-          }
+                  );
+                }
 
-          return _buildContent(booking);
-        },
-      ),
+                return _buildContent(booking);
+              },
+            ),
+    );
+  }
+
+  EscrowBooking _demoBooking() {
+    final now = DateTime.now();
+    return EscrowBooking(
+      id: DemoModeService.demoEscrowId,
+      jobId: DemoModeService.demoJobId,
+      customerId: DemoModeService.demoCustomerId,
+      contractorId: DemoModeService.demoContractorId,
+      service: 'Interior Painting',
+      zip: '77093',
+      aiPrice: 4860,
+      platformFee: 243,
+      contractorPayout: 4617,
+      status: EscrowStatus.funded,
+      jobDetails: DemoModeService.demoJobData,
+      createdAt: now.subtract(const Duration(days: 1)),
+      fundedAt: now.subtract(const Duration(hours: 20)),
+      stripePaymentIntentId: 'pi_demo_store_screenshot',
+      priceBreakdown: const {'low': 4750, 'recommended': 4860, 'premium': 6210},
+      estimatedMarketPrice: 6635,
+      savingsAmount: 1775,
+      savingsPercent: 27,
+      discountPercent: 10,
+      originalAiPrice: 5400,
     );
   }
 

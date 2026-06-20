@@ -104,6 +104,7 @@ import '../screens/multi_location_dashboard_screen.dart';
 import '../screens/sub_marketplace_screen.dart';
 import '../screens/bid_analyzer_screen.dart';
 import '../screens/store_screenshot_demo_screen.dart';
+import '../services/demo_mode_service.dart';
 import '../widgets/offline_banner.dart';
 import '../state/app_state.dart';
 
@@ -283,6 +284,8 @@ GoRouter createRouter() {
       ),
     ),
     redirect: (context, state) {
+      if (DemoModeService.isDemoCapturePath(state.uri.path)) return null;
+
       final loggedIn = FirebaseAuth.instance.currentUser != null;
       final isPublic = publicPaths.contains(state.matchedLocation);
       if (!loggedIn && !isPublic) return '/';

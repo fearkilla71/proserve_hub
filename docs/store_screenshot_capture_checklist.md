@@ -31,3 +31,16 @@ Demo capture is available in debug builds or with:
 ```bash
 --dart-define=PROSERVE_DEMO_MODE=true
 ```
+
+## Verified Demo Routes
+
+These routes render local seeded demo data and do not write fake records to
+production Firebase:
+
+- `/screenshot-demo`
+- `/quotes/demo-job`
+- `/job-command/demo-job`
+- `/escrow-status/demo-escrow`
+
+Use the screenshot hub first, then open the specific route directly if a store
+capture needs a tighter first viewport.

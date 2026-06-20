@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/demo_mode_service.dart';
 import '../widgets/job_detail_actions.dart';
 
 class JobCommandCenterScreen extends StatelessWidget {
@@ -13,7 +14,10 @@ class JobCommandCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final isDemo = DemoModeService.isDemoJobId(jobId);
+    final uid = isDemo
+        ? DemoModeService.demoCustomerId
+        : FirebaseAuth.instance.currentUser?.uid;
     final l10n = AppLocalizations.of(context)!;
 
     if (uid == null) {
@@ -31,264 +35,266 @@ class JobCommandCenterScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('job_requests')
-            .doc(jobId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return _StateCard(
-              icon: Icons.error_outline,
-              title: l10n.couldNotLoadJob,
-              subtitle: snapshot.error.toString(),
-            );
-          }
+      body: isDemo
+          ? _buildCommandContent(
+              context,
+              _JobCommandState(
+                jobId: jobId,
+                uid: uid,
+                data: DemoModeService.demoJobData,
+              ),
+            )
+          : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('job_requests')
+                  .doc(jobId)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return _StateCard(
+                    icon: Icons.error_outline,
+                    title: l10n.couldNotLoadJob,
+                    subtitle: snapshot.error.toString(),
+                  );
+                }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final data = snapshot.data!.data();
-          if (data == null) {
-            return _StateCard(
-              icon: Icons.work_off_outlined,
-              title: l10n.jobNotFoundTitle,
-              subtitle: l10n.jobNotFoundSubtitle,
-            );
-          }
+                final data = snapshot.data!.data();
+                if (data == null) {
+                  return _StateCard(
+                    icon: Icons.work_off_outlined,
+                    title: l10n.jobNotFoundTitle,
+                    subtitle: l10n.jobNotFoundSubtitle,
+                  );
+                }
 
-          final state = _JobCommandState(jobId: jobId, uid: uid, data: data);
+                final state = _JobCommandState(
+                  jobId: jobId,
+                  uid: uid,
+                  data: data,
+                );
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                return _buildCommandContent(context, state);
+              },
+            ),
+    );
+  }
+
+  Widget _buildCommandContent(BuildContext context, _JobCommandState state) {
+    final l10n = AppLocalizations.of(context)!;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      children: [
+        _JobHeader(state: state),
+        const SizedBox(height: 12),
+        _JobProgressCard(state: state),
+        const SizedBox(height: 12),
+        _NextActionCard(state: state),
+        const SizedBox(height: 12),
+        _CommandSection(
+          title: l10n.commandSectionWinConfirm,
+          children: [
+            _CommandTile(
+              icon: Icons.request_quote_outlined,
+              title: state.isRequester ? l10n.reviewQuotes : l10n.submitQuote,
+              subtitle: state.isRequester
+                  ? l10n.reviewQuotesSubtitle
+                  : l10n.submitQuoteSubtitle,
+              onTap: () => context.push(
+                state.isRequester ? '/quotes/$jobId' : '/submit-quote/$jobId',
+              ),
+            ),
+            _CommandTile(
+              icon: Icons.how_to_vote_outlined,
+              title: l10n.bids,
+              subtitle: l10n.bidsSubtitle,
+              onTap: () => context.push('/bids/$jobId'),
+            ),
+          ],
+        ),
+        if (state.isContractor) ...[
+          const SizedBox(height: 12),
+          _CommandSection(
+            title: l10n.commandSectionToolsForJob,
             children: [
-              _JobHeader(state: state),
-              const SizedBox(height: 12),
-              _JobProgressCard(state: state),
-              const SizedBox(height: 12),
-              _NextActionCard(state: state),
-              const SizedBox(height: 12),
-              _CommandSection(
-                title: l10n.commandSectionWinConfirm,
-                children: [
-                  _CommandTile(
-                    icon: Icons.request_quote_outlined,
-                    title: state.isRequester
-                        ? l10n.reviewQuotes
-                        : l10n.submitQuote,
-                    subtitle: state.isRequester
-                        ? l10n.reviewQuotesSubtitle
-                        : l10n.submitQuoteSubtitle,
-                    onTap: () => context.push(
-                      state.isRequester
-                          ? '/quotes/$jobId'
-                          : '/submit-quote/$jobId',
-                    ),
-                  ),
-                  _CommandTile(
-                    icon: Icons.how_to_vote_outlined,
-                    title: l10n.bids,
-                    subtitle: l10n.bidsSubtitle,
-                    onTap: () => context.push('/bids/$jobId'),
-                  ),
-                ],
+              _CommandTile(
+                icon: Icons.calculate_outlined,
+                title: l10n.priceThisJob,
+                subtitle: l10n.priceThisJobSubtitle,
+                onTap: () =>
+                    context.push('/pricing-calculator', extra: state.toolExtra),
               ),
-              if (state.isContractor) ...[
-                const SizedBox(height: 12),
-                _CommandSection(
-                  title: l10n.commandSectionToolsForJob,
-                  children: [
-                    _CommandTile(
-                      icon: Icons.calculate_outlined,
-                      title: l10n.priceThisJob,
-                      subtitle: l10n.priceThisJobSubtitle,
-                      onTap: () => context.push(
-                        '/pricing-calculator',
-                        extra: state.toolExtra,
-                      ),
-                    ),
-                    _CommandTile(
-                      icon: Icons.folder_copy_outlined,
-                      title: l10n.savedEstimates,
-                      subtitle: l10n.savedEstimatesJobSubtitle,
-                      onTap: () => context.push(
-                        '/saved-estimates',
-                        extra: state.toolExtra,
-                      ),
-                    ),
-                    _CommandTile(
-                      icon: Icons.receipt_long_outlined,
-                      title: l10n.aiInvoiceMaker,
-                      subtitle: l10n.aiInvoiceMakerJobSubtitle,
-                      onTap: () => context.push(
-                        '/invoice-maker',
-                        extra: state.toolExtra,
-                      ),
-                    ),
-                    _CommandTile(
-                      icon: Icons.imagesearch_roller_outlined,
-                      title: l10n.createRender,
-                      subtitle: l10n.createRenderJobSubtitle,
-                      onTap: () =>
-                          context.push('/render-tool', extra: state.toolExtra),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              _CommandSection(
-                title: l10n.commandSectionCommunicateDocument,
-                children: [
-                  _CommandTile(
-                    icon: Icons.chat_bubble_outline,
-                    title: state.isRequester
-                        ? l10n.chatWithContractor
-                        : l10n.chatWithClient,
-                    subtitle: state.canChat
-                        ? l10n.openJobConversation
-                        : l10n.chatOpensAfterClaimed,
-                    enabled: state.canChat,
-                    onTap: () => JobDetailActions.openChat(
-                      context: context,
-                      jobId: jobId,
-                      requesterUid: state.requesterUid,
-                      claimedBy: state.claimedBy,
-                      isRequester: state.isRequester,
-                    ),
-                  ),
-                  _CommandTile(
-                    icon: Icons.photo_library_outlined,
-                    title: l10n.progressPhotos,
-                    subtitle: l10n.progressPhotosSubtitle,
-                    onTap: () => context.push(
-                      '/progress-photos/$jobId',
-                      extra: {'canUpload': state.isContractor},
-                    ),
-                  ),
-                  _CommandTile(
-                    icon: Icons.timeline_outlined,
-                    title: l10n.timeline,
-                    subtitle: l10n.timelineSubtitle,
-                    onTap: () => context.push('/timeline/$jobId'),
-                  ),
-                  _CommandTile(
-                    icon: Icons.flag_outlined,
-                    title: l10n.milestones,
-                    subtitle: l10n.milestonesSubtitle,
-                    onTap: () => context.push(
-                      '/milestones/$jobId',
-                      extra: {'isContractor': state.isContractor},
-                    ),
-                  ),
-                ],
+              _CommandTile(
+                icon: Icons.folder_copy_outlined,
+                title: l10n.savedEstimates,
+                subtitle: l10n.savedEstimatesJobSubtitle,
+                onTap: () =>
+                    context.push('/saved-estimates', extra: state.toolExtra),
               ),
-              const SizedBox(height: 12),
-              _CommandSection(
-                title: l10n.commandSectionMoneyCompletion,
-                children: [
-                  _CommandTile(
-                    icon: Icons.verified_user_outlined,
-                    title: l10n.status,
-                    subtitle: l10n.statusJobSubtitle,
-                    onTap: () => context.push('/job-status/$jobId'),
-                  ),
-                  _CommandTile(
-                    icon: Icons.receipt_long_outlined,
-                    title: state.isContractor
-                        ? l10n.createInvoice
-                        : l10n.invoice,
-                    subtitle: state.isContractor
-                        ? l10n.createInvoiceSubtitle
-                        : l10n.invoiceSubtitle,
-                    onTap: () => context.push('/invoice/$jobId'),
-                  ),
-                  if (state.escrowId.isNotEmpty)
-                    _CommandTile(
-                      icon: Icons.shield_outlined,
-                      title: l10n.escrow,
-                      subtitle: l10n.escrowSubtitle,
-                      onTap: () =>
-                          context.push('/escrow-status/${state.escrowId}'),
-                    )
-                  else
-                    _CommandTile(
-                      icon: Icons.shield_outlined,
-                      title: l10n.escrow,
-                      subtitle: l10n.noEscrowAttached,
-                      enabled: false,
-                    ),
-                  _CommandTile(
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: l10n.receiptsExpenses,
-                    subtitle: l10n.receiptsExpensesSubtitle,
-                    onTap: () => context.push(
-                      '/expenses/$jobId',
-                      extra: {
-                        'canAdd': state.isRequester || state.isContractor,
-                        'createdByRole': state.isContractor
-                            ? 'contractor'
-                            : 'customer',
-                      },
-                    ),
-                  ),
-                ],
+              _CommandTile(
+                icon: Icons.receipt_long_outlined,
+                title: l10n.aiInvoiceMaker,
+                subtitle: l10n.aiInvoiceMakerJobSubtitle,
+                onTap: () =>
+                    context.push('/invoice-maker', extra: state.toolExtra),
               ),
-              const SizedBox(height: 12),
-              _CommandSection(
-                title: l10n.commandSectionTrustCloseout,
-                children: [
-                  _CommandTile(
-                    icon: Icons.star_outline,
-                    title: l10n.review,
-                    subtitle: state.canReview
-                        ? l10n.reviewCompletedWork
-                        : l10n.reviewOpensAfterCompleted,
-                    enabled: state.canReview,
-                    onTap: () => context.push(
-                      '/submit-review/$jobId/${state.claimedBy}',
-                    ),
-                  ),
-                  _CommandTile(
-                    icon: Icons.report_problem_outlined,
-                    title: state.hasDispute
-                        ? l10n.viewDispute
-                        : l10n.reportDispute,
-                    subtitle: state.hasDispute
-                        ? l10n.viewDisputeSubtitle
-                        : l10n.reportDisputeSubtitle,
-                    enabled: state.isRequester || state.isContractor,
-                    onTap: () {
-                      if (state.hasDispute) {
-                        JobDetailActions.openLatestDispute(context, jobId);
-                      } else {
-                        context.push('/dispute/$jobId');
-                      }
-                    },
-                  ),
-                  _CommandTile(
-                    icon: Icons.cancel_outlined,
-                    title: l10n.cancellation,
-                    subtitle: state.canCancel
-                        ? l10n.cancelRefundEligibility
-                        : l10n.cancellationUnavailable,
-                    enabled: state.canCancel,
-                    onTap: () => context.push(
-                      '/cancellation/$jobId',
-                      extra: {
-                        'collection': 'job_requests',
-                        'scheduledDate': state.scheduledDate,
-                        'jobPrice': state.price,
-                        'jobTitle': state.service,
-                      },
-                    ),
-                  ),
-                ],
+              _CommandTile(
+                icon: Icons.imagesearch_roller_outlined,
+                title: l10n.createRender,
+                subtitle: l10n.createRenderJobSubtitle,
+                onTap: () =>
+                    context.push('/render-tool', extra: state.toolExtra),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        _CommandSection(
+          title: l10n.commandSectionCommunicateDocument,
+          children: [
+            _CommandTile(
+              icon: Icons.chat_bubble_outline,
+              title: state.isRequester
+                  ? l10n.chatWithContractor
+                  : l10n.chatWithClient,
+              subtitle: state.canChat
+                  ? l10n.openJobConversation
+                  : l10n.chatOpensAfterClaimed,
+              enabled: state.canChat,
+              onTap: () => JobDetailActions.openChat(
+                context: context,
+                jobId: jobId,
+                requesterUid: state.requesterUid,
+                claimedBy: state.claimedBy,
+                isRequester: state.isRequester,
+              ),
+            ),
+            _CommandTile(
+              icon: Icons.photo_library_outlined,
+              title: l10n.progressPhotos,
+              subtitle: l10n.progressPhotosSubtitle,
+              onTap: () => context.push(
+                '/progress-photos/$jobId',
+                extra: {'canUpload': state.isContractor},
+              ),
+            ),
+            _CommandTile(
+              icon: Icons.timeline_outlined,
+              title: l10n.timeline,
+              subtitle: l10n.timelineSubtitle,
+              onTap: () => context.push('/timeline/$jobId'),
+            ),
+            _CommandTile(
+              icon: Icons.flag_outlined,
+              title: l10n.milestones,
+              subtitle: l10n.milestonesSubtitle,
+              onTap: () => context.push(
+                '/milestones/$jobId',
+                extra: {'isContractor': state.isContractor},
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _CommandSection(
+          title: l10n.commandSectionMoneyCompletion,
+          children: [
+            _CommandTile(
+              icon: Icons.verified_user_outlined,
+              title: l10n.status,
+              subtitle: l10n.statusJobSubtitle,
+              onTap: () => context.push('/job-status/$jobId'),
+            ),
+            _CommandTile(
+              icon: Icons.receipt_long_outlined,
+              title: state.isContractor ? l10n.createInvoice : l10n.invoice,
+              subtitle: state.isContractor
+                  ? l10n.createInvoiceSubtitle
+                  : l10n.invoiceSubtitle,
+              onTap: () => context.push('/invoice/$jobId'),
+            ),
+            if (state.escrowId.isNotEmpty)
+              _CommandTile(
+                icon: Icons.shield_outlined,
+                title: l10n.escrow,
+                subtitle: l10n.escrowSubtitle,
+                onTap: () => context.push('/escrow-status/${state.escrowId}'),
+              )
+            else
+              _CommandTile(
+                icon: Icons.shield_outlined,
+                title: l10n.escrow,
+                subtitle: l10n.noEscrowAttached,
+                enabled: false,
+              ),
+            _CommandTile(
+              icon: Icons.account_balance_wallet_outlined,
+              title: l10n.receiptsExpenses,
+              subtitle: l10n.receiptsExpensesSubtitle,
+              onTap: () => context.push(
+                '/expenses/$jobId',
+                extra: {
+                  'canAdd': state.isRequester || state.isContractor,
+                  'createdByRole': state.isContractor
+                      ? 'contractor'
+                      : 'customer',
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _CommandSection(
+          title: l10n.commandSectionTrustCloseout,
+          children: [
+            _CommandTile(
+              icon: Icons.star_outline,
+              title: l10n.review,
+              subtitle: state.canReview
+                  ? l10n.reviewCompletedWork
+                  : l10n.reviewOpensAfterCompleted,
+              enabled: state.canReview,
+              onTap: () =>
+                  context.push('/submit-review/$jobId/${state.claimedBy}'),
+            ),
+            _CommandTile(
+              icon: Icons.report_problem_outlined,
+              title: state.hasDispute ? l10n.viewDispute : l10n.reportDispute,
+              subtitle: state.hasDispute
+                  ? l10n.viewDisputeSubtitle
+                  : l10n.reportDisputeSubtitle,
+              enabled: state.isRequester || state.isContractor,
+              onTap: () {
+                if (state.hasDispute) {
+                  JobDetailActions.openLatestDispute(context, jobId);
+                } else {
+                  context.push('/dispute/$jobId');
+                }
+              },
+            ),
+            _CommandTile(
+              icon: Icons.cancel_outlined,
+              title: l10n.cancellation,
+              subtitle: state.canCancel
+                  ? l10n.cancelRefundEligibility
+                  : l10n.cancellationUnavailable,
+              enabled: state.canCancel,
+              onTap: () => context.push(
+                '/cancellation/$jobId',
+                extra: {
+                  'collection': 'job_requests',
+                  'scheduledDate': state.scheduledDate,
+                  'jobPrice': state.price,
+                  'jobTitle': state.service,
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

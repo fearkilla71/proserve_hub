@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
+import '../services/demo_mode_service.dart';
 import '../theme/proserve_theme.dart';
 import '../utils/optimistic_ui.dart';
 import '../utils/app_error_handler.dart';
@@ -50,6 +51,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (DemoModeService.isDemoJobId(widget.jobId)) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.compareQuotes)),
+        body: _buildDemoQuotesBody(),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.compareQuotes)),
       body: StreamBuilder<QuerySnapshot>(
@@ -225,6 +233,98 @@ class _QuotesScreenState extends State<QuotesScreen> {
     return Chip(
       label: Text('$value $label'),
       visualDensity: VisualDensity.compact,
+    );
+  }
+
+  Widget _buildDemoQuotesBody() {
+    _contractorCache[DemoModeService.demoContractorId] = {
+      'name': 'VeroHue Pro Painting',
+      'businessName': 'VeroHue Pro Painting',
+      'averageRating': 4.8,
+      'reviewCount': 24,
+      'completedJobs': 15,
+      'verificationStatus': 'verified',
+      'verified': true,
+      'insured': true,
+      'licensed': true,
+    };
+    _contractorCache['demo-contractor-2'] = {
+      'name': 'Prime Coat Pros',
+      'averageRating': 4.6,
+      'reviewCount': 17,
+      'completedJobs': 11,
+      'verified': true,
+      'insured': true,
+      'licensed': false,
+    };
+    _contractorCache['demo-contractor-3'] = {
+      'name': 'Northside Paint & Drywall',
+      'averageRating': 4.9,
+      'reviewCount': 31,
+      'completedJobs': 28,
+      'verified': true,
+      'insured': true,
+      'licensed': true,
+    };
+
+    final now = Timestamp.fromDate(DateTime.now());
+    final quotes = <Map<String, dynamic>>[
+      {
+        'contractorId': DemoModeService.demoContractorId,
+        'price': 4860,
+        'estimatedDuration': '3 days',
+        'notes':
+            'Includes wall prep, two coats, trim touch-ups, cleanup, and a 1-year workmanship warranty.',
+        'sowUrl': 'demo-scope.pdf',
+        'submittedAt': now,
+        'status': 'pending',
+        'warranty': '1-year workmanship warranty',
+        'exclusions': 'Major drywall replacement, water damage repair',
+        'depositRequired': 1200,
+      },
+      {
+        'contractorId': 'demo-contractor-2',
+        'price': 4525,
+        'estimatedDuration': '4 days',
+        'notes':
+            'Best price option with standard prep and one trim touch-up pass.',
+        'submittedAt': now,
+        'status': 'pending',
+        'warranty': '6-month touch-up warranty',
+        'exclusions': 'Trim repaint, repairs larger than nail holes',
+        'depositRequired': 900,
+      },
+      {
+        'contractorId': 'demo-contractor-3',
+        'price': 5240,
+        'estimatedDuration': '2 days',
+        'notes':
+            'Fast crew availability, premium washable finish, and detailed daily cleanup.',
+        'sowUrl': 'demo-premium-scope.pdf',
+        'submittedAt': now,
+        'status': 'pending',
+        'warranty': '2-year workmanship warranty',
+        'exclusions': 'Color consultation beyond two samples',
+        'depositRequired': 1500,
+      },
+    ];
+    final prices = quotes.map((q) => (q['price'] as num).toDouble()).toList()
+      ..sort();
+    final lowPrice = prices.first;
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      itemCount: quotes.length + 1,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        if (index == 0) return _buildDecisionHeader(quotes);
+        final quoteIndex = index - 1;
+        return _buildQuoteCard(
+          'demo-quote-$quoteIndex',
+          quotes[quoteIndex],
+          lowPrice: lowPrice,
+        );
+      },
     );
   }
 
@@ -888,6 +988,14 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
   Future<void> _acceptQuote(String quoteId, Map<String, dynamic> quote) async {
     final l10n = AppLocalizations.of(context)!;
+    if (DemoModeService.isDemoJobId(widget.jobId)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.quoteAcceptedJobAssigned)));
+      context.push('/job-command/${widget.jobId}');
+      return;
+    }
+
     final contractorId = quote['contractorId'] as String;
     final price = (quote['price'] as num).toDouble();
     final contractorName =
