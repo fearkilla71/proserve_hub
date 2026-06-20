@@ -11,7 +11,6 @@ import 'landing_page.dart';
 import 'community_feed_screen.dart';
 
 import '../services/customer_portal_nav.dart';
-import '../services/escrow_service.dart';
 import '../services/fcm_service.dart';
 import '../services/conversation_service.dart';
 import '../services/trusted_pros_service.dart';
@@ -73,8 +72,6 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
         );
     _homeIntroController.forward();
     CustomerPortalNav.tabRequest.addListener(_handleTabRequest);
-    // Patch any existing escrow bookings that are missing fields on job_requests
-    EscrowService.instance.syncEscrowFieldsToJobRequests();
     // Show role-specific onboarding the first time a customer opens the portal.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) OnboardingScreen.showIfNeeded(context, 'customer');
@@ -188,9 +185,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     return Scaffold(
       body: Stack(
         children: [
-          SafeArea(
-            child: child,
-          ),
+          SafeArea(child: child),
           Positioned(
             left: 0,
             right: 0,
@@ -201,10 +196,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
       ),
       floatingActionButton: fab == null
           ? null
-          : Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: fab,
-            ),
+          : Padding(padding: const EdgeInsets.only(bottom: 8), child: fab),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         height: 76,
@@ -925,15 +917,18 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     );
   }
 
-  Widget _buildProjectsTab({required BuildContext context, required User user}) {
+  Widget _buildProjectsTab({
+    required BuildContext context,
+    required User user,
+  }) {
     final l10n = AppLocalizations.of(context)!;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _myRequestsQuery(user.uid).snapshots(
-            includeMetadataChanges: true,
-          ),
+          stream: _myRequestsQuery(
+            user.uid,
+          ).snapshots(includeMetadataChanges: true),
           builder: (context, jobsSnap) {
             if (jobsSnap.hasError) {
               return _ProjectStateCard(
@@ -1022,7 +1017,9 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
       children: [
         _ProjectHeaderCard(
           activeCount: docs.where((doc) => _isActiveProject(doc.data())).length,
-          quotesCount: docs.where((doc) => _hasWaitingQuotes(doc.data())).length,
+          quotesCount: docs
+              .where((doc) => _hasWaitingQuotes(doc.data()))
+              .length,
           protectedCount: docs
               .where((doc) => _hasProtectedPayment(doc.data()))
               .length,
@@ -1299,7 +1296,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     ],
                   ),
                 ),
-                _ProjectStatusChip(label: statusInfo.label, color: statusInfo.color),
+                _ProjectStatusChip(
+                  label: statusInfo.label,
+                  color: statusInfo.color,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -1389,7 +1389,10 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
                     child: FilledButton.icon(
                       onPressed: () => context.push(primaryRoute),
                       icon: Icon(primaryIcon, size: 18),
-                      label: Text(primaryLabel, overflow: TextOverflow.ellipsis),
+                      label: Text(
+                        primaryLabel,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ),
@@ -1696,7 +1699,9 @@ class _ProjectNotice extends StatelessWidget {
       decoration: BoxDecoration(
         color: ProServeColors.warning.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ProServeColors.warning.withValues(alpha: 0.26)),
+        border: Border.all(
+          color: ProServeColors.warning.withValues(alpha: 0.26),
+        ),
       ),
       child: Row(
         children: [
@@ -2141,7 +2146,9 @@ class _CustomerActionCenter extends StatelessWidget {
           return (data['escrowId'] ?? '').toString().trim().isNotEmpty ||
               data['instantBook'] == true;
         }).length;
-        final reviewsDue = docs.where((doc) => canLeaveReview(doc.data())).length;
+        final reviewsDue = docs
+            .where((doc) => canLeaveReview(doc.data()))
+            .length;
         final latestProject = docs.isNotEmpty ? docs.first : null;
 
         return Container(
@@ -2226,7 +2233,8 @@ class _CustomerActionCenter extends StatelessWidget {
                   const SizedBox(height: 10),
                   _RecentCustomerProjectCard(
                     doc: latestProject,
-                    onTap: () => context.push('/job-command/${latestProject.id}'),
+                    onTap: () =>
+                        context.push('/job-command/${latestProject.id}'),
                   ),
                 ],
                 if (openJobs > 0 && pendingQuotes == 0) ...[

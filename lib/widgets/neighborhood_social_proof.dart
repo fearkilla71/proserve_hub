@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../theme/proserve_theme.dart';
 
@@ -23,60 +21,13 @@ class _NeighborhoodSocialProofState extends State<NeighborhoodSocialProof> {
   }
 
   Future<void> _load() async {
-    try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) {
-        if (mounted) setState(() => _loading = false);
-        return;
-      }
-
-      // Get user's ZIP
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      final zip = userDoc.data()?['zip'] as String? ?? '';
-      if (zip.isEmpty) {
-        if (mounted) setState(() => _loading = false);
-        return;
-      }
-
-      // Prefix match for neighborhood (first 3 digits)
-      final prefix = zip.substring(0, zip.length.clamp(0, 3));
-
-      // Count recently completed jobs nearby
-      final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-      final query = await FirebaseFirestore.instance
-          .collection('job_requests')
-          .where('status', isEqualTo: 'completed')
-          .where('zip', isGreaterThanOrEqualTo: prefix)
-          .where('zip', isLessThan: '${prefix}z')
-          .where(
-            'completedAt',
-            isGreaterThan: Timestamp.fromDate(thirtyDaysAgo),
-          )
-          .limit(50)
-          .get();
-
-      // Aggregate by service type
-      final serviceCount = <String, int>{};
-      for (final doc in query.docs) {
-        final svc = doc.data()['serviceName'] as String? ?? 'home project';
-        serviceCount[svc] = (serviceCount[svc] ?? 0) + 1;
-      }
-
-      if (mounted) {
-        setState(() {
-          _data = {
-            'totalJobs': query.docs.length,
-            'topServices': serviceCount,
-            'zip': zip,
-          };
-          _loading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    // Completed job request documents are private. Keep this widget hidden until
+    // a server-maintained public aggregate is available for neighborhood proof.
+    if (mounted) {
+      setState(() {
+        _data = null;
+        _loading = false;
+      });
     }
   }
 
