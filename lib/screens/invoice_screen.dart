@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_item.dart';
+import '../services/demo_mode_service.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final String jobId;
@@ -418,6 +419,44 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   Future<Map<String, dynamic>> _loadInvoiceData() async {
+    if (DemoModeService.isDemoJobId(widget.jobId)) {
+      return {
+        'job': {
+          ...DemoModeService.demoJobData,
+          'platformFeeAmount': 243,
+          'completedAt': Timestamp.fromDate(DateTime.now()),
+        },
+        'customer': {'name': 'Carvic Franco'},
+        'contractor': {
+          'businessName': 'VeroHue Pro Painting',
+          'location': 'Houston, TX',
+        },
+        'jobId': widget.jobId,
+        'invoice': {
+          'status': 'sent',
+          'items': [
+            InvoiceItem(
+              description: 'Interior painting labor',
+              quantity: 1,
+              unitPrice: 2673,
+            ).toMap(),
+            InvoiceItem(
+              description: 'Paint, primer, masking, and materials',
+              quantity: 1,
+              unitPrice: 1701,
+            ).toMap(),
+            InvoiceItem(
+              description: 'Escrow protection and project closeout',
+              quantity: 1,
+              unitPrice: 486,
+            ).toMap(),
+          ],
+          'notes':
+              'Payment is protected through escrow. Includes cleanup, final walkthrough, and workmanship warranty.',
+        },
+      };
+    }
+
     final jobDoc = await FirebaseFirestore.instance
         .collection('job_requests')
         .doc(widget.jobId)
@@ -546,6 +585,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           final String paymentStatus;
           if (status == 'completed') {
             paymentStatus = 'Paid';
+          } else if (status == 'escrow_funded' ||
+              status == 'funded' ||
+              status == 'in_progress') {
+            paymentStatus = 'Protected';
           } else {
             paymentStatus = 'Unpaid';
           }
@@ -562,15 +605,23 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           final invoiceDate = _formatDate(
             job['completedAt'] ?? job['createdAt'],
           );
+          final demoInvoiceData = DemoModeService.isDemoJobId(widget.jobId)
+              ? data['invoice'] as Map<String, dynamic>?
+              : null;
 
           return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: _invoiceRef.snapshots(),
+            stream: DemoModeService.isDemoJobId(widget.jobId)
+                ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
+                : _invoiceRef.snapshots(),
             builder: (context, invoiceSnap) {
-              final invoiceData = invoiceSnap.data?.data();
-              final invoiceExists = invoiceSnap.data?.exists == true;
+              final invoiceData = demoInvoiceData ?? invoiceSnap.data?.data();
+              final invoiceExists =
+                  demoInvoiceData != null || invoiceSnap.data?.exists == true;
 
               // Auto-mark as viewed when customer opens the invoice
-              if (invoiceExists && isRequester) {
+              if (invoiceExists &&
+                  isRequester &&
+                  !DemoModeService.isDemoJobId(widget.jobId)) {
                 final invoiceStatus =
                     (invoiceData?['status'] as String?) ?? 'draft';
                 if (invoiceStatus == 'sent') {
@@ -673,10 +724,11 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                         const Divider(height: 32),
 
                         // Status actions
-                        _statusActionButtons(
-                          (invoiceData?['status'] as String?) ?? 'draft',
-                          isAssignedContractor,
-                        ),
+                        if (!DemoModeService.isDemoJobId(widget.jobId))
+                          _statusActionButtons(
+                            (invoiceData?['status'] as String?) ?? 'draft',
+                            isAssignedContractor,
+                          ),
 
                         const Divider(height: 32),
 

@@ -40,6 +40,7 @@ production Firebase:
 - `/screenshot-demo`
 - `/quotes/demo-job`
 - `/job-command/demo-job`
+- `/invoice/demo-job`
 - `/escrow-status/demo-escrow`
 
 Use the screenshot hub first, then open the specific route directly if a store
