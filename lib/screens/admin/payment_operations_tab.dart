@@ -173,6 +173,18 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
               const SizedBox(height: 6),
               Text(item.payoutError, style: TextStyle(color: scheme.error)),
             ],
+            const SizedBox(height: 10),
+            _OperatorNextAction(
+              icon: item.needsAttention
+                  ? Icons.priority_high_outlined
+                  : Icons.fact_check_outlined,
+              title: item.needsAttention
+                  ? 'Operator next action'
+                  : 'Operator check',
+              body: item.needsAttention
+                  ? 'Open escrow and job, confirm Stripe payout state, then add a note or mark reviewed after the stuck payment is resolved.'
+                  : 'No immediate escrow action is required. Keep the record available for audit history.',
+            ),
             if (item.lastAdminNote.isNotEmpty) ...[
               const SizedBox(height: 8),
               _AdminNotePreview(
@@ -281,6 +293,18 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
               ),
             ],
             const SizedBox(height: 10),
+            _OperatorNextAction(
+              icon: item.needsAttention
+                  ? Icons.receipt_long_outlined
+                  : Icons.check_circle_outline,
+              title: item.needsAttention
+                  ? 'Operator next action'
+                  : 'Operator check',
+              body: item.needsAttention
+                  ? 'Confirm the Stripe event, subscription or invoice metadata, then record whether the payment was retried, refunded, or fulfilled.'
+                  : 'Payment is not flagged. Add a note only if you manually verified it.',
+            ),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -366,6 +390,14 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
                 formatter: _dateTime,
               ),
             ],
+            const SizedBox(height: 10),
+            _OperatorNextAction(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Operator next action',
+              body: item.stripeAccountId.isEmpty
+                  ? 'Ask the contractor to start Connect onboarding before they can receive escrow or invoice payouts.'
+                  : 'Ask the contractor to resume Connect onboarding until details are submitted and payouts are enabled.',
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -503,6 +535,54 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
         SnackBar(content: Text('Could not save admin action: $e')),
       );
     }
+  }
+}
+
+class _OperatorNextAction extends StatelessWidget {
+  const _OperatorNextAction({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: scheme.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 3),
+                Text(body, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

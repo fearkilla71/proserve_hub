@@ -8,7 +8,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
-import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
 import '../utils/app_error_handler.dart';
 
@@ -758,15 +757,10 @@ class _QuotesScreenState extends State<QuotesScreen> {
         _contractorCache[contractorId]?['name']?.toString() ??
         l10n.unknownContractor;
 
-    // Show confirmation bottom sheet
-    final confirmed = await BottomSheetHelper.showConfirmation(
-      context: context,
-      title: l10n.acceptQuote,
-      message: l10n.acceptQuoteMessage(
-        '\$${price.toStringAsFixed(0)}',
-        contractorName,
-      ),
-      confirmText: l10n.accept,
+    final confirmed = await _showAcceptQuoteSheet(
+      amount: '\$${price.toStringAsFixed(0)}',
+      contractorName: contractorName,
+      quote: quote,
     );
 
     if (!confirmed || !mounted) return;
@@ -809,6 +803,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
               'claimedAt': FieldValue.serverTimestamp(),
               'acceptedQuoteId': quoteId,
               'quoteAcceptedAt': FieldValue.serverTimestamp(),
+              'customerNextAction': 'open_job_command_center',
+              'customerNextActionLabel': l10n.openJobCommandCenter,
             });
       },
       loadingMessage: l10n.acceptingQuote,
@@ -816,6 +812,173 @@ class _QuotesScreenState extends State<QuotesScreen> {
       onSuccess: () {
         if (mounted) context.pushReplacement('/job-command/${widget.jobId}');
       },
+    );
+  }
+
+  Future<bool> _showAcceptQuoteSheet({
+    required String amount,
+    required String contractorName,
+    required Map<String, dynamic> quote,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final warranty = (quote['warranty'] as String?)?.trim();
+    final exclusions = (quote['exclusions'] as String?)?.trim();
+    final deposit =
+        (quote['depositRequired'] as num?)?.toDouble() ??
+        (quote['deposit'] as num?)?.toDouble();
+    final hasScope = ((quote['sowUrl'] as String?) ?? '').trim().isNotEmpty;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final scheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                      child: Icon(
+                        Icons.verified_user_outlined,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.acceptQuote,
+                        style: Theme.of(sheetContext).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.acceptQuoteMessage(amount, contractorName),
+                  style: Theme.of(sheetContext).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.28),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _acceptanceRow(
+                        Icons.shield_outlined,
+                        l10n.protectedPaymentPath,
+                        l10n.escrowAfterApproval,
+                      ),
+                      _acceptanceRow(
+                        Icons.dashboard_customize_outlined,
+                        l10n.openJobCommandCenter,
+                        l10n.quoteAcceptedHeaderBody,
+                      ),
+                      _acceptanceRow(
+                        hasScope
+                            ? Icons.check_circle_outline
+                            : Icons.info_outline,
+                        l10n.scopeOfWork,
+                        hasScope ? l10n.scopeAttached : l10n.scopeMissing,
+                      ),
+                      _acceptanceRow(
+                        warranty?.isNotEmpty == true
+                            ? Icons.verified_outlined
+                            : Icons.info_outline,
+                        l10n.warranty,
+                        warranty?.isNotEmpty == true
+                            ? l10n.warrantyIncluded
+                            : l10n.warrantyNotListed,
+                      ),
+                      _acceptanceRow(
+                        exclusions?.isNotEmpty == true
+                            ? Icons.rule_outlined
+                            : Icons.info_outline,
+                        l10n.exclusions,
+                        exclusions?.isNotEmpty == true
+                            ? l10n.exclusionsListed
+                            : l10n.exclusionsNotListed,
+                      ),
+                      _acceptanceRow(
+                        deposit != null && deposit > 0
+                            ? Icons.payments_outlined
+                            : Icons.info_outline,
+                        l10n.deposit,
+                        deposit != null && deposit > 0
+                            ? l10n.depositRequiredAmount(
+                                '\$${deposit.toStringAsFixed(0)}',
+                              )
+                            : l10n.depositNotListed,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(sheetContext, true),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: Text(l10n.accept),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(sheetContext, false),
+                  child: Text(l10n.cancel),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
+  Widget _acceptanceRow(IconData icon, String title, String body) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodySmall,
+                children: [
+                  TextSpan(
+                    text: '$title: ',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  TextSpan(text: body),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
