@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:proserve_hub/services/lead_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 
+import '../constants/service_intake.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../widgets/lead_pack_purchase_sheet.dart';
 import '../widgets/suggested_pros_card.dart';
@@ -67,6 +68,24 @@ class JobDetailPage extends StatelessWidget {
 
         final priceRaw = data['price'];
         final price = priceRaw is num ? priceRaw.toDouble() : 0.0;
+        final service = (data['service'] ?? '').toString();
+        final intakeDefinition = intakeDefinitionForService(service);
+        final contractorBrief = (data['contractorBrief'] ?? '')
+            .toString()
+            .trim();
+        final leadQualityLabel = (data['leadQualityLabel'] ?? '')
+            .toString()
+            .trim();
+        final leadQualityScore = (data['leadQualityScore'] as num?)?.toInt();
+        final serviceAnswers = data['serviceAnswers'] is Map
+            ? Map<String, dynamic>.from(data['serviceAnswers'] as Map)
+            : const <String, dynamic>{};
+        final missingLeadFields =
+            (data['missingLeadFields'] as List?)
+                ?.whereType<String>()
+                .where((field) => field.trim().isNotEmpty)
+                .toList() ??
+            const <String>[];
 
         final isRequester =
             currentUid != null &&
@@ -275,7 +294,7 @@ class JobDetailPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  data['service'] ?? '',
+                  service,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -287,6 +306,20 @@ class JobDetailPage extends StatelessWidget {
                 const Text('Description:'),
                 const SizedBox(height: 4),
                 Text(data['description'] ?? ''),
+
+                if (contractorBrief.isNotEmpty ||
+                    leadQualityLabel.isNotEmpty ||
+                    serviceAnswers.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _LeadQualityDetailCard(
+                    contractorBrief: contractorBrief,
+                    leadQualityLabel: leadQualityLabel,
+                    leadQualityScore: leadQualityScore,
+                    missingLeadFields: missingLeadFields,
+                    serviceAnswers: serviceAnswers,
+                    intakeDefinition: intakeDefinition,
+                  ),
+                ],
 
                 const SizedBox(height: 16),
                 if (isRequester && !claimed) ...[
@@ -808,5 +841,126 @@ class JobDetailPage extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _LeadQualityDetailCard extends StatelessWidget {
+  const _LeadQualityDetailCard({
+    required this.contractorBrief,
+    required this.leadQualityLabel,
+    required this.leadQualityScore,
+    required this.missingLeadFields,
+    required this.serviceAnswers,
+    required this.intakeDefinition,
+  });
+
+  final String contractorBrief;
+  final String leadQualityLabel;
+  final int? leadQualityScore;
+  final List<String> missingLeadFields;
+  final Map<String, dynamic> serviceAnswers;
+  final ServiceIntakeDefinition intakeDefinition;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final answerEntries = serviceAnswers.entries
+        .where((entry) => _formatAnswer(entry.value).isNotEmpty)
+        .take(8)
+        .toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: scheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lead quality',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (leadQualityLabel.isNotEmpty)
+                  Chip(
+                    label: Text(
+                      leadQualityScore == null
+                          ? leadQualityLabel
+                          : '$leadQualityLabel · $leadQualityScore%',
+                    ),
+                  ),
+              ],
+            ),
+            if (contractorBrief.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                contractorBrief,
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (answerEntries.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              ...answerEntries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          answerLabelForId(intakeDefinition, entry.key),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _formatAnswer(entry.value),
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (missingLeadFields.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'May need follow-up: ${missingLeadFields.join(', ')}',
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatAnswer(dynamic value) {
+    if (value == null) return '';
+    if (value is bool) return value ? 'Yes' : 'No';
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .join(', ');
+    }
+    return value.toString().trim();
   }
 }

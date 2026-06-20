@@ -10,6 +10,7 @@ import 'package:proserve_hub/widgets/page_header.dart';
 import 'package:proserve_hub/widgets/animated_states.dart';
 import '../constants/service_types.dart';
 import '../constants/service_guidance.dart';
+import '../constants/service_intake.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
@@ -253,6 +254,18 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         .limit(_pageSize)
         .get(const GetOptions(source: Source.serverAndCache))
         .timeout(const Duration(seconds: 10));
+  }
+
+  String _formatLeadAnswer(dynamic value) {
+    if (value == null) return '';
+    if (value is bool) return value ? 'Yes' : 'No';
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .join(', ');
+    }
+    return value.toString().trim();
   }
 
   /// Batch-load multiple job docs by ID (avoids N+1 individual fetches).
@@ -831,8 +844,21 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     final scheme = Theme.of(context).colorScheme;
     final service = (data['service'] ?? 'Service').toString();
     final description = (data['description'] ?? '').toString().trim();
+    final contractorBrief = (data['contractorBrief'] ?? '').toString().trim();
+    final leadQualityLabel = (data['leadQualityLabel'] ?? '').toString().trim();
+    final leadQualityScore = (data['leadQualityScore'] as num?)?.toInt();
+    final missingLeadFields =
+        (data['missingLeadFields'] as List?)
+            ?.whereType<String>()
+            .where((field) => field.trim().isNotEmpty)
+            .toList() ??
+        const <String>[];
+    final serviceAnswers = data['serviceAnswers'] is Map
+        ? Map<String, dynamic>.from(data['serviceAnswers'] as Map)
+        : const <String, dynamic>{};
     final location = (data['location'] ?? 'Unknown').toString();
     final guidance = guidanceForService(service);
+    final intakeDefinition = intakeDefinitionForService(service);
     final pricingMode = (data['pricingMode'] ?? '').toString();
     final manualQuote =
         pricingMode == 'manual_quote' ||
@@ -1007,6 +1033,15 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                     icon: Icons.handyman_outlined,
                     label: 'Matches your services',
                   ),
+                if (leadQualityLabel.isNotEmpty)
+                  _LeadSignalChip(
+                    icon: leadQualityScore != null && leadQualityScore >= 75
+                        ? Icons.verified_outlined
+                        : Icons.info_outline,
+                    label: leadQualityScore == null
+                        ? leadQualityLabel
+                        : '$leadQualityLabel · $leadQualityScore%',
+                  ),
                 ...guidance.matchSignals
                     .take(1)
                     .map(
@@ -1025,6 +1060,104 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (contractorBrief.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: scheme.primary.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.assignment_turned_in_outlined,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        contractorBrief,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (serviceAnswers.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: serviceAnswers.entries
+                      .where(
+                        (entry) => _formatLeadAnswer(entry.value).isNotEmpty,
+                      )
+                      .take(3)
+                      .map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.checklist_outlined,
+                                size: 16,
+                                color: scheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  answerLabelForId(intakeDefinition, entry.key),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _formatLeadAnswer(entry.value),
+                                  textAlign: TextAlign.end,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ],
+            if (missingLeadFields.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'May need follow-up: ${missingLeadFields.take(2).join(', ')}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

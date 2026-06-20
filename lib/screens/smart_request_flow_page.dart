@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/service_types.dart';
 import '../constants/service_guidance.dart';
+import '../constants/service_intake.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/pricing_engine.dart';
 
@@ -57,6 +58,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   final _sqftController = TextEditingController();
   String _propertyType = 'home';
   String _condition = 'fair';
+  Map<String, dynamic> _serviceAnswers = <String, dynamic>{};
+  final Map<String, TextEditingController> _answerControllers =
+      <String, TextEditingController>{};
 
   // ── Step 3: Timeline & Budget ──
   String _timeline = 'standard'; // standard, asap, flexible
@@ -72,12 +76,24 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
 
-  static final _services = kQuickServices.entries
-      .map((entry) => {'type': entry.key, 'name': entry.value})
-      .toList(growable: false);
+  static final _services = _dedupedQuickServices();
+
+  static List<Map<String, String>> _dedupedQuickServices() {
+    final seen = <String>{};
+    final services = <Map<String, String>>[];
+    for (final entry in kQuickServices.entries) {
+      final key = serviceKey(canonicalServiceName(entry.value));
+      if (!seen.add(key)) continue;
+      services.add({'type': entry.key, 'name': entry.value});
+    }
+    return services;
+  }
 
   ServiceGuidance get _currentGuidance =>
       guidanceForService(_selectedServiceName ?? _selectedServiceType);
+
+  ServiceIntakeDefinition get _currentIntakeDefinition =>
+      intakeDefinitionForService(_selectedServiceName ?? _selectedServiceType);
 
   bool get _selectedSupportsInstantPrice =>
       supportsInstantPrice(_selectedServiceName ?? _selectedServiceType ?? '');
@@ -132,6 +148,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
     _pageController.dispose();
     _zipController.dispose();
     _sqftController.dispose();
+    for (final controller in _answerControllers.values) {
+      controller.dispose();
+    }
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -171,6 +190,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       'selectedServiceType': _selectedServiceType,
       'selectedServiceName': _selectedServiceName,
       'sqft': _sqftController.text,
+      'serviceAnswers': _serviceAnswers,
       'propertyType': _propertyType,
       'condition': _condition,
       'timeline': _timeline,
@@ -258,6 +278,17 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       _selectedServiceType = draft['selectedServiceType']?.toString();
       _selectedServiceName = draft['selectedServiceName']?.toString();
       _sqftController.text = draft['sqft']?.toString() ?? '';
+      _serviceAnswers = Map<String, dynamic>.from(
+        draft['serviceAnswers'] is Map
+            ? draft['serviceAnswers'] as Map
+            : const <String, dynamic>{},
+      );
+      for (final entry in _serviceAnswers.entries) {
+        final value = entry.value;
+        if (value is! List && value is! bool) {
+          _controllerForQuestion(entry.key).text = value.toString();
+        }
+      }
       _propertyType = draft['propertyType']?.toString() ?? 'home';
       _condition = draft['condition']?.toString() ?? 'fair';
       _timeline = draft['timeline']?.toString() ?? 'standard';
@@ -340,6 +371,169 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  TextEditingController _controllerForQuestion(String id) {
+    return _answerControllers.putIfAbsent(id, () {
+      final controller = TextEditingController(
+        text: _serviceAnswers[id]?.toString() ?? '',
+      );
+      controller.addListener(() {
+        _serviceAnswers[id] = controller.text.trim();
+        _scheduleDraftSave();
+      });
+      return controller;
+    });
+  }
+
+  double _primaryQuantity() {
+    final candidates = <String>[
+      'sqft',
+      'exterior_sqft',
+      'quantity',
+      'rooms',
+      'bedrooms',
+      'cabinet_doors',
+      'damage_count',
+      'task_count',
+    ];
+    for (final id in candidates) {
+      final value = _serviceAnswers[id];
+      if (value is num && value > 0) return value.toDouble();
+      if (value is String) {
+        final parsed = double.tryParse(value.trim());
+        if (parsed != null && parsed > 0) return parsed;
+      }
+    }
+    return double.tryParse(_sqftController.text.trim()) ?? 1000;
+  }
+
+  Widget _buildServiceQuestion(ServiceIntakeQuestion question) {
+    final scheme = Theme.of(context).colorScheme;
+    final value = _serviceAnswers[question.id];
+    final label = question.required ? '${question.label} *' : question.label;
+
+    Widget field;
+    switch (question.type) {
+      case ServiceIntakeQuestionType.choice:
+        field = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: question.options.map((option) {
+            final selected = value == option;
+            return ChoiceChip(
+              label: Text(option),
+              selected: selected,
+              onSelected: (_) {
+                setState(() => _serviceAnswers[question.id] = option);
+                _scheduleDraftSave();
+              },
+            );
+          }).toList(),
+        );
+        break;
+      case ServiceIntakeQuestionType.multiChoice:
+        final selectedValues = value is List
+            ? value.map((item) => item.toString()).toSet()
+            : <String>{};
+        field = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: question.options.map((option) {
+            final selected = selectedValues.contains(option);
+            return FilterChip(
+              label: Text(option),
+              selected: selected,
+              onSelected: (isSelected) {
+                setState(() {
+                  final next = {...selectedValues};
+                  if (isSelected) {
+                    next.add(option);
+                  } else {
+                    next.remove(option);
+                  }
+                  _serviceAnswers[question.id] = next.toList();
+                });
+                _scheduleDraftSave();
+              },
+            );
+          }).toList(),
+        );
+        break;
+      case ServiceIntakeQuestionType.number:
+        field = TextField(
+          controller: _controllerForQuestion(question.id),
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: 'Enter a number',
+            suffixText: question.unit,
+            helperText: question.helper,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.numbers_outlined),
+          ),
+        );
+        break;
+      case ServiceIntakeQuestionType.text:
+        field = TextField(
+          controller: _controllerForQuestion(question.id),
+          minLines: 1,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Add details',
+            helperText: question.helper,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.notes_outlined),
+          ),
+        );
+        break;
+      case ServiceIntakeQuestionType.yesNo:
+        final selected = value is bool ? value : null;
+        field = SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: true, label: Text('Yes')),
+            ButtonSegment(value: false, label: Text('No')),
+          ],
+          emptySelectionAllowed: true,
+          selected: selected == null ? <bool>{} : <bool>{selected},
+          onSelectionChanged: (selection) {
+            setState(() {
+              if (selection.isEmpty) {
+                _serviceAnswers.remove(question.id);
+              } else {
+                _serviceAnswers[question.id] = selection.first;
+              }
+            });
+            _scheduleDraftSave();
+          },
+        );
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          field,
+          if (question.required && value == null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Helps pros quote this lead accurately.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -451,8 +645,35 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
     try {
       final zip = _zipController.text.trim();
-      final sqft = double.tryParse(_sqftController.text.trim()) ?? 1000;
+      final quantity = _primaryQuantity();
       final urgent = _timeline == 'asap';
+      final serviceLabel = _selectedServiceName ?? 'Painting';
+      final intakeDefinition = intakeDefinitionForService(serviceLabel);
+      final missingFields = requiredMissingFields(
+        intakeDefinition,
+        _serviceAnswers,
+      );
+      final qualityScore = leadQualityScore(
+        definition: intakeDefinition,
+        answers: _serviceAnswers,
+        photoCount: _photos.length,
+        zip: zip,
+        timeline: _timeline,
+        budgetPreference: _budgetPref,
+      );
+      final contractorBrief = contractorBriefForLead(
+        service: serviceLabel,
+        definition: intakeDefinition,
+        answers: _serviceAnswers,
+        photoCount: _photos.length,
+        zip: zip,
+        timeline: _timeline,
+        notes: _notesController.text,
+      );
+      final serviceMatchTags = matchTagsForAnswers(
+        intakeDefinition,
+        _serviceAnswers,
+      );
 
       // Upload photos.
       final List<String> uploadedPaths = [];
@@ -475,7 +696,6 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       }
 
       // Calculate budget using PricingEngine.
-      final serviceLabel = _selectedServiceName ?? 'Painting';
       final instantPriceSupported = supportsInstantPrice(serviceLabel);
       double budget;
       try {
@@ -483,28 +703,28 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           final result = await PricingEngine.calculate(
             service: serviceLabel,
             zip: zip,
-            quantity: sqft,
+            quantity: quantity,
             urgent: urgent,
           );
-          budget = result['recommended'] ?? (sqft * 2.5);
+          budget = result['recommended'] ?? (quantity * 2.5);
           if (_budgetPref == 'low') {
             budget = result['low'] ?? (budget * 0.88);
           } else if (_budgetPref == 'premium') {
             budget = result['premium'] ?? (budget * 1.15);
           }
         } else {
-          budget = _manualQuoteBudgetHint(serviceLabel, sqft);
+          budget = _manualQuoteBudgetHint(serviceLabel, quantity);
         }
       } catch (_) {
         budget = instantPriceSupported
-            ? sqft * 2.5
-            : _manualQuoteBudgetHint(serviceLabel, sqft);
+            ? quantity * 2.5
+            : _manualQuoteBudgetHint(serviceLabel, quantity);
       }
 
       // Build description.
       final desc = StringBuffer()
         ..write('$serviceLabel job')
-        ..write(' | ${sqft.toStringAsFixed(0)} sqft')
+        ..write(' | Quantity: ${quantity.toStringAsFixed(0)}')
         ..write(' | $_propertyType')
         ..write(' | Condition: $_condition')
         ..write(' | Timeline: $_timeline');
@@ -516,9 +736,17 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       final batch = FirebaseFirestore.instance.batch();
       batch.set(jobRef, {
         'service': serviceLabel,
+        'serviceSlug': serviceSlug(serviceLabel),
+        'serviceIntakeVersion': intakeDefinition.version,
+        'serviceAnswers': _serviceAnswers,
+        'leadQualityScore': qualityScore,
+        'leadQualityLabel': leadQualityLabel(qualityScore, missingFields),
+        'missingLeadFields': missingFields,
+        'contractorBrief': contractorBrief,
+        'matchTags': serviceMatchTags,
         'location': 'ZIP $zip',
         'zip': zip,
-        'quantity': sqft,
+        'quantity': quantity,
         'urgency': urgent ? 'asap' : 'standard',
         'budget': budget,
         'pricingMode': instantPriceSupported ? 'instant_price' : 'manual_quote',
@@ -539,11 +767,16 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         'createdAt': FieldValue.serverTimestamp(),
         if (uploadedPaths.isNotEmpty) 'imagePaths': uploadedPaths,
         'smartFlowDetails': {
-          'sqft': sqft,
+          'sqft': quantity,
           'propertyType': _propertyType,
           'condition': _condition,
           'timeline': _timeline,
           'budgetPreference': _budgetPref,
+          'serviceAnswers': _serviceAnswers,
+          'leadQualityScore': qualityScore,
+          'missingLeadFields': missingFields,
+          'contractorBrief': contractorBrief,
+          'matchTags': serviceMatchTags,
           'aiAnalysis': _aiDetails.isNotEmpty ? _aiDetails : null,
           'notes': _notesController.text.trim(),
         },
@@ -571,12 +804,14 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           extra: {
             'service': serviceLabel,
             'zip': zip,
-            'quantity': sqft,
+            'quantity': quantity,
             'urgent': urgent,
             'jobDetails': {
-              'sqft': sqft,
+              'sqft': quantity,
               'propertyType': _propertyType,
               'condition': _condition,
+              'serviceAnswers': _serviceAnswers,
+              'contractorBrief': contractorBrief,
             },
           },
         );
@@ -864,8 +1099,15 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
               selected: selected,
               onSelected: (_) {
                 setState(() {
+                  final changed = _selectedServiceType != s['type'];
                   _selectedServiceType = s['type'];
                   _selectedServiceName = s['name'];
+                  if (changed) {
+                    _serviceAnswers = <String, dynamic>{};
+                    for (final controller in _answerControllers.values) {
+                      controller.clear();
+                    }
+                  }
                 });
                 _scheduleDraftSave();
               },
@@ -1010,25 +1252,35 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 
         const SizedBox(height: 24),
 
-        // Estimated size
         Text(
-          _selectedSupportsInstantPrice
-              ? l10n.smartRequestEstimatedSize
-              : 'Approximate size or quantity',
+          '${_selectedServiceName ?? 'Project'} details',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _sqftController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: 'e.g. 1500',
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.square_foot),
-            suffixText: _selectedSupportsInstantPrice ? 'sqft' : null,
-            helperText: _aiDetails['notes'] as String?,
+        Card(
+          color: scheme.surfaceContainerLow,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.assignment_outlined, color: scheme.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _currentIntakeDefinition.summary,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        const SizedBox(height: 16),
+        ..._currentIntakeDefinition.questions.map(_buildServiceQuestion),
 
         const SizedBox(height: 20),
 
@@ -1302,6 +1554,16 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         ),
 
         const SizedBox(height: 12),
+        _ServiceAnswersReviewCard(
+          definition: _currentIntakeDefinition,
+          answers: _serviceAnswers,
+          missingFields: requiredMissingFields(
+            _currentIntakeDefinition,
+            _serviceAnswers,
+          ),
+        ),
+
+        const SizedBox(height: 12),
         _ServiceGuidanceCard(
           title: _selectedSupportsInstantPrice
               ? 'Pricing path'
@@ -1452,6 +1714,121 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 // ═══════════════════════════════════════════════════════════════
 // Helper Widgets
 // ═══════════════════════════════════════════════════════════════
+
+class _ServiceAnswersReviewCard extends StatelessWidget {
+  const _ServiceAnswersReviewCard({
+    required this.definition,
+    required this.answers,
+    required this.missingFields,
+  });
+
+  final ServiceIntakeDefinition definition;
+  final Map<String, dynamic> answers;
+  final List<String> missingFields;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final answeredEntries = answers.entries
+        .where((entry) => _formatAnswer(entry.value).isNotEmpty)
+        .take(8)
+        .toList();
+
+    return Card(
+      color: scheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.fact_check_outlined, color: scheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lead details for pros',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              answeredEntries.isEmpty
+                  ? 'Add a few service details to help contractors quote with fewer follow-up questions.'
+                  : 'These structured details will be shown to matching contractors.',
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+            if (answeredEntries.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...answeredEntries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          answerLabelForId(definition, entry.key),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 5,
+                        child: Text(
+                          _formatAnswer(entry.value),
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (missingFields.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: scheme.errorContainer.withValues(alpha: 0.38),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: scheme.error.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Text(
+                  'Missing helpful details: ${missingFields.join(', ')}',
+                  style: TextStyle(
+                    color: scheme.onErrorContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatAnswer(dynamic value) {
+    if (value == null) return '';
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .join(', ');
+    }
+    if (value is bool) return value ? 'Yes' : 'No';
+    return value.toString().trim();
+  }
+}
 
 class _DraftStatusCard extends StatelessWidget {
   final DateTime? lastSavedAt;
