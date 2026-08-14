@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../constants/service_types.dart';
 import '../services/contract_generator_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Screen for generating and managing service contracts / SOW documents.
 class ContractGeneratorScreen extends StatefulWidget {
@@ -277,10 +278,13 @@ class _ContractGeneratorScreenState extends State<ContractGeneratorScreen> {
                                   ? null
                                   : warrantyCtrl.text.trim(),
                             );
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: 'create contract',
                               );
                             }
                           }

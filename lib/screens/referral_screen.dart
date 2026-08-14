@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../services/referral_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/skeleton_loader.dart';
 
 /// Screen for viewing/sharing a referral code and entering someone else's code.
@@ -118,7 +119,7 @@ class _ReferralScreenState extends State<ReferralScreen>
                 return _errorCard(
                   scheme,
                   'Could not load credit balance.',
-                  snap.error.toString(),
+                  AppError.message(snap.error, action: 'load credit balance'),
                 );
               }
               final credits = snap.data ?? 0;
@@ -562,7 +563,7 @@ class _ReferralScreenState extends State<ReferralScreen>
                 return _errorCard(
                   scheme,
                   'Could not load referrals.',
-                  snap.error.toString(),
+                  AppError.message(snap.error, action: 'load referrals'),
                 );
               }
               if (snap.connectionState == ConnectionState.waiting) {
@@ -655,7 +656,7 @@ class _ReferralScreenState extends State<ReferralScreen>
                 return _errorCard(
                   scheme,
                   'Could not load redemptions.',
-                  snap.error.toString(),
+                  AppError.message(snap.error, action: 'load redemptions'),
                 );
               }
               if (snap.connectionState == ConnectionState.waiting) {

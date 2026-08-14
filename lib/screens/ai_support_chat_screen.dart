@@ -87,7 +87,7 @@ class _AiSupportChatScreenState extends State<AiSupportChatScreen>
         );
       }
     } catch (e) {
-      debugPrint('[AiSupport] Failed to load history: $e');
+      debugPrint('[AiSupport] History load issue: $e');
     }
 
     setState(() => _loadingHistory = false);

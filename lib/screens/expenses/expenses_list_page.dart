@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/job_expense.dart';
 import '../../services/expense_export_service.dart';
 import '../../services/job_expense_service.dart';
+import '../../utils/app_error_handler.dart';
 import '../../widgets/skeleton_loader.dart';
 
 class ExpensesListPage extends StatefulWidget {
@@ -154,7 +155,11 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
         stream: expenseService.streamExpensesForJob(widget.jobId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                AppError.message(snapshot.error, action: 'load expenses'),
+              ),
+            );
           }
           if (!snapshot.hasData) {
             return ListView.separated(

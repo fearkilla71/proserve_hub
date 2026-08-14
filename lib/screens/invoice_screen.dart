@@ -559,7 +559,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
 
           if (snapshot.hasError) {
             return Center(
-              child: Text('Error loading invoice: ${snapshot.error}'),
+              child: Text(
+                AppError.message(snapshot.error, action: 'load invoice'),
+              ),
             );
           }
 

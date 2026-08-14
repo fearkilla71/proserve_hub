@@ -177,7 +177,7 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      debugPrint('Failed to persist render: $e');
+      debugPrint('Render persistence issue: $e');
     } finally {
       if (mounted) setState(() => _persistingRender = false);
     }

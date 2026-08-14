@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../services/job_timeline_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 
 /// Icon resolver from string keys stored in Firestore.
 IconData _iconFromKey(String key) {
@@ -77,11 +78,9 @@ class _LiveJobTimelineScreenState extends State<LiveJobTimelineScreen>
         serviceType,
       );
       HapticFeedback.mediumImpact();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'start job timeline');
       }
     } finally {
       if (mounted) setState(() => _initializing = false);
@@ -305,11 +304,14 @@ class _LiveJobTimelineScreenState extends State<LiveJobTimelineScreen>
                             ? null
                             : noteCtrl.text.trim(),
                       );
-                    } catch (e) {
+                    } catch (e, st) {
                       if (mounted) {
-                        ScaffoldMessenger.of(
+                        AppError.show(
                           context,
-                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          e,
+                          st,
+                          action: 'complete timeline step',
+                        );
                       }
                     }
                   },

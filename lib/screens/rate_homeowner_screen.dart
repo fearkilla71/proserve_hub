@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/homeowner_reliability_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Screen for contractors to rate a homeowner after job completion.
 /// Four categories: On-time access, Communication, Payment promptness,
@@ -70,11 +71,9 @@ class _RateHomeownerScreenState extends State<RateHomeownerScreen> {
       if (mounted) {
         setState(() => _submitted = true);
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'submit homeowner rating');
         setState(() => _submitting = false);
       }
     }

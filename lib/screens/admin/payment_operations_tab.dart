@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../utils/app_error_handler.dart';
 
 class PaymentOperationsTab extends StatefulWidget {
   const PaymentOperationsTab({super.key});
@@ -529,11 +530,9 @@ class _PaymentOperationsTabState extends State<PaymentOperationsTab> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(successMessage)));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save admin action: $e')),
-      );
+      AppError.show(context, e, st, action: 'save admin action');
     }
   }
 }

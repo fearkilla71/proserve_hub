@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/app_error_handler.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/page_header.dart';
 
@@ -556,11 +557,9 @@ class _ContractorJobDetailScreenState extends State<ContractorJobDetailScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Offer sent.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to send offer: $e')));
+      AppError.show(context, e, st, action: 'send offer');
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -600,11 +599,9 @@ class _ContractorJobDetailScreenState extends State<ContractorJobDetailScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Offer accepted.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to accept offer: $e')));
+      AppError.show(context, e, st, action: 'accept offer');
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -887,11 +884,9 @@ class _ContractorPostJobScreenState extends State<ContractorPostJobScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Job posted.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to post job: $e')));
+      AppError.show(context, e, st, action: 'post subcontract job');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

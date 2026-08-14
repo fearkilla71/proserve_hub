@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/customer_crm_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Customer CRM / Contact Management screen for contractors.
 class CustomerCrmScreen extends StatefulWidget {
@@ -408,10 +409,15 @@ class _CustomerCrmScreenState extends State<CustomerCrmScreen> {
                                     'tags': tags,
                                   });
                             }
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: id == null
+                                    ? 'add client'
+                                    : 'save client',
                               );
                             }
                           }

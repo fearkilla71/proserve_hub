@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../constants/service_guidance.dart';
 import '../services/quote_template_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Screen for creating, editing, and applying quote/estimate templates.
 class QuoteTemplatesScreen extends StatefulWidget {
@@ -417,10 +418,15 @@ class _QuoteTemplatesScreenState extends State<QuoteTemplatesScreen> {
                                     30,
                               });
                             }
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: id == null
+                                    ? 'create quote template'
+                                    : 'save quote template',
                               );
                             }
                           }

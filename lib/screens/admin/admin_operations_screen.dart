@@ -8,6 +8,7 @@ import 'job_admin_tab.dart';
 import 'moderation_admin_tab.dart';
 import 'payment_operations_tab.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/app_error_handler.dart';
 
 class AdminOperationsScreen extends StatelessWidget {
   const AdminOperationsScreen({super.key});
@@ -30,7 +31,9 @@ class AdminOperationsScreen extends StatelessWidget {
           return Scaffold(
             appBar: AppBar(title: Text(l10n.adminOperationsTitle)),
             body: Center(
-              child: Text(l10n.adminCheckFailed(snapshot.error.toString())),
+              child: Text(
+                AppError.message(snapshot.error, action: 'check admin access'),
+              ),
             ),
           );
         }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/recurring_job_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Screen for managing recurring job schedules.
 class RecurringJobsScreen extends StatefulWidget {
@@ -260,10 +261,15 @@ class _RecurringJobsScreenState extends State<RecurringJobsScreen> {
                                     'nextDueDate': Timestamp.fromDate(nextDue),
                                   });
                             }
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: id == null
+                                    ? 'create recurring job'
+                                    : 'save recurring job',
                               );
                             }
                           }
@@ -290,8 +296,9 @@ class _RecurringJobsScreenState extends State<RecurringJobsScreen> {
       messenger.showSnackBar(
         const SnackBar(content: Text('Job created and next due date advanced')),
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'create job from recurring work');
     }
   }
 

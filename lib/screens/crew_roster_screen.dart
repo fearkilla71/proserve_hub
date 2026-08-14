@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/crew_roster_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Crew Roster management screen — Enterprise only.
 /// Contractors can add/edit/remove crew members with skills, ratings, certs.
@@ -404,10 +405,15 @@ class _CrewRosterScreenState extends State<CrewRosterScreen> {
                                 ),
                               );
                             }
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: id == null
+                                    ? 'add crew member'
+                                    : 'save crew member',
                               );
                             }
                           }
@@ -546,10 +552,13 @@ class _CrewRosterScreenState extends State<CrewRosterScreen> {
                                     ),
                                   );
                                 }
-                              } catch (e) {
+                              } catch (e, st) {
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: $e')),
+                                  AppError.show(
+                                    context,
+                                    e,
+                                    st,
+                                    action: 'assign crew member',
                                   );
                                 }
                               }
@@ -757,10 +766,13 @@ class _CrewRosterScreenState extends State<CrewRosterScreen> {
                                 ),
                               );
                             }
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: 'log crew hours',
                               );
                             }
                           }

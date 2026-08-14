@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../utils/app_error_handler.dart';
+
 class ServicePackagesScreen extends StatefulWidget {
   const ServicePackagesScreen({super.key});
 
@@ -69,11 +71,9 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Package created!')));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'create service package');
       }
     } finally {
       if (mounted) {
@@ -119,11 +119,9 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Package deleted')));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'delete service package');
       }
     }
   }
@@ -142,11 +140,9 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
           .collection('service_packages')
           .doc(packageId)
           .update({'isActive': !currentStatus});
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'update service package');
       }
     }
   }

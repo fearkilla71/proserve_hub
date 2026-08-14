@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../constants/service_types.dart';
+import '../utils/app_error_handler.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Subcontractor Marketplace
@@ -442,11 +443,9 @@ class _SubMarketplaceScreenState extends State<SubMarketplaceScreen> {
         ).showSnackBar(const SnackBar(content: Text('Bid submitted ✓')));
       }
       await _loadAll();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'submit subcontractor bid');
       }
     }
   }
@@ -668,11 +667,9 @@ class _SubMarketplaceScreenState extends State<SubMarketplaceScreen> {
         );
       }
       await _loadAll();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'accept subcontractor bid');
       }
     }
   }

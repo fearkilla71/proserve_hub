@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/app_error_handler.dart';
+
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Multi-Location Dashboard
 ///
@@ -87,11 +89,9 @@ class _MultiLocationDashboardScreenState
 
       // Load job metrics per location.
       await _loadMetrics();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading dashboard: $e')));
+        AppError.show(context, e, st, action: 'load dashboard');
       }
     }
 
@@ -281,11 +281,9 @@ class _MultiLocationDashboardScreenState
           .collection('locations')
           .add({...result, 'createdAt': FieldValue.serverTimestamp()});
       await _loadDashboard();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'add location');
       }
     }
   }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/app_error_handler.dart';
+
 /// Crew scheduling calendar — visual day/week view of crew member assignments.
 class CrewScheduleCalendarScreen extends StatefulWidget {
   const CrewScheduleCalendarScreen({super.key});
@@ -396,10 +398,13 @@ class _CrewScheduleCalendarScreenState
                                       : notesCtrl.text.trim(),
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: 'assign crew member',
                               );
                             }
                           }

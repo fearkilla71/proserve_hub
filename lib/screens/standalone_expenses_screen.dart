@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/standalone_expense_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Standalone expense tracker — view ALL expenses across jobs,
 /// categorize, flag tax-deductible, and see totals dashboard.
@@ -383,10 +384,13 @@ class _StandaloneExpensesScreenState extends State<StandaloneExpensesScreen> {
                               receiptDate: receiptDate,
                               taxDeductible: taxDeductible,
                             );
-                          } catch (e) {
+                          } catch (e, st) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
+                              AppError.show(
+                                context,
+                                e,
+                                st,
+                                action: 'save expense',
                               );
                             }
                           }

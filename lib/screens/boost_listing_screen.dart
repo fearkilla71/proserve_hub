@@ -31,12 +31,10 @@ class _BoostListingScreenState extends State<BoostListingScreen> {
         _status = status;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load boost status: $e')),
-      );
+      AppError.show(context, e, st, action: 'load boost status');
     }
   }
 

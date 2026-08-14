@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/admin_action_service.dart';
+import '../../utils/app_error_handler.dart';
 import '../../widgets/admin_action_history_card.dart';
 
 class DisputeAdminTab extends StatefulWidget {
@@ -85,12 +86,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
           SnackBar(content: Text(l10n.disputeStatusUpdated(newStatus))),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
       if (context.mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.errorWithMessage('$e'))));
+        AppError.show(context, e, st, action: 'update dispute');
       }
     }
   }
@@ -144,7 +142,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                l10n.errorLoadingDisputes(snapshot.error.toString()),
+                AppError.message(snapshot.error, action: 'load disputes'),
                 textAlign: TextAlign.center,
               ),
             ),

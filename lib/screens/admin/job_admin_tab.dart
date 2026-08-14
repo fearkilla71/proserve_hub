@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../utils/app_error_handler.dart';
 
 class JobAdminTab extends StatefulWidget {
   const JobAdminTab({super.key});
@@ -43,7 +44,7 @@ class _JobAdminTabState extends State<JobAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                l10n.errorLoadingJobs(snap.error.toString()),
+                AppError.message(snap.error, action: 'load jobs'),
                 textAlign: TextAlign.center,
               ),
             ),

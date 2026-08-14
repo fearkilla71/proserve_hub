@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../services/cancellation_service.dart';
+import '../utils/app_error_handler.dart';
 
 /// Screen that walks the customer through a cancellation/refund flow.
 class CancellationScreen extends StatefulWidget {
@@ -86,11 +87,9 @@ class _CancellationScreenState extends State<CancellationScreen> {
           ],
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      AppError.show(context, e, st, action: 'cancel this job');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

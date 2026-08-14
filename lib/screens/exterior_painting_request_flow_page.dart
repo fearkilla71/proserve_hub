@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
+import '../utils/app_error_handler.dart';
 import '../services/zip_lookup_service.dart';
 
 class ExteriorPaintingRequestFlowPage extends StatefulWidget {
@@ -107,11 +108,9 @@ class _ExteriorPaintingRequestFlowPageState
       }
       _zipController.text = result.zip.trim();
       setState(() {});
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
+      AppError.show(context, e, st, action: 'find your location');
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -604,8 +603,9 @@ class _ExteriorPaintingRequestFlowPageState
           },
         },
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'submit exterior painting request');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

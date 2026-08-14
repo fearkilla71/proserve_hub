@@ -68,7 +68,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
-              child: Text(l10n.errorWithMessage(snapshot.error.toString())),
+              child: Text(
+                AppError.message(snapshot.error, action: 'load quotes'),
+              ),
             );
           }
 

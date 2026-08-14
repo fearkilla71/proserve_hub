@@ -506,7 +506,7 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       });
     } catch (e, st) {
-      debugPrint('Failed to start voice note: $e');
+      debugPrint('Voice note start issue: $e');
       if (mounted) {
         AppError.show(context, e, st, action: 'start recording');
       }
@@ -551,7 +551,7 @@ class _ChatScreenState extends State<ChatScreen> {
         text: '🎤 Voice note',
       );
     } catch (e, st) {
-      debugPrint('Failed to send voice note: $e');
+      debugPrint('Voice note send issue: $e');
       if (mounted) {
         AppError.show(context, e, st, action: 'send voice note');
       }

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/app_error_handler.dart';
+
 class QandAScreen extends StatefulWidget {
   final String contractorId;
   final bool isContractor;
@@ -209,7 +211,14 @@ class _QandAScreenState extends State<QandAScreen> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(
+                    child: Text(
+                      AppError.message(
+                        snapshot.error,
+                        action: 'load questions',
+                      ),
+                    ),
+                  );
                 }
 
                 if (!snapshot.hasData) {

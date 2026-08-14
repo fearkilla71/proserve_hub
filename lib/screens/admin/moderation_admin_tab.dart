@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/admin_action_service.dart';
+import '../../utils/app_error_handler.dart';
 import '../../widgets/admin_action_history_card.dart';
 
 class ModerationAdminTab extends StatefulWidget {
@@ -19,7 +20,6 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('community_posts')
@@ -28,7 +28,7 @@ class _ModerationAdminTabState extends State<ModerationAdminTab> {
         if (snapshot.hasError) {
           return Center(
             child: Text(
-              l10n.errorLoadingModerationQueue(snapshot.error.toString()),
+              AppError.message(snapshot.error, action: 'load moderation queue'),
             ),
           );
         }

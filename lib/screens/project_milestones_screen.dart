@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/app_error_handler.dart';
+
 class ProjectMilestonesScreen extends StatefulWidget {
   final String jobId;
   final bool isContractor;
@@ -67,11 +69,9 @@ class _ProjectMilestonesScreenState extends State<ProjectMilestonesScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Milestone added!')));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'add milestone');
       }
     } finally {
       if (mounted) {
@@ -102,11 +102,9 @@ class _ProjectMilestonesScreenState extends State<ProjectMilestonesScreen> {
           SnackBar(content: Text('Milestone marked as $newStatus')),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'update milestone');
       }
     }
   }
@@ -145,11 +143,9 @@ class _ProjectMilestonesScreenState extends State<ProjectMilestonesScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Milestone deleted')));
       }
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppError.show(context, e, st, action: 'delete milestone');
       }
     }
   }
