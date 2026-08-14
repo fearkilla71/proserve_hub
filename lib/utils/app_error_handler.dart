@@ -77,6 +77,24 @@ class AppError {
     return overrideMessage ?? _friendlyMessage(error, action);
   }
 
+  /// Convert an error to user-facing text without logging it.
+  ///
+  /// Use this for StreamBuilder/FutureBuilder error states where a stack trace
+  /// is not available. Prefer [show] or [capture] inside catch blocks.
+  static String message(
+    Object? error, {
+    String? action,
+    String? overrideMessage,
+  }) {
+    if (overrideMessage != null) return overrideMessage;
+    if (error == null) {
+      return action != null
+          ? 'Couldn\'t $action. Please try again.'
+          : 'Something went wrong. Please try again.';
+    }
+    return _friendlyMessage(error, action);
+  }
+
   // ── Internal mapping ─────────────────────────────────────────────
 
   /// Maps raw exceptions to human-readable text.

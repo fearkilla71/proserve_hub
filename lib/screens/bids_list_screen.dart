@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/marketplace_models.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../utils/optimistic_ui.dart';
 import '../widgets/skeleton_loader.dart';
@@ -35,7 +36,9 @@ class BidsListScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
-              child: Text(l10n.errorWithMessage(snapshot.error.toString())),
+              child: Text(
+                AppError.message(snapshot.error, action: 'load bids'),
+              ),
             );
           }
 

@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../services/zip_lookup_service.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/platform_file_bytes.dart';
 
 class CabinetRequestFlowPage extends StatefulWidget {
@@ -116,11 +117,9 @@ class _CabinetRequestFlowPageState extends State<CabinetRequestFlowPage> {
       }
       _zipController.text = result.zip.trim();
       setState(() {});
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
+      AppError.show(context, e, st, action: 'find your location');
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -519,8 +518,9 @@ class _CabinetRequestFlowPageState extends State<CabinetRequestFlowPage> {
           },
         },
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'submit cabinet request');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

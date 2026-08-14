@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/contractor_reputation_card.dart';
 import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
@@ -13,6 +12,7 @@ import '../widgets/skeleton_loader.dart';
 import '../constants/service_types.dart';
 import '../models/marketplace_models.dart';
 import '../services/zip_lookup_service.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/zip_locations.dart';
 
 class RecommendedContractorsPage extends StatefulWidget {
@@ -151,7 +151,7 @@ class _RecommendedContractorsPageState
       builder: (context, snap) {
         if (snap.hasError) {
           return Center(
-            child: Text('Error loading contractors: ${snap.error}'),
+            child: Text(AppError.message(snap.error, action: 'load pros')),
           );
         }
         if (!snap.hasData) {
@@ -205,7 +205,9 @@ class _RecommendedContractorsPageState
 
         if (candidates.isEmpty) {
           return const Center(
-            child: Text('No contractors found (fallback matching found none).'),
+            child: Text(
+              'No recommended pros are available for this project yet. Try expanding the service area or check back soon.',
+            ),
           );
         }
 
@@ -238,7 +240,7 @@ class _RecommendedContractorsPageState
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                'Showing fallback matches (auto-matching not generated yet).',
+                'Recommended local pros based on your project details.',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -305,16 +307,63 @@ class _RecommendedContractorsPageState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Invite sent.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Invite failed: $e')));
+      AppError.show(context, e, st, action: 'send invite');
     } finally {
       if (mounted) {
         setState(() => _invitingContractorIds.remove(safeContractorId));
       }
     }
+  }
+
+  Widget _requestLiveCard(Map<String, dynamic>? job, int invitedCount) {
+    final scheme = Theme.of(context).colorScheme;
+    final service = (job?['service'] ?? 'Your project').toString();
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: 0,
+      color: scheme.primaryContainer.withValues(alpha: 0.14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.primary.withValues(alpha: 0.18)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: scheme.primary.withValues(alpha: 0.18),
+              child: Icon(Icons.campaign_outlined, color: scheme.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$service request is live',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    invitedCount > 0
+                        ? '$invitedCount pro${invitedCount == 1 ? '' : 's'} invited. Quotes will appear in Projects.'
+                        : 'Pros can now review your details. Invite trusted pros or wait for quotes to appear in Projects.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -373,6 +422,7 @@ class _RecommendedContractorsPageState
               return ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
+                  _requestLiveCard(job, invited.length),
                   StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirebaseFirestore.instance
                         .collection('job_matches')
@@ -597,16 +647,6 @@ class _RecommendedContractorsPageState
 
                 const SizedBox(height: 6),
 
-                // Reputation compact view
-                if (c['reputation'] != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: ContractorReputationCard(
-                      reputationData: c['reputation'],
-                      compact: true,
-                    ),
-                  ),
-
                 // MATCH SCORE BAR
                 Row(
                   children: [
@@ -620,6 +660,11 @@ class _RecommendedContractorsPageState
                     const SizedBox(width: 10),
                     Text('$matchScore%'),
                   ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _confidenceChip(matchScore),
                 ),
 
                 const SizedBox(height: 10),
@@ -689,12 +734,30 @@ class _RecommendedContractorsPageState
   Widget _infoChip(IconData icon, String label) {
     return Chip(avatar: Icon(icon, size: 16), label: Text(label));
   }
+
+  Widget _confidenceChip(int matchScore) {
+    final label = matchScore >= 75
+        ? 'Strong project fit'
+        : matchScore >= 50
+        ? 'Good project fit'
+        : 'Review profile details';
+    final icon = matchScore >= 75
+        ? Icons.verified_outlined
+        : matchScore >= 50
+        ? Icons.check_circle_outline
+        : Icons.info_outline;
+    return Chip(avatar: Icon(icon, size: 16), label: Text(label));
+  }
 }
 
 class ContractorProfilePage extends StatelessWidget {
   final String contractorId;
 
   const ContractorProfilePage({super.key, required this.contractorId});
+
+  Widget _profileTrustChip(IconData icon, String label) {
+    return Chip(avatar: Icon(icon, size: 16), label: Text(label));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -827,9 +890,52 @@ class ContractorProfilePage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Reputation Engine
-                ContractorReputationCard(
-                  reputationData: data['reputation'] ?? {},
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Trust summary',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _profileTrustChip(
+                              verified
+                                  ? Icons.verified_outlined
+                                  : Icons.info_outline,
+                              verified
+                                  ? 'Verified pro'
+                                  : 'Verification pending',
+                            ),
+                            _profileTrustChip(
+                              Icons.star_outline,
+                              rating > 0
+                                  ? '${rating.toStringAsFixed(1)} rating'
+                                  : 'No rating yet',
+                            ),
+                            _profileTrustChip(
+                              Icons.work_outline,
+                              '$completedJobs completed jobs',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Review the contractor profile, services, and recent reviews before inviting or accepting a quote.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 24),

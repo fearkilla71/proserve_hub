@@ -14,6 +14,7 @@ import '../services/invoice_ai_service.dart';
 import '../services/invoice_number_service.dart';
 import '../services/invoice_pdf_builder.dart';
 import '../services/ai_usage_service.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/animated_states.dart';
 import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/linked_job_context_card.dart';
@@ -829,11 +830,9 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
     try {
       await launchUrl(uri);
       setState(() => _invoiceStatus = 'sent');
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open email client: $e')),
-      );
+      AppError.show(context, e, st, action: 'open email app');
     }
   }
 
@@ -849,11 +848,9 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
     try {
       await launchUrl(uri);
       setState(() => _invoiceStatus = 'sent');
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not open SMS: $e')));
+      AppError.show(context, e, st, action: 'open text message app');
     }
   }
 

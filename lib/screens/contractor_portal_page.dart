@@ -332,6 +332,22 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           ),
         ),
         _DashboardTool(
+          label: l10n.toolQuoteTemplatesTitle,
+          icon: Icons.article_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/quote-templates'),
+          ),
+        ),
+        _DashboardTool(
+          label: l10n.invoice,
+          icon: Icons.receipt_long_outlined,
+          color: ProServeColors.accent2,
+          onTap: () => _openPricingToolsOrSubscribe(
+            open: () async => context.push('/invoice-maker'),
+          ),
+        ),
+        _DashboardTool(
           label: l10n.contractorHomeToolSmartSchedule,
           icon: Icons.event_available_outlined,
           color: ProServeColors.accent,
@@ -339,27 +355,17 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             open: () async => context.push('/smart-scheduling'),
           ),
         ),
-        _DashboardTool(
-          label: l10n.contractorHomeToolInspector,
-          icon: Icons.camera_enhance_outlined,
-          color: ProServeColors.accent,
-          onTap: () => _openEnterpriseToolOrSubscribe(
-            open: () async => context.push('/quality-inspector'),
-          ),
-        ),
-        _DashboardTool(
-          label: l10n.contractorHomeToolMultiLocation,
-          icon: Icons.dashboard_customize_outlined,
-          color: ProServeColors.accent2,
-          onTap: () => _openEnterpriseToolOrSubscribe(
-            open: () async => context.push('/multi-location-dashboard'),
-          ),
-        ),
       ];
     }
 
     if (tier == 'pro') {
       return [
+        _DashboardTool(
+          label: l10n.contractorHomeToolBrowseLeads,
+          icon: Icons.local_activity_outlined,
+          color: ProServeColors.accent,
+          onTap: () => setState(() => _tabIndex = 1),
+        ),
         _DashboardTool(
           label: l10n.contractorHomeToolPricing,
           icon: Icons.request_quote_outlined,
@@ -393,19 +399,11 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
           ),
         ),
         _DashboardTool(
-          label: l10n.contractorHomeToolRender,
-          icon: Icons.palette_outlined,
-          color: ProServeColors.accent,
+          label: l10n.toolQuoteTemplatesTitle,
+          icon: Icons.article_outlined,
+          color: ProServeColors.accent2,
           onTap: () => _openPricingToolsOrSubscribe(
-            open: () async => context.push('/render-tool'),
-          ),
-        ),
-        _DashboardTool(
-          label: l10n.contractorHomeToolInvoices,
-          icon: Icons.folder_open_outlined,
-          color: ProServeColors.accent,
-          onTap: () => _openPricingToolsOrSubscribe(
-            open: () async => context.push('/invoice-drafts'),
+            open: () async => context.push('/quote-templates'),
           ),
         ),
       ];
@@ -431,10 +429,10 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
         onTap: _buyLeadCredits,
       ),
       _DashboardTool(
-        label: l10n.contractorHomeToolCommunity,
-        icon: Icons.forum_outlined,
+        label: l10n.contractorHomeToolBrowseLeads,
+        icon: Icons.work_outline,
         color: ProServeColors.accent2,
-        onTap: () => setState(() => _tabIndex = 4),
+        onTap: () => setState(() => _tabIndex = 1),
       ),
       _DashboardTool(
         label: l10n.contractorHomeToolVerify,
@@ -509,6 +507,119 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             icon: const Icon(Icons.forum_outlined),
             selectedIcon: const Icon(Icons.forum),
             label: l10n.community,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeadFirstPanel(Map<String, dynamic>? userData) {
+    final scheme = Theme.of(context).colorScheme;
+    final leadCreditsRaw = userData?['leadCredits'] ?? userData?['credits'];
+    final leadCredits = leadCreditsRaw is num ? leadCreditsRaw.toInt() : 0;
+    final exclusiveRaw = userData?['exclusiveLeadCredits'];
+    final exclusiveCredits = exclusiveRaw is num ? exclusiveRaw.toInt() : 0;
+    final payoutReady =
+        userData?['stripePayoutsEnabled'] == true ||
+        userData?['payoutsEnabled'] == true;
+    final payoutPending = userData?['stripeDetailsSubmitted'] == true;
+    final payoutLabel = payoutReady
+        ? 'Payouts ready'
+        : (payoutPending ? 'Payouts pending' : 'Connect payouts');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: ProServeColors.cardGradient,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ProServeColors.lineStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: ProServeColors.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.local_activity_outlined,
+                  color: ProServeColors.accent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lead marketplace',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Browse matched projects, unlock contact, then send a quote.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ProfessionalStatusChip(
+                icon: Icons.confirmation_number_outlined,
+                label: '$leadCredits shared credits',
+                color: ProServeColors.accent,
+              ),
+              _ProfessionalStatusChip(
+                icon: Icons.lock_outline,
+                label: '$exclusiveCredits exclusive',
+                color: ProServeColors.accent2,
+              ),
+              _ProfessionalStatusChip(
+                icon: payoutReady
+                    ? Icons.verified_user_outlined
+                    : Icons.account_balance_wallet_outlined,
+                label: payoutLabel,
+                color: payoutReady
+                    ? ProServeColors.accent
+                    : ProServeColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => setState(() => _tabIndex = 1),
+                  icon: const Icon(Icons.search),
+                  label: const Text('Browse leads'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _buyLeadCredits,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Buy credits'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -649,11 +760,13 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
               _ContractorDashboardHeader(
-                title: l10n.contractorHomeToday,
+                title: 'Today',
                 onNotifications: () => context.push('/notifications'),
                 onHelp: () => context.push('/contractor-profile-settings'),
               ),
               const SizedBox(height: 14),
+              _buildLeadFirstPanel(data),
+              const SizedBox(height: 12),
               _buildTodayMetrics(context, data),
               const SizedBox(height: 12),
               StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -1433,6 +1546,44 @@ class _DashboardTool {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+}
+
+class _ProfessionalStatusChip extends StatelessWidget {
+  const _ProfessionalStatusChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ContractorToolGrid extends StatelessWidget {

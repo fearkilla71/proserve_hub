@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
 import '../services/version_check_service.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/legal_documents.dart';
 import '../widgets/skeleton_loader.dart';
 import 'legal_doc_screen.dart';
@@ -174,10 +175,9 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
       if (!mounted) return;
       setState(() => _logoUrl = url);
       messenger.showSnackBar(const SnackBar(content: Text('Logo updated.')));
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Could not update logo: $e')),
-      );
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'update your logo');
     } finally {
       if (mounted) setState(() => _uploadingLogo = false);
     }
@@ -208,10 +208,9 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text('Password reset email sent to $email')),
       );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Failed to send email: $e')),
-      );
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'send password reset email');
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -233,10 +232,9 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
           ),
         ),
       );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Failed to enable notifications: $e')),
-      );
+    } catch (e, st) {
+      if (!mounted) return;
+      AppError.show(context, e, st, action: 'enable notifications');
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -250,8 +248,8 @@ class _ContractorProfileScreenState extends State<ContractorProfileScreen> {
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Signed out.')));
       Navigator.of(context).popUntil((r) => r.isFirst);
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
+    } catch (e, st) {
+      AppError.show(context, e, st, action: 'sign out');
     } finally {
       if (mounted) setState(() => _working = false);
     }

@@ -210,6 +210,41 @@ describe('Firestore user security rules', () => {
     )));
   });
 
+  it('allows contractors to read only their own lead credit activity', async () => {
+    await seed(['users', 'contractorA'], {
+      uid: 'contractorA',
+      role: 'contractor',
+    });
+    await seed(['lead_credit_transactions', 'txnA'], {
+      userId: 'contractorA',
+      contractorId: 'contractorA',
+      type: 'used',
+      creditType: 'shared',
+      delta: -1,
+      jobId: 'jobA',
+      createdAt: new Date(),
+    });
+    await seed(['lead_credit_transactions', 'txnB'], {
+      userId: 'contractorB',
+      contractorId: 'contractorB',
+      type: 'purchased',
+      creditType: 'exclusive',
+      delta: 1,
+      packId: 'ex_1',
+      createdAt: new Date(),
+    });
+
+    await assertSucceeds(getDocs(query(
+      collection(db('contractorA'), 'lead_credit_transactions'),
+      where('userId', '==', 'contractorA'),
+      limit(5),
+    )));
+    await assertFails(getDoc(doc(
+      db('contractorA'),
+      'lead_credit_transactions/txnB',
+    )));
+  });
+
   it('allows invited contractors to load invited jobs by document id', async () => {
     await seed(['users', 'contractorA'], {
       uid: 'contractorA',

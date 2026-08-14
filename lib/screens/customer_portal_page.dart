@@ -14,6 +14,7 @@ import '../services/customer_portal_nav.dart';
 import '../services/fcm_service.dart';
 import '../services/conversation_service.dart';
 import '../services/trusted_pros_service.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/escrow_bookings_card.dart';
 import '../widgets/maintenance_reminder_card.dart';
 import '../widgets/neighborhood_social_proof.dart';
@@ -2669,7 +2670,7 @@ class _HiredProsList extends StatelessWidget {
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Error loading jobs: ${snap.error}'),
+              child: Text(AppError.message(snap.error, action: 'load jobs')),
             ),
           );
         }

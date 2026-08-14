@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/app_error_handler.dart';
+
 class SuggestedProsCard extends StatefulWidget {
   final String jobId;
   final bool canInvite;
@@ -62,11 +64,9 @@ class _SuggestedProsCardState extends State<SuggestedProsCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Invite sent.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Invite failed: $e')));
+      AppError.show(context, e, st, action: 'send invite');
     } finally {
       if (mounted) {
         setState(() => _invitingContractorIds.remove(safeContractorId));

@@ -472,121 +472,164 @@ class JobDetailPage extends StatelessWidget {
                                 }
                               }
 
+                              Future<void> unlockLead({
+                                required bool exclusive,
+                              }) async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                try {
+                                  await LeadService().unlockLead(
+                                    jobId: jobId,
+                                    exclusive: exclusive,
+                                  );
+                                  if (!context.mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        exclusive
+                                            ? 'Exclusive lead unlocked. Only you can access this contact.'
+                                            : 'Shared lead unlocked. Contact details are now available.',
+                                      ),
+                                    ),
+                                  );
+                                  await showModalBottomSheet<void>(
+                                    context: context,
+                                    showDragHandle: true,
+                                    builder: (sheetContext) {
+                                      return SafeArea(
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            20,
+                                            8,
+                                            20,
+                                            20,
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Lead unlocked',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              const Text(
+                                                'Next, contact the customer or send a quote while the project is fresh.',
+                                              ),
+                                              const SizedBox(height: 16),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: FilledButton.icon(
+                                                  onPressed: () {
+                                                    Navigator.pop(sheetContext);
+                                                    context.push(
+                                                      '/submit-quote/$jobId',
+                                                    );
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.description_outlined,
+                                                  ),
+                                                  label: const Text(
+                                                    'Submit quote',
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: () {
+                                                    Navigator.pop(sheetContext);
+                                                    context.push(
+                                                      '/job-command/$jobId',
+                                                    );
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.dashboard_outlined,
+                                                  ),
+                                                  label: const Text(
+                                                    'Open Job Command Center',
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                } catch (e) {
+                                  final message = e
+                                      .toString()
+                                      .replaceFirst('Exception: ', '')
+                                      .trim();
+                                  messenger.showSnackBar(
+                                    SnackBar(content: Text(message)),
+                                  );
+                                }
+                              }
+
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Non-exclusive credits: $neCredits'),
+                                  Text(
+                                    'Shared credits: $neCredits',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text('Exclusive credits: $exCredits'),
+                                  Text(
+                                    'Exclusive credits: $exCredits',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                   const SizedBox(height: 10),
+                                  const Text(
+                                    '1 shared credit unlocks this lead while it remains available to other contractors. 1 exclusive credit locks the lead to you.',
+                                  ),
+                                  const SizedBox(height: 12),
                                   SizedBox(
                                     width: double.infinity,
-                                    child: FilledButton(
-                                      onPressed: () async {
-                                        final messenger = ScaffoldMessenger.of(
-                                          context,
-                                        );
-                                        try {
-                                          if (neCredits <= 0 &&
-                                              exCredits <= 0) {
-                                            await showLeadPackSheet();
-                                            return;
-                                          }
-
-                                          bool exclusive;
-                                          if (neCredits > 0 && exCredits > 0) {
-                                            final choice = await showModalBottomSheet<bool>(
-                                              context: context,
-                                              showDragHandle: true,
-                                              builder: (context) {
-                                                return SafeArea(
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const ListTile(
-                                                        title: Text(
-                                                          'Unlock lead',
-                                                          style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                        subtitle: Text(
-                                                          'Choose non-exclusive or exclusive.',
-                                                        ),
-                                                      ),
-                                                      ListTile(
-                                                        title: const Text(
-                                                          'Non-exclusive (1 credit)',
-                                                        ),
-                                                        subtitle: const Text(
-                                                          'Other contractors may also purchase',
-                                                        ),
-                                                        onTap: () =>
-                                                            Navigator.pop(
-                                                              context,
-                                                              false,
-                                                            ),
-                                                      ),
-                                                      ListTile(
-                                                        title: const Text(
-                                                          'Exclusive (1 credit)',
-                                                        ),
-                                                        subtitle: const Text(
-                                                          'Locks lead so only you can access it',
-                                                        ),
-                                                        onTap: () =>
-                                                            Navigator.pop(
-                                                              context,
-                                                              true,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            );
-
-                                            if (choice == null) return;
-                                            exclusive = choice;
-                                          } else {
-                                            exclusive = neCredits <= 0;
-                                          }
-
-                                          await LeadService().unlockLead(
-                                            jobId: jobId,
-                                            exclusive: exclusive,
-                                          );
-                                          messenger.showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Lead unlocked. Contact details are now available.',
-                                              ),
-                                            ),
-                                          );
-                                        } catch (e) {
-                                          final message = e
-                                              .toString()
-                                              .replaceFirst('Exception: ', '')
-                                              .trim();
-                                          messenger.showSnackBar(
-                                            SnackBar(content: Text(message)),
-                                          );
-                                        }
-                                      },
-                                      child: Text(
-                                        (neCredits > 0 || exCredits > 0)
-                                            ? 'Unlock lead'
-                                            : 'Buy leads',
+                                    child: FilledButton.icon(
+                                      onPressed: neCredits > 0
+                                          ? () => unlockLead(exclusive: false)
+                                          : showLeadPackSheet,
+                                      icon: const Icon(Icons.groups_2_outlined),
+                                      label: Text(
+                                        neCredits > 0
+                                            ? 'Unlock shared lead (1 credit)'
+                                            : 'Buy shared credits',
                                       ),
                                     ),
                                   ),
-                                  if (neCredits > 0 || exCredits > 0)
-                                    TextButton(
-                                      onPressed: showLeadPackSheet,
-                                      child: const Text('Buy more leads'),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: exCredits > 0
+                                          ? () => unlockLead(exclusive: true)
+                                          : showLeadPackSheet,
+                                      icon: const Icon(Icons.lock_outline),
+                                      label: Text(
+                                        exCredits > 0
+                                            ? 'Unlock exclusive lead (1 credit)'
+                                            : 'Buy exclusive credits',
+                                      ),
                                     ),
+                                  ),
+                                  TextButton.icon(
+                                    onPressed: showLeadPackSheet,
+                                    icon: const Icon(Icons.add_circle_outline),
+                                    label: const Text('Buy more lead credits'),
+                                  ),
                                 ],
                               );
                             },

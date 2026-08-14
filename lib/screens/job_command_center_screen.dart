@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/demo_mode_service.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/job_detail_actions.dart';
 
 class JobCommandCenterScreen extends StatelessWidget {
@@ -54,7 +55,10 @@ class JobCommandCenterScreen extends StatelessWidget {
                   return _StateCard(
                     icon: Icons.error_outline,
                     title: l10n.couldNotLoadJob,
-                    subtitle: snapshot.error.toString(),
+                    subtitle: AppError.message(
+                      snapshot.error,
+                      action: 'load this job',
+                    ),
                   );
                 }
 
@@ -93,6 +97,8 @@ class JobCommandCenterScreen extends StatelessWidget {
         _JobProgressCard(state: state),
         const SizedBox(height: 12),
         _NextActionCard(state: state),
+        const SizedBox(height: 12),
+        _PaymentReviewSnapshotCard(state: state),
         const SizedBox(height: 12),
         _CommandSection(
           title: l10n.commandSectionWinConfirm,
@@ -318,6 +324,10 @@ class _JobCommandState {
   String get escrowId => (data['escrowId'] ?? '').toString();
   String get disputeStatus => (data['disputeStatus'] ?? '').toString();
   String get status => (data['status'] ?? 'open').toString().toLowerCase();
+  String get acceptedQuoteId => (data['acceptedQuoteId'] ?? '').toString();
+  String get invoiceId => (data['invoiceId'] ?? '').toString();
+  String get paymentStatus =>
+      (data['paymentStatus'] ?? data['escrowStatus'] ?? '').toString();
   bool get claimed => data['claimed'] == true || claimedBy.isNotEmpty;
   bool get isRequester => requesterUid == uid;
   bool get isContractor => claimedBy == uid;
@@ -325,6 +335,13 @@ class _JobCommandState {
   bool get hasDispute => disputeStatus.trim().isNotEmpty;
   bool get canReview =>
       isRequester && claimedBy.isNotEmpty && status == 'completed';
+  bool get hasAcceptedQuote =>
+      acceptedQuoteId.isNotEmpty || status == 'accepted';
+  bool get hasPaymentProtection =>
+      escrowId.isNotEmpty ||
+      paymentStatus == 'funded' ||
+      paymentStatus == 'escrow_funded' ||
+      status == 'escrow_funded';
   bool get canCancel =>
       isRequester && status != 'completed' && status != 'cancelled';
   double get price => (data['price'] as num?)?.toDouble() ?? 0;
@@ -483,6 +500,138 @@ class _JobCommandState {
       return l10n.fundsVisibleFromEscrow;
     }
     return l10n.useStatusToAlign;
+  }
+}
+
+class _PaymentReviewSnapshotCard extends StatelessWidget {
+  const _PaymentReviewSnapshotCard({required this.state});
+
+  final _JobCommandState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Payment and closeout',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Track the money, invoice, and review state for this job before anyone has to guess what comes next.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _SnapshotChip(
+                  icon: Icons.request_quote_outlined,
+                  label: state.hasAcceptedQuote
+                      ? 'Quote accepted'
+                      : 'Quote pending',
+                  active: state.hasAcceptedQuote,
+                ),
+                _SnapshotChip(
+                  icon: Icons.shield_outlined,
+                  label: state.hasPaymentProtection
+                      ? l10n.escrowAttached
+                      : l10n.noEscrowAttached,
+                  active: state.hasPaymentProtection,
+                ),
+                _SnapshotChip(
+                  icon: Icons.receipt_long_outlined,
+                  label: state.invoiceId.isNotEmpty
+                      ? 'Invoice linked'
+                      : 'Invoice pending',
+                  active: state.invoiceId.isNotEmpty,
+                ),
+                _SnapshotChip(
+                  icon: Icons.star_outline,
+                  label: state.canReview ? 'Review ready' : 'Review later',
+                  active: state.canReview,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: Text(
+                      state.isContractor ? l10n.createInvoice : l10n.invoice,
+                    ),
+                    onPressed: () => context.push('/invoice/${state.jobId}'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    icon: Icon(
+                      state.escrowId.isNotEmpty
+                          ? Icons.shield_outlined
+                          : Icons.verified_user_outlined,
+                    ),
+                    label: Text(
+                      state.escrowId.isNotEmpty
+                          ? l10n.checkEscrow
+                          : l10n.status,
+                    ),
+                    onPressed: () => context.push(
+                      state.escrowId.isNotEmpty
+                          ? '/escrow-status/${state.escrowId}'
+                          : '/job-status/${state.jobId}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SnapshotChip extends StatelessWidget {
+  const _SnapshotChip({
+    required this.icon,
+    required this.label,
+    required this.active,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = active ? Colors.green.shade700 : scheme.onSurfaceVariant;
+    return Chip(
+      avatar: Icon(icon, size: 16, color: color),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      backgroundColor: active ? Colors.green.withValues(alpha: 0.10) : null,
+      side: BorderSide(
+        color: active
+            ? Colors.green.withValues(alpha: 0.35)
+            : scheme.outlineVariant,
+      ),
+    );
   }
 }
 

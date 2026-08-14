@@ -15,6 +15,7 @@ import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
 import '../utils/geo_utils.dart';
+import '../utils/app_error_handler.dart';
 import '../theme/proserve_theme.dart';
 import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/lead_pack_purchase_sheet.dart';
@@ -100,6 +101,66 @@ class _LeadSignalChip extends StatelessWidget {
   }
 }
 
+class _LeadCreditActivityTile extends StatelessWidget {
+  const _LeadCreditActivityTile({required this.data});
+
+  final Map<String, dynamic> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final type = (data['type'] ?? 'activity').toString();
+    final creditType = (data['creditType'] ?? 'shared').toString();
+    final deltaRaw = data['delta'];
+    final delta = deltaRaw is num ? deltaRaw.toInt() : 0;
+    final jobId = (data['jobId'] ?? '').toString();
+    final packId = (data['packId'] ?? '').toString();
+    final createdAt = data['createdAt'];
+    final date = createdAt is Timestamp
+        ? DateFormat.MMMd().add_jm().format(createdAt.toDate())
+        : 'Pending';
+
+    final isDebit = delta < 0 || type == 'used';
+    final icon = isDebit
+        ? Icons.local_activity_outlined
+        : Icons.add_circle_outline;
+    final color = isDebit ? scheme.error : ProServeColors.accent;
+    final title = switch (type) {
+      'purchased' => 'Credits purchased',
+      'used' => 'Lead unlocked',
+      'refunded' => 'Credits refunded',
+      'failed' => 'Credit failed',
+      _ => 'Credit activity',
+    };
+    final reference = jobId.isNotEmpty
+        ? 'Job ${jobId.length > 8 ? jobId.substring(0, 8) : jobId}'
+        : (packId.isNotEmpty ? 'Pack $packId' : 'Lead credits');
+
+    return ListTile(
+      dense: true,
+      leading: CircleAvatar(
+        radius: 17,
+        backgroundColor: color.withValues(alpha: 0.12),
+        child: Icon(icon, size: 18, color: color),
+      ),
+      title: Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
+      ),
+      subtitle: Text('$reference · $creditType · $date'),
+      trailing: Text(
+        delta == 0 ? '—' : '${delta > 0 ? '+' : ''}$delta',
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
 class _JobFeedBody extends StatefulWidget {
   const _JobFeedBody();
 
@@ -109,7 +170,6 @@ class _JobFeedBody extends StatefulWidget {
 
 class _JobFeedBodyState extends State<_JobFeedBody> {
   static const int _pageSize = 25;
-  static const double _leadPriceUsd = 50;
   DocumentSnapshot? _oldestLoadedJobDoc;
   final List<DocumentSnapshot> _olderJobs = [];
   bool _isLoadingMore = false;
@@ -208,11 +268,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         _currentZip = result.zip.trim();
         _distanceEnabled = true;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
+      AppError.show(context, e, st, action: 'find your location');
     } finally {
       if (mounted) setState(() => _loadingLocation = false);
     }
@@ -553,6 +611,180 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     );
   }
 
+  Widget _leadMarketplaceStatusPanel({
+    required Map<String, dynamic> userData,
+    required int sharedCredits,
+    required int exclusiveCredits,
+    required VoidCallback onBuyCredits,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final zip = _currentZip;
+    final hasZip = zip != null && zip.isNotEmpty;
+    final payoutsReady =
+        userData['stripePayoutsEnabled'] == true ||
+        userData['payoutsEnabled'] == true;
+    final servicesCount = _myServices.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        elevation: 0,
+        color: scheme.primaryContainer.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: scheme.primary.withValues(alpha: 0.16)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.radar_outlined, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Lead marketplace status',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onBuyCredits,
+                    child: const Text('Buy credits'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _LeadSignalChip(
+                    icon: Icons.confirmation_number_outlined,
+                    label: '$sharedCredits shared',
+                  ),
+                  _LeadSignalChip(
+                    icon: Icons.lock_outline,
+                    label: '$exclusiveCredits exclusive',
+                  ),
+                  _LeadSignalChip(
+                    icon: Icons.near_me_outlined,
+                    label: hasZip
+                        ? '${_distanceMiles.toStringAsFixed(0)} mi from $zip'
+                        : 'Set ZIP',
+                  ),
+                  _LeadSignalChip(
+                    icon: Icons.handyman_outlined,
+                    label: servicesCount == 0
+                        ? 'Add services'
+                        : '$servicesCount services',
+                  ),
+                  _LeadSignalChip(
+                    icon: payoutsReady
+                        ? Icons.verified_user_outlined
+                        : Icons.account_balance_wallet_outlined,
+                    label: payoutsReady ? 'Payouts ready' : 'Payouts blocked',
+                  ),
+                ],
+              ),
+              if (!payoutsReady) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Connect payouts before accepting paid jobs. You can still review market demand and buy credits.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _leadCreditActivitySection({required String uid}) {
+    final scheme = Theme.of(context).colorScheme;
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('lead_credit_transactions')
+          .where('userId', isEqualTo: uid)
+          .limit(5)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.hasError) return const SizedBox.shrink();
+        if (!snap.hasData) return const SizedBox.shrink();
+
+        final docs = snap.data!.docs.toList()
+          ..sort((a, b) {
+            final at = a.data()['createdAt'] as Timestamp?;
+            final bt = b.data()['createdAt'] as Timestamp?;
+            if (at == null && bt == null) return 0;
+            if (at == null) return 1;
+            if (bt == null) return -1;
+            return bt.compareTo(at);
+          });
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Card(
+            elevation: 0,
+            color: scheme.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.32),
+              ),
+            ),
+            child: ExpansionTile(
+              initiallyExpanded: false,
+              leading: Icon(Icons.receipt_long_outlined, color: scheme.primary),
+              title: Text(
+                'Lead credit activity',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              subtitle: Text(
+                docs.isEmpty
+                    ? 'Purchases and unlocks will appear here.'
+                    : 'Latest purchases, unlocks, refunds, and failed credits.',
+              ),
+              children: [
+                if (docs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'When you buy credits or unlock a lead, this ledger gives you a receipt-style history.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  for (final doc in docs)
+                    _LeadCreditActivityTile(data: doc.data()),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _advancedFiltersCard() {
     final scheme = Theme.of(context).colorScheme;
     return Card(
@@ -853,6 +1085,19 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             .where((field) => field.trim().isNotEmpty)
             .toList() ??
         const <String>[];
+    final imageCount =
+        (data['imagePaths'] as List?)?.whereType<String>().length ?? 0;
+    final urgency = (data['urgency'] ?? data['timeline'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final matchTags =
+        (data['matchTags'] as List?)
+            ?.whereType<String>()
+            .where((tag) => tag.trim().isNotEmpty)
+            .take(3)
+            .toList() ??
+        const <String>[];
     final serviceAnswers = data['serviceAnswers'] is Map
         ? Map<String, dynamic>.from(data['serviceAnswers'] as Map)
         : const <String, dynamic>{};
@@ -1042,6 +1287,23 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         ? leadQualityLabel
                         : '$leadQualityLabel · $leadQualityScore%',
                   ),
+                _LeadSignalChip(
+                  icon: Icons.photo_library_outlined,
+                  label: imageCount == 1 ? '1 photo' : '$imageCount photos',
+                ),
+                if (urgency.isNotEmpty)
+                  _LeadSignalChip(
+                    icon: urgency == 'asap'
+                        ? Icons.priority_high_outlined
+                        : Icons.schedule_outlined,
+                    label: urgency == 'asap' ? 'ASAP' : urgency,
+                  ),
+                ...matchTags.map(
+                  (tag) => _LeadSignalChip(
+                    icon: Icons.sell_outlined,
+                    label: tag.replaceAll('-', ' '),
+                  ),
+                ),
                 ...guidance.matchSignals
                     .take(1)
                     .map(
@@ -1173,15 +1435,16 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 children: [
                   Icon(Icons.sell_outlined, size: 18, color: scheme.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    'Lead Price:',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Text(
+                      'Unlock model',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   Text(
-                    money.format(_leadPriceUsd),
+                    '1 credit',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: scheme.primary,
                       fontWeight: FontWeight.w900,
@@ -1269,7 +1532,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 onPressed: () {
                   _openJobDetail(jobId: jobId, jobData: data);
                 },
-                child: const Text('Purchase Lead'),
+                child: const Text('View & unlock lead'),
               ),
             ),
           ],
@@ -1565,13 +1828,13 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'No claimed jobs yet',
+                              'No unlocked leads yet',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Unlocked and accepted leads will appear here as you start conversations.',
+                              'Leads you unlock or win will appear here so you can follow up and quote fast.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -1604,7 +1867,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'My claimed jobs',
+                      'Unlocked leads & won jobs',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -1637,6 +1900,95 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 ),
               ),
             ),
+          );
+        },
+      );
+    }
+
+    Widget submittedQuotesSection({required String uid}) {
+      return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('quotes')
+            .where('contractorId', isEqualTo: uid)
+            .limit(10)
+            .snapshots(),
+        builder: (context, snap) {
+          if (snap.hasError || !snap.hasData) return const SizedBox.shrink();
+          final quotes = snap.data!.docs.toList();
+          if (quotes.isEmpty) return const SizedBox.shrink();
+
+          quotes.sort((a, b) {
+            final at = a.data()['submittedAt'] as Timestamp?;
+            final bt = b.data()['submittedAt'] as Timestamp?;
+            if (at == null && bt == null) return 0;
+            if (at == null) return 1;
+            if (bt == null) return -1;
+            return bt.compareTo(at);
+          });
+
+          final jobIds = quotes
+              .map((d) => (d.data()['jobId'] ?? '').toString())
+              .where((id) => id.isNotEmpty)
+              .toSet()
+              .toList();
+
+          return FutureBuilder<Map<String, Map<String, dynamic>>>(
+            future: _batchLoadJobs(jobIds),
+            builder: (context, jobsSnap) {
+              final jobsMap = jobsSnap.data ?? {};
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Submitted quotes',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        for (final quote in quotes.take(5))
+                          Builder(
+                            builder: (context) {
+                              final q = quote.data();
+                              final jobId = (q['jobId'] ?? '').toString();
+                              final job = jobsMap[jobId] ?? const {};
+                              final service = (job['service'] ?? 'Project')
+                                  .toString();
+                              final status = (q['status'] ?? 'pending')
+                                  .toString();
+                              final price = q['price'];
+                              final amount = price is num
+                                  ? NumberFormat.currency(
+                                      symbol: r'$',
+                                      decimalDigits: 0,
+                                    ).format(price)
+                                  : 'Quote sent';
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: const Icon(
+                                  Icons.description_outlined,
+                                  color: ProServeColors.accent2,
+                                ),
+                                title: Text(service),
+                                subtitle: Text('$amount · $status'),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: jobId.isEmpty
+                                    ? null
+                                    : () => context.push('/job-command/$jobId'),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       );
@@ -1765,6 +2117,8 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                     children: [
                       invitedSection(uid: user.uid),
                       unlockedLeadsSection(uid: user.uid),
+                      submittedQuotesSection(uid: user.uid),
+                      _leadCreditActivitySection(uid: user.uid),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -1887,7 +2241,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Error loading leads\n\n$raw',
+                            AppError.message(
+                              snapshot.error,
+                              action: 'load leads',
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -1988,6 +2345,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   children: [
                                     invitedSection(uid: user.uid),
                                     unlockedLeadsSection(uid: user.uid),
+                                    submittedQuotesSection(uid: user.uid),
                                     _availableLeadsHeader(context),
                                     Card(
                                       child: Padding(
@@ -2080,6 +2438,13 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                     invitedSection(uid: user.uid),
                                     unlockedLeadsSection(uid: user.uid),
                                     _availableLeadsHeader(context),
+                                    _leadMarketplaceStatusPanel(
+                                      userData: userData,
+                                      sharedCredits: neCredits,
+                                      exclusiveCredits: exCredits,
+                                      onBuyCredits: showLeadPackSheet,
+                                    ),
+                                    _leadCreditActivitySection(uid: user.uid),
                                     _leadMarketEmptyState(
                                       userData: userData,
                                       totalCredits: totalCredits,
@@ -2097,7 +2462,15 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                 children: [
                                   invitedSection(uid: user.uid),
                                   unlockedLeadsSection(uid: user.uid),
+                                  submittedQuotesSection(uid: user.uid),
                                   _availableLeadsHeader(context),
+                                  _leadMarketplaceStatusPanel(
+                                    userData: userData,
+                                    sharedCredits: neCredits,
+                                    exclusiveCredits: exCredits,
+                                    onBuyCredits: showLeadPackSheet,
+                                  ),
+                                  _leadCreditActivitySection(uid: user.uid),
                                   _advancedFiltersCard(),
                                   const SizedBox(height: 12),
                                   for (final doc in filteredDocs) ...[
@@ -2185,7 +2558,15 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         children: [
                           invitedSection(uid: user.uid),
                           unlockedLeadsSection(uid: user.uid),
+                          submittedQuotesSection(uid: user.uid),
                           _availableLeadsHeader(context),
+                          _leadMarketplaceStatusPanel(
+                            userData: userData,
+                            sharedCredits: neCredits,
+                            exclusiveCredits: exCredits,
+                            onBuyCredits: showLeadPackSheet,
+                          ),
+                          _leadCreditActivitySection(uid: user.uid),
                           _advancedFiltersCard(),
                           const SizedBox(height: 12),
                           _leadMarketEmptyState(
@@ -2202,7 +2583,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                     }
 
                     // Header rows: invited bids + unlocked leads + header.
-                    const headerCount = 4;
+                    const headerCount = 7;
 
                     stateKey = 'list';
                     stateChild = NotificationListener<ScrollNotification>(
@@ -2227,9 +2608,23 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                             return unlockedLeadsSection(uid: user.uid);
                           }
                           if (index == 2) {
-                            return _availableLeadsHeader(context);
+                            return submittedQuotesSection(uid: user.uid);
                           }
                           if (index == 3) {
+                            return _availableLeadsHeader(context);
+                          }
+                          if (index == 4) {
+                            return _leadMarketplaceStatusPanel(
+                              userData: userData,
+                              sharedCredits: neCredits,
+                              exclusiveCredits: exCredits,
+                              onBuyCredits: showLeadPackSheet,
+                            );
+                          }
+                          if (index == 5) {
+                            return _leadCreditActivitySection(uid: user.uid);
+                          }
+                          if (index == 6) {
                             return Column(
                               children: [
                                 _advancedFiltersCard(),

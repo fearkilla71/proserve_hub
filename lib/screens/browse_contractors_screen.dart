@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../services/location_service.dart';
 import '../services/favorites_service.dart';
 import '../utils/geo_utils.dart';
+import '../utils/app_error_handler.dart';
 import '../theme/proserve_theme.dart';
 import '../constants/service_types.dart';
 import '../constants/service_guidance.dart';
@@ -85,11 +86,9 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
         _currentZip = result.zip.trim();
         _distanceEnabled = true;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location failed: $e')));
+      AppError.show(context, e, st, action: 'find your location');
     } finally {
       if (mounted) setState(() => _loadingLocation = false);
     }
@@ -539,7 +538,12 @@ class _BrowseContractorsScreenState extends State<BrowseContractorsScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                    child: Text('Error loading contractors: ${snapshot.error}'),
+                    child: Text(
+                      AppError.message(
+                        snapshot.error,
+                        action: 'load contractors',
+                      ),
+                    ),
                   );
                 }
 

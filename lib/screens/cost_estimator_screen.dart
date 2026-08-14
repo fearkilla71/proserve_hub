@@ -15,6 +15,7 @@ import '../services/labor_ai_service.dart';
 import '../services/material_ai_service.dart';
 import '../services/material_database_service.dart';
 import '../services/ai_usage_service.dart';
+import '../utils/app_error_handler.dart';
 
 double _computeDescriptionScore(String text) {
   final trimmed = text.trim();
@@ -433,11 +434,9 @@ class _CostEstimatorFlowState extends State<_CostEstimatorFlow> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Estimate saved.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not save estimate: $e')));
+      AppError.show(context, e, st, action: 'save estimate');
     }
   }
 

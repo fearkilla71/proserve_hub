@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
   final String title;
@@ -79,11 +80,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 setSheetState(() {
                   selected = picks;
                 });
-              } catch (e) {
+              } catch (e, st) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Image picker failed: $e')),
-                );
+                AppError.show(context, e, st, action: 'pick images');
               }
             }
 
@@ -102,11 +101,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Post published.')),
                 );
-              } catch (e) {
+              } catch (e, st) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Failed to post: $e')));
+                AppError.show(context, e, st, action: 'publish post');
               } finally {
                 if (context.mounted) {
                   setSheetState(() => posting = false);
@@ -316,6 +313,18 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     return email.hasMatch(text) || phone.hasMatch(text) || url.hasMatch(text);
   }
 
+  String _maskPublicContactInfo(String value) {
+    final email = RegExp(r'\b[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}\b');
+    final phone = RegExp(
+      r'(?:(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})',
+    );
+    final url = RegExp(r'\b(?:https?://|www\.)\S+', caseSensitive: false);
+    return value
+        .replaceAll(email, '[email hidden]')
+        .replaceAll(phone, '[phone hidden]')
+        .replaceAll(url, '[link hidden]');
+  }
+
   Future<bool> _confirmPublicContactWarning(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
@@ -507,11 +516,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
       return true;
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return false;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to add comment: $e')));
+      AppError.show(context, e, st, action: 'add comment');
       return false;
     }
   }
@@ -549,15 +556,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         _likeOverrides.remove(postId);
         _likeDeltas.remove(postId);
       });
-    } catch (e) {
+    } catch (e, st) {
       setState(() {
         _likeOverrides.remove(postId);
         _likeDeltas.remove(postId);
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update like: $e')));
+      AppError.show(context, e, st, action: 'update reaction');
     }
   }
 
@@ -671,11 +676,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Post removed.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete post: $e')));
+      AppError.show(context, e, st, action: 'delete post');
     }
   }
 
@@ -790,11 +793,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Comment deleted.')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
+      AppError.show(context, e, st, action: 'delete comment');
     }
   }
 
@@ -1262,6 +1263,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final role = (data['authorRole'] ?? '').toString();
     final authorId = (data['authorId'] ?? '').toString();
     final caption = (data['caption'] ?? '').toString();
+    final captionHasContactInfo = _containsPublicContactInfo(caption);
+    final visibleCaption = captionHasContactInfo
+        ? _maskPublicContactInfo(caption)
+        : caption;
     final moderationStatus = (data['moderationStatus'] ?? 'active').toString();
     final isAuthor = currentUid != null && authorId == currentUid;
     final urlsRaw = data['mediaUrls'];
@@ -1401,7 +1406,31 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             ),
             if (caption.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(caption, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                visibleCaption,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              if (captionHasContactInfo) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: ProServeColors.error.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: ProServeColors.error.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: Text(
+                    'Contact details were hidden because this is a public post.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ],
             if (reportCount > 0 || moderationStatus != 'active') ...[
               const SizedBox(height: 12),

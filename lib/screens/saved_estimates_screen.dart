@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_models.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/linked_job_context_card.dart';
 
 /// Contractor-side saved estimates list — reads from
@@ -745,11 +746,9 @@ class _SavedEstimatesScreenState extends State<SavedEstimatesScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not create quote: $e')));
+      AppError.show(context, e, st, action: 'create quote from estimate');
     }
   }
 

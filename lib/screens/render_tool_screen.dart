@@ -16,6 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/ai_usage_service.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/linked_job_context_card.dart';
 
 class RenderToolScreen extends StatefulWidget {
@@ -458,11 +459,9 @@ class _RenderToolScreenState extends State<RenderToolScreen> {
 
         _promptController.text = '';
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to load photo: $e')));
+      AppError.show(context, e, st, action: 'load photo');
     }
   }
 

@@ -64,12 +64,12 @@ class _LeadPackPurchaseSheet extends StatelessWidget {
                       _InfoStrip(
                         icon: Icons.info_outline,
                         text:
-                            'Non-exclusive leads can be bought by multiple contractors. Exclusive leads lock access to you.',
+                            '1 shared credit unlocks 1 customer lead. 1 exclusive credit locks 1 lead to your account so other contractors cannot buy it.',
                       ),
                       const SizedBox(height: 18),
                       const _LeadPackSectionHeader(
                         title: 'Non-exclusive',
-                        subtitle: 'Best for testing more opportunities.',
+                        subtitle: 'Shared leads from \$50 each.',
                         icon: Icons.groups_2_outlined,
                         accent: ProServeColors.accent,
                       ),
@@ -78,7 +78,7 @@ class _LeadPackPurchaseSheet extends StatelessWidget {
                         id: 'ne_1',
                         title: '1 lead',
                         price: r'$50',
-                        subtitle: 'Single contact unlock',
+                        subtitle: '1 shared credit',
                         detail: 'Multiple contractors may purchase this lead.',
                         accent: ProServeColors.accent,
                       ),
@@ -87,7 +87,8 @@ class _LeadPackPurchaseSheet extends StatelessWidget {
                         title: '10 leads',
                         price: r'$450',
                         subtitle: r'Save $50',
-                        detail: '10 non-exclusive lead credits.',
+                        detail:
+                            '10 shared lead credits. Unlock 10 customer contacts.',
                         badge: 'Popular',
                         accent: ProServeColors.accent,
                       ),
@@ -96,14 +97,15 @@ class _LeadPackPurchaseSheet extends StatelessWidget {
                         title: '20 leads',
                         price: r'$850',
                         subtitle: r'Save $150',
-                        detail: '20 non-exclusive lead credits.',
+                        detail:
+                            '20 shared lead credits. Lower cost per opportunity.',
                         badge: 'Best value',
                         accent: ProServeColors.accent,
                       ),
                       const SizedBox(height: 18),
                       const _LeadPackSectionHeader(
                         title: 'Exclusive',
-                        subtitle: 'Best when you want less competition.',
+                        subtitle: 'Exclusive leads from \$80 each.',
                         icon: Icons.lock_outline,
                         accent: ProServeColors.accent2,
                       ),
@@ -142,7 +144,7 @@ class _LeadPackPurchaseSheet extends StatelessWidget {
                       _InfoStrip(
                         icon: Icons.verified_user_outlined,
                         text:
-                            'Credits are added after checkout is confirmed by the app store or Stripe.',
+                            'Purchases, unlocks, refunds, and failed checkouts are recorded in your lead credit activity.',
                         compact: true,
                       ),
                     ],

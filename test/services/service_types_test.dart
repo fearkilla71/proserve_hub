@@ -31,6 +31,20 @@ void main() {
       expect(kContractorServiceCatalog, contains('Smart Home Installation'));
     });
 
+    test('grouped service categories do not duplicate canonical services', () {
+      final seen = <String>{};
+      for (final category in kHomeServiceCategories.entries) {
+        for (final service in category.value) {
+          final key = serviceKey(canonicalServiceName(service));
+          expect(
+            seen.add(key),
+            isTrue,
+            reason: '${category.key} repeats $service',
+          );
+        }
+      }
+    });
+
     test('normalizes release catalog aliases from large marketplaces', () {
       expect(canonicalServiceName('Power Washing'), 'Pressure Washing');
       expect(canonicalServiceName('HVAC Repair'), 'HVAC');

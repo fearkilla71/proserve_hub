@@ -12,6 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/marketplace_models.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/chat_message_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -272,11 +273,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _messageController.clear();
       }
       _scrollToBottom();
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
+        AppError.show(context, e, st, action: 'send message');
       }
     } finally {
       if (pendingId != null && mounted) {
@@ -402,11 +401,9 @@ class _ChatScreenState extends State<ChatScreen> {
       final imageUrl = await imageRef.getDownloadURL();
 
       await _sendMessage(imageUrl: imageUrl);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send image: $e')));
+        AppError.show(context, e, st, action: 'send image');
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -440,11 +437,9 @@ class _ChatScreenState extends State<ChatScreen> {
         fileUrl: fileUrl,
         fileName: file.name,
       );
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send file: $e')));
+        AppError.show(context, e, st, action: 'send file');
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -510,12 +505,10 @@ class _ChatScreenState extends State<ChatScreen> {
           await _stopVoiceNote(send: true);
         }
       });
-    } catch (e) {
+    } catch (e, st) {
       debugPrint('Failed to start voice note: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start recording: $e')),
-        );
+        AppError.show(context, e, st, action: 'start recording');
       }
     }
   }
@@ -557,12 +550,10 @@ class _ChatScreenState extends State<ChatScreen> {
         audioDurationMs: durationMs,
         text: '🎤 Voice note',
       );
-    } catch (e) {
+    } catch (e, st) {
       debugPrint('Failed to send voice note: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send voice note: $e')),
-        );
+        AppError.show(context, e, st, action: 'send voice note');
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -667,7 +658,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return Center(
+                        child: Text(
+                          AppError.message(
+                            snapshot.error,
+                            action: 'load messages',
+                          ),
+                        ),
+                      );
                     }
 
                     if (!snapshot.hasData) {

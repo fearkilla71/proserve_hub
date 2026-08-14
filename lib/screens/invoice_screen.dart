@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice_item.dart';
 import '../services/demo_mode_service.dart';
+import '../utils/app_error_handler.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final String jobId;
@@ -138,11 +139,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Invoice marked as $newStatus')));
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
+      AppError.show(context, e, st, action: 'update invoice status');
     }
   }
 

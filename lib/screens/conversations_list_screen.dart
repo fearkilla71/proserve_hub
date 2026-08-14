@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../models/marketplace_models.dart';
+import '../utils/app_error_handler.dart';
 import '../widgets/skeleton.dart';
 
 class ConversationsListScreen extends StatefulWidget {
@@ -106,7 +107,11 @@ class _ConversationsListScreenState extends State<ConversationsListScreen>
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                AppError.message(snapshot.error, action: 'load messages'),
+              ),
+            );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {

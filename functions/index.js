@@ -1391,6 +1391,7 @@ async function unlockLeadCore({ jobId, uid, exclusive }) {
   const unlockRef = db
     .collection('lead_unlocks')
     .doc(`${jobId}_${uid}_${wantExclusive ? 'ex' : 'ne'}`);
+  const ledgerRef = db.collection('lead_credit_transactions').doc();
 
   const result = await db.runTransaction(async (tx) => {
     const [userSnap, jobSnap, unlockSnap] = await Promise.all([
@@ -1492,6 +1493,21 @@ async function unlockLeadCore({ jobId, uid, exclusive }) {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         source: wantExclusive ? 'exclusive_credits' : 'credits',
         exclusive: wantExclusive,
+      },
+      { merge: true }
+    );
+    tx.set(
+      ledgerRef,
+      {
+        userId: uid,
+        contractorId: uid,
+        jobId,
+        type: 'used',
+        creditType: wantExclusive ? 'exclusive' : 'shared',
+        delta: -1,
+        balanceAfter: creditsAvailable - 1,
+        source: wantExclusive ? 'exclusive_unlock' : 'shared_unlock',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -6502,6 +6518,23 @@ async function verifyLeadPackPurchaseCore({ uid, productId, purchaseId, verifica
         { merge: true }
       );
     }
+
+    tx.set(
+      db.collection('lead_credit_transactions').doc(),
+      {
+        userId: uid,
+        contractorId: uid,
+        type: 'purchased',
+        creditType: creditType === 'exclusive' ? 'exclusive' : 'shared',
+        delta: pack.leads,
+        packId: pack.id,
+        purchaseId: normalizedPurchaseId,
+        source: normalizedSource,
+        status: 'success',
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
   });
 
   return { ok: true, credits: pack.leads, creditType };
@@ -7046,6 +7079,23 @@ async function fulfillLeadPackFromCheckoutSession(session, deps = {}) {
         { merge: true }
       );
     }
+
+    tx.set(
+      db.collection('lead_credit_transactions').doc(),
+      {
+        userId: contractorId,
+        contractorId,
+        type: 'purchased',
+        creditType: creditType === 'exclusive' ? 'exclusive' : 'shared',
+        delta: pack.leads,
+        packId: pack.id,
+        stripeSessionId: session.id,
+        source: 'stripe',
+        status: 'success',
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
   });
 }
 

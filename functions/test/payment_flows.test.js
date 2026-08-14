@@ -257,9 +257,14 @@ describe('payment and entitlement core flows', () => {
     await _test.fulfillLeadPackFromCheckoutSession(session, deps(db, { getLeadPack }));
 
     const user = db.read('users/contractorA');
+    const ledger = db._docsInCollection('lead_credit_transactions');
     assert.strictEqual(user.leadCredits, 3);
     assert.strictEqual(user.credits, 3);
     assert.strictEqual(db.read('payments/cs_lead_1').leadsGranted, 3);
+    assert.strictEqual(ledger.length, 1);
+    assert.strictEqual(ledger[0].data.type, 'purchased');
+    assert.strictEqual(ledger[0].data.creditType, 'shared');
+    assert.strictEqual(ledger[0].data.delta, 3);
   });
 
   it('verifies lead pack purchase idempotently without live store credentials in tests', async () => {
@@ -279,6 +284,11 @@ describe('payment and entitlement core flows', () => {
 
     assert.strictEqual(db.read('users/contractorA').exclusiveLeadCredits, 1);
     assert.strictEqual(db.read('payments/iap_google_play_purchase_1').status, 'success');
+    const ledger = db._docsInCollection('lead_credit_transactions');
+    assert.strictEqual(ledger.length, 1);
+    assert.strictEqual(ledger[0].data.type, 'purchased');
+    assert.strictEqual(ledger[0].data.creditType, 'exclusive');
+    assert.strictEqual(ledger[0].data.delta, 1);
   });
 
   it('marks escrow funded and updates the related job once', async () => {

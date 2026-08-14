@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../models/escrow_booking.dart';
 import '../services/escrow_service.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/profanity_filter.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -89,12 +90,10 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
         _submitted = true;
         _submitting = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to submit: $e')));
+      AppError.show(context, e, st, action: 'submit rating');
     }
   }
 
@@ -353,25 +352,25 @@ class _EscrowRatingScreenState extends State<EscrowRatingScreen> {
                     setState(() => _selectedRating = starNum);
                   },
                   child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? _ratingColor(starNum).withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
                       color: selected
-                          ? _ratingColor(starNum).withValues(alpha: 0.4)
-                          : Colors.white10,
+                          ? _ratingColor(starNum).withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected
+                            ? _ratingColor(starNum).withValues(alpha: 0.4)
+                            : Colors.white10,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    selected ? Icons.star : Icons.star_border,
-                    color: selected ? _ratingColor(starNum) : Colors.white30,
-                    size: 36,
-                  ),
+                    child: Icon(
+                      selected ? Icons.star : Icons.star_border,
+                      color: selected ? _ratingColor(starNum) : Colors.white30,
+                      size: 36,
+                    ),
                   ),
                 ),
               );
