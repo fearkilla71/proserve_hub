@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:proserve_hub/l10n/app_localizations.dart';
 import 'package:proserve_hub/state/app_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Lightweight widget that reads AppState and displays key values.
 class _AppStateReader extends StatelessWidget {
@@ -17,6 +20,71 @@ class _AppStateReader extends StatelessWidget {
 }
 
 void main() {
+  group('Locale switching', () {
+    testWidgets('rebuilds localized text when the locale changes', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState.test();
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        AppStateProvider(
+          notifier: state,
+          child: AnimatedBuilder(
+            animation: state,
+            builder: (context, _) {
+              return MaterialApp(
+                locale: state.locale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [Locale('en'), Locale('es')],
+                home: Builder(
+                  builder: (context) {
+                    final l10n = AppLocalizations.of(context)!;
+                    return Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${l10n.landingHeadlinePrefix}'
+                        '${l10n.landingHeadlineAccent}',
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Connect. Hire.'), findsOneWidget);
+
+      await state.setLocale(const Locale('es'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Conecta. Contrata.'), findsOneWidget);
+    });
+
+    test('persists selected locale in SharedPreferences', () async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AppState.test();
+      addTearDown(state.dispose);
+
+      await state.setLocale(const Locale('es'));
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(prefs.getString('locale'), 'es');
+
+      await state.setLocale(null);
+      expect(prefs.getString('locale'), isNull);
+    });
+  });
+
   group('AppStateProvider / AppState.of', () {
     testWidgets('provides AppState to descendants', (tester) async {
       final state = AppState.test();

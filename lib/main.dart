@@ -474,21 +474,26 @@ class _ProServeHubAppState extends State<ProServeHubApp> {
   Widget build(BuildContext context) {
     return AppStateProvider(
       notifier: _appState,
-      child: MaterialApp.router(
-        routerConfig: _router,
-        title: 'ProServe Hub',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        darkTheme: ProServeTheme.darkTheme(),
-        theme: ProServeTheme.darkTheme(),
-        locale: _appState.locale,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('es')],
+      child: AnimatedBuilder(
+        animation: _appState,
+        builder: (context, _) {
+          return MaterialApp.router(
+            routerConfig: _router,
+            title: 'ProServe Hub',
+            debugShowCheckedModeBanner: false,
+            themeMode: ThemeMode.dark,
+            darkTheme: ProServeTheme.darkTheme(),
+            theme: ProServeTheme.darkTheme(),
+            locale: _appState.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('en'), Locale('es')],
+          );
+        },
       ),
     );
   }

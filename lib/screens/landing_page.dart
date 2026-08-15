@@ -254,11 +254,13 @@ class _LanguageMenu extends StatelessWidget {
 
     return PopupMenuButton<Locale?>(
       tooltip: l10n.language,
-      onSelected: (locale) => appState.setLocale(locale),
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: null, child: Text('System')),
-        PopupMenuItem(value: Locale('en'), child: Text('English')),
-        PopupMenuItem(value: Locale('es'), child: Text('Español')),
+      onSelected: (locale) {
+        appState.setLocale(locale);
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(value: null, child: Text(l10n.landingLanguageSystem)),
+        const PopupMenuItem(value: Locale('en'), child: Text('English')),
+        const PopupMenuItem(value: Locale('es'), child: Text('Español')),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
