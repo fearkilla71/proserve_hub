@@ -2102,14 +2102,10 @@ class _CustomerActionCenter extends StatelessWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: requestsQuery.snapshots(),
       builder: (context, snapshot) {
-        final docs =
-            snapshot.data?.docs.where((d) {
-              final status = (d.data()['status'] ?? '')
-                  .toString()
-                  .toLowerCase();
-              return status != 'cancelled' && status != 'deleted';
-            }).toList() ??
-            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        final docs = (snapshot.data?.docs ?? const []).where((d) {
+          final status = (d.data()['status'] ?? '').toString().toLowerCase();
+          return status != 'cancelled' && status != 'deleted';
+        }).toList();
 
         docs.sort((a, b) {
           final at = a.data()['createdAt'];
