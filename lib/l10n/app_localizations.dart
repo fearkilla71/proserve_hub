@@ -3266,6 +3266,378 @@ abstract class AppLocalizations {
   /// **'Expand radius'**
   String get leadMarketExpandRadius;
 
+  /// No description provided for @availableLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Leads'**
+  String get availableLeads;
+
+  /// No description provided for @availableLeadsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse and purchase customer project leads'**
+  String get availableLeadsSubtitle;
+
+  /// No description provided for @leadMarketServiceRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Service radius'**
+  String get leadMarketServiceRadius;
+
+  /// No description provided for @leadMarketOnlyWithinRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Only leads within {range} of ZIP {zip}'**
+  String leadMarketOnlyWithinRadius(String range, String zip);
+
+  /// No description provided for @leadMarketSetZipDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your ZIP to filter leads by distance'**
+  String get leadMarketSetZipDistance;
+
+  /// No description provided for @useMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my location'**
+  String get useMyLocation;
+
+  /// No description provided for @leadMarketplaceStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead marketplace status'**
+  String get leadMarketplaceStatusTitle;
+
+  /// No description provided for @leadMarketSharedCreditsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shared'**
+  String leadMarketSharedCreditsShort(int count);
+
+  /// No description provided for @leadMarketExclusiveCreditsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} exclusive'**
+  String leadMarketExclusiveCreditsShort(int count);
+
+  /// No description provided for @leadMarketDistanceFromZip.
+  ///
+  /// In en, this message translates to:
+  /// **'{miles} mi from {zip}'**
+  String leadMarketDistanceFromZip(String miles, String zip);
+
+  /// No description provided for @leadMarketSetZipShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Set ZIP'**
+  String get leadMarketSetZipShort;
+
+  /// No description provided for @leadMarketAddServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Add services'**
+  String get leadMarketAddServices;
+
+  /// No description provided for @leadMarketServicesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} services'**
+  String leadMarketServicesCount(int count);
+
+  /// No description provided for @leadMarketPayoutsReadyShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts ready'**
+  String get leadMarketPayoutsReadyShort;
+
+  /// No description provided for @leadMarketPayoutsBlockedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts blocked'**
+  String get leadMarketPayoutsBlockedShort;
+
+  /// No description provided for @leadMarketPayoutBlockedExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect payouts before accepting paid jobs. You can still review market demand and buy credits.'**
+  String get leadMarketPayoutBlockedExplain;
+
+  /// No description provided for @leadCreditActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead credit activity'**
+  String get leadCreditActivityTitle;
+
+  /// No description provided for @leadCreditActivityEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases and unlocks will appear here.'**
+  String get leadCreditActivityEmptySubtitle;
+
+  /// No description provided for @leadCreditActivitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest purchases, unlocks, refunds, and failed credits.'**
+  String get leadCreditActivitySubtitle;
+
+  /// No description provided for @leadCreditActivityEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When you buy credits or unlock a lead, this ledger gives you a receipt-style history.'**
+  String get leadCreditActivityEmptyBody;
+
+  /// No description provided for @leadCreditActivityPurchased.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits purchased'**
+  String get leadCreditActivityPurchased;
+
+  /// No description provided for @leadCreditActivityUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead unlocked'**
+  String get leadCreditActivityUsed;
+
+  /// No description provided for @leadCreditActivityRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits refunded'**
+  String get leadCreditActivityRefunded;
+
+  /// No description provided for @leadCreditActivityFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit failed'**
+  String get leadCreditActivityFailed;
+
+  /// No description provided for @leadCreditActivityGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit activity'**
+  String get leadCreditActivityGeneric;
+
+  /// No description provided for @leadCreditActivityJobRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Job {jobId}'**
+  String leadCreditActivityJobRef(String jobId);
+
+  /// No description provided for @leadCreditActivityPackRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack {packId}'**
+  String leadCreditActivityPackRef(String packId);
+
+  /// No description provided for @leadCreditActivityLeadCreditsRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead credits'**
+  String get leadCreditActivityLeadCreditsRef;
+
+  /// No description provided for @leadMarketEarlyAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Early Access'**
+  String get leadMarketEarlyAccess;
+
+  /// No description provided for @leadMarketManualQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual quote'**
+  String get leadMarketManualQuote;
+
+  /// No description provided for @leadMarketInstantPriceReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant price ready'**
+  String get leadMarketInstantPriceReady;
+
+  /// No description provided for @leadMarketMatchesYourServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches your services'**
+  String get leadMarketMatchesYourServices;
+
+  /// No description provided for @leadMarketPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No photos} =1{1 photo} other{{count} photos}}'**
+  String leadMarketPhotoCount(int count);
+
+  /// No description provided for @leadMarketManualQuoteFallbackReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer details should be reviewed before quoting.'**
+  String get leadMarketManualQuoteFallbackReason;
+
+  /// No description provided for @leadMarketMayNeedFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'May need follow-up: {fields}'**
+  String leadMarketMayNeedFollowUp(String fields);
+
+  /// No description provided for @leadMarketUnlockModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock model'**
+  String get leadMarketUnlockModel;
+
+  /// No description provided for @leadMarketOneCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'1 credit'**
+  String get leadMarketOneCredit;
+
+  /// No description provided for @leadMarketBudgetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget: {amount}'**
+  String leadMarketBudgetLabel(String amount);
+
+  /// No description provided for @leadMarketDistanceAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} away'**
+  String leadMarketDistanceAway(String distance);
+
+  /// No description provided for @leadMarketPostedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted {date}'**
+  String leadMarketPostedDate(String date);
+
+  /// No description provided for @leadMarketViewUnlockLead.
+  ///
+  /// In en, this message translates to:
+  /// **'View & unlock lead'**
+  String get leadMarketViewUnlockLead;
+
+  /// No description provided for @leadMarketBuyLeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy leads'**
+  String get leadMarketBuyLeads;
+
+  /// No description provided for @leadMarketBuyLeadsToSeeJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy leads to see available jobs'**
+  String get leadMarketBuyLeadsToSeeJobs;
+
+  /// No description provided for @leadMarketCreditsRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You need lead credits to view the job feed and unlock customer contact info.'**
+  String get leadMarketCreditsRequiredBody;
+
+  /// No description provided for @leadMarketLeadsLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leads are locked'**
+  String get leadMarketLeadsLockedTitle;
+
+  /// No description provided for @leadMarketLeadsLockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You need lead credits or a direct invite to view available leads. If you just bought credits, give it a moment and try again.'**
+  String get leadMarketLeadsLockedBody;
+
+  /// No description provided for @leadDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead Details'**
+  String get leadDetailTitle;
+
+  /// No description provided for @leadDetailContactLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client contact locked'**
+  String get leadDetailContactLockedTitle;
+
+  /// No description provided for @leadDetailUnlockExplainerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose shared or exclusive access'**
+  String get leadDetailUnlockExplainerTitle;
+
+  /// No description provided for @leadDetailUnlockExplainerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared access reveals the customer contact while the lead stays available. Exclusive access locks the lead to you so other contractors cannot unlock it.'**
+  String get leadDetailUnlockExplainerBody;
+
+  /// No description provided for @leadDetailSharedUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared lead unlocked. Contact details are now available.'**
+  String get leadDetailSharedUnlocked;
+
+  /// No description provided for @leadDetailExclusiveUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive lead unlocked. Only you can access this contact.'**
+  String get leadDetailExclusiveUnlocked;
+
+  /// No description provided for @leadDetailUnlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead unlocked'**
+  String get leadDetailUnlockedTitle;
+
+  /// No description provided for @leadDetailUnlockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Next, contact the customer or send a quote while the project is fresh.'**
+  String get leadDetailUnlockedBody;
+
+  /// No description provided for @leadDetailSharedCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared credits: {count}'**
+  String leadDetailSharedCredits(int count);
+
+  /// No description provided for @leadDetailExclusiveCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive credits: {count}'**
+  String leadDetailExclusiveCredits(int count);
+
+  /// No description provided for @leadDetailCreditModel.
+  ///
+  /// In en, this message translates to:
+  /// **'1 shared credit unlocks this lead while it remains available to other contractors. 1 exclusive credit locks the lead to you.'**
+  String get leadDetailCreditModel;
+
+  /// No description provided for @leadDetailUnlockSharedLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock shared lead (1 credit)'**
+  String get leadDetailUnlockSharedLead;
+
+  /// No description provided for @leadDetailUnlockExclusiveLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock exclusive lead (1 credit)'**
+  String get leadDetailUnlockExclusiveLead;
+
+  /// No description provided for @leadDetailBuySharedCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy shared credits'**
+  String get leadDetailBuySharedCredits;
+
+  /// No description provided for @leadDetailBuyExclusiveCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy exclusive credits'**
+  String get leadDetailBuyExclusiveCredits;
+
+  /// No description provided for @leadDetailBuyMoreCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy more lead credits'**
+  String get leadDetailBuyMoreCredits;
+
   /// No description provided for @pricingWhyThisPriceTitle.
   ///
   /// In en, this message translates to:

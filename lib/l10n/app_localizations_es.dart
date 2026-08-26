@@ -1799,6 +1799,243 @@ class AppLocalizationsEs extends AppLocalizations {
   String get leadMarketExpandRadius => 'Ampliar radio';
 
   @override
+  String get availableLeads => 'Leads disponibles';
+
+  @override
+  String get availableLeadsSubtitle =>
+      'Busca y compra leads de proyectos de clientes';
+
+  @override
+  String get leadMarketServiceRadius => 'Radio de servicio';
+
+  @override
+  String leadMarketOnlyWithinRadius(String range, String zip) {
+    return 'Solo leads a $range del ZIP $zip';
+  }
+
+  @override
+  String get leadMarketSetZipDistance =>
+      'Configura tu ZIP para filtrar leads por distancia';
+
+  @override
+  String get useMyLocation => 'Usar mi ubicación';
+
+  @override
+  String get leadMarketplaceStatusTitle => 'Estado del mercado de leads';
+
+  @override
+  String leadMarketSharedCreditsShort(int count) {
+    return '$count compartidos';
+  }
+
+  @override
+  String leadMarketExclusiveCreditsShort(int count) {
+    return '$count exclusivos';
+  }
+
+  @override
+  String leadMarketDistanceFromZip(String miles, String zip) {
+    return '$miles mi desde $zip';
+  }
+
+  @override
+  String get leadMarketSetZipShort => 'Configurar ZIP';
+
+  @override
+  String get leadMarketAddServices => 'Agregar servicios';
+
+  @override
+  String leadMarketServicesCount(int count) {
+    return '$count servicios';
+  }
+
+  @override
+  String get leadMarketPayoutsReadyShort => 'Cobros listos';
+
+  @override
+  String get leadMarketPayoutsBlockedShort => 'Cobros bloqueados';
+
+  @override
+  String get leadMarketPayoutBlockedExplain =>
+      'Conecta cobros antes de aceptar trabajos pagados. Aún puedes revisar demanda y comprar créditos.';
+
+  @override
+  String get leadCreditActivityTitle => 'Actividad de créditos';
+
+  @override
+  String get leadCreditActivityEmptySubtitle =>
+      'Compras y desbloqueos aparecerán aquí.';
+
+  @override
+  String get leadCreditActivitySubtitle =>
+      'Últimas compras, desbloqueos, reembolsos y fallos.';
+
+  @override
+  String get leadCreditActivityEmptyBody =>
+      'Cuando compres créditos o desbloquees un lead, este historial funciona como recibo.';
+
+  @override
+  String get leadCreditActivityPurchased => 'Créditos comprados';
+
+  @override
+  String get leadCreditActivityUsed => 'Lead desbloqueado';
+
+  @override
+  String get leadCreditActivityRefunded => 'Créditos reembolsados';
+
+  @override
+  String get leadCreditActivityFailed => 'Crédito fallido';
+
+  @override
+  String get leadCreditActivityGeneric => 'Actividad de crédito';
+
+  @override
+  String leadCreditActivityJobRef(String jobId) {
+    return 'Trabajo $jobId';
+  }
+
+  @override
+  String leadCreditActivityPackRef(String packId) {
+    return 'Paquete $packId';
+  }
+
+  @override
+  String get leadCreditActivityLeadCreditsRef => 'Créditos de leads';
+
+  @override
+  String get leadMarketEarlyAccess => 'Acceso temprano';
+
+  @override
+  String get leadMarketManualQuote => 'Cotización manual';
+
+  @override
+  String get leadMarketInstantPriceReady => 'Precio instantáneo';
+
+  @override
+  String get leadMarketMatchesYourServices => 'Coincide con tus servicios';
+
+  @override
+  String leadMarketPhotoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fotos',
+      one: '1 foto',
+      zero: 'Sin fotos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leadMarketManualQuoteFallbackReason =>
+      'Los detalles del cliente deben revisarse antes de cotizar.';
+
+  @override
+  String leadMarketMayNeedFollowUp(String fields) {
+    return 'Puede necesitar seguimiento: $fields';
+  }
+
+  @override
+  String get leadMarketUnlockModel => 'Modelo de desbloqueo';
+
+  @override
+  String get leadMarketOneCredit => '1 crédito';
+
+  @override
+  String leadMarketBudgetLabel(String amount) {
+    return 'Presupuesto: $amount';
+  }
+
+  @override
+  String leadMarketDistanceAway(String distance) {
+    return 'A $distance';
+  }
+
+  @override
+  String leadMarketPostedDate(String date) {
+    return 'Publicado $date';
+  }
+
+  @override
+  String get leadMarketViewUnlockLead => 'Ver y desbloquear lead';
+
+  @override
+  String get leadMarketBuyLeads => 'Comprar leads';
+
+  @override
+  String get leadMarketBuyLeadsToSeeJobs => 'Compra leads para ver trabajos';
+
+  @override
+  String get leadMarketCreditsRequiredBody =>
+      'Necesitas créditos de leads para ver el feed y desbloquear contacto del cliente.';
+
+  @override
+  String get leadMarketLeadsLockedTitle => 'Leads bloqueados';
+
+  @override
+  String get leadMarketLeadsLockedBody =>
+      'Necesitas créditos o una invitación directa para ver leads disponibles. Si acabas de comprar, espera un momento y reintenta.';
+
+  @override
+  String get leadDetailTitle => 'Detalles del lead';
+
+  @override
+  String get leadDetailContactLockedTitle => 'Contacto del cliente bloqueado';
+
+  @override
+  String get leadDetailUnlockExplainerTitle =>
+      'Elige acceso compartido o exclusivo';
+
+  @override
+  String get leadDetailUnlockExplainerBody =>
+      'El acceso compartido muestra el contacto mientras el lead sigue disponible. El exclusivo bloquea el lead para ti.';
+
+  @override
+  String get leadDetailSharedUnlocked =>
+      'Lead compartido desbloqueado. Ya puedes ver el contacto.';
+
+  @override
+  String get leadDetailExclusiveUnlocked =>
+      'Lead exclusivo desbloqueado. Solo tú puedes acceder a este contacto.';
+
+  @override
+  String get leadDetailUnlockedTitle => 'Lead desbloqueado';
+
+  @override
+  String get leadDetailUnlockedBody =>
+      'Ahora contacta al cliente o envía una cotización mientras el proyecto está reciente.';
+
+  @override
+  String leadDetailSharedCredits(int count) {
+    return 'Créditos compartidos: $count';
+  }
+
+  @override
+  String leadDetailExclusiveCredits(int count) {
+    return 'Créditos exclusivos: $count';
+  }
+
+  @override
+  String get leadDetailCreditModel =>
+      '1 crédito compartido desbloquea este lead mientras sigue disponible. 1 crédito exclusivo lo bloquea para ti.';
+
+  @override
+  String get leadDetailUnlockSharedLead => 'Desbloquear compartido (1 crédito)';
+
+  @override
+  String get leadDetailUnlockExclusiveLead =>
+      'Desbloquear exclusivo (1 crédito)';
+
+  @override
+  String get leadDetailBuySharedCredits => 'Comprar créditos compartidos';
+
+  @override
+  String get leadDetailBuyExclusiveCredits => 'Comprar créditos exclusivos';
+
+  @override
+  String get leadDetailBuyMoreCredits => 'Comprar más créditos';
+
+  @override
   String get pricingWhyThisPriceTitle => 'Por qué este precio';
 
   @override

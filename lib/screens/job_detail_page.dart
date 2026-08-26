@@ -6,6 +6,8 @@ import 'package:proserve_hub/services/lead_service.dart';
 import 'package:proserve_hub/services/stripe_service.dart';
 
 import '../constants/service_intake.dart';
+import '../l10n/app_localizations.dart';
+import '../theme/proserve_theme.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../widgets/lead_pack_purchase_sheet.dart';
 import '../widgets/suggested_pros_card.dart';
@@ -21,6 +23,7 @@ class JobDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -274,7 +277,7 @@ class JobDetailPage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Job Details'),
+            title: Text(l10n.leadDetailTitle),
             actions: [
               IconButton(
                 tooltip: 'Command Center',
@@ -390,9 +393,9 @@ class JobDetailPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Client contact (locked)',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          Text(
+                            l10n.leadDetailContactLockedTitle,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Opacity(
@@ -406,13 +409,9 @@ class JobDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            'Non-exclusive: any contractor can purchase contact access.\nExclusive: first buyer locks the lead so no one else can purchase or see it.',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
+                          _LeadUnlockExplainer(
+                            sharedCredits: null,
+                            exclusiveCredits: null,
                           ),
                           const SizedBox(height: 12),
                           StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -451,9 +450,9 @@ class JobDetailPage extends StatelessWidget {
                                     context,
                                   );
                                   messenger.showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text(
-                                        'Complete checkout to add lead credits.',
+                                        l10n.subscriptionCheckoutBrowserReturn,
                                       ),
                                     ),
                                   );
@@ -486,8 +485,8 @@ class JobDetailPage extends StatelessWidget {
                                     SnackBar(
                                       content: Text(
                                         exclusive
-                                            ? 'Exclusive lead unlocked. Only you can access this contact.'
-                                            : 'Shared lead unlocked. Contact details are now available.',
+                                            ? l10n.leadDetailExclusiveUnlocked
+                                            : l10n.leadDetailSharedUnlocked,
                                       ),
                                     ),
                                   );
@@ -509,7 +508,7 @@ class JobDetailPage extends StatelessWidget {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'Lead unlocked',
+                                                l10n.leadDetailUnlockedTitle,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .titleLarge
@@ -519,9 +518,7 @@ class JobDetailPage extends StatelessWidget {
                                                     ),
                                               ),
                                               const SizedBox(height: 8),
-                                              const Text(
-                                                'Next, contact the customer or send a quote while the project is fresh.',
-                                              ),
+                                              Text(l10n.leadDetailUnlockedBody),
                                               const SizedBox(height: 16),
                                               SizedBox(
                                                 width: double.infinity,
@@ -535,9 +532,7 @@ class JobDetailPage extends StatelessWidget {
                                                   icon: const Icon(
                                                     Icons.description_outlined,
                                                   ),
-                                                  label: const Text(
-                                                    'Submit quote',
-                                                  ),
+                                                  label: Text(l10n.submitQuote),
                                                 ),
                                               ),
                                               const SizedBox(height: 8),
@@ -553,8 +548,8 @@ class JobDetailPage extends StatelessWidget {
                                                   icon: const Icon(
                                                     Icons.dashboard_outlined,
                                                   ),
-                                                  label: const Text(
-                                                    'Open Job Command Center',
+                                                  label: Text(
+                                                    l10n.openJobCommandCenter,
                                                   ),
                                                 ),
                                               ),
@@ -579,22 +574,20 @@ class JobDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Shared credits: $neCredits',
+                                    l10n.leadDetailSharedCredits(neCredits),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Exclusive credits: $exCredits',
+                                    l10n.leadDetailExclusiveCredits(exCredits),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  const Text(
-                                    '1 shared credit unlocks this lead while it remains available to other contractors. 1 exclusive credit locks the lead to you.',
-                                  ),
+                                  Text(l10n.leadDetailCreditModel),
                                   const SizedBox(height: 12),
                                   SizedBox(
                                     width: double.infinity,
@@ -605,8 +598,8 @@ class JobDetailPage extends StatelessWidget {
                                       icon: const Icon(Icons.groups_2_outlined),
                                       label: Text(
                                         neCredits > 0
-                                            ? 'Unlock shared lead (1 credit)'
-                                            : 'Buy shared credits',
+                                            ? l10n.leadDetailUnlockSharedLead
+                                            : l10n.leadDetailBuySharedCredits,
                                       ),
                                     ),
                                   ),
@@ -620,15 +613,15 @@ class JobDetailPage extends StatelessWidget {
                                       icon: const Icon(Icons.lock_outline),
                                       label: Text(
                                         exCredits > 0
-                                            ? 'Unlock exclusive lead (1 credit)'
-                                            : 'Buy exclusive credits',
+                                            ? l10n.leadDetailUnlockExclusiveLead
+                                            : l10n.leadDetailBuyExclusiveCredits,
                                       ),
                                     ),
                                   ),
                                   TextButton.icon(
                                     onPressed: showLeadPackSheet,
                                     icon: const Icon(Icons.add_circle_outline),
-                                    label: const Text('Buy more lead credits'),
+                                    label: Text(l10n.leadDetailBuyMoreCredits),
                                   ),
                                 ],
                               );
@@ -1005,5 +998,60 @@ class _LeadQualityDetailCard extends StatelessWidget {
           .join(', ');
     }
     return value.toString().trim();
+  }
+}
+
+class _LeadUnlockExplainer extends StatelessWidget {
+  const _LeadUnlockExplainer({
+    required this.sharedCredits,
+    required this.exclusiveCredits,
+  });
+
+  final int? sharedCredits;
+  final int? exclusiveCredits;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ProServeColors.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: ProServeColors.accent.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lock_open_outlined, color: ProServeColors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.leadDetailUnlockExplainerTitle,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.leadDetailUnlockExplainerBody,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

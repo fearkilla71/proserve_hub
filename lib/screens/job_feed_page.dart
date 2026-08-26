@@ -109,6 +109,7 @@ class _LeadCreditActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final type = (data['type'] ?? 'activity').toString();
     final creditType = (data['creditType'] ?? 'shared').toString();
     final deltaRaw = data['delta'];
@@ -118,7 +119,7 @@ class _LeadCreditActivityTile extends StatelessWidget {
     final createdAt = data['createdAt'];
     final date = createdAt is Timestamp
         ? DateFormat.MMMd().add_jm().format(createdAt.toDate())
-        : 'Pending';
+        : l10n.pending;
 
     final isDebit = delta < 0 || type == 'used';
     final icon = isDebit
@@ -126,15 +127,19 @@ class _LeadCreditActivityTile extends StatelessWidget {
         : Icons.add_circle_outline;
     final color = isDebit ? scheme.error : ProServeColors.accent;
     final title = switch (type) {
-      'purchased' => 'Credits purchased',
-      'used' => 'Lead unlocked',
-      'refunded' => 'Credits refunded',
-      'failed' => 'Credit failed',
-      _ => 'Credit activity',
+      'purchased' => l10n.leadCreditActivityPurchased,
+      'used' => l10n.leadCreditActivityUsed,
+      'refunded' => l10n.leadCreditActivityRefunded,
+      'failed' => l10n.leadCreditActivityFailed,
+      _ => l10n.leadCreditActivityGeneric,
     };
     final reference = jobId.isNotEmpty
-        ? 'Job ${jobId.length > 8 ? jobId.substring(0, 8) : jobId}'
-        : (packId.isNotEmpty ? 'Pack $packId' : 'Lead credits');
+        ? l10n.leadCreditActivityJobRef(
+            jobId.length > 8 ? jobId.substring(0, 8) : jobId,
+          )
+        : (packId.isNotEmpty
+              ? l10n.leadCreditActivityPackRef(packId)
+              : l10n.leadCreditActivityLeadCreditsRef);
 
     return ListTile(
       dense: true,
@@ -364,15 +369,17 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   }
 
   Widget _availableLeadsHeader(BuildContext context) {
-    return const PageHeader(
-      title: 'Available Leads',
-      subtitle: 'Browse and purchase customer project leads',
-      padding: EdgeInsets.only(bottom: 16),
+    final l10n = AppLocalizations.of(context)!;
+    return PageHeader(
+      title: l10n.availableLeads,
+      subtitle: l10n.availableLeadsSubtitle,
+      padding: const EdgeInsets.only(bottom: 16),
     );
   }
 
   Widget _nearbyLeadsSection() {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final zip = _currentZip;
     final hasZip = zip != null && zip.isNotEmpty;
     final rangeLabel = '${_distanceMiles.toStringAsFixed(0)} mi';
@@ -386,7 +393,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Service radius',
+                l10n.leadMarketServiceRadius,
                 style: Theme.of(
                   context,
                 ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -398,7 +405,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              'Only leads within $rangeLabel of ZIP $zip',
+              l10n.leadMarketOnlyWithinRadius(rangeLabel, zip),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -408,7 +415,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              'Set your ZIP to filter leads by distance',
+              l10n.leadMarketSetZipDistance,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: scheme.error),
@@ -458,7 +465,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.my_location),
-              label: const Text('Use my location'),
+              label: Text(l10n.useMyLocation),
             ),
           ),
         ],
@@ -617,6 +624,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     required int exclusiveCredits,
     required VoidCallback onBuyCredits,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final zip = _currentZip;
     final hasZip = zip != null && zip.isNotEmpty;
@@ -645,7 +653,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Lead marketplace status',
+                      l10n.leadMarketplaceStatusTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -653,7 +661,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   ),
                   TextButton(
                     onPressed: onBuyCredits,
-                    child: const Text('Buy credits'),
+                    child: Text(l10n.leadMarketBuyCredits),
                   ),
                 ],
               ),
@@ -664,36 +672,43 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 children: [
                   _LeadSignalChip(
                     icon: Icons.confirmation_number_outlined,
-                    label: '$sharedCredits shared',
+                    label: l10n.leadMarketSharedCreditsShort(sharedCredits),
                   ),
                   _LeadSignalChip(
                     icon: Icons.lock_outline,
-                    label: '$exclusiveCredits exclusive',
+                    label: l10n.leadMarketExclusiveCreditsShort(
+                      exclusiveCredits,
+                    ),
                   ),
                   _LeadSignalChip(
                     icon: Icons.near_me_outlined,
                     label: hasZip
-                        ? '${_distanceMiles.toStringAsFixed(0)} mi from $zip'
-                        : 'Set ZIP',
+                        ? l10n.leadMarketDistanceFromZip(
+                            _distanceMiles.toStringAsFixed(0),
+                            zip,
+                          )
+                        : l10n.leadMarketSetZipShort,
                   ),
                   _LeadSignalChip(
                     icon: Icons.handyman_outlined,
                     label: servicesCount == 0
-                        ? 'Add services'
-                        : '$servicesCount services',
+                        ? l10n.leadMarketAddServices
+                        : l10n.leadMarketServicesCount(servicesCount),
                   ),
                   _LeadSignalChip(
                     icon: payoutsReady
                         ? Icons.verified_user_outlined
                         : Icons.account_balance_wallet_outlined,
-                    label: payoutsReady ? 'Payouts ready' : 'Payouts blocked',
+                    label: payoutsReady
+                        ? l10n.leadMarketPayoutsReadyShort
+                        : l10n.leadMarketPayoutsBlockedShort,
                   ),
                 ],
               ),
               if (!payoutsReady) ...[
                 const SizedBox(height: 10),
                 Text(
-                  'Connect payouts before accepting paid jobs. You can still review market demand and buy credits.',
+                  l10n.leadMarketPayoutBlockedExplain,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.error,
                     fontWeight: FontWeight.w700,
@@ -709,6 +724,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
   Widget _leadCreditActivitySection({required String uid}) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('lead_credit_transactions')
@@ -743,15 +759,15 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               initiallyExpanded: false,
               leading: Icon(Icons.receipt_long_outlined, color: scheme.primary),
               title: Text(
-                'Lead credit activity',
+                l10n.leadCreditActivityTitle,
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
               ),
               subtitle: Text(
                 docs.isEmpty
-                    ? 'Purchases and unlocks will appear here.'
-                    : 'Latest purchases, unlocks, refunds, and failed credits.',
+                    ? l10n.leadCreditActivityEmptySubtitle
+                    : l10n.leadCreditActivitySubtitle,
               ),
               children: [
                 if (docs.isEmpty)
@@ -766,11 +782,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                           color: scheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'When you buy credits or unlock a lead, this ledger gives you a receipt-style history.',
-                          ),
-                        ),
+                        Expanded(child: Text(l10n.leadCreditActivityEmptyBody)),
                       ],
                     ),
                   )
@@ -1073,8 +1085,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     required Map<String, dynamic> data,
     double? distanceMiles,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final service = (data['service'] ?? 'Service').toString();
+    final service = (data['service'] ?? l10n.service).toString();
     final description = (data['description'] ?? '').toString().trim();
     final contractorBrief = (data['contractorBrief'] ?? '').toString().trim();
     final leadQualityLabel = (data['leadQualityLabel'] ?? '').toString().trim();
@@ -1179,7 +1192,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          'Escrow',
+                          l10n.escrow,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -1203,14 +1216,14 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                       ),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.bolt, size: 12, color: Colors.white),
-                        SizedBox(width: 3),
+                        const Icon(Icons.bolt, size: 12, color: Colors.white),
+                        const SizedBox(width: 3),
                         Text(
-                          'Early Access',
-                          style: TextStyle(
+                          l10n.leadMarketEarlyAccess,
+                          style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -1271,12 +1284,14 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   icon: manualQuote
                       ? Icons.request_quote_outlined
                       : Icons.bolt_outlined,
-                  label: manualQuote ? 'Manual quote' : 'Instant price ready',
+                  label: manualQuote
+                      ? l10n.leadMarketManualQuote
+                      : l10n.leadMarketInstantPriceReady,
                 ),
                 if (_myServices.any((mine) => serviceMatches(mine, service)))
-                  const _LeadSignalChip(
+                  _LeadSignalChip(
                     icon: Icons.handyman_outlined,
-                    label: 'Matches your services',
+                    label: l10n.leadMarketMatchesYourServices,
                   ),
                 if (leadQualityLabel.isNotEmpty)
                   _LeadSignalChip(
@@ -1289,7 +1304,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   ),
                 _LeadSignalChip(
                   icon: Icons.photo_library_outlined,
-                  label: imageCount == 1 ? '1 photo' : '$imageCount photos',
+                  label: l10n.leadMarketPhotoCount(imageCount),
                 ),
                 if (urgency.isNotEmpty)
                   _LeadSignalChip(
@@ -1318,7 +1333,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               const SizedBox(height: 10),
               Text(
                 guidance.manualQuoteReason ??
-                    'Customer details should be reviewed before quoting.',
+                    l10n.leadMarketManualQuoteFallbackReason,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -1416,7 +1431,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             if (missingLeadFields.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'May need follow-up: ${missingLeadFields.take(2).join(', ')}',
+                l10n.leadMarketMayNeedFollowUp(
+                  missingLeadFields.take(2).join(', '),
+                ),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
@@ -1437,14 +1454,14 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Unlock model',
+                      l10n.leadMarketUnlockModel,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Text(
-                    '1 credit',
+                    l10n.leadMarketOneCredit,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: scheme.primary,
                       fontWeight: FontWeight.w900,
@@ -1460,7 +1477,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Budget: ${money.format(budget)}',
+                    l10n.leadMarketBudgetLabel(money.format(budget)),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -1491,7 +1508,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${formatDistance(distanceMiles)} away',
+                      l10n.leadMarketDistanceAway(
+                        formatDistance(distanceMiles),
+                      ),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
@@ -1509,7 +1528,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Posted $posted',
+                    l10n.leadMarketPostedDate(posted),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -1532,7 +1551,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 onPressed: () {
                   _openJobDetail(jobId: jobId, jobData: data);
                 },
-                child: const Text('View & unlock lead'),
+                child: Text(l10n.leadMarketViewUnlockLead),
               ),
             ),
           ],
@@ -1634,7 +1653,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Opening store…'),
+                content: Text('Opening store...'),
                 duration: Duration(seconds: 2),
               ),
             );
@@ -1755,10 +1774,13 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   if (job == null) {
                                     return const SizedBox.shrink();
                                   }
-                                  final service = (job['service'] ?? 'Service')
-                                      .toString();
+                                  final l10n = AppLocalizations.of(context)!;
+                                  final service =
+                                      (job['service'] ?? l10n.service)
+                                          .toString();
                                   final location =
-                                      (job['location'] ?? 'Unknown').toString();
+                                      (job['location'] ?? l10n.unknown)
+                                          .toString();
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
                                     leading: const Icon(Icons.mail_outline),
@@ -1996,7 +2018,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Jobs'),
+        title: Text(AppLocalizations.of(context)!.jobs),
         actions: [
           if (user != null)
             StreamBuilder<DocumentSnapshot>(
@@ -2066,7 +2088,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                     const SizedBox(width: 4),
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline),
-                      tooltip: 'Buy leads',
+                      tooltip: AppLocalizations.of(context)!.leadMarketBuyLeads,
                       onPressed: showLeadPackSheet,
                       visualDensity: VisualDensity.compact,
                     ),
@@ -2077,7 +2099,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         ],
       ),
       body: (user == null)
-          ? const Center(child: Text('Please sign in to view jobs.'))
+          ? Center(child: Text(AppLocalizations.of(context)!.signInRequired))
           : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('users')
@@ -2126,19 +2148,27 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Buy leads to see available jobs',
+                                AppLocalizations.of(
+                                  context,
+                                )!.leadMarketBuyLeadsToSeeJobs,
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'You need lead credits to view the job feed and unlock customer contact info.',
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.leadMarketCreditsRequiredBody,
                               ),
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton(
                                   onPressed: showLeadPackSheet,
-                                  child: const Text('Buy leads'),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.leadMarketBuyLeads,
+                                  ),
                                 ),
                               ),
                             ],
@@ -2204,7 +2234,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Leads are locked',
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.leadMarketLeadsLockedTitle,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
@@ -2213,15 +2245,21 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                           ),
                                     ),
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      'You need lead credits (or an invite) to view the available leads feed. If you just bought credits, give it a moment and try again.',
+                                    Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.leadMarketLeadsLockedBody,
                                     ),
                                     const SizedBox(height: 12),
                                     SizedBox(
                                       width: double.infinity,
                                       child: FilledButton(
                                         onPressed: showLeadPackSheet,
-                                        child: const Text('Buy leads'),
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.leadMarketBuyLeads,
+                                        ),
                                       ),
                                     ),
                                   ],
