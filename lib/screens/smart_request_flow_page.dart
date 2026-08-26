@@ -371,8 +371,8 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   // Navigation
   // ════════════════════════════════════════════════════════════════
 
-  void _next() {
-    if (_currentStep == 0 && !_validateStep1()) return;
+  Future<void> _next() async {
+    if (_currentStep == 0 && !await _validateStep1()) return;
     if (_currentStep == 0 && _selectedSupportsInstantPrice) {
       // Transitioning from step 1 to step 2 → trigger AI analysis.
       _runAiAnalysis();
@@ -402,12 +402,8 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
     }
   }
 
-  bool _validateStep1() {
+  Future<bool> _validateStep1() async {
     final l10n = AppLocalizations.of(context)!;
-    if (_photos.isEmpty) {
-      _showError(l10n.smartRequestPhotoRequired);
-      return false;
-    }
     final zip = _zipController.text.trim();
     if (zip.length != 5 || !RegExp(r'^\d{5}$').hasMatch(zip)) {
       _showError(l10n.smartRequestZipInvalid);
@@ -417,7 +413,33 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       _showError(l10n.smartRequestServiceRequired);
       return false;
     }
+    if (_photos.isEmpty) {
+      final proceed = await _confirmContinueWithoutPhotos();
+      if (!proceed) return false;
+    }
     return true;
+  }
+
+  Future<bool> _confirmContinueWithoutPhotos() async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.smartRequestNoPhotosTitle),
+        content: Text(l10n.smartRequestNoPhotosBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.smartRequestAddPhotos),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.smartRequestContinueWithoutPhotos),
+          ),
+        ],
+      ),
+    );
+    return result == true;
   }
 
   String? _serviceNameForType(String? type) {
@@ -931,18 +953,22 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add a little more detail?'),
+        title: Text(AppLocalizations.of(context)!.smartRequestMissingTitle),
         content: Text(
-          'Contractors can quote faster when these fields are filled in: ${missingFields.join(', ')}.\n\nYou can still submit now, but this lead may need follow-up questions.',
+          AppLocalizations.of(
+            context,
+          )!.smartRequestMissingBody(missingFields.join(', ')),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Review details'),
+            child: Text(
+              AppLocalizations.of(context)!.smartRequestReviewDetails,
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Submit anyway'),
+            child: Text(AppLocalizations.of(context)!.smartRequestSubmitAnyway),
           ),
         ],
       ),
@@ -985,7 +1011,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         final leave = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text(l10n.smartRequestDiscardTitle),
+            title: Text(l10n.smartRequestLeaveTitle),
             content: Text(l10n.smartRequestDiscardBody),
             actions: [
               TextButton(
@@ -1215,10 +1241,10 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         const SizedBox(height: 8),
         TextField(
           controller: _serviceSearchController,
-          decoration: const InputDecoration(
-            hintText: 'Search service, trade, or project type',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            hintText: l10n.smartRequestServiceSearchHint,
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.search),
           ),
         ),
         const SizedBox(height: 12),
@@ -1234,8 +1260,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           _ServiceGuidanceCard(
             title: _selectedServiceName!,
             subtitle: _selectedSupportsInstantPrice
-                ? 'Instant price supported. We will still collect photos and details for better contractor matching.'
-                : '${_currentGuidance.manualQuoteReason ?? 'This service needs pro review before pricing.'} We will send this as a quote request to matching pros.',
+                ? l10n.smartRequestInstantPriceSupported
+                : l10n.smartRequestManualQuoteSupported(
+                    _currentGuidance.manualQuoteReason ??
+                        l10n.smartRequestNeedsProReview,
+                  ),
             icon: _selectedSupportsInstantPrice
                 ? Icons.bolt_outlined
                 : Icons.request_quote_outlined,
@@ -1243,7 +1272,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           ),
           const SizedBox(height: 12),
           _ServiceGuidanceCard(
-            title: 'Helpful photos',
+            title: l10n.smartRequestHelpfulPhotosTitle,
             subtitle: _currentGuidance.summary,
             icon: Icons.photo_library_outlined,
             bullets: _currentGuidance.photoTips,
@@ -1263,7 +1292,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
           label: Text(
             _selectedSupportsInstantPrice
                 ? l10n.smartRequestAnalyzeWithAi
-                : 'Continue to details',
+                : l10n.smartRequestContinueToDetails,
           ),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 52),
@@ -1316,8 +1345,8 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         _ServiceGuidanceCard(
           title: '${_selectedServiceName ?? 'Project'} details checklist',
           subtitle: _selectedSupportsInstantPrice
-              ? 'Review these details before pricing or sending to pros.'
-              : 'This request will go to qualified pros for manual quotes. Clear answers help prevent callbacks and low-quality bids.',
+              ? l10n.smartRequestDetailsChecklistInstant
+              : l10n.smartRequestDetailsChecklistManual,
           icon: Icons.checklist_outlined,
           bullets: _currentGuidance.customerQuestions,
         ),
@@ -1438,7 +1467,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         Text(
           _selectedSupportsInstantPrice
               ? l10n.smartRequestSurfaceCondition
-              : 'Project condition',
+              : l10n.smartRequestProjectCondition,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -1688,11 +1717,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         const SizedBox(height: 12),
         _ServiceGuidanceCard(
           title: _selectedSupportsInstantPrice
-              ? 'Pricing path'
-              : 'Manual quote path',
+              ? l10n.smartRequestPricingPathTitle
+              : l10n.smartRequestManualQuotePathTitle,
           subtitle: _selectedSupportsInstantPrice
-              ? 'This service can show an instant AI price, then you can invite pros or continue with quotes.'
-              : 'Pros will review your details, photos, and service checklist before sending quotes.',
+              ? l10n.smartRequestPricingPathSubtitle
+              : l10n.smartRequestManualQuotePathSubtitle,
           icon: _selectedSupportsInstantPrice
               ? Icons.auto_awesome
               : Icons.groups_2_outlined,
@@ -1853,6 +1882,7 @@ class _ServiceCatalogPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final normalizedQuery = serviceKey(query);
     final filtered = services
         .where((service) {
@@ -1873,7 +1903,7 @@ class _ServiceCatalogPicker extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'No matching service yet. Try a broader trade like roofing, plumbing, cleaning, or handyman.',
+                  l10n.smartRequestNoMatchingService,
                   style: TextStyle(color: scheme.onSurfaceVariant),
                 ),
               ),
@@ -1902,7 +1932,7 @@ class _ServiceCatalogPicker extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Choose the closest service. Instant-price services can show an AI price; all other services become quote requests sent to matching pros.',
+                    l10n.smartRequestChooseClosestService,
                     style: TextStyle(
                       color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
@@ -1952,6 +1982,7 @@ class _ServiceCatalogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final accent = service.instantPrice ? scheme.primary : scheme.secondary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -2004,10 +2035,10 @@ class _ServiceCatalogTile extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         service.instantPrice
-                            ? 'Instant price + pro matching'
+                            ? l10n.smartRequestInstantPriceChip
                             : service.specificIntake
-                            ? 'Service-specific quote request'
-                            : 'Manual quote request',
+                            ? l10n.smartRequestServiceSpecificQuoteChip
+                            : l10n.smartRequestManualQuoteChip,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -2042,6 +2073,7 @@ class _ServiceAnswersReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final answeredEntries = answers.entries
         .where((entry) => _formatAnswer(entry.value).isNotEmpty)
         .take(8)
@@ -2060,7 +2092,7 @@ class _ServiceAnswersReviewCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Lead details for pros',
+                    l10n.smartRequestLeadDetailsTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -2071,8 +2103,8 @@ class _ServiceAnswersReviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               answeredEntries.isEmpty
-                  ? 'Add a few service details to help contractors quote with fewer follow-up questions.'
-                  : 'These structured details will be shown to matching contractors.',
+                  ? l10n.smartRequestLeadDetailsEmpty
+                  : l10n.smartRequestLeadDetailsFilled,
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
             if (answeredEntries.isNotEmpty) ...[
@@ -2116,7 +2148,9 @@ class _ServiceAnswersReviewCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Missing helpful details: ${missingFields.join(', ')}',
+                  l10n.smartRequestMissingHelpfulDetails(
+                    missingFields.join(', '),
+                  ),
                   style: TextStyle(
                     color: scheme.onErrorContainer,
                     fontWeight: FontWeight.w700,

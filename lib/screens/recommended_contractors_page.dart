@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../widgets/skeleton_loader.dart';
 
 import '../constants/service_types.dart';
+import '../l10n/app_localizations.dart';
 import '../models/marketplace_models.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/app_error_handler.dart';
@@ -133,14 +134,13 @@ class _RecommendedContractorsPageState
   }) {
     final zip = (job['zip'] as String?)?.trim() ?? '';
     final service = (job['service'] as String?)?.trim() ?? '';
+    final l10n = AppLocalizations.of(context)!;
 
     final jobLat = _zipLat(zip);
     final jobLng = _zipLng(zip);
 
     if (zip.isEmpty || jobLat == null || jobLng == null) {
-      return const Center(
-        child: Text('No contractors found (missing or unsupported ZIP).'),
-      );
+      return Center(child: Text(l10n.recommendedProsMissingZip));
     }
 
     return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -204,11 +204,7 @@ class _RecommendedContractorsPageState
         }
 
         if (candidates.isEmpty) {
-          return const Center(
-            child: Text(
-              'No recommended pros are available for this project yet. Try expanding the service area or check back soon.',
-            ),
-          );
+          return Center(child: Text(l10n.recommendedProsEmpty));
         }
 
         candidates.sort((a, b) {
@@ -240,7 +236,7 @@ class _RecommendedContractorsPageState
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                'Recommended local pros based on your project details.',
+                l10n.recommendedProsFallbackIntro,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -268,9 +264,9 @@ class _RecommendedContractorsPageState
   Future<void> _inviteToBid({required String contractorId}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please sign in first.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.signInRequired)),
+      );
       return;
     }
 
@@ -304,9 +300,13 @@ class _RecommendedContractorsPageState
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Invite sent.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.recommendedProsInviteSent,
+          ),
+        ),
+      );
     } catch (e, st) {
       if (!mounted) return;
       AppError.show(context, e, st, action: 'send invite');
@@ -320,6 +320,7 @@ class _RecommendedContractorsPageState
   Widget _requestLiveCard(Map<String, dynamic>? job, int invitedCount) {
     final scheme = Theme.of(context).colorScheme;
     final service = (job?['service'] ?? 'Your project').toString();
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       elevation: 0,
@@ -343,7 +344,7 @@ class _RecommendedContractorsPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$service request is live',
+                    l10n.recommendedProsRequestLiveTitle(service),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -351,8 +352,8 @@ class _RecommendedContractorsPageState
                   const SizedBox(height: 4),
                   Text(
                     invitedCount > 0
-                        ? '$invitedCount pro${invitedCount == 1 ? '' : 's'} invited. Quotes will appear in Projects.'
-                        : 'Pros can now review your details. Invite trusted pros or wait for quotes to appear in Projects.',
+                        ? l10n.recommendedProsInvitedStatus(invitedCount)
+                        : l10n.recommendedProsRequestLiveBody,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -370,7 +371,9 @@ class _RecommendedContractorsPageState
   Widget build(BuildContext context) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
-      appBar: AppBar(title: const Text('Top Recommended Pros')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.topRecommendedPros),
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -383,7 +386,7 @@ class _RecommendedContractorsPageState
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Complete'),
+              label: Text(AppLocalizations.of(context)!.completeAction),
             ),
           ),
         ),
@@ -420,7 +423,7 @@ class _RecommendedContractorsPageState
               }
 
               return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
                 children: [
                   _requestLiveCard(job, invited.length),
                   StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -491,7 +494,7 @@ class _RecommendedContractorsPageState
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Row(
                               children: [
-                                const Text('Sort:'),
+                                Text(AppLocalizations.of(context)!.sortLabel),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
@@ -500,22 +503,38 @@ class _RecommendedContractorsPageState
                                       isDense: true,
                                       border: OutlineInputBorder(),
                                     ),
-                                    items: const [
+                                    items: [
                                       DropdownMenuItem(
                                         value: 'match',
-                                        child: Text('Best Match'),
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.recommendedProsSortBestMatch,
+                                        ),
                                       ),
                                       DropdownMenuItem(
                                         value: 'distance',
-                                        child: Text('Closest'),
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.recommendedProsSortClosest,
+                                        ),
                                       ),
                                       DropdownMenuItem(
                                         value: 'rating',
-                                        child: Text('Highest Rated'),
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.recommendedProsSortHighestRated,
+                                        ),
                                       ),
                                       DropdownMenuItem(
                                         value: 'response',
-                                        child: Text('Fastest Response'),
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.recommendedProsSortFastestResponse,
+                                        ),
                                       ),
                                     ],
                                     onChanged: (v) {
@@ -612,6 +631,11 @@ class _RecommendedContractorsPageState
         if (c == null) return const SizedBox.shrink();
 
         final scheme = Theme.of(context).colorScheme;
+        final l10n = AppLocalizations.of(context)!;
+        int asInt(dynamic value) {
+          if (value is num) return value.toInt();
+          return int.tryParse(value?.toString() ?? '') ?? 0;
+        }
 
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
@@ -629,7 +653,7 @@ class _RecommendedContractorsPageState
                   children: [
                     Expanded(
                       child: Text(
-                        (c['name'] ?? 'Contractor').toString(),
+                        (c['name'] ?? l10n.contractor).toString(),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -685,14 +709,16 @@ class _RecommendedContractorsPageState
                     _infoChip(
                       Icons.schedule,
                       responseScore >= 80
-                          ? 'Fast'
+                          ? l10n.recommendedProsFast
                           : responseScore >= 60
-                          ? 'Medium'
-                          : 'Slow',
+                          ? l10n.recommendedProsMedium
+                          : l10n.recommendedProsSlow,
                     ),
                     _infoChip(
                       Icons.work,
-                      '${c['completedJobs'] ?? c['totalJobsCompleted'] ?? 0} jobs',
+                      l10n.completedJobsCount(
+                        asInt(c['completedJobs'] ?? c['totalJobsCompleted']),
+                      ),
                     ),
                   ],
                 ),
@@ -707,8 +733,10 @@ class _RecommendedContractorsPageState
                       onPressed: (isInvited || isInviting) ? null : onInvite,
                       child: Text(
                         isInvited
-                            ? 'Invited'
-                            : (isInviting ? 'Inviting…' : 'Invite to Bid'),
+                            ? l10n.recommendedProsInvited
+                            : (isInviting
+                                  ? l10n.recommendedProsInviting
+                                  : l10n.inviteToBid),
                       ),
                     ),
                   ),
@@ -720,7 +748,7 @@ class _RecommendedContractorsPageState
                     onPressed: () {
                       context.push('/contractor/$contractorId');
                     },
-                    child: const Text('View Profile'),
+                    child: Text(l10n.viewProfile),
                   ),
                 ),
               ],
@@ -737,10 +765,10 @@ class _RecommendedContractorsPageState
 
   Widget _confidenceChip(int matchScore) {
     final label = matchScore >= 75
-        ? 'Strong project fit'
+        ? AppLocalizations.of(context)!.recommendedProsStrongFit
         : matchScore >= 50
-        ? 'Good project fit'
-        : 'Review profile details';
+        ? AppLocalizations.of(context)!.recommendedProsGoodFit
+        : AppLocalizations.of(context)!.recommendedProsReviewProfile;
     final icon = matchScore >= 75
         ? Icons.verified_outlined
         : matchScore >= 50

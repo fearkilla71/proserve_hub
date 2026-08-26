@@ -1260,7 +1260,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => context.push('/job-command/$docId'),
+      onTap: () => context.push(primaryRoute),
       child: Ink(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -1412,38 +1412,45 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
     String claimedByName, {
     bool isEscrow = false,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'escrow_funded':
-        return _StatusInfo('Paid — Matching Contractor', Colors.amber);
+        return _StatusInfo(l10n.projectStatusPaidMatching, Colors.amber);
       case 'in_progress':
-        return _StatusInfo('In Progress', Colors.blue);
+        return _StatusInfo(l10n.projectStatusInProgress, Colors.blue);
       case 'completion_requested':
-        return _StatusInfo('Completion Requested', Colors.orange);
+        return _StatusInfo(
+          l10n.projectStatusCompletionRequested,
+          Colors.orange,
+        );
       case 'completion_approved':
-        return _StatusInfo('Approved', ProServeColors.accent);
+        return _StatusInfo(l10n.projectStatusApproved, ProServeColors.accent);
       case 'completed':
-        return _StatusInfo('Completed', ProServeColors.accent);
+        return _StatusInfo(l10n.completed, ProServeColors.accent);
       case 'cancelled':
-        return _StatusInfo('Cancelled', Colors.red);
+        return _StatusInfo(l10n.cancelled, Colors.red);
       case 'deleted':
-        return _StatusInfo('Deleted', Colors.red);
+        return _StatusInfo(l10n.deleted, Colors.red);
       default:
         if (isEscrow && claimed) {
           final name = claimedByName.isNotEmpty
-              ? 'Contractor: $claimedByName'
-              : 'Contractor Assigned';
+              ? l10n.projectStatusContractorName(claimedByName)
+              : l10n.projectStatusContractorAssigned;
           return _StatusInfo(name, Colors.blue);
         }
         if (claimed) {
           final name = claimedByName.isNotEmpty
-              ? 'Assigned: $claimedByName'
-              : 'Assigned';
+              ? l10n.projectStatusAssignedName(claimedByName)
+              : l10n.projectStatusAssigned;
           return _StatusInfo(name, Colors.blue);
         }
         if (isEscrow) {
-          return _StatusInfo('Price Offered', ProServeColors.accent);
+          return _StatusInfo(
+            l10n.projectStatusPriceOffered,
+            ProServeColors.accent,
+          );
         }
-        return _StatusInfo('Pending', Colors.grey);
+        return _StatusInfo(l10n.waitingForQuotes, Colors.grey);
     }
   }
 }

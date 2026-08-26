@@ -6308,6 +6308,12 @@ abstract class AppLocalizations {
   /// **'Discard request?'**
   String get smartRequestDiscardTitle;
 
+  /// No description provided for @smartRequestLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave request?'**
+  String get smartRequestLeaveTitle;
+
   /// No description provided for @smartRequestDiscardBody.
   ///
   /// In en, this message translates to:
@@ -6356,6 +6362,30 @@ abstract class AppLocalizations {
   /// **'Please add at least one photo of the project area.'**
   String get smartRequestPhotoRequired;
 
+  /// No description provided for @smartRequestNoPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without photos?'**
+  String get smartRequestNoPhotosTitle;
+
+  /// No description provided for @smartRequestNoPhotosBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos help contractors understand the scope and quote faster. You can still continue now and add details instead.'**
+  String get smartRequestNoPhotosBody;
+
+  /// No description provided for @smartRequestAddPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos'**
+  String get smartRequestAddPhotos;
+
+  /// No description provided for @smartRequestContinueWithoutPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without photos'**
+  String get smartRequestContinueWithoutPhotos;
+
   /// No description provided for @smartRequestZipInvalid.
   ///
   /// In en, this message translates to:
@@ -6367,6 +6397,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please select a service type.'**
   String get smartRequestServiceRequired;
+
+  /// No description provided for @smartRequestMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a little more detail?'**
+  String get smartRequestMissingTitle;
+
+  /// No description provided for @smartRequestMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractors can quote faster when these fields are filled in: {fields}.\n\nYou can still submit now, but this lead may need follow-up questions.'**
+  String smartRequestMissingBody(String fields);
+
+  /// No description provided for @smartRequestReviewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Review details'**
+  String get smartRequestReviewDetails;
+
+  /// No description provided for @smartRequestSubmitAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit anyway'**
+  String get smartRequestSubmitAnyway;
 
   /// No description provided for @smartRequestAiUnavailable.
   ///
@@ -6446,6 +6500,72 @@ abstract class AppLocalizations {
   /// **'Service Type'**
   String get smartRequestServiceType;
 
+  /// No description provided for @smartRequestServiceSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search service, trade, or project type'**
+  String get smartRequestServiceSearchHint;
+
+  /// No description provided for @smartRequestNoMatchingService.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching service yet. Try a broader trade like roofing, plumbing, cleaning, or handyman.'**
+  String get smartRequestNoMatchingService;
+
+  /// No description provided for @smartRequestChooseClosestService.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the closest service. Instant-price services can show an AI price; all other services become quote requests sent to matching pros.'**
+  String get smartRequestChooseClosestService;
+
+  /// No description provided for @smartRequestInstantPriceChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant price + pro matching'**
+  String get smartRequestInstantPriceChip;
+
+  /// No description provided for @smartRequestServiceSpecificQuoteChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Service-specific quote request'**
+  String get smartRequestServiceSpecificQuoteChip;
+
+  /// No description provided for @smartRequestManualQuoteChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual quote request'**
+  String get smartRequestManualQuoteChip;
+
+  /// No description provided for @smartRequestInstantPriceSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant price supported. We will still collect photos and details for better contractor matching.'**
+  String get smartRequestInstantPriceSupported;
+
+  /// No description provided for @smartRequestNeedsProReview.
+  ///
+  /// In en, this message translates to:
+  /// **'This service needs pro review before pricing.'**
+  String get smartRequestNeedsProReview;
+
+  /// No description provided for @smartRequestManualQuoteSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason} We will send this as a quote request to matching pros.'**
+  String smartRequestManualQuoteSupported(String reason);
+
+  /// No description provided for @smartRequestHelpfulPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Helpful photos'**
+  String get smartRequestHelpfulPhotosTitle;
+
+  /// No description provided for @smartRequestContinueToDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to details'**
+  String get smartRequestContinueToDetails;
+
   /// No description provided for @smartRequestAnalyzeWithAi.
   ///
   /// In en, this message translates to:
@@ -6475,6 +6595,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review and adjust the details below.'**
   String get smartRequestReviewAdjust;
+
+  /// No description provided for @smartRequestDetailsChecklistInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Review these details before pricing or sending to pros.'**
+  String get smartRequestDetailsChecklistInstant;
+
+  /// No description provided for @smartRequestDetailsChecklistManual.
+  ///
+  /// In en, this message translates to:
+  /// **'This request will go to qualified pros for manual quotes. Clear answers help prevent callbacks and low-quality bids.'**
+  String get smartRequestDetailsChecklistManual;
 
   /// No description provided for @smartRequestAiConfidence.
   ///
@@ -6511,6 +6643,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Surface Condition'**
   String get smartRequestSurfaceCondition;
+
+  /// No description provided for @smartRequestProjectCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Project condition'**
+  String get smartRequestProjectCondition;
 
   /// No description provided for @smartRequestExcellent.
   ///
@@ -6644,6 +6782,54 @@ abstract class AppLocalizations {
   /// **'Confirm your details and submit.'**
   String get smartRequestConfirmDetails;
 
+  /// No description provided for @smartRequestPricingPathTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing path'**
+  String get smartRequestPricingPathTitle;
+
+  /// No description provided for @smartRequestManualQuotePathTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual quote path'**
+  String get smartRequestManualQuotePathTitle;
+
+  /// No description provided for @smartRequestPricingPathSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This service can show an instant AI price, then you can invite pros or continue with quotes.'**
+  String get smartRequestPricingPathSubtitle;
+
+  /// No description provided for @smartRequestManualQuotePathSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pros will review your details, photos, and service checklist before sending quotes.'**
+  String get smartRequestManualQuotePathSubtitle;
+
+  /// No description provided for @smartRequestLeadDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead details for pros'**
+  String get smartRequestLeadDetailsTitle;
+
+  /// No description provided for @smartRequestLeadDetailsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few service details to help contractors quote with fewer follow-up questions.'**
+  String get smartRequestLeadDetailsEmpty;
+
+  /// No description provided for @smartRequestLeadDetailsFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'These structured details will be shown to matching contractors.'**
+  String get smartRequestLeadDetailsFilled;
+
+  /// No description provided for @smartRequestMissingHelpfulDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing helpful details: {fields}'**
+  String smartRequestMissingHelpfulDetails(String fields);
+
   /// No description provided for @smartRequestSummarySize.
   ///
   /// In en, this message translates to:
@@ -6703,6 +6889,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Appear first in search results'**
   String get boostListingSubtitle;
+
+  /// No description provided for @recommendedProsMissingZip.
+  ///
+  /// In en, this message translates to:
+  /// **'No contractors found yet because the ZIP code is missing or unsupported.'**
+  String get recommendedProsMissingZip;
+
+  /// No description provided for @recommendedProsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recommended pros are available for this project yet. Try expanding the service area or check back soon.'**
+  String get recommendedProsEmpty;
+
+  /// No description provided for @recommendedProsFallbackIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby pros who may fit this project.'**
+  String get recommendedProsFallbackIntro;
+
+  /// No description provided for @recommendedProsInviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent.'**
+  String get recommendedProsInviteSent;
+
+  /// No description provided for @recommendedProsRequestLiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{service} request is live'**
+  String recommendedProsRequestLiveTitle(String service);
+
+  /// No description provided for @recommendedProsInvitedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 pro invited. Quotes will appear in Projects.} other{{count} pros invited. Quotes will appear in Projects.}}'**
+  String recommendedProsInvitedStatus(int count);
+
+  /// No description provided for @recommendedProsRequestLiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pros can now review your details. Invite trusted pros or wait for quotes to appear in Projects.'**
+  String get recommendedProsRequestLiveBody;
+
+  /// No description provided for @topRecommendedPros.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Recommended Pros'**
+  String get topRecommendedPros;
+
+  /// No description provided for @completeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get completeAction;
+
+  /// No description provided for @sortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort:'**
+  String get sortLabel;
+
+  /// No description provided for @recommendedProsSortBestMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Match'**
+  String get recommendedProsSortBestMatch;
+
+  /// No description provided for @recommendedProsSortClosest.
+  ///
+  /// In en, this message translates to:
+  /// **'Closest'**
+  String get recommendedProsSortClosest;
+
+  /// No description provided for @recommendedProsSortHighestRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Rated'**
+  String get recommendedProsSortHighestRated;
+
+  /// No description provided for @recommendedProsSortFastestResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Fastest Response'**
+  String get recommendedProsSortFastestResponse;
+
+  /// No description provided for @recommendedProsFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get recommendedProsFast;
+
+  /// No description provided for @recommendedProsMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get recommendedProsMedium;
+
+  /// No description provided for @recommendedProsSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow'**
+  String get recommendedProsSlow;
+
+  /// No description provided for @recommendedProsInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get recommendedProsInvited;
+
+  /// No description provided for @recommendedProsInviting.
+  ///
+  /// In en, this message translates to:
+  /// **'Inviting...'**
+  String get recommendedProsInviting;
+
+  /// No description provided for @recommendedProsStrongFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong project fit'**
+  String get recommendedProsStrongFit;
+
+  /// No description provided for @recommendedProsGoodFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Good project fit'**
+  String get recommendedProsGoodFit;
+
+  /// No description provided for @recommendedProsReviewProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Review profile details'**
+  String get recommendedProsReviewProfile;
+
+  /// No description provided for @inviteToBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite to Bid'**
+  String get inviteToBid;
+
+  /// No description provided for @viewProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'View Profile'**
+  String get viewProfile;
+
+  /// No description provided for @projectStatusPaidMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid - Matching Contractor'**
+  String get projectStatusPaidMatching;
+
+  /// No description provided for @projectStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get projectStatusInProgress;
+
+  /// No description provided for @projectStatusCompletionRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion Requested'**
+  String get projectStatusCompletionRequested;
+
+  /// No description provided for @projectStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get projectStatusApproved;
+
+  /// No description provided for @projectStatusContractorName.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor: {name}'**
+  String projectStatusContractorName(String name);
+
+  /// No description provided for @projectStatusContractorAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Contractor Assigned'**
+  String get projectStatusContractorAssigned;
+
+  /// No description provided for @projectStatusAssignedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned: {name}'**
+  String projectStatusAssignedName(String name);
+
+  /// No description provided for @projectStatusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get projectStatusAssigned;
+
+  /// No description provided for @projectStatusPriceOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Offered'**
+  String get projectStatusPriceOffered;
+
+  /// No description provided for @deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get deleted;
 
   /// Retry button label
   ///

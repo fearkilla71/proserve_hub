@@ -3580,6 +3580,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get smartRequestDiscardTitle => '¿Salir de la solicitud?';
 
   @override
+  String get smartRequestLeaveTitle => '¿Salir de la solicitud?';
+
+  @override
   String get smartRequestDiscardBody =>
       'Tu progreso se guarda automáticamente. Puedes salir ahora y continuar esta solicitud después.';
 
@@ -3609,11 +3612,38 @@ class AppLocalizationsEs extends AppLocalizations {
       'Agrega al menos una foto del área del proyecto.';
 
   @override
+  String get smartRequestNoPhotosTitle => '¿Continuar sin fotos?';
+
+  @override
+  String get smartRequestNoPhotosBody =>
+      'Las fotos ayudan a los contratistas a entender el alcance y cotizar más rápido. Puedes continuar ahora y agregar detalles.';
+
+  @override
+  String get smartRequestAddPhotos => 'Agregar fotos';
+
+  @override
+  String get smartRequestContinueWithoutPhotos => 'Continuar sin fotos';
+
+  @override
   String get smartRequestZipInvalid =>
       'Ingresa un código postal válido de 5 dígitos.';
 
   @override
   String get smartRequestServiceRequired => 'Selecciona un tipo de servicio.';
+
+  @override
+  String get smartRequestMissingTitle => '¿Agregar más detalle?';
+
+  @override
+  String smartRequestMissingBody(String fields) {
+    return 'Los contratistas pueden cotizar más rápido si completas estos campos: $fields.\n\nPuedes enviar ahora, pero podrían necesitar preguntas de seguimiento.';
+  }
+
+  @override
+  String get smartRequestReviewDetails => 'Revisar detalles';
+
+  @override
+  String get smartRequestSubmitAnyway => 'Enviar de todos modos';
 
   @override
   String get smartRequestAiUnavailable =>
@@ -3662,6 +3692,46 @@ class AppLocalizationsEs extends AppLocalizations {
   String get smartRequestServiceType => 'Tipo de servicio';
 
   @override
+  String get smartRequestServiceSearchHint =>
+      'Buscar servicio, oficio o proyecto';
+
+  @override
+  String get smartRequestNoMatchingService =>
+      'Aún no hay coincidencias. Prueba un oficio más amplio como techo, plomería, limpieza o handyman.';
+
+  @override
+  String get smartRequestChooseClosestService =>
+      'Elige el servicio más cercano. Los servicios con precio instantáneo pueden mostrar precio de IA; los demás se envían como solicitud de cotización.';
+
+  @override
+  String get smartRequestInstantPriceChip => 'Precio instantáneo + pros';
+
+  @override
+  String get smartRequestServiceSpecificQuoteChip => 'Cotización específica';
+
+  @override
+  String get smartRequestManualQuoteChip => 'Cotización manual';
+
+  @override
+  String get smartRequestInstantPriceSupported =>
+      'Precio instantáneo disponible. También reuniremos fotos y detalles para encontrar mejores contratistas.';
+
+  @override
+  String get smartRequestNeedsProReview =>
+      'Este servicio necesita revisión de un pro antes del precio.';
+
+  @override
+  String smartRequestManualQuoteSupported(String reason) {
+    return '$reason Enviaremos esto como solicitud de cotización a pros compatibles.';
+  }
+
+  @override
+  String get smartRequestHelpfulPhotosTitle => 'Fotos útiles';
+
+  @override
+  String get smartRequestContinueToDetails => 'Continuar a detalles';
+
+  @override
   String get smartRequestAnalyzeWithAi => 'Analizar con IA';
 
   @override
@@ -3676,6 +3746,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get smartRequestReviewAdjust => 'Revisa y ajusta los detalles abajo.';
+
+  @override
+  String get smartRequestDetailsChecklistInstant =>
+      'Revisa estos detalles antes del precio o de enviarlo a pros.';
+
+  @override
+  String get smartRequestDetailsChecklistManual =>
+      'Esta solicitud irá a pros calificados para cotización manual. Respuestas claras evitan llamadas y ofertas incompletas.';
 
   @override
   String smartRequestAiConfidence(String percent) {
@@ -3696,6 +3774,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get smartRequestSurfaceCondition => 'Condición de la superficie';
+
+  @override
+  String get smartRequestProjectCondition => 'Condición del proyecto';
 
   @override
   String get smartRequestExcellent => 'Excelente';
@@ -3769,6 +3850,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get smartRequestConfirmDetails => 'Confirma tus detalles y envía.';
 
   @override
+  String get smartRequestPricingPathTitle => 'Ruta de precio';
+
+  @override
+  String get smartRequestManualQuotePathTitle => 'Ruta de cotización';
+
+  @override
+  String get smartRequestPricingPathSubtitle =>
+      'Este servicio puede mostrar un precio de IA, luego puedes invitar pros o seguir con cotizaciones.';
+
+  @override
+  String get smartRequestManualQuotePathSubtitle =>
+      'Los pros revisarán tus detalles, fotos y lista de servicio antes de enviar cotizaciones.';
+
+  @override
+  String get smartRequestLeadDetailsTitle => 'Detalles para pros';
+
+  @override
+  String get smartRequestLeadDetailsEmpty =>
+      'Agrega algunos detalles del servicio para que los contratistas coticen con menos preguntas.';
+
+  @override
+  String get smartRequestLeadDetailsFilled =>
+      'Estos detalles estructurados se mostrarán a los contratistas compatibles.';
+
+  @override
+  String smartRequestMissingHelpfulDetails(String fields) {
+    return 'Detalles útiles faltantes: $fields';
+  }
+
+  @override
   String get smartRequestSummarySize => 'Tamaño';
 
   @override
@@ -3799,6 +3910,126 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get boostListingSubtitle =>
       'Aparece primero en los resultados de búsqueda';
+
+  @override
+  String get recommendedProsMissingZip =>
+      'Aún no se encontraron contratistas porque falta el código postal o no es compatible.';
+
+  @override
+  String get recommendedProsEmpty =>
+      'Aún no hay pros recomendados para este proyecto. Prueba ampliar el área o revisa de nuevo después.';
+
+  @override
+  String get recommendedProsFallbackIntro =>
+      'Pros cercanos que podrían ajustarse a tu proyecto.';
+
+  @override
+  String get recommendedProsInviteSent => 'Invitación enviada.';
+
+  @override
+  String recommendedProsRequestLiveTitle(String service) {
+    return 'Solicitud de $service activa';
+  }
+
+  @override
+  String recommendedProsInvitedStatus(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pros invitados. Las cotizaciones aparecerán en Proyectos.',
+      one: '1 pro invitado. Las cotizaciones aparecerán en Proyectos.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recommendedProsRequestLiveBody =>
+      'Los pros ya pueden revisar tus detalles. Invita pros de confianza o espera cotizaciones en Proyectos.';
+
+  @override
+  String get topRecommendedPros => 'Pros recomendados';
+
+  @override
+  String get completeAction => 'Completar';
+
+  @override
+  String get sortLabel => 'Orden:';
+
+  @override
+  String get recommendedProsSortBestMatch => 'Mejor ajuste';
+
+  @override
+  String get recommendedProsSortClosest => 'Más cerca';
+
+  @override
+  String get recommendedProsSortHighestRated => 'Mejor calificación';
+
+  @override
+  String get recommendedProsSortFastestResponse => 'Respuesta rápida';
+
+  @override
+  String get recommendedProsFast => 'Rápido';
+
+  @override
+  String get recommendedProsMedium => 'Medio';
+
+  @override
+  String get recommendedProsSlow => 'Lento';
+
+  @override
+  String get recommendedProsInvited => 'Invitado';
+
+  @override
+  String get recommendedProsInviting => 'Invitando...';
+
+  @override
+  String get recommendedProsStrongFit => 'Muy buen ajuste';
+
+  @override
+  String get recommendedProsGoodFit => 'Buen ajuste';
+
+  @override
+  String get recommendedProsReviewProfile => 'Revisar perfil';
+
+  @override
+  String get inviteToBid => 'Invitar a cotizar';
+
+  @override
+  String get viewProfile => 'Ver perfil';
+
+  @override
+  String get projectStatusPaidMatching => 'Pagado - Buscando contratista';
+
+  @override
+  String get projectStatusInProgress => 'En progreso';
+
+  @override
+  String get projectStatusCompletionRequested => 'Finalización solicitada';
+
+  @override
+  String get projectStatusApproved => 'Aprobado';
+
+  @override
+  String projectStatusContractorName(String name) {
+    return 'Contratista: $name';
+  }
+
+  @override
+  String get projectStatusContractorAssigned => 'Contratista asignado';
+
+  @override
+  String projectStatusAssignedName(String name) {
+    return 'Asignado: $name';
+  }
+
+  @override
+  String get projectStatusAssigned => 'Asignado';
+
+  @override
+  String get projectStatusPriceOffered => 'Precio ofrecido';
+
+  @override
+  String get deleted => 'Eliminado';
 
   @override
   String get retry => 'Reintentar';
