@@ -451,33 +451,18 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
 
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final l10n = AppLocalizations.of(context)!;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    const navHeight = 80.0;
-    const persistentBarReserve = 0.0;
-    final contentBottomPadding = persistentBarReserve;
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: contentBottomPadding),
-              child: child,
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: navHeight + bottomInset,
-            child: const PersistentJobStateBar(role: JobBarRole.contractor),
-          ),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(child: child),
+            const PersistentJobStateBar(role: JobBarRole.contractor),
+          ],
+        ),
       ),
       floatingActionButton: fab == null
           ? null
-          : Padding(
-              padding: EdgeInsets.only(bottom: persistentBarReserve),
-              child: fab,
-            ),
+          : Padding(padding: const EdgeInsets.only(bottom: 8), child: fab),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
@@ -1240,7 +1225,7 @@ class _ContractorDashboardHeader extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
-              letterSpacing: -0.2,
+              letterSpacing: 0,
             ),
           ),
         ),
@@ -1392,7 +1377,7 @@ class _DashboardMetricCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
+                    letterSpacing: 0,
                   ),
                 ),
               ),

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
+
 enum JobBarRole { customer, contractor }
 
 class PersistentJobStateBar extends StatelessWidget {
@@ -12,6 +14,7 @@ class PersistentJobStateBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
@@ -53,9 +56,9 @@ class PersistentJobStateBar extends StatelessWidget {
 
         if (inProgress) {
           return _Bar(
-            title: 'In progress',
-            subtitle: 'Work is underway.',
-            actionLabel: 'Open job',
+            title: l10n.inProgress,
+            subtitle: l10n.persistentJobBarWorkUnderway,
+            actionLabel: l10n.openJob,
             onPressed: () {
               context.push('/job-command/$jobId');
             },
@@ -80,9 +83,9 @@ class PersistentJobStateBar extends StatelessWidget {
                 if (alreadyReviewed) return const SizedBox.shrink();
 
                 return _Bar(
-                  title: 'Awaiting review',
-                  subtitle: 'Leave a review to close this out.',
-                  actionLabel: 'Review',
+                  title: l10n.persistentJobBarAwaitingReview,
+                  subtitle: l10n.persistentJobBarCustomerReviewPrompt,
+                  actionLabel: l10n.review,
                   onPressed: () {
                     context.push('/job-command/$jobId');
                   },
@@ -92,9 +95,9 @@ class PersistentJobStateBar extends StatelessWidget {
           }
 
           return _Bar(
-            title: 'Awaiting review',
-            subtitle: 'Customer review pending.',
-            actionLabel: 'Open job',
+            title: l10n.persistentJobBarAwaitingReview,
+            subtitle: l10n.persistentJobBarContractorReviewPending,
+            actionLabel: l10n.openJob,
             onPressed: () {
               context.push('/job-command/$jobId');
             },
@@ -124,44 +127,46 @@ class _Bar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Icon(Icons.circle, size: 10, color: scheme.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle. $actionLabel',
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.circle, size: 10, color: scheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton.tonal(
-                  onPressed: onPressed,
-                  child: Text(actionLabel),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  FilledButton.tonal(
+                    onPressed: onPressed,
+                    child: Text(actionLabel),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -4760,6 +4760,30 @@ abstract class AppLocalizations {
   /// **'In progress'**
   String get inProgress;
 
+  /// No description provided for @persistentJobBarWorkUnderway.
+  ///
+  /// In en, this message translates to:
+  /// **'Work is underway.'**
+  String get persistentJobBarWorkUnderway;
+
+  /// No description provided for @persistentJobBarAwaitingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting review'**
+  String get persistentJobBarAwaitingReview;
+
+  /// No description provided for @persistentJobBarCustomerReviewPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a review to close this out.'**
+  String get persistentJobBarCustomerReviewPrompt;
+
+  /// No description provided for @persistentJobBarContractorReviewPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer review pending.'**
+  String get persistentJobBarContractorReviewPending;
+
   /// No description provided for @completed.
   ///
   /// In en, this message translates to:

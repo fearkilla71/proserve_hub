@@ -69,13 +69,18 @@ class StoreScreenshotDemoScreen extends StatelessWidget {
               ),
             ),
             ...entry.value.map(
-              (item) => Card(
-                child: ListTile(
-                  leading: const Icon(Icons.phone_android_outlined),
-                  title: Text(item.label),
-                  subtitle: Text(item.description),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(item.route),
+              (item) => Semantics(
+                button: true,
+                label:
+                    'Open ${item.label} screenshot. ${item.description}. Category ${item.category}.',
+                child: Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.phone_android_outlined),
+                    title: Text(item.label),
+                    subtitle: Text(item.description),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(item.route),
+                  ),
                 ),
               ),
             ),

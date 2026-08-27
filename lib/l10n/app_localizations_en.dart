@@ -2667,6 +2667,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inProgress => 'In progress';
 
   @override
+  String get persistentJobBarWorkUnderway => 'Work is underway.';
+
+  @override
+  String get persistentJobBarAwaitingReview => 'Awaiting review';
+
+  @override
+  String get persistentJobBarCustomerReviewPrompt =>
+      'Leave a review to close this out.';
+
+  @override
+  String get persistentJobBarContractorReviewPending =>
+      'Customer review pending.';
+
+  @override
   String get completed => 'Completed';
 
   @override

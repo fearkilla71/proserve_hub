@@ -124,6 +124,7 @@ class _LandingPageState extends State<LandingPage>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 520;
+                  final isCompactHeight = constraints.maxHeight < 760;
                   final horizontalPadding = constraints.maxWidth < 380
                       ? 16.0
                       : 20.0;
@@ -131,7 +132,7 @@ class _LandingPageState extends State<LandingPage>
                   return SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      18,
+                      isCompactHeight ? 12 : 18,
                       horizontalPadding,
                       24,
                     ),
@@ -148,7 +149,7 @@ class _LandingPageState extends State<LandingPage>
                                 child: _LandingHeader(l10n: l10n),
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            SizedBox(height: isCompactHeight ? 16 : 24),
                             FadeTransition(
                               opacity: _bodyFade,
                               child: SlideTransition(
@@ -156,19 +157,22 @@ class _LandingPageState extends State<LandingPage>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _HeroCopy(l10n: l10n),
-                                    const SizedBox(height: 20),
+                                    _HeroCopy(
+                                      l10n: l10n,
+                                      compact: isCompactHeight,
+                                    ),
+                                    SizedBox(height: isCompactHeight ? 14 : 20),
                                     _RoleChoiceSection(
                                       l10n: l10n,
                                       twoColumn: isWide,
                                     ),
-                                    const SizedBox(height: 24),
+                                    SizedBox(height: isCompactHeight ? 16 : 24),
                                     _TrustStrip(l10n: l10n),
                                   ],
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 18),
+                            SizedBox(height: isCompactHeight ? 12 : 18),
                             FadeTransition(
                               opacity: _footerFade,
                               child: _BuiltForTradesCard(l10n: l10n),
@@ -296,9 +300,10 @@ class _LanguageMenu extends StatelessWidget {
 }
 
 class _HeroCopy extends StatelessWidget {
-  const _HeroCopy({required this.l10n});
+  const _HeroCopy({required this.l10n, required this.compact});
 
   final AppLocalizations l10n;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -306,13 +311,13 @@ class _HeroCopy extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Badge(label: l10n.landingBadge),
-        const SizedBox(height: 22),
+        SizedBox(height: compact ? 14 : 22),
         RichText(
           text: TextSpan(
             style: GoogleFonts.manrope(
-              fontSize: 35,
+              fontSize: compact ? 31 : 35,
               height: 1.08,
-              letterSpacing: -1.1,
+              letterSpacing: 0,
               fontWeight: FontWeight.w900,
               color: ProServeColors.ink,
             ),
@@ -325,11 +330,11 @@ class _HeroCopy extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: compact ? 10 : 16),
         Text(
           l10n.landingSubtitle,
           style: GoogleFonts.manrope(
-            fontSize: 16,
+            fontSize: compact ? 14.5 : 16,
             height: 1.45,
             color: ProServeColors.muted,
             fontWeight: FontWeight.w500,
@@ -425,184 +430,190 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(compact ? 15 : 18),
-          decoration: BoxDecoration(
-            color: ProServeColors.card.withValues(alpha: 0.74),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-            gradient: LinearGradient(
-              colors: [
-                backgroundAccent,
-                ProServeColors.card.withValues(alpha: 0.78),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: compact ? 46 : 54,
-                    height: compact ? 46 : 54,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(compact ? 14 : 16),
-                      gradient: LinearGradient(
-                        colors: [accent, accent.withValues(alpha: 0.65)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.18),
-                          blurRadius: compact ? 14 : 22,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      icon,
-                      color: ProServeColors.ink,
-                      size: compact ? 25 : 29,
-                    ),
-                  ),
-                  SizedBox(width: compact ? 13 : 0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (!compact) const SizedBox(height: 22),
-                        Text(
-                          title,
-                          style: GoogleFonts.manrope(
-                            fontSize: compact ? 19 : 22,
-                            height: 1.12,
-                            fontWeight: FontWeight.w900,
-                            color: ProServeColors.ink,
-                          ),
-                        ),
-                        const SizedBox(height: 7),
-                        Text(
-                          body,
-                          style: GoogleFonts.manrope(
-                            fontSize: compact ? 12.6 : 13.5,
-                            height: compact ? 1.32 : 1.42,
-                            fontWeight: FontWeight.w500,
-                            color: ProServeColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return Semantics(
+      button: true,
+      label: '$title. $body. $cta',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: EdgeInsets.all(compact ? 15 : 18),
+            decoration: BoxDecoration(
+              color: ProServeColors.card.withValues(alpha: 0.74),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: accent.withValues(alpha: 0.35)),
+              gradient: LinearGradient(
+                colors: [
+                  backgroundAccent,
+                  ProServeColors.card.withValues(alpha: 0.78),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              SizedBox(height: compact ? 12 : 18),
-              ...bullets.map(
-                (bullet) => Padding(
-                  padding: EdgeInsets.only(bottom: compact ? 7 : 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 19,
-                        height: 19,
-                        margin: const EdgeInsets.only(top: 1),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: accent.withValues(alpha: 0.22),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: compact ? 46 : 54,
+                      height: compact ? 46 : 54,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(compact ? 14 : 16),
+                        gradient: LinearGradient(
+                          colors: [accent, accent.withValues(alpha: 0.65)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Icon(Icons.check, size: 13, color: accent),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          bullet,
-                          style: GoogleFonts.manrope(
-                            fontSize: 12.2,
-                            height: 1.35,
-                            fontWeight: FontWeight.w700,
-                            color: ProServeColors.ink.withValues(alpha: 0.9),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accent.withValues(alpha: 0.18),
+                            blurRadius: compact ? 14 : 22,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: compact ? 8 : 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: onTap,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [accent, ProServeColors.accent2],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                      child: Icon(
+                        icon,
+                        color: ProServeColors.ink,
+                        size: compact ? 25 : 29,
                       ),
-                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      constraints: BoxConstraints(minHeight: compact ? 46 : 50),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    SizedBox(width: compact ? 13 : 0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              cta,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.manrope(
-                                fontSize: compact ? 14 : 14.5,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF041016),
-                              ),
+                          if (!compact) const SizedBox(height: 22),
+                          Text(
+                            title,
+                            style: GoogleFonts.manrope(
+                              fontSize: compact ? 19 : 22,
+                              height: 1.12,
+                              fontWeight: FontWeight.w900,
+                              color: ProServeColors.ink,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.arrow_forward,
-                            size: 19,
-                            color: Color(0xFF041016),
+                          const SizedBox(height: 7),
+                          Text(
+                            body,
+                            style: GoogleFonts.manrope(
+                              fontSize: compact ? 12.6 : 13.5,
+                              height: compact ? 1.32 : 1.42,
+                              fontWeight: FontWeight.w500,
+                              color: ProServeColors.muted,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+                SizedBox(height: compact ? 12 : 18),
+                ...bullets.map(
+                  (bullet) => Padding(
+                    padding: EdgeInsets.only(bottom: compact ? 7 : 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 19,
+                          height: 19,
+                          margin: const EdgeInsets.only(top: 1),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accent.withValues(alpha: 0.22),
+                          ),
+                          child: Icon(Icons.check, size: 13, color: accent),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            bullet,
+                            style: GoogleFonts.manrope(
+                              fontSize: 12.2,
+                              height: 1.35,
+                              fontWeight: FontWeight.w700,
+                              color: ProServeColors.ink.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: compact ? 9 : 12),
-              Center(
-                child: Text(
-                  footnote,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.manrope(
-                    fontSize: 12,
-                    color: ProServeColors.muted,
-                    fontWeight: FontWeight.w600,
+                SizedBox(height: compact ? 8 : 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: onTap,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [accent, ProServeColors.accent2],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        constraints: BoxConstraints(
+                          minHeight: compact ? 46 : 50,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                cta,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.manrope(
+                                  fontSize: compact ? 14 : 14.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF041016),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward,
+                              size: 19,
+                              color: Color(0xFF041016),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: compact ? 9 : 12),
+                Center(
+                  child: Text(
+                    footnote,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: ProServeColors.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

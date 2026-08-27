@@ -184,20 +184,20 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
   Widget _tabScaffold({required Widget child, Widget? fab}) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(child: child),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: const PersistentJobStateBar(role: JobBarRole.customer),
-          ),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(child: child),
+            const PersistentJobStateBar(role: JobBarRole.customer),
+          ],
+        ),
       ),
       floatingActionButton: fab == null
           ? null
-          : Padding(padding: const EdgeInsets.only(bottom: 8), child: fab),
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Semantics(button: true, label: l10n.messages, child: fab),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         height: 76,
