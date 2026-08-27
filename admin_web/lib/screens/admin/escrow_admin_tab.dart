@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:web/web.dart' as web;
 
@@ -1137,6 +1138,11 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
                       ),
                   ],
 
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  _EscrowActionHistory(escrowId: id),
+
                   const SizedBox(height: 20),
                   // Admin actions
                   if (status == 'funded' ||
@@ -1148,7 +1154,10 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               Navigator.pop(ctx);
-                              await _forceRelease(id);
+                              await _confirmEscrowRecoveryAction(
+                                escrowId: id,
+                                action: _EscrowRecoveryAction.release,
+                              );
                             },
                             icon: const Icon(Icons.send, size: 16),
                             label: const Text('Force Release'),
@@ -1162,7 +1171,10 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               Navigator.pop(ctx);
-                              await _forceCancel(id);
+                              await _confirmEscrowRecoveryAction(
+                                escrowId: id,
+                                action: _EscrowRecoveryAction.cancel,
+                              );
                             },
                             icon: const Icon(Icons.cancel, size: 16),
                             label: const Text('Force Cancel'),
@@ -1212,13 +1224,94 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
 
   // ── Admin actions ──
 
-  Future<void> _forceRelease(String escrowId) async {
+  Future<void> _confirmEscrowRecoveryAction({
+    required String escrowId,
+    required _EscrowRecoveryAction action,
+  }) async {
+    final controller = TextEditingController();
+    final isRelease = action == _EscrowRecoveryAction.release;
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          isRelease ? 'Force release escrow?' : 'Force cancel escrow?',
+        ),
+        content: SizedBox(
+          width: 460,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isRelease
+                    ? 'This marks the escrow as released from Admin Web. Use this only after confirming the Stripe payout or manual resolution.'
+                    : 'This marks the escrow as cancelled from Admin Web. Use this only after confirming the customer refund or agreed cancellation path.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLines: 4,
+                maxLength: 500,
+                decoration: const InputDecoration(
+                  labelText: 'Required reason',
+                  hintText: 'What did you verify before taking this action?',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: isRelease ? null : AdminColors.error,
+            ),
+            onPressed: () {
+              final note = controller.text.trim();
+              if (note.isEmpty) return;
+              Navigator.pop(dialogContext, note);
+            },
+            child: Text(isRelease ? 'Force release' : 'Force cancel'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (reason == null || reason.isEmpty) return;
+    if (isRelease) {
+      await _forceRelease(escrowId, reason);
+    } else {
+      await _forceCancel(escrowId, reason);
+    }
+  }
+
+  Future<void> _forceRelease(String escrowId, String reason) async {
     try {
-      await _db.collection('escrow_bookings').doc(escrowId).update({
+      final user = FirebaseAuth.instance.currentUser;
+      final ref = _db.collection('escrow_bookings').doc(escrowId);
+      final batch = _db.batch();
+      batch.set(ref.collection('admin_actions').doc(), {
+        'action': 'force_release',
+        'note': reason,
+        'adminUid': user?.uid ?? 'unknown_admin',
+        'adminName': user?.displayName ?? user?.email ?? 'Admin',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      batch.set(ref, {
         'status': 'released',
         'releasedAt': FieldValue.serverTimestamp(),
-        'adminReleasedNote': 'Force released by admin',
-      });
+        'adminReleasedNote': reason,
+        'lastAdminAction': 'force_release',
+        'lastAdminActionNote': reason,
+        'lastAdminActionAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await batch.commit();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Escrow funds force released')),
@@ -1226,18 +1319,36 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
       _loadData();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not force release escrow. Check permissions and try again.',
+          ),
+        ),
+      );
     }
   }
 
-  Future<void> _forceCancel(String escrowId) async {
+  Future<void> _forceCancel(String escrowId, String reason) async {
     try {
-      await _db.collection('escrow_bookings').doc(escrowId).update({
-        'status': 'cancelled',
-        'adminCancelledNote': 'Force cancelled by admin',
+      final user = FirebaseAuth.instance.currentUser;
+      final ref = _db.collection('escrow_bookings').doc(escrowId);
+      final batch = _db.batch();
+      batch.set(ref.collection('admin_actions').doc(), {
+        'action': 'force_cancel',
+        'note': reason,
+        'adminUid': user?.uid ?? 'unknown_admin',
+        'adminName': user?.displayName ?? user?.email ?? 'Admin',
+        'createdAt': FieldValue.serverTimestamp(),
       });
+      batch.set(ref, {
+        'status': 'cancelled',
+        'adminCancelledNote': reason,
+        'lastAdminAction': 'force_cancel',
+        'lastAdminActionNote': reason,
+        'lastAdminActionAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await batch.commit();
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1245,9 +1356,112 @@ class _EscrowAdminTabState extends State<EscrowAdminTab> {
       _loadData();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not cancel escrow. Check permissions and try again.',
+          ),
+        ),
+      );
     }
+  }
+}
+
+enum _EscrowRecoveryAction { release, cancel }
+
+class _EscrowActionHistory extends StatelessWidget {
+  const _EscrowActionHistory({required this.escrowId});
+
+  final String escrowId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('escrow_bookings')
+          .doc(escrowId)
+          .collection('admin_actions')
+          .orderBy('createdAt', descending: true)
+          .limit(5)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return const Text(
+            'Action history unavailable.',
+            style: TextStyle(color: AdminColors.error),
+          );
+        }
+        if (!snap.hasData) return const LinearProgressIndicator();
+        final docs = snap.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Action history',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            if (docs.isEmpty)
+              Text(
+                'No escrow recovery actions recorded yet.',
+                style: TextStyle(color: AdminColors.muted, fontSize: 12),
+              )
+            else
+              ...docs.map((doc) {
+                final data = doc.data();
+                final action = (data['action'] ?? 'admin_action')
+                    .toString()
+                    .replaceAll('_', ' ');
+                final note = (data['note'] ?? '').toString();
+                final admin = (data['adminName'] ?? 'Admin').toString();
+                final createdAt = data['createdAt'] is Timestamp
+                    ? (data['createdAt'] as Timestamp).toDate()
+                    : null;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.history,
+                        size: 16,
+                        color: AdminColors.accent2,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              action.toUpperCase(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (note.isNotEmpty)
+                              Text(note, style: const TextStyle(fontSize: 12)),
+                            Text(
+                              [
+                                admin,
+                                if (createdAt != null)
+                                  DateFormat.MMMd().add_jm().format(createdAt),
+                              ].join(' • '),
+                              style: TextStyle(
+                                color: AdminColors.muted,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ],
+        );
+      },
+    );
   }
 }

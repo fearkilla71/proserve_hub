@@ -130,17 +130,21 @@ class StripeService {
           return await _callHttp(httpName, params);
         } catch (httpError) {
           final base = humanizePaymentError(e);
-          throw Exception(
-            '$base\n\n(Details: code=${e.code}, message=${e.message})\nHTTP fallback: $httpError',
+          debugPrint(
+            '[StripeService] $callableName callable failed and $httpName fallback failed. '
+            'Callable code=${e.code}, message=${e.message}; HTTP error=$httpError',
           );
+          throw Exception(base);
         }
       } catch (e) {
         try {
           return await _callHttp(httpName, params);
         } catch (httpError) {
-          throw Exception(
-            '${humanizePaymentError(e)}\n\nHTTP fallback: $httpError',
+          debugPrint(
+            '[StripeService] $callableName failed and $httpName fallback failed. '
+            'Callable error=$e; HTTP error=$httpError',
           );
+          throw Exception(humanizePaymentError(e));
         }
       }
     }
