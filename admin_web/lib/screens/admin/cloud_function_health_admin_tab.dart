@@ -27,7 +27,15 @@ class _CloudFunctionHealthAdminTabState
           .snapshots(),
       builder: (context, snap) {
         if (snap.hasError) {
-          return Center(child: Text('Error: ${snap.error}'));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Could not load function health. Check admin permissions and try again.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
         }
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

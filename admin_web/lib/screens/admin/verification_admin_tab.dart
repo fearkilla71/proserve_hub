@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
+import '../../utils/admin_error_text.dart';
 
 class VerificationAdminTab extends StatefulWidget {
   final bool canWrite;
@@ -71,9 +72,11 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(adminFriendlyError(e, 'approve verification')),
+          ),
+        );
       }
     }
   }
@@ -99,9 +102,9 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(adminFriendlyError(e, 'reject verification'))),
+        );
       }
     }
   }
@@ -116,7 +119,7 @@ class _VerificationAdminTabState extends State<VerificationAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Error loading verifications:\n\n${snapshot.error}',
+                adminFriendlyError(snapshot.error, 'load verifications'),
                 textAlign: TextAlign.center,
               ),
             ),

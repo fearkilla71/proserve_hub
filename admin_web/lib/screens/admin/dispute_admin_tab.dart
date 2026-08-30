@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/admin_theme.dart';
+import '../../utils/admin_error_text.dart';
 
 class DisputeAdminTab extends StatefulWidget {
   final bool canWrite;
@@ -70,9 +71,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(adminFriendlyError(e, 'update dispute'))),
+        );
       }
     }
   }
@@ -144,9 +145,9 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(adminFriendlyError(e, 'escalate dispute'))),
+        );
       }
     }
   }
@@ -293,7 +294,7 @@ class _DisputeAdminTabState extends State<DisputeAdminTab> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Error loading disputes:\n\n${snapshot.error}',
+                adminFriendlyError(snapshot.error, 'load disputes'),
                 textAlign: TextAlign.center,
               ),
             ),

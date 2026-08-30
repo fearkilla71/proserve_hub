@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_error_handler.dart';
+
 /// Helper for optimistic UI updates - shows immediate feedback before server confirms
 class OptimisticUI {
   /// Show optimistic snackbar with undo option
@@ -76,7 +78,7 @@ class OptimisticUI {
         dismissLoadingOverlay(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage ?? 'Error: ${e.toString()}'),
+            content: Text(errorMessage ?? AppError.message(e)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'package:admin_web/services/admin_service.dart';
+import 'package:admin_web/utils/admin_error_text.dart';
 
 class ContractorAdminTab extends StatefulWidget {
   const ContractorAdminTab({super.key});
@@ -396,9 +397,9 @@ class _ContractorAdminTabState extends State<ContractorAdminTab> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to archive user: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(adminFriendlyError(e, 'archive user'))),
+      );
     }
   }
 

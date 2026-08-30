@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../utils/admin_error_text.dart';
 import '../../widgets/skeleton_loader.dart';
 
 /// ---------------------------------------------------------------------------
@@ -231,9 +232,9 @@ class _NotificationAdminTabState extends State<NotificationAdminTab> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(adminFriendlyError(e, 'send notification'))),
+        );
       }
     } finally {
       if (mounted) setState(() => _sending = false);

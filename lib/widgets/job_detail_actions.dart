@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../services/conversation_service.dart';
 import '../services/job_claim_service.dart';
 import '../utils/bottom_sheet_helper.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/optimistic_ui.dart';
 
 /// Helper methods extracted from [JobDetailPage] to reduce god-class size.
@@ -81,11 +82,7 @@ class JobDetailActions {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to open chat: ${e.toString().replaceFirst('Exception: ', '')}',
-          ),
-        ),
+        SnackBar(content: Text(AppError.message(e, action: 'open chat'))),
       );
     }
   }
@@ -116,11 +113,7 @@ class JobDetailActions {
       context.push('/dispute-detail/$disputeId');
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error loading dispute: ${e.toString().replaceFirst('Exception: ', '')}',
-          ),
-        ),
+        SnackBar(content: Text(AppError.message(e, action: 'load dispute'))),
       );
     }
   }
