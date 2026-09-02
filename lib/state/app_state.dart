@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/launch_regions.dart';
+
 /// Centralised, observable application state.
 ///
 /// Caches the current [User], resolved role, and basic profile data so that
@@ -45,6 +47,7 @@ class AppState extends ChangeNotifier {
   bool get isContractor => _role == 'contractor';
   bool get isCustomer => _role == 'customer';
   bool get isSignedIn => _user != null;
+  bool get isWaitlisted => isWaitlistedProfile(_profile);
   bool get isLoading => _loading;
   bool get phoneVerified => _phoneVerified;
   bool get emailVerified => _user?.emailVerified ?? false;

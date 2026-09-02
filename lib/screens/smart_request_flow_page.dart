@@ -13,9 +13,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/service_types.dart';
+import '../constants/launch_regions.dart';
 import '../constants/service_guidance.dart';
 import '../constants/service_intake.dart';
 import '../l10n/app_localizations.dart';
+import '../services/region_waitlist_service.dart';
 import '../utils/app_error_handler.dart';
 import '../utils/pricing_engine.dart';
 
@@ -409,6 +411,10 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
       _showError(l10n.smartRequestZipInvalid);
       return false;
     }
+    if (!isSupportedLaunchZip(zip)) {
+      await _sendUnsupportedZipToWaitlist(zip);
+      return false;
+    }
     if (_selectedServiceType == null) {
       _showError(l10n.smartRequestServiceRequired);
       return false;
@@ -745,6 +751,11 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
   Future<void> _submit() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+    final zip = normalizeZip(_zipController.text);
+    if (!isSupportedLaunchZip(zip)) {
+      await _sendUnsupportedZipToWaitlist(zip);
+      return;
+    }
 
     final serviceLabel = _selectedServiceName ?? 'Painting';
     final intakeDefinition = intakeDefinitionForService(serviceLabel);
@@ -770,7 +781,6 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
     setState(() => _submitting = true);
 
     try {
-      final zip = _zipController.text.trim();
       final quantity = _primaryQuantity();
       final urgent = _timeline == 'asap';
       final qualityScore = leadQualityScore(
@@ -866,6 +876,8 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
         'matchTags': serviceMatchTags,
         'location': 'ZIP $zip',
         'zip': zip,
+        'launchRegion': launchRegionForZip(zip),
+        'marketStatus': marketStatusForZip(zip),
         'quantity': quantity,
         'urgency': urgent ? 'asap' : 'standard',
         'budget': budget,
@@ -945,6 +957,23 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Future<void> _sendUnsupportedZipToWaitlist(String zip) async {
+    final l10n = AppLocalizations.of(context)!;
+    await RegionWaitlistService().saveAccountRegion(
+      role: 'customer',
+      zip: zip,
+      name: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      service: _selectedServiceName ?? _selectedServiceType,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.regionWaitlistRequestBlocked)));
+    context.go('/region-waitlist');
   }
 
   Future<bool> _confirmSubmitWithMissingFields(

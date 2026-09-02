@@ -128,6 +128,24 @@ function hasOwn(obj, key) {
   return Object.prototype.hasOwnProperty.call(obj || {}, key);
 }
 
+function normalizeZip(value) {
+  const digits = (value || '').toString().replace(/\D/g, '');
+  return digits.length >= 5 ? digits.slice(0, 5) : digits;
+}
+
+function isSupportedLaunchZip(value) {
+  const zip = normalizeZip(value);
+  return /^(770(0[1-9]|[1-8][0-9]|9[0-6]|98|99)|773(0[1-6]|1[568]|2[578]|3[36789]|4[567]|5[3-7]|6[2589]|7[235789]|8[0-9]|9[136])|774(0[1267]|1[0137]|2[239]|3[013]|4[145679]|5[019]|6[13469]|7[16789]|8[014679]|9[1234678])|775(0[1-8]|1[0-8]|2[0-3]|3[0-6]|38|39|4[125679]|5[0-5]|6[0-6]|68|7[1234578]|8[0-8]|9[0-278])|776(17|23|50|61|65))$/.test(zip);
+}
+
+function launchRegionForZip(value) {
+  return isSupportedLaunchZip(value) ? 'houston_metro' : 'unsupported';
+}
+
+function marketStatusForZip(value) {
+  return isSupportedLaunchZip(value) ? 'active' : 'waitlist';
+}
+
 /**
  * Backend-owned role/profile bootstrap. Firestore rules intentionally block
  * clients from writing role, credits, approval, subscription, and admin fields.
@@ -154,6 +172,7 @@ exports.completeUserProfile = functions.https.onCall(async (data, context) => {
   const services = cleanStringList(data?.services);
   const zip = cleanString(data?.zip, 20);
   const radius = cleanPositiveInt(data?.radius, 25, 1, 250);
+  const requestedMarketStatus = cleanString(data?.marketStatus, 30).toLowerCase();
 
   await db.runTransaction(async (tx) => {
     const [userSnap, contractorSnap] = await Promise.all([
@@ -170,15 +189,36 @@ exports.completeUserProfile = functions.https.onCall(async (data, context) => {
       );
     }
 
+    const effectiveZip = hasOwn(data, 'zip')
+      ? normalizeZip(zip)
+      : normalizeZip(existing.zip || existingContractor.zip || '');
+    const hasEffectiveZip = effectiveZip.length === 5;
+    const regionPayload = hasEffectiveZip
+      ? {
+          zip: effectiveZip,
+          launchRegion: launchRegionForZip(effectiveZip),
+          marketStatus: marketStatusForZip(effectiveZip),
+          ...(isSupportedLaunchZip(effectiveZip)
+            ? { marketActivatedAt: admin.firestore.FieldValue.serverTimestamp() }
+            : { waitlistJoinedAt: admin.firestore.FieldValue.serverTimestamp() }),
+        }
+      : requestedMarketStatus === 'waitlist'
+        ? {
+            launchRegion: 'unsupported',
+            marketStatus: 'waitlist',
+            waitlistJoinedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }
+      : {};
+
     const userPayload = {
       role,
       ...(email ? { email } : {}),
       ...(name ? { name } : {}),
       ...(phone ? { phone } : {}),
+      ...regionPayload,
       ...(role === 'contractor' ? {
         ...(hasOwn(data, 'company') ? { company } : {}),
         ...(hasOwn(data, 'services') ? { services } : {}),
-        ...(hasOwn(data, 'zip') ? { zip } : {}),
         ...(hasOwn(data, 'radius') ? { radius } : {}),
         approved: existing.approved === true,
         featured: existing.featured === true,
@@ -196,7 +236,11 @@ exports.completeUserProfile = functions.https.onCall(async (data, context) => {
           ? (company || name)
           : (existingContractor.name || company || name),
         services: hasOwn(data, 'services') ? services : (existingContractor.services || []),
-        zip: hasOwn(data, 'zip') ? zip : (existingContractor.zip || ''),
+        ...(hasEffectiveZip ? regionPayload : {
+          zip: existingContractor.zip || '',
+          launchRegion: existingContractor.launchRegion || '',
+          marketStatus: existingContractor.marketStatus || '',
+        }),
         radius: hasOwn(data, 'radius') ? radius : Number(existingContractor.radius || 25),
         rating: Number(existingContractor.rating || 0),
         completedJobs: Number(existingContractor.completedJobs || 0),
@@ -733,6 +777,12 @@ async function assertContractor(uid) {
   const role = (userData.role || '').toString().trim().toLowerCase();
   if (role !== 'contractor') {
     throw new functions.https.HttpsError('permission-denied', 'Contractor account required');
+  }
+  if ((userData.marketStatus || '').toString().trim().toLowerCase() === 'waitlist') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'ProServe Hub is launching in Houston first. Your account is on the waitlist for your area.'
+    );
   }
   return { db, userRef: userSnap.ref, userData };
 }
@@ -1423,6 +1473,12 @@ async function unlockLeadCore({ jobId, uid, exclusive }) {
     }
 
     const jobData = jobSnap.data() || {};
+    if (!isSupportedLaunchZip(jobData.zip)) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'This lead is outside the current Houston launch market.'
+      );
+    }
     if (jobData.claimed === true) {
       throw new functions.https.HttpsError('failed-precondition', 'Job already claimed');
     }
@@ -4751,6 +4807,12 @@ async function createCheckoutSessionCore({ jobId, uid }) {
   }
 
   const jobData = jobSnap.data() || {};
+  if (!isSupportedLaunchZip(jobData.zip)) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'This lead is outside the current Houston launch market.'
+    );
+  }
   if (jobData.claimed === true) {
     throw new functions.https.HttpsError('failed-precondition', 'Job already claimed');
   }

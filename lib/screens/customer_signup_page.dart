@@ -7,7 +7,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../constants/launch_regions.dart';
 import '../services/auth_service.dart';
+import '../services/region_waitlist_service.dart';
 import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -28,6 +30,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final password = TextEditingController();
   final name = TextEditingController();
   final phone = TextEditingController();
+  final zip = TextEditingController();
   final phoneCode = TextEditingController();
 
   bool loading = false;
@@ -48,6 +51,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     password.dispose();
     name.dispose();
     phone.dispose();
+    zip.dispose();
     phoneCode.dispose();
     super.dispose();
   }
@@ -60,7 +64,13 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       final user = await _auth.signInWithApple(role: 'customer');
       if (!mounted) return;
       if (user != null) {
-        context.go('/customer-portal');
+        await RegionWaitlistService().saveAccountRegion(
+          role: 'customer',
+          zip: '',
+          name: user.displayName,
+          email: user.email,
+        );
+        if (mounted) context.go('/region-waitlist');
       }
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code != AuthorizationErrorCode.canceled) {
@@ -119,7 +129,13 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
       // New user — assign customer role
       await _auth.ensureGoogleUserRole(user.uid, 'customer');
-      if (mounted) router.go('/customer-portal');
+      await RegionWaitlistService().saveAccountRegion(
+        role: 'customer',
+        zip: '',
+        name: user.displayName,
+        email: user.email,
+      );
+      if (mounted) router.go('/region-waitlist');
     } catch (e, st) {
       if (!context.mounted) return;
       AppError.show(context, e, st, action: 'Google sign-up');
@@ -267,6 +283,13 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       );
       return;
     }
+    final zipValue = normalizeZip(zip.text);
+    if (zipValue.length != 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid 5-digit US ZIP code.')),
+      );
+      return;
+    }
 
     setState(() => loading = true);
 
@@ -278,11 +301,14 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
         password: passwordValue,
         name: name.text.trim(),
         phone: phone.text.trim(),
+        zip: zipValue,
       );
 
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Account created.')));
-      context.go('/verify-contact');
+      context.go(
+        isSupportedLaunchZip(zipValue) ? '/verify-contact' : '/region-waitlist',
+      );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceFirst('Exception: ', '');
@@ -359,6 +385,12 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       if (phone.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Phone number is required.')),
+        );
+        return false;
+      }
+      if (normalizeZip(zip.text).length != 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enter a valid 5-digit US ZIP code.')),
         );
         return false;
       }
@@ -571,6 +603,26 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 label: 'Phone',
                 hint: '(123) 456-7890',
                 icon: Icons.phone_outlined,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: zip,
+              keyboardType: TextInputType.number,
+              maxLength: 5,
+              decoration: _inputDecoration(
+                label: 'Project ZIP code',
+                hint: '77002',
+                icon: Icons.location_on_outlined,
+              ).copyWith(counterText: ''),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'ProServe Hub is launching in Houston first. Outside ZIPs can create an account and join the waitlist.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.35,
               ),
             ),
           ],

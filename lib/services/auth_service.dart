@@ -10,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../constants/service_types.dart';
+import '../constants/launch_regions.dart';
 import '../utils/zip_locations.dart';
 import 'zip_lookup_service.dart';
 
@@ -38,6 +39,47 @@ class AuthService {
       if (services != null) 'services': services,
       if (zip != null) 'zip': zip,
       if (radius != null) 'radius': radius,
+    });
+  }
+
+  Map<String, dynamic> _regionPayloadForZip(String zip) {
+    final normalizedZip = normalizeZip(zip);
+    final supported = isSupportedLaunchZip(normalizedZip);
+    return {
+      'zip': normalizedZip,
+      'launchRegion': launchRegionForZip(normalizedZip),
+      'marketStatus': marketStatusForZip(normalizedZip),
+      if (!supported) 'waitlistJoinedAt': FieldValue.serverTimestamp(),
+      if (supported) 'marketActivatedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  Future<void> _writeWaitlistMirror({
+    required User user,
+    required String role,
+    required String zip,
+    String? name,
+    String? phone,
+    String? service,
+    List<String>? services,
+  }) async {
+    final normalizedZip = normalizeZip(zip);
+    if (isSupportedLaunchZip(normalizedZip)) return;
+    await _db.collection('waitlist').add({
+      'uid': user.uid,
+      'name': (name?.trim().isNotEmpty == true)
+          ? name!.trim()
+          : user.displayName ?? 'ProServe user',
+      'email': user.email ?? '',
+      'phone': phone?.trim() ?? '',
+      'role': role,
+      'zip': normalizedZip,
+      'service': service?.trim() ?? '',
+      'services': services ?? const <String>[],
+      'launchRegion': kLaunchRegionUnsupported,
+      'marketStatus': kMarketStatusWaitlist,
+      'source': 'app_signup_region_gate',
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -148,9 +190,19 @@ class AuthService {
       await _db.collection('contractors').doc(user.uid).set({
         'services': normalizedServices,
         'servicesOffered': normalizedServices,
+        ..._regionPayloadForZip(zip),
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
       }, SetOptions(merge: true));
+
+      await _writeWaitlistMirror(
+        user: user,
+        role: 'contractor',
+        zip: zip,
+        name: name,
+        phone: phone,
+        services: normalizedServices,
+      );
 
       return user;
     } on FirebaseAuthException catch (e, st) {
@@ -227,7 +279,7 @@ class AuthService {
       'name': company.trim().isEmpty ? name : company,
       'services': normalizedServices,
       'servicesOffered': normalizedServices,
-      'zip': zip,
+      ..._regionPayloadForZip(zip),
       // Legacy field used by the existing Nearby Contractors page.
       'radius': radius,
       if (lat != null) 'lat': lat,
@@ -236,6 +288,15 @@ class AuthService {
       'availabilityWindow': 'next_week',
       'avgResponseMinutes': 60,
     }, SetOptions(merge: true));
+
+    await _writeWaitlistMirror(
+      user: user,
+      role: 'contractor',
+      zip: zip,
+      name: name,
+      phone: phone,
+      services: normalizedServices,
+    );
   }
 
   Future<User?> signUpCustomer({
@@ -243,6 +304,7 @@ class AuthService {
     required String password,
     required String name,
     required String phone,
+    required String zip,
   }) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(
@@ -258,6 +320,15 @@ class AuthService {
       await _completeUserProfile(
         role: 'customer',
         email: email,
+        name: name,
+        phone: phone,
+        zip: zip,
+      );
+
+      await _writeWaitlistMirror(
+        user: user,
+        role: 'customer',
+        zip: zip,
         name: name,
         phone: phone,
       );

@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../constants/launch_regions.dart';
 import '../constants/service_types.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
-import '../services/zip_lookup_service.dart';
+import '../services/region_waitlist_service.dart';
 import '../theme/proserve_theme.dart';
 import '../utils/app_error_handler.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -67,7 +68,13 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       final user = await _auth.signInWithApple(role: 'contractor');
       if (!mounted) return;
       if (user != null) {
-        context.go('/contractor-portal');
+        await RegionWaitlistService().saveAccountRegion(
+          role: 'contractor',
+          zip: '',
+          name: user.displayName,
+          email: user.email,
+        );
+        if (mounted) context.go('/region-waitlist');
       }
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code != AuthorizationErrorCode.canceled) {
@@ -103,12 +110,12 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       setState(() => _showZipPreview = false);
       return;
     }
-    // Try async geocoding for any US ZIP
-    final loc = await ZipLookupService.instance.lookup(zipValue);
     if (!mounted) return;
     setState(() {
-      _showZipPreview = loc != null;
-      _zipAreaLabel = 'your area';
+      _showZipPreview = true;
+      _zipAreaLabel = isSupportedLaunchZip(zipValue)
+          ? kLaunchRegionName
+          : 'the waitlist area';
     });
   }
 
@@ -319,7 +326,13 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
 
       // New user — assign contractor role
       await _auth.ensureGoogleUserRole(user.uid, 'contractor');
-      if (mounted) router.go('/contractor-portal');
+      await RegionWaitlistService().saveAccountRegion(
+        role: 'contractor',
+        zip: '',
+        name: user.displayName,
+        email: user.email,
+      );
+      if (mounted) router.go('/region-waitlist');
     } catch (e, st) {
       if (!context.mounted) return;
       AppError.show(context, e, st, action: 'Google sign-up');
@@ -997,7 +1010,7 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       return;
     }
 
-    final zipValue = zip.text.trim();
+    final zipValue = normalizeZip(zip.text);
     if (zipValue.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -1037,7 +1050,10 @@ class _ContractorSignupPageState extends State<ContractorSignupPage>
       );
 
       if (!mounted) return;
-      context.go('/verify-contact', extra: {'showPitchAfterVerify': true});
+      context.go(
+        isSupportedLaunchZip(zipValue) ? '/verify-contact' : '/region-waitlist',
+        extra: {'showPitchAfterVerify': true},
+      );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString().replaceFirst('Exception: ', '');

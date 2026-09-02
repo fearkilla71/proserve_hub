@@ -40,6 +40,16 @@ service cloud.firestore {
         );
     }
 
+    function isSupportedLaunchZip(zip) {
+      return zip is string
+        && zip.matches('^(770(0[1-9]|[1-8][0-9]|9[0-6]|98|99)|773(0[1-6]|1[568]|2[578]|3[36789]|4[567]|5[3-7]|6[2589]|7[235789]|8[0-9]|9[136])|774(0[1267]|1[0137]|2[239]|3[013]|4[145679]|5[019]|6[13469]|7[16789]|8[014679]|9[1234678])|775(0[1-8]|1[0-8]|2[0-3]|3[0-6]|38|39|4[125679]|5[0-5]|6[0-6]|68|7[1234578]|8[0-8]|9[0-278])|776(17|23|50|61|65))$');
+    }
+
+    function myMarketIsActive() {
+      let u = userDoc(request.auth.uid);
+      return !('marketStatus' in u) || u.marketStatus == 'active';
+    }
+
     function job(jobId) {
       return get(/databases/$(database)/documents/job_requests/$(jobId)).data;
     }
@@ -235,7 +245,11 @@ service cloud.firestore {
         'reputationScore',
         'verificationTier',
         'verified',
-        'verifiedAt'
+        'verifiedAt',
+        'launchRegion',
+        'marketStatus',
+        'waitlistJoinedAt',
+        'marketActivatedAt'
       ];
     }
 
@@ -365,7 +379,21 @@ service cloud.firestore {
       // Anyone can create (website form), only admins can read/delete
       allow create: if true
         && request.resource.data.keys().hasAll(['name', 'email', 'role', 'source', 'createdAt'])
-        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'source', 'createdAt'])
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'name',
+          'email',
+          'phone',
+          'role',
+          'zip',
+          'cityState',
+          'service',
+          'services',
+          'launchRegion',
+          'marketStatus',
+          'source',
+          'createdAt'
+        ])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 120
@@ -602,6 +630,8 @@ service cloud.firestore {
       // Customers create jobs. Disallow storing contact info on the public doc.
       allow create: if isCustomer()
         && request.resource.data.requesterUid == request.auth.uid
+        && myMarketIsActive()
+        && isSupportedLaunchZip(request.resource.data.zip)
         && !(request.resource.data.keys().hasAny(['requesterEmail', 'requesterPhone']))
         && !(request.resource.data.keys().hasAny(['paymentIntentId', 'fundedAt', 'completedAt']));
 

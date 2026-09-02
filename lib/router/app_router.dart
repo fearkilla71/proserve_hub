@@ -104,6 +104,7 @@ import '../screens/multi_location_dashboard_screen.dart';
 import '../screens/sub_marketplace_screen.dart';
 import '../screens/bid_analyzer_screen.dart';
 import '../screens/store_screenshot_demo_screen.dart';
+import '../screens/region_waitlist_screen.dart';
 import '../services/demo_mode_service.dart';
 import '../widgets/offline_banner.dart';
 import '../state/app_state.dart';
@@ -198,6 +199,7 @@ abstract final class AppRoutes {
   static const savedEstimates = '/saved-estimates';
   static const landing = '/landing';
   static const editCard = '/edit-card';
+  static const regionWaitlist = '/region-waitlist';
 
   // ── Escrow ──
   static const aiPriceOffer = '/ai-price-offer/:jobId';
@@ -294,6 +296,17 @@ GoRouter createRouter() {
       if (loggedIn) {
         final appState = AppState.read(context);
         final path = state.matchedLocation;
+        final isRegionWaitlist = path == AppRoutes.regionWaitlist;
+
+        if (appState.isWaitlisted && !isRegionWaitlist) {
+          return AppRoutes.regionWaitlist;
+        }
+
+        if (!appState.isWaitlisted && isRegionWaitlist) {
+          if (appState.isCustomer) return AppRoutes.customerPortal;
+          if (appState.isContractor) return AppRoutes.contractorPortal;
+          return AppRoutes.root;
+        }
 
         // Contractor-only paths (exclude login/signup which are public).
         const contractorPrefixes = [
@@ -378,6 +391,10 @@ GoRouter createRouter() {
       GoRoute(
         path: '/screenshot-demo',
         builder: (context, state) => const StoreScreenshotDemoScreen(),
+      ),
+      GoRoute(
+        path: '/region-waitlist',
+        builder: (context, state) => const RegionWaitlistScreen(),
       ),
       GoRoute(
         path: '/favorites',

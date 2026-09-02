@@ -16,6 +16,7 @@ import 'package:proserve_hub/services/deep_link_service.dart';
 import 'package:proserve_hub/services/fcm_service.dart';
 import 'package:proserve_hub/services/error_logger.dart';
 import 'package:proserve_hub/screens/verify_contact_info_page.dart';
+import 'package:proserve_hub/screens/region_waitlist_screen.dart';
 import 'package:proserve_hub/theme/proserve_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -534,6 +535,9 @@ class _RootGateState extends State<RootGate> {
     // Require verified email + phone before allowing portal access.
     final user = state.user;
     if (user == null) return const LandingPage();
+    if (state.isWaitlisted) {
+      return const RegionWaitlistScreen();
+    }
     if (!user.emailVerified || !state.phoneVerified) {
       return const VerifyContactInfoPage();
     }

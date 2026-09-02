@@ -4280,6 +4280,73 @@ class AppLocalizationsEs extends AppLocalizations {
   String get projectStatusPriceOffered => 'Precio ofrecido';
 
   @override
+  String regionWaitlistBadge(String region) {
+    return 'Mercado de lanzamiento: $region';
+  }
+
+  @override
+  String get regionWaitlistTitle =>
+      'ProServe Hub se lanzará primero en Houston.';
+
+  @override
+  String get regionWaitlistBody =>
+      'Tu cuenta quedó guardada. Te avisaremos cuando abramos en tu área, y puedes actualizar tu código postal si hubo un error.';
+
+  @override
+  String get regionWaitlistRole => 'Tipo de cuenta';
+
+  @override
+  String get regionWaitlistRoleFallback => 'Cuenta guardada';
+
+  @override
+  String get regionWaitlistZip => 'Código postal';
+
+  @override
+  String get regionWaitlistMissingZip => 'Aún no configurado';
+
+  @override
+  String get regionWaitlistService => 'Servicio';
+
+  @override
+  String get regionWaitlistServiceFallback => 'Aún no seleccionado';
+
+  @override
+  String get regionWaitlistUpdateTitle => '¿Código postal equivocado?';
+
+  @override
+  String get regionWaitlistUpdateBody =>
+      'Ingresa un código postal del área de Houston para desbloquear la app ahora. Fuera de Houston, tu cuenta queda en la lista de espera.';
+
+  @override
+  String get regionWaitlistZipField => 'Código postal';
+
+  @override
+  String get regionWaitlistUpdateCta => 'Actualizar código';
+
+  @override
+  String get regionWaitlistSignOut => 'Cerrar sesión';
+
+  @override
+  String get regionWaitlistInvalidZip =>
+      'Ingresa un código postal válido de 5 dígitos.';
+
+  @override
+  String get regionWaitlistSaved =>
+      'Sigues en la lista de espera para este código postal.';
+
+  @override
+  String get regionWaitlistUnlocked =>
+      'Código de Houston confirmado. Acceso desbloqueado.';
+
+  @override
+  String get regionWaitlistSaveFailed =>
+      'No pudimos actualizar tu código postal ahora. Intenta de nuevo.';
+
+  @override
+  String get regionWaitlistRequestBlocked =>
+      'ProServe Hub se lanzará primero en Houston. Tu cuenta quedó guardada en la lista de espera.';
+
+  @override
   String get deleted => 'Eliminado';
 
   @override

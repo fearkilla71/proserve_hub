@@ -17,6 +17,7 @@ import 'screens/admin/contractor_admin_tab.dart';
 import 'screens/admin/crew_multi_location_admin_tab.dart';
 import 'screens/admin/customer_admin_tab.dart';
 import 'screens/admin/customer_crm_admin_tab.dart';
+import 'screens/admin/waitlist_admin_tab.dart';
 import 'screens/admin/dispute_admin_tab.dart';
 import 'screens/admin/escrow_admin_tab.dart';
 import 'screens/admin/job_admin_tab.dart';
@@ -555,6 +556,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       label: 'Customers',
     ),
     _NavDestination(
+      icon: Icons.location_on_outlined,
+      selectedIcon: Icons.location_on,
+      label: 'Waitlist',
+    ),
+    _NavDestination(
       icon: Icons.people_outline,
       selectedIcon: Icons.people,
       label: 'Contractors',
@@ -705,60 +711,62 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 3:
         return CustomerAdminTab(canWrite: cw);
       case 4:
-        return const ContractorAdminTab();
+        return const WaitlistAdminTab();
       case 5:
-        return JobAdminTab(canWrite: cw);
+        return const ContractorAdminTab();
       case 6:
-        return VerificationAdminTab(canWrite: cw);
+        return JobAdminTab(canWrite: cw);
       case 7:
-        return DisputeAdminTab(canWrite: cw);
+        return VerificationAdminTab(canWrite: cw);
       case 8:
-        return EscrowAdminTab(canWrite: cw);
+        return DisputeAdminTab(canWrite: cw);
       case 9:
-        return NotificationAdminTab(canWrite: cw);
+        return EscrowAdminTab(canWrite: cw);
       case 10:
-        return const ActivityLogAdminTab();
+        return NotificationAdminTab(canWrite: cw);
       case 11:
-        return const AiInsightsAdminTab();
+        return const ActivityLogAdminTab();
       case 12:
+        return const AiInsightsAdminTab();
+      case 13:
         return const AnalyticsAdminTab();
       // ── Phase 2 tabs ──
-      case 13:
-        return PromotionsAdminTab(canWrite: cw);
       case 14:
-        return VerificationTierAdminTab(canWrite: cw);
+        return PromotionsAdminTab(canWrite: cw);
       case 15:
-        return LoyaltyAdminTab(canWrite: cw);
+        return VerificationTierAdminTab(canWrite: cw);
       case 16:
-        return PriceGuaranteeAdminTab(canWrite: cw);
+        return LoyaltyAdminTab(canWrite: cw);
       case 17:
-        return CustomerCrmAdminTab(canWrite: cw);
+        return PriceGuaranteeAdminTab(canWrite: cw);
       case 18:
-        return const BidIntelligenceAdminTab();
+        return CustomerCrmAdminTab(canWrite: cw);
       case 19:
-        return QualityInspectorAdminTab(canWrite: cw);
+        return const BidIntelligenceAdminTab();
       case 20:
-        return MaintenanceReminderAdminTab(canWrite: cw);
+        return QualityInspectorAdminTab(canWrite: cw);
       case 21:
-        return RecurringJobsAdminTab(canWrite: cw);
+        return MaintenanceReminderAdminTab(canWrite: cw);
       case 22:
-        return SubMarketplaceAdminTab(canWrite: cw);
+        return RecurringJobsAdminTab(canWrite: cw);
       case 23:
-        return const CrewMultiLocationAdminTab();
+        return SubMarketplaceAdminTab(canWrite: cw);
       case 24:
+        return const CrewMultiLocationAdminTab();
+      case 25:
         return LeadCreditsAdminTab(canWrite: cw);
       // ── Monitoring tabs ──
-      case 25:
-        return const ErrorLogsAdminTab();
       case 26:
-        return const PaymentFailuresAdminTab();
+        return const ErrorLogsAdminTab();
       case 27:
-        return const CloudFunctionHealthAdminTab();
+        return const PaymentFailuresAdminTab();
       case 28:
-        return const LeadConversionAdminTab();
+        return const CloudFunctionHealthAdminTab();
       case 29:
-        return const AdminAlertsTab();
+        return const LeadConversionAdminTab();
       case 30:
+        return const AdminAlertsTab();
+      case 31:
         return const ContractorEarningsAdminTab();
       default:
         return const SizedBox.shrink();

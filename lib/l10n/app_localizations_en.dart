@@ -4246,6 +4246,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectStatusPriceOffered => 'Price Offered';
 
   @override
+  String regionWaitlistBadge(String region) {
+    return '$region launch market';
+  }
+
+  @override
+  String get regionWaitlistTitle =>
+      'ProServe Hub is launching in Houston first.';
+
+  @override
+  String get regionWaitlistBody =>
+      'Your account is saved. We’ll notify you when we open in your area, and you can update your ZIP if this was a mistake.';
+
+  @override
+  String get regionWaitlistRole => 'Account type';
+
+  @override
+  String get regionWaitlistRoleFallback => 'Saved account';
+
+  @override
+  String get regionWaitlistZip => 'ZIP code';
+
+  @override
+  String get regionWaitlistMissingZip => 'Not set yet';
+
+  @override
+  String get regionWaitlistService => 'Service';
+
+  @override
+  String get regionWaitlistServiceFallback => 'Not selected yet';
+
+  @override
+  String get regionWaitlistUpdateTitle => 'Wrong ZIP?';
+
+  @override
+  String get regionWaitlistUpdateBody =>
+      'Enter a Houston-area ZIP to unlock the app now. Outside Houston, your account stays on the waitlist.';
+
+  @override
+  String get regionWaitlistZipField => 'ZIP code';
+
+  @override
+  String get regionWaitlistUpdateCta => 'Update ZIP';
+
+  @override
+  String get regionWaitlistSignOut => 'Sign out';
+
+  @override
+  String get regionWaitlistInvalidZip => 'Enter a valid 5-digit ZIP code.';
+
+  @override
+  String get regionWaitlistSaved =>
+      'You’re still on the waitlist for this ZIP.';
+
+  @override
+  String get regionWaitlistUnlocked =>
+      'Houston ZIP confirmed. App access unlocked.';
+
+  @override
+  String get regionWaitlistSaveFailed =>
+      'We could not update your ZIP right now. Please try again.';
+
+  @override
+  String get regionWaitlistRequestBlocked =>
+      'ProServe Hub is launching in Houston first. Your account was saved to the waitlist.';
+
+  @override
   String get deleted => 'Deleted';
 
   @override

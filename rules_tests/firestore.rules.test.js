@@ -13,6 +13,7 @@ const {
   getDocs,
   limit,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -77,6 +78,9 @@ describe('Firestore user security rules', () => {
       { pricingToolsPro: true },
       { avgRating: 5 },
       { verified: true },
+      { marketStatus: 'active' },
+      { launchRegion: 'houston_metro' },
+      { waitlistJoinedAt: new Date() },
     ];
 
     for (let i = 0; i < protectedFields.length; i += 1) {
@@ -108,6 +112,72 @@ describe('Firestore user security rules', () => {
     }));
     await assertFails(updateDoc(doc(db('userA'), 'users/userA'), {
       contractorPro: true,
+    }));
+    await assertFails(updateDoc(doc(db('userA'), 'users/userA'), {
+      marketStatus: 'active',
+    }));
+  });
+
+  it('allows customers to create live jobs only in the Houston launch market', async () => {
+    await seed(['users', 'customerA'], {
+      uid: 'customerA',
+      role: 'customer',
+      marketStatus: 'active',
+    });
+
+    await assertSucceeds(setDoc(doc(db('customerA'), 'job_requests/houstonJob'), {
+      requesterUid: 'customerA',
+      service: 'Interior Painting',
+      location: 'Houston, TX',
+      zip: '77002',
+      claimed: false,
+      paidBy: [],
+      createdAt: new Date(),
+    }));
+
+    await assertFails(setDoc(doc(db('customerA'), 'job_requests/austinJob'), {
+      requesterUid: 'customerA',
+      service: 'Interior Painting',
+      location: 'Austin, TX',
+      zip: '78701',
+      claimed: false,
+      paidBy: [],
+      createdAt: new Date(),
+    }));
+  });
+
+  it('blocks waitlisted customers from creating live jobs', async () => {
+    await seed(['users', 'customerA'], {
+      uid: 'customerA',
+      role: 'customer',
+      marketStatus: 'waitlist',
+    });
+
+    await assertFails(setDoc(doc(db('customerA'), 'job_requests/waitlistJob'), {
+      requesterUid: 'customerA',
+      service: 'Interior Painting',
+      location: 'Houston, TX',
+      zip: '77002',
+      claimed: false,
+      paidBy: [],
+      createdAt: new Date(),
+    }));
+  });
+
+  it('allows safe app waitlist entries with ZIP and service planning fields', async () => {
+    await assertSucceeds(setDoc(doc(db('userA'), 'waitlist/entryA'), {
+      uid: 'userA',
+      name: 'User A',
+      email: 'user@example.com',
+      phone: '555-0100',
+      role: 'customer',
+      zip: '78701',
+      service: 'Roofing',
+      services: ['Roofing'],
+      launchRegion: 'unsupported',
+      marketStatus: 'waitlist',
+      source: 'app_region_gate',
+      createdAt: serverTimestamp(),
     }));
   });
 

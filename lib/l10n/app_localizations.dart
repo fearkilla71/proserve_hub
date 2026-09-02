@@ -7484,6 +7484,120 @@ abstract class AppLocalizations {
   /// **'Price Offered'**
   String get projectStatusPriceOffered;
 
+  /// No description provided for @regionWaitlistBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{region} launch market'**
+  String regionWaitlistBadge(String region);
+
+  /// No description provided for @regionWaitlistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ProServe Hub is launching in Houston first.'**
+  String get regionWaitlistTitle;
+
+  /// No description provided for @regionWaitlistBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is saved. We’ll notify you when we open in your area, and you can update your ZIP if this was a mistake.'**
+  String get regionWaitlistBody;
+
+  /// No description provided for @regionWaitlistRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Account type'**
+  String get regionWaitlistRole;
+
+  /// No description provided for @regionWaitlistRoleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved account'**
+  String get regionWaitlistRoleFallback;
+
+  /// No description provided for @regionWaitlistZip.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP code'**
+  String get regionWaitlistZip;
+
+  /// No description provided for @regionWaitlistMissingZip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set yet'**
+  String get regionWaitlistMissingZip;
+
+  /// No description provided for @regionWaitlistService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get regionWaitlistService;
+
+  /// No description provided for @regionWaitlistServiceFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Not selected yet'**
+  String get regionWaitlistServiceFallback;
+
+  /// No description provided for @regionWaitlistUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong ZIP?'**
+  String get regionWaitlistUpdateTitle;
+
+  /// No description provided for @regionWaitlistUpdateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Houston-area ZIP to unlock the app now. Outside Houston, your account stays on the waitlist.'**
+  String get regionWaitlistUpdateBody;
+
+  /// No description provided for @regionWaitlistZipField.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP code'**
+  String get regionWaitlistZipField;
+
+  /// No description provided for @regionWaitlistUpdateCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Update ZIP'**
+  String get regionWaitlistUpdateCta;
+
+  /// No description provided for @regionWaitlistSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get regionWaitlistSignOut;
+
+  /// No description provided for @regionWaitlistInvalidZip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 5-digit ZIP code.'**
+  String get regionWaitlistInvalidZip;
+
+  /// No description provided for @regionWaitlistSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re still on the waitlist for this ZIP.'**
+  String get regionWaitlistSaved;
+
+  /// No description provided for @regionWaitlistUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Houston ZIP confirmed. App access unlocked.'**
+  String get regionWaitlistUnlocked;
+
+  /// No description provided for @regionWaitlistSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not update your ZIP right now. Please try again.'**
+  String get regionWaitlistSaveFailed;
+
+  /// No description provided for @regionWaitlistRequestBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'ProServe Hub is launching in Houston first. Your account was saved to the waitlist.'**
+  String get regionWaitlistRequestBlocked;
+
   /// No description provided for @deleted.
   ///
   /// In en, this message translates to:
