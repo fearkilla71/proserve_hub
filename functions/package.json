@@ -8,8 +8,8 @@
   "scripts": {
     "test": "npm run test:payments",
     "test:payments": "mocha --timeout 15000 \"test/**/*.test.js\"",
-    "backfill:launch-regions": "node scripts/backfill_launch_regions.js",
-    "backfill:launch-regions:apply": "node scripts/backfill_launch_regions.js --apply"
+    "backfill:launch-regions": "node scripts/backfill_launch_regions.js --project=proserve-hub-ada0e",
+    "backfill:launch-regions:apply": "node scripts/backfill_launch_regions.js --project=proserve-hub-ada0e --apply"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0",

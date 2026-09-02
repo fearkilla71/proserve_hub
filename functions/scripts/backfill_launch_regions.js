@@ -147,7 +147,16 @@ async function mirrorUnsupportedUsersToWaitlist(db, apply) {
 
 async function main() {
   const apply = process.argv.includes('--apply');
-  admin.initializeApp();
+  const projectArg = process.argv.find((arg) => arg.startsWith('--project='));
+  const firebaseConfig = process.env.FIREBASE_CONFIG
+    ? JSON.parse(process.env.FIREBASE_CONFIG)
+    : {};
+  const projectId = projectArg?.split('=')[1]
+    || process.env.GCLOUD_PROJECT
+    || process.env.GOOGLE_CLOUD_PROJECT
+    || firebaseConfig.projectId;
+
+  admin.initializeApp(projectId ? { projectId } : undefined);
   const db = admin.firestore();
 
   const results = [];
