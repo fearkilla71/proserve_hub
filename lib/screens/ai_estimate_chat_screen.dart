@@ -10,7 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
+import '../constants/launch_regions.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/launch_region_guard.dart';
 
 /// Recursively converts nested maps (from Firebase callable
 /// responses) into `Map<String,dynamic>` so that `as` casts don't throw.
@@ -373,6 +375,14 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
     // Create the job request in Firestore
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+    if (!await ensureSupportedLaunchRegion(
+      context,
+      zip: _zip,
+      role: 'customer',
+      service: widget.serviceName,
+    )) {
+      return;
+    }
 
     final est = _estimateResult!;
     final jobData = <String, dynamic>{
@@ -380,6 +390,8 @@ class _AiEstimateChatScreenState extends State<AiEstimateChatScreen>
       'serviceType': widget.serviceType,
       'requesterUid': uid,
       'zip': _zip,
+      'launchRegion': launchRegionForZip(_zip),
+      'marketStatus': marketStatusForZip(_zip),
       'location': _zip,
       'status': 'open',
       'claimed': false,

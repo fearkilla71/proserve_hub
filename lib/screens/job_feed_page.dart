@@ -11,6 +11,7 @@ import 'package:proserve_hub/widgets/animated_states.dart';
 import '../constants/service_types.dart';
 import '../constants/service_guidance.dart';
 import '../constants/service_intake.dart';
+import '../constants/launch_regions.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/skeleton_loader.dart';
 import '../services/location_service.dart';
@@ -1585,6 +1586,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     // simpler query to keep the feed usable.
     final base = FirebaseFirestore.instance
         .collection('job_requests')
+        .where('launchRegion', isEqualTo: kLaunchRegionHoustonMetro)
         .where('claimed', isEqualTo: false)
         .where('leadUnlockedBy', isNull: true);
 

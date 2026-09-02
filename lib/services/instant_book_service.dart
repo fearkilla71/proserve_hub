@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../constants/launch_regions.dart';
+
 /// A fixed-price service package offered by a contractor.
 class ServicePackage {
   final String id;
@@ -79,6 +81,13 @@ class InstantBookService {
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('Not signed in');
+    final userSnap = await _firestore.collection('users').doc(uid).get();
+    final zip = normalizeZip((userSnap.data()?['zip'] ?? '').toString());
+    if (!isSupportedLaunchZip(zip)) {
+      throw Exception(
+        'ProServe Hub is launching in Houston first. Update your ZIP to book this service.',
+      );
+    }
 
     final batch = _firestore.batch();
 
@@ -92,6 +101,10 @@ class InstantBookService {
       'claimed': true,
       'service': package.serviceType,
       'serviceType': package.serviceType,
+      'zip': zip,
+      'location': 'ZIP $zip',
+      'launchRegion': launchRegionForZip(zip),
+      'marketStatus': marketStatusForZip(zip),
       'packageId': package.id,
       'packageTitle': package.title,
       'price': package.price,

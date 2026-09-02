@@ -62,6 +62,7 @@
       "collectionGroup": "job_requests",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "launchRegion", "order": "ASCENDING" },
         { "fieldPath": "claimed", "order": "ASCENDING" },
         { "fieldPath": "leadUnlockedBy", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }

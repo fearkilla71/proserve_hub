@@ -204,6 +204,8 @@ describe('Firestore user security rules', () => {
       requesterUid: 'customerA',
       service: 'Interior Painting',
       location: 'Houston, TX',
+      zip: '77002',
+      launchRegion: 'houston_metro',
       claimed: false,
       leadUnlockedBy: null,
       paidBy: [],
@@ -212,6 +214,34 @@ describe('Firestore user security rules', () => {
 
     await assertSucceeds(getDocs(query(
       collection(db('contractorA'), 'job_requests'),
+      where('launchRegion', '==', 'houston_metro'),
+      where('claimed', '==', false),
+      where('leadUnlockedBy', '==', null),
+      limit(10),
+    )));
+  });
+
+  it('blocks contractors from listing unsupported-market leads', async () => {
+    await seed(['users', 'contractorA'], {
+      uid: 'contractorA',
+      role: 'contractor',
+      leadCredits: 1,
+    });
+    await seed(['job_requests', 'austinJobA'], {
+      requesterUid: 'customerA',
+      service: 'Interior Painting',
+      location: 'Austin, TX',
+      zip: '78701',
+      launchRegion: 'unsupported',
+      claimed: false,
+      leadUnlockedBy: null,
+      paidBy: [],
+      createdAt: new Date(),
+    });
+
+    await assertFails(getDocs(query(
+      collection(db('contractorA'), 'job_requests'),
+      where('launchRegion', '==', 'unsupported'),
       where('claimed', '==', false),
       where('leadUnlockedBy', '==', null),
       limit(10),
@@ -229,6 +259,8 @@ describe('Firestore user security rules', () => {
       requesterUid: 'customerA',
       service: 'Interior Painting',
       location: 'Houston, TX',
+      zip: '77002',
+      launchRegion: 'houston_metro',
       claimed: false,
       leadUnlockedBy: null,
       paidBy: [],
@@ -237,6 +269,7 @@ describe('Firestore user security rules', () => {
 
     await assertFails(getDocs(query(
       collection(db('contractorA'), 'job_requests'),
+      where('launchRegion', '==', 'houston_metro'),
       where('claimed', '==', false),
       where('leadUnlockedBy', '==', null),
       limit(10),
@@ -324,7 +357,9 @@ describe('Firestore user security rules', () => {
     await seed(['job_requests', 'invitedJobA'], {
       requesterUid: 'customerA',
       service: 'Cabinet Painting',
-      location: 'Dallas, TX',
+      location: 'Houston, TX',
+      zip: '77002',
+      launchRegion: 'houston_metro',
       claimed: false,
       leadUnlockedBy: 'contractorB',
       paidBy: [],

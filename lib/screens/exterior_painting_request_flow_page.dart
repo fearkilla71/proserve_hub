@@ -8,9 +8,11 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../constants/launch_regions.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../utils/app_error_handler.dart';
+import '../utils/launch_region_guard.dart';
 import '../services/zip_lookup_service.dart';
 
 class ExteriorPaintingRequestFlowPage extends StatefulWidget {
@@ -417,10 +419,19 @@ class _ExteriorPaintingRequestFlowPageState
     final messenger = ScaffoldMessenger.of(context);
     final uid = await _ensureSignedInCustomerUid();
     if (uid == null) return;
+    if (!mounted) return;
 
     final zip = _zipController.text.trim();
     final homeSqft = _parseNum(_homeSqftController.text);
     if (zip.isEmpty || homeSqft == null || homeSqft <= 0) return;
+    if (!await ensureSupportedLaunchRegion(
+      context,
+      zip: zip,
+      role: 'customer',
+      service: 'Exterior Painting',
+    )) {
+      return;
+    }
 
     final exteriorSqft = _estimateExteriorSqft();
 
@@ -558,6 +569,8 @@ class _ExteriorPaintingRequestFlowPageState
         'paintingScope': 'exterior',
         'location': 'ZIP $zip',
         'zip': zip,
+        'launchRegion': launchRegionForZip(zip),
+        'marketStatus': marketStatusForZip(zip),
         'quantity': exteriorSqft,
         'lat': loc['lat'],
         'lng': loc['lng'],

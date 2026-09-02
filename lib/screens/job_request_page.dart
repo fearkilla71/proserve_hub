@@ -12,9 +12,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 
+import '../constants/launch_regions.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../utils/app_error_handler.dart';
+import '../utils/launch_region_guard.dart';
 import '../utils/platform_file_bytes.dart';
 import '../services/zip_lookup_service.dart';
 import '../widgets/price_suggestion_card.dart';
@@ -835,6 +837,7 @@ class _JobRequestPageState extends State<JobRequestPage> {
 
                         final uid = await _ensureSignedInCustomerUid();
                         if (uid == null) return;
+                        if (!context.mounted) return;
 
                         if (zip.isEmpty || description.isEmpty) {
                           messenger.showSnackBar(
@@ -844,6 +847,14 @@ class _JobRequestPageState extends State<JobRequestPage> {
                               ),
                             ),
                           );
+                          return;
+                        }
+                        if (!await ensureSupportedLaunchRegion(
+                          context,
+                          zip: zip,
+                          role: 'customer',
+                          service: widget.serviceName,
+                        )) {
                           return;
                         }
 
@@ -919,6 +930,8 @@ class _JobRequestPageState extends State<JobRequestPage> {
                             'service': widget.serviceName,
                             'location': location,
                             'zip': zip,
+                            'launchRegion': launchRegionForZip(zip),
+                            'marketStatus': marketStatusForZip(zip),
                             'quantity': quantity,
                             // Smart matching foundation fields.
                             'lat': loc['lat'],

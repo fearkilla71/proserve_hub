@@ -8,10 +8,12 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/launch_regions.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/app_error_handler.dart';
+import '../utils/launch_region_guard.dart';
 import '../utils/platform_file_bytes.dart';
 
 class CabinetRequestFlowPage extends StatefulWidget {
@@ -310,9 +312,18 @@ class _CabinetRequestFlowPageState extends State<CabinetRequestFlowPage> {
 
     final uid = await _ensureSignedInCustomerUid();
     if (uid == null) return;
+    if (!mounted) return;
 
     final zip = _zipController.text.trim();
     if (zip.isEmpty || _cabinetDoors <= 0) return;
+    if (!await ensureSupportedLaunchRegion(
+      context,
+      zip: zip,
+      role: 'customer',
+      service: 'Cabinets',
+    )) {
+      return;
+    }
 
     final List<String> uploadedPaths = [];
 
@@ -473,6 +484,8 @@ class _CabinetRequestFlowPageState extends State<CabinetRequestFlowPage> {
         'service': 'Cabinets',
         'location': 'ZIP $zip',
         'zip': zip,
+        'launchRegion': launchRegionForZip(zip),
+        'marketStatus': marketStatusForZip(zip),
         'quantity': _cabinetDoors.toDouble(),
         'lat': loc['lat'],
         'lng': loc['lng'],

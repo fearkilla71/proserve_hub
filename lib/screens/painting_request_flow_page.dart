@@ -7,10 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/launch_regions.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/app_error_handler.dart';
+import '../utils/launch_region_guard.dart';
 import '../utils/platform_file_bytes.dart';
 
 class PaintingRequestFlowPage extends StatefulWidget {
@@ -272,10 +274,19 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
 
     final uid = await _ensureSignedInCustomerUid();
     if (uid == null) return;
+    if (!mounted) return;
 
     final zip = _zipController.text.trim();
     final sqft = _parseSqft(_sqftController.text);
     if (zip.isEmpty) return;
+    if (!await ensureSupportedLaunchRegion(
+      context,
+      zip: zip,
+      role: 'customer',
+      service: 'Painting',
+    )) {
+      return;
+    }
 
     final loc = await ZipLookupService.instance.lookup(zip);
     if (loc == null) {
@@ -451,6 +462,8 @@ class _PaintingRequestFlowPageState extends State<PaintingRequestFlowPage> {
         'paintingScope': _paintingScope,
         'location': 'ZIP $zip',
         'zip': zip,
+        'launchRegion': launchRegionForZip(zip),
+        'marketStatus': marketStatusForZip(zip),
         'quantity': sqft,
         'lat': loc['lat'],
         'lng': loc['lng'],

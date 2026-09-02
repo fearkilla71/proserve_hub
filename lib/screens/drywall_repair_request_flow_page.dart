@@ -7,10 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/launch_regions.dart';
 import '../services/location_service.dart';
 import '../utils/pricing_engine.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/app_error_handler.dart';
+import '../utils/launch_region_guard.dart';
 import '../utils/platform_file_bytes.dart';
 
 class DrywallRepairRequestFlowPage extends StatefulWidget {
@@ -384,12 +386,21 @@ class _DrywallRepairRequestFlowPageState
 
     final uid = await _ensureSignedInCustomerUid();
     if (uid == null) return;
+    if (!mounted) return;
 
     final zip = _zipController.text.trim();
     final size = _parseNumber(_sizeController.text);
     final unit = (_unit ?? 'sqft').trim();
 
     if (zip.isEmpty || size == null || size <= 0) return;
+    if (!await ensureSupportedLaunchRegion(
+      context,
+      zip: zip,
+      role: 'customer',
+      service: 'Drywall Repair',
+    )) {
+      return;
+    }
 
     final List<String> uploadedPaths = [];
 
@@ -554,6 +565,8 @@ class _DrywallRepairRequestFlowPageState
         'service': 'Drywall Repair',
         'location': 'ZIP $zip',
         'zip': zip,
+        'launchRegion': launchRegionForZip(zip),
+        'marketStatus': marketStatusForZip(zip),
         'quantity': size,
         'lat': loc['lat'],
         'lng': loc['lng'],

@@ -7,7 +7,9 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test:payments",
-    "test:payments": "mocha --timeout 15000 \"test/**/*.test.js\""
+    "test:payments": "mocha --timeout 15000 \"test/**/*.test.js\"",
+    "backfill:launch-regions": "node scripts/backfill_launch_regions.js",
+    "backfill:launch-regions:apply": "node scripts/backfill_launch_regions.js --apply"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0",
