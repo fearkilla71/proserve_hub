@@ -1927,12 +1927,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get leadMarketUnlockModel => 'Unlock model';
 
   @override
+  String get leadMarketUnlockModelDescription =>
+      '1 shared credit unlocks contact. 1 exclusive credit locks the lead to you.';
+
+  @override
   String get leadMarketOneCredit => '1 credit';
+
+  @override
+  String leadMarketSharedUnlockCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shared unlocks',
+      one: '1 shared unlock',
+      zero: 'No shared unlocks yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leadMarketExclusiveAvailable => 'Exclusive available';
+
+  @override
+  String get leadMarketSharedOnly => 'Shared only';
 
   @override
   String leadMarketBudgetLabel(String amount) {
     return 'Budget: $amount';
   }
+
+  @override
+  String get leadMarketBudgetNotSet => 'Budget not provided yet';
 
   @override
   String leadMarketDistanceAway(String distance) {

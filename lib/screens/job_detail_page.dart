@@ -8,6 +8,7 @@ import 'package:proserve_hub/services/stripe_service.dart';
 import '../constants/service_intake.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/proserve_theme.dart';
+import '../utils/app_error_handler.dart';
 import '../utils/bottom_sheet_helper.dart';
 import '../widgets/lead_pack_purchase_sheet.dart';
 import '../widgets/suggested_pros_card.dart';
@@ -461,10 +462,10 @@ class JobDetailPage extends StatelessWidget {
                                   final messenger = ScaffoldMessenger.of(
                                     context,
                                   );
-                                  final message = e
-                                      .toString()
-                                      .replaceFirst('Exception: ', '')
-                                      .trim();
+                                  final message = AppError.message(
+                                    e,
+                                    action: 'open checkout',
+                                  );
                                   messenger.showSnackBar(
                                     SnackBar(content: Text(message)),
                                   );
@@ -560,10 +561,12 @@ class JobDetailPage extends StatelessWidget {
                                     },
                                   );
                                 } catch (e) {
-                                  final message = e
-                                      .toString()
-                                      .replaceFirst('Exception: ', '')
-                                      .trim();
+                                  final message = AppError.message(
+                                    e,
+                                    action: exclusive
+                                        ? 'unlock this exclusive lead'
+                                        : 'unlock this shared lead',
+                                  );
                                   messenger.showSnackBar(
                                     SnackBar(content: Text(message)),
                                   );

@@ -1939,12 +1939,37 @@ class AppLocalizationsEs extends AppLocalizations {
   String get leadMarketUnlockModel => 'Modelo de desbloqueo';
 
   @override
+  String get leadMarketUnlockModelDescription =>
+      '1 crédito compartido muestra el contacto. 1 crédito exclusivo bloquea el lead para ti.';
+
+  @override
   String get leadMarketOneCredit => '1 crédito';
+
+  @override
+  String leadMarketSharedUnlockCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count desbloqueos compartidos',
+      one: '1 desbloqueo compartido',
+      zero: 'Sin desbloqueos compartidos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leadMarketExclusiveAvailable => 'Exclusivo disponible';
+
+  @override
+  String get leadMarketSharedOnly => 'Solo compartido';
 
   @override
   String leadMarketBudgetLabel(String amount) {
     return 'Presupuesto: $amount';
   }
+
+  @override
+  String get leadMarketBudgetNotSet => 'Presupuesto no indicado aún';
 
   @override
   String leadMarketDistanceAway(String distance) {

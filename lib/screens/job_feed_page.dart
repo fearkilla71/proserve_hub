@@ -1112,6 +1112,12 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
             .take(3)
             .toList() ??
         const <String>[];
+    final sharedUnlockCount =
+        (data['paidBy'] as List?)?.whereType<String>().length ?? 0;
+    final exclusiveAvailable = (data['leadUnlockedBy'] ?? '')
+        .toString()
+        .trim()
+        .isEmpty;
     final serviceAnswers = data['serviceAnswers'] is Map
         ? Map<String, dynamic>.from(data['serviceAnswers'] as Map)
         : const <String, dynamic>{};
@@ -1135,8 +1141,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     final money = NumberFormat.currency(symbol: r'$', decimalDigits: 0);
     final posted = DateFormat.yMd().format(created);
 
-    final chipBg = scheme.surfaceContainerHighest;
-    final chipFg = scheme.onSurface;
     final priceBg = scheme.primaryContainer.withValues(alpha: 0.22);
     final priceBorder = scheme.primary.withValues(alpha: 0.25);
 
@@ -1246,24 +1250,13 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    child: Text(
-                      service,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: chipFg,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                _LeadSignalChip(
+                  icon: exclusiveAvailable
+                      ? Icons.lock_open_outlined
+                      : Icons.lock_outline,
+                  label: exclusiveAvailable
+                      ? l10n.leadMarketExclusiveAvailable
+                      : l10n.leadMarketSharedOnly,
                 ),
               ],
             ),
@@ -1303,6 +1296,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         ? leadQualityLabel
                         : '$leadQualityLabel · $leadQualityScore%',
                   ),
+                _LeadSignalChip(
+                  icon: Icons.groups_2_outlined,
+                  label: l10n.leadMarketSharedUnlockCount(sharedUnlockCount),
+                ),
                 _LeadSignalChip(
                   icon: Icons.photo_library_outlined,
                   label: l10n.leadMarketPhotoCount(imageCount),
@@ -1455,7 +1452,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      l10n.leadMarketUnlockModel,
+                      l10n.leadMarketUnlockModelDescription,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1478,7 +1475,9 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    l10n.leadMarketBudgetLabel(money.format(budget)),
+                    budget > 0
+                        ? l10n.leadMarketBudgetLabel(money.format(budget))
+                        : l10n.leadMarketBudgetNotSet,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -1684,7 +1683,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           await iap.buy(chosen);
         } catch (e) {
           if (!context.mounted) return;
-          final message = e.toString().replaceFirst('Exception: ', '').trim();
+          final message = AppError.message(e, action: 'open the store');
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(message)));
@@ -1706,7 +1705,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
       } catch (e) {
         if (!context.mounted) return;
         final messenger = ScaffoldMessenger.of(context);
-        final message = e.toString().replaceFirst('Exception: ', '').trim();
+        final message = AppError.message(e, action: 'open checkout');
         messenger.showSnackBar(SnackBar(content: Text(message)));
       }
     }

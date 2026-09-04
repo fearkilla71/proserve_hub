@@ -3482,17 +3482,47 @@ abstract class AppLocalizations {
   /// **'Unlock model'**
   String get leadMarketUnlockModel;
 
+  /// No description provided for @leadMarketUnlockModelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'1 shared credit unlocks contact. 1 exclusive credit locks the lead to you.'**
+  String get leadMarketUnlockModelDescription;
+
   /// No description provided for @leadMarketOneCredit.
   ///
   /// In en, this message translates to:
   /// **'1 credit'**
   String get leadMarketOneCredit;
 
+  /// No description provided for @leadMarketSharedUnlockCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No shared unlocks yet} =1{1 shared unlock} other{{count} shared unlocks}}'**
+  String leadMarketSharedUnlockCount(int count);
+
+  /// No description provided for @leadMarketExclusiveAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive available'**
+  String get leadMarketExclusiveAvailable;
+
+  /// No description provided for @leadMarketSharedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared only'**
+  String get leadMarketSharedOnly;
+
   /// No description provided for @leadMarketBudgetLabel.
   ///
   /// In en, this message translates to:
   /// **'Budget: {amount}'**
   String leadMarketBudgetLabel(String amount);
+
+  /// No description provided for @leadMarketBudgetNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget not provided yet'**
+  String get leadMarketBudgetNotSet;
 
   /// No description provided for @leadMarketDistanceAway.
   ///
