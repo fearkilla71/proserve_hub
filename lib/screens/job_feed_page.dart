@@ -332,22 +332,24 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
     return value.toString().trim();
   }
 
-  /// Batch-load multiple job docs by ID (avoids N+1 individual fetches).
+  /// Load multiple job docs by ID without letting one unreadable doc fail a section.
   Future<Map<String, Map<String, dynamic>>> _batchLoadJobs(
     List<String> ids,
   ) async {
     if (ids.isEmpty) return {};
     final db = FirebaseFirestore.instance;
     final results = <String, Map<String, dynamic>>{};
-    // Firestore 'in' queries support max 10 items.
-    for (var i = 0; i < ids.length; i += 10) {
-      final chunk = ids.sublist(i, (i + 10).clamp(0, ids.length));
-      final snap = await db
-          .collection('job_requests')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
-      for (final doc in snap.docs) {
-        results[doc.id] = doc.data();
+
+    // A batched `whereIn` read fails the whole query if any referenced job is
+    // no longer readable under rules. Fall back to isolated reads so stale
+    // invite/quote references do not break the visible lead sections.
+    for (final id in ids.toSet()) {
+      try {
+        final doc = await db.collection('job_requests').doc(id).get();
+        final data = doc.data();
+        if (data != null) results[doc.id] = data;
+      } catch (error) {
+        debugPrint('Skipping unreadable lead reference $id: $error');
       }
     }
     return results;
@@ -1741,7 +1743,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               final invites = invitesSnap.data!.docs;
               if (invites.isEmpty) return const SizedBox.shrink();
 
-              // Batch-load all invited job docs to avoid N+1.
               final jobIds = invites
                   .map((d) => (d.data()['jobId'] ?? '').toString())
                   .where((id) => id.isNotEmpty)
@@ -1751,7 +1752,17 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               return FutureBuilder<Map<String, Map<String, dynamic>>>(
                 future: _batchLoadJobs(jobIds),
                 builder: (context, jobsSnap) {
+                  if (!jobsSnap.hasData) {
+                    return const SizedBox.shrink();
+                  }
                   final jobsMap = jobsSnap.data ?? {};
+                  final visibleInvites = invites.where((invite) {
+                    final jobId = (invite.data()['jobId'] ?? '').toString();
+                    return jobsMap.containsKey(jobId);
+                  }).toList();
+                  if (visibleInvites.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Card(
@@ -1766,7 +1777,7 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 10),
-                            for (final invite in invites)
+                            for (final invite in visibleInvites)
                               Builder(
                                 builder: (context) {
                                   final jobId = (invite.data()['jobId'] ?? '')
