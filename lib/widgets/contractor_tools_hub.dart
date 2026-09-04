@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/release_flags.dart';
 import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 import '../services/connect_service.dart';
@@ -58,7 +59,21 @@ class ContractorToolsHub extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isPro = pricingToolsUnlockedFromUserDoc(userData);
     final isEnterprise = isEnterpriseFromUserDoc(userData);
-    final sections = _sections(l10n);
+    final sections = _sections(l10n)
+        .map(
+          (section) => _ToolSection(
+            title: section.title,
+            tools: section.tools
+                .where(
+                  (tool) =>
+                      kShowEnterprisePublicSurfaces ||
+                      tool.access != _ToolAccess.enterprise,
+                )
+                .toList(),
+          ),
+        )
+        .where((section) => section.tools.isNotEmpty)
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
@@ -446,15 +461,16 @@ class _TodayPanel extends StatelessWidget {
                   label: isPro ? l10n.toolsProActive : l10n.toolsProLocked,
                   emphasized: !isPro,
                 ),
-                _StatusChip(
-                  icon: isEnterprise
-                      ? Icons.domain_verification_outlined
-                      : Icons.lock_outline,
-                  label: isEnterprise
-                      ? l10n.toolsEnterpriseActive
-                      : l10n.toolsEnterpriseLocked,
-                  emphasized: !isEnterprise,
-                ),
+                if (kShowEnterprisePublicSurfaces)
+                  _StatusChip(
+                    icon: isEnterprise
+                        ? Icons.domain_verification_outlined
+                        : Icons.lock_outline,
+                    label: isEnterprise
+                        ? l10n.toolsEnterpriseActive
+                        : l10n.toolsEnterpriseLocked,
+                    emphasized: !isEnterprise,
+                  ),
               ],
             ),
             if (!payoutsReady || !isPro) ...[
@@ -529,7 +545,7 @@ class _SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final compact = isPro || isEnterprise;
+    final compact = isPro || (kShowEnterprisePublicSurfaces && isEnterprise);
     return Card(
       child: Padding(
         padding: EdgeInsets.all(compact ? 12 : 16),
@@ -548,7 +564,7 @@ class _SubscriptionCard extends StatelessWidget {
                 ),
                 Chip(
                   label: Text(
-                    isEnterprise
+                    kShowEnterprisePublicSurfaces && isEnterprise
                         ? l10n.accessEnterprise
                         : (isPro ? l10n.active : l10n.accessPro),
                   ),

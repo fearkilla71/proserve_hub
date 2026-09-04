@@ -30,13 +30,12 @@ void main() {
 
     expect(find.text('Tools'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Win Work'), findsOneWidget);
+    expect(find.text('Win Work'), findsNothing);
+    expect(find.text('AI Bid Analyzer'), findsNothing);
     await tester.scrollUntilVisible(find.text('Estimate & Quote'), 500);
     expect(find.text('Estimate & Quote'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('AI Invoice Maker'), 500);
     expect(find.text('AI Invoice Maker'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('AI Bid Analyzer'), -500);
-    expect(find.text('AI Bid Analyzer'), findsOneWidget);
   });
 
   testWidgets('renders grouped contractor tools in Spanish', (tester) async {
@@ -44,7 +43,8 @@ void main() {
 
     expect(find.text('Herramientas'), findsOneWidget);
     expect(find.text('Hoy'), findsOneWidget);
-    expect(find.text('Ganar trabajos'), findsOneWidget);
+    expect(find.text('Ganar trabajos'), findsNothing);
+    expect(find.text('Analizador de cotizaciones con IA'), findsNothing);
     await tester.scrollUntilVisible(find.text('Presupuestar y cotizar'), 500);
     expect(find.text('Presupuestar y cotizar'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -52,10 +52,5 @@ void main() {
       500,
     );
     expect(find.text('Creador de facturas con IA'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Analizador de cotizaciones con IA'),
-      -500,
-    );
-    expect(find.text('Analizador de cotizaciones con IA'), findsOneWidget);
   });
 }

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../constants/release_flags.dart';
 import '../l10n/app_localizations.dart';
 import '../services/stripe_service.dart';
 import '../services/subscription_service.dart';
@@ -95,7 +96,12 @@ class _ContractorSubscriptionScreenState
   static const _tiers = <_SubscriptionTier>[
     _SubscriptionTier(id: 'basic'),
     _SubscriptionTier(id: 'pro', recommended: true),
-    _SubscriptionTier(id: 'enterprise'),
+  ];
+
+  List<_SubscriptionTier> get _publicTiers => [
+    ..._tiers,
+    if (kShowEnterprisePublicSurfaces)
+      const _SubscriptionTier(id: 'enterprise'),
   ];
 
   /// Returns the user's current tier from Firestore.
@@ -205,9 +211,11 @@ class _ContractorSubscriptionScreenState
         return;
       }
 
-      final resp = await _subs.queryProducts(
-        SubscriptionService.allSubscriptionProductIds,
-      );
+      final productIds = _publicTiers
+          .map((tier) => SubscriptionService.tierToProductId[tier.id])
+          .nonNulls
+          .toSet();
+      final resp = await _subs.queryProducts(productIds);
       if (!mounted) return;
       if (resp.error != null) {
         final l10n = AppLocalizations.of(context)!;
@@ -440,7 +448,7 @@ class _ContractorSubscriptionScreenState
               ],
 
               // Tier cards
-              ..._tiers.map((tier) {
+              ..._publicTiers.map((tier) {
                 final isActive = tier.id == currentTier;
                 final isUpgrade = _tierIndex(tier.id) > _tierIndex(currentTier);
 

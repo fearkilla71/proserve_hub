@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../constants/release_flags.dart';
 import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 
@@ -140,130 +141,135 @@ Future<void> showToolsQuickActions({
                     },
                   ),
                   divider,
-                  tile(
-                    icon: Icons.palette_outlined,
-                    title: l10n.toolRenderToolTitle,
-                    subtitle: l10n.toolRenderToolSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openProToolOrSubscribe(
-                        open: () async => parentContext.push('/render-tool'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.photo_library_outlined,
-                    title: l10n.toolRenderGalleryTitle,
-                    subtitle: l10n.toolRenderGallerySubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openProToolOrSubscribe(
-                        open: () async => parentContext.push('/render-gallery'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.insights_outlined,
-                    title: l10n.toolProfitLossTitle,
-                    subtitle: l10n.toolProfitLossSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async => parentContext.push('/pnl-dashboard'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.groups_2_outlined,
-                    title: l10n.toolCrewRosterTitle,
-                    subtitle: l10n.toolCrewRosterSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async => parentContext.push('/crew-roster'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.auto_awesome,
-                    title: l10n.toolSmartSchedulingTitle,
-                    subtitle: l10n.toolSmartSchedulingSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async =>
-                            parentContext.push('/smart-scheduling'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.calendar_month_outlined,
-                    title: l10n.toolCrewScheduleTitle,
-                    subtitle: l10n.toolCrewScheduleSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async => parentContext.push('/crew-schedule'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.camera_enhance,
-                    title: l10n.toolQualityInspectorTitle,
-                    subtitle: l10n.toolQualityInspectorSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async =>
-                            parentContext.push('/quality-inspector'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.dashboard,
-                    title: l10n.toolMultiLocationTitle,
-                    subtitle: l10n.toolMultiLocationSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async =>
-                            parentContext.push('/multi-location-dashboard'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.storefront,
-                    title: l10n.toolSubMarketplaceTitle,
-                    subtitle: l10n.toolSubMarketplaceSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async =>
-                            parentContext.push('/sub-marketplace'),
-                      );
-                    },
-                  ),
-                  divider,
-                  tile(
-                    icon: Icons.analytics,
-                    title: l10n.toolBidAnalyzerTitle,
-                    subtitle: l10n.toolBidAnalyzerSubtitle,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await openEnterpriseToolOrSubscribe(
-                        open: () async => parentContext.push('/bid-analyzer'),
-                      );
-                    },
-                  ),
-                  divider,
+                  if (kShowEnterprisePublicSurfaces) ...[
+                    tile(
+                      icon: Icons.palette_outlined,
+                      title: l10n.toolRenderToolTitle,
+                      subtitle: l10n.toolRenderToolSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openProToolOrSubscribe(
+                          open: () async => parentContext.push('/render-tool'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.photo_library_outlined,
+                      title: l10n.toolRenderGalleryTitle,
+                      subtitle: l10n.toolRenderGallerySubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openProToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/render-gallery'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.insights_outlined,
+                      title: l10n.toolProfitLossTitle,
+                      subtitle: l10n.toolProfitLossSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/pnl-dashboard'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.groups_2_outlined,
+                      title: l10n.toolCrewRosterTitle,
+                      subtitle: l10n.toolCrewRosterSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async => parentContext.push('/crew-roster'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.auto_awesome,
+                      title: l10n.toolSmartSchedulingTitle,
+                      subtitle: l10n.toolSmartSchedulingSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/smart-scheduling'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.calendar_month_outlined,
+                      title: l10n.toolCrewScheduleTitle,
+                      subtitle: l10n.toolCrewScheduleSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/crew-schedule'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.camera_enhance,
+                      title: l10n.toolQualityInspectorTitle,
+                      subtitle: l10n.toolQualityInspectorSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/quality-inspector'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.dashboard,
+                      title: l10n.toolMultiLocationTitle,
+                      subtitle: l10n.toolMultiLocationSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/multi-location-dashboard'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.storefront,
+                      title: l10n.toolSubMarketplaceTitle,
+                      subtitle: l10n.toolSubMarketplaceSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async =>
+                              parentContext.push('/sub-marketplace'),
+                        );
+                      },
+                    ),
+                    divider,
+                    tile(
+                      icon: Icons.analytics,
+                      title: l10n.toolBidAnalyzerTitle,
+                      subtitle: l10n.toolBidAnalyzerSubtitle,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await openEnterpriseToolOrSubscribe(
+                          open: () async => parentContext.push('/bid-analyzer'),
+                        );
+                      },
+                    ),
+                    divider,
+                  ],
                   tile(
                     icon: Icons.workspace_premium,
                     title: l10n.subscribe,

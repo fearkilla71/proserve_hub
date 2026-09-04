@@ -12,6 +12,7 @@ import 'community_feed_screen.dart';
 import 'job_feed_page.dart';
 
 import '../l10n/app_localizations.dart';
+import '../constants/release_flags.dart';
 import '../services/lead_iap_service.dart';
 import '../services/fcm_service.dart';
 import '../services/escrow_service.dart';
@@ -293,7 +294,10 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
   }
 
   String _homeToolsSubtitle(AppLocalizations l10n, String tier) {
-    return switch (tier) {
+    final publicTier = tier == 'enterprise' && !kShowEnterprisePublicSurfaces
+        ? 'pro'
+        : tier;
+    return switch (publicTier) {
       'enterprise' => l10n.contractorHomeToolsEnterpriseSubtitle,
       'pro' => l10n.contractorHomeToolsProSubtitle,
       _ => l10n.contractorHomeToolsBasicSubtitle,
@@ -305,7 +309,11 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
     AppLocalizations l10n,
     String tier,
   ) {
-    if (tier == 'enterprise') {
+    final publicTier = tier == 'enterprise' && !kShowEnterprisePublicSurfaces
+        ? 'pro'
+        : tier;
+
+    if (publicTier == 'enterprise') {
       return [
         _DashboardTool(
           label: l10n.contractorHomeToolProfitLoss,
@@ -358,7 +366,7 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       ];
     }
 
-    if (tier == 'pro') {
+    if (publicTier == 'pro') {
       return [
         _DashboardTool(
           label: l10n.contractorHomeToolBrowseLeads,
