@@ -12,6 +12,7 @@ import '../widgets/skeleton_loader.dart';
 import '../constants/service_types.dart';
 import '../l10n/app_localizations.dart';
 import '../models/marketplace_models.dart';
+import '../services/customer_portal_nav.dart';
 import '../services/zip_lookup_service.dart';
 import '../utils/app_error_handler.dart';
 import '../utils/zip_locations.dart';
@@ -317,6 +318,11 @@ class _RecommendedContractorsPageState
     }
   }
 
+  void _completeRequestFlow() {
+    CustomerPortalNav.requestTab(2);
+    context.go('/customer-portal');
+  }
+
   Widget _requestLiveCard(Map<String, dynamic>? job, int invitedCount) {
     final scheme = Theme.of(context).colorScheme;
     final service = (job?['service'] ?? 'Your project').toString();
@@ -382,9 +388,7 @@ class _RecommendedContractorsPageState
             width: double.infinity,
             height: 52,
             child: FilledButton.icon(
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
+              onPressed: _completeRequestFlow,
               icon: const Icon(Icons.check_circle_outline),
               label: Text(AppLocalizations.of(context)!.completeAction),
             ),
