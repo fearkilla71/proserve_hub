@@ -19,6 +19,7 @@ import '../widgets/animated_states.dart';
 import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/linked_job_context_card.dart';
 import '../services/stripe_service.dart';
+import '../l10n/app_localizations.dart';
 
 class InvoiceMakerScreen extends StatefulWidget {
   final InvoiceDraft? initialDraft;
@@ -216,6 +217,7 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
   }
 
   Future<void> _editClientSheet() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = TextEditingController(text: _clientName.text);
     final email = TextEditingController(text: _clientEmail.text);
     final phone = TextEditingController(text: _clientPhone.text);
@@ -224,26 +226,30 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
     String? phoneError;
 
     final ok = await _showEditorSheet<bool>(
-      title: 'Client',
-      primaryButtonText: 'Save',
+      title: l10n.invoiceClientSheetTitle,
+      primaryButtonText: l10n.save,
       builder: (context, setSheetState) {
         return Column(
           children: [
             TextField(
               controller: name,
-              decoration: const InputDecoration(labelText: 'Client name'),
+              decoration: InputDecoration(
+                labelText: l10n.invoiceClientNameLabel,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: email,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: 'Email (optional)',
+                labelText: l10n.invoiceClientEmailLabel,
                 errorText: emailError,
               ),
               onChanged: (v) {
                 setSheetState(() {
-                  emailError = _isValidEmail(v) ? null : 'Invalid email format';
+                  emailError = _isValidEmail(v)
+                      ? null
+                      : l10n.invoiceClientInvalidEmail;
                 });
               },
             ),
@@ -252,12 +258,14 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
               controller: phone,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'Phone (optional)',
+                labelText: l10n.invoiceClientPhoneLabel,
                 errorText: phoneError,
               ),
               onChanged: (v) {
                 setSheetState(() {
-                  phoneError = _isValidPhone(v) ? null : 'Invalid phone number';
+                  phoneError = _isValidPhone(v)
+                      ? null
+                      : l10n.invoiceClientInvalidPhone;
                 });
               },
             ),
@@ -265,8 +273,8 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
             TextField(
               controller: address,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Address (optional)',
+              decoration: InputDecoration(
+                labelText: l10n.invoiceClientAddressLabel,
               ),
             ),
           ],
@@ -1357,6 +1365,7 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final stateKey = _loading
         ? 'loading'
         : (_error != null && _error!.trim().isNotEmpty)
@@ -1584,14 +1593,17 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
                 ],
               ),
               const SizedBox(height: 18),
-              _sectionHeader(title: 'Client', requiredField: true),
+              _sectionHeader(
+                title: l10n.invoiceClientSheetTitle,
+                requiredField: true,
+              ),
               const SizedBox(height: 10),
               InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: _editClientSheet,
                 child: InputDecorator(
-                  decoration: const InputDecoration(
-                    hintText: 'Select client…',
+                  decoration: InputDecoration(
+                    hintText: l10n.invoiceClientSelectHint,
                     border: OutlineInputBorder(),
                   ),
                   child: Row(
@@ -1599,7 +1611,7 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
                       Expanded(
                         child: Text(
                           _draft.clientName.trim().isEmpty
-                              ? 'Select client…'
+                              ? l10n.invoiceClientSelectHint
                               : _draft.clientName,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
@@ -1612,6 +1624,58 @@ class _InvoiceMakerScreenState extends State<InvoiceMakerScreen> {
                       const Icon(Icons.arrow_drop_down),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: scheme.primary.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1_outlined,
+                      color: scheme.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.invoiceClientHelperTitle,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.invoiceClientHelperBody,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: _editClientSheet,
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            label: Text(l10n.invoiceClientEditAction),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 18),

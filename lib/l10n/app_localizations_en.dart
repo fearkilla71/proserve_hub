@@ -1354,6 +1354,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolSelectServiceType => 'Select Service Type';
 
   @override
+  String get toolCostEstimatorPickerBody =>
+      'Detailed estimator templates are available for painting, cabinets, drywall, and pressure washing. For other services, use quote templates or a manual quote for now.';
+
+  @override
+  String get instantPriceAvailable => 'Instant price available';
+
+  @override
   String get toolActionUnlock => 'Unlock';
 
   @override
@@ -4152,6 +4159,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get smartRequestSubmitRequest => 'Submit Request';
+
+  @override
+  String get invoiceClientSheetTitle => 'Client';
+
+  @override
+  String get invoiceClientSelectHint => 'Select or type client...';
+
+  @override
+  String get invoiceClientNameLabel => 'Client name';
+
+  @override
+  String get invoiceClientEmailLabel => 'Email (optional)';
+
+  @override
+  String get invoiceClientPhoneLabel => 'Phone (optional)';
+
+  @override
+  String get invoiceClientAddressLabel => 'Address (optional)';
+
+  @override
+  String get invoiceClientInvalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get invoiceClientInvalidPhone => 'Enter a valid phone number.';
+
+  @override
+  String get invoiceClientHelperTitle => 'Need a client?';
+
+  @override
+  String get invoiceClientHelperBody =>
+      'Type a quick client here before previewing. When you start from an unlocked lead or job, ProServe can prefill these details.';
+
+  @override
+  String get invoiceClientEditAction => 'Add or edit client';
+
+  @override
+  String get paymentHistoryTitle => 'Payment History';
+
+  @override
+  String get paymentHistorySignIn => 'Sign in to view payment history.';
+
+  @override
+  String get paymentHistoryAsCustomer => 'As customer';
+
+  @override
+  String get paymentHistoryAsContractor => 'As contractor';
+
+  @override
+  String get paymentHistoryNoCustomerPayments => 'No customer payments yet';
+
+  @override
+  String get paymentHistoryNoContractorPayments => 'No contractor payments yet';
+
+  @override
+  String get paymentHistoryLoadFailedTitle => 'Payments did not load';
+
+  @override
+  String get paymentHistoryLoadFailedBody =>
+      'We could not load this payment history right now. Check your connection and try again.';
+
+  @override
+  String get paymentHistoryEmptyBody =>
+      'Payments, refunds, and payout-related records will appear here after activity is recorded.';
 
   @override
   String get boostListingTitle => 'Boost Listing';

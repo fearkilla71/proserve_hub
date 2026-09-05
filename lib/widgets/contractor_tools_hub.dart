@@ -189,17 +189,27 @@ class ContractorToolsHub extends StatelessWidget {
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: kPaintingServices
-                .map(
-                  (service) => ListTile(
-                    title: Text(service),
-                    onTap: () {
-                      Navigator.pop(dialogContext);
-                      context.push('/cost-estimator/$service');
-                    },
-                  ),
-                )
-                .toList(),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.toolCostEstimatorPickerBody,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...kPaintingServices.map(
+                (service) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(service),
+                  subtitle: Text(l10n.instantPriceAvailable),
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    context.push('/cost-estimator/$service');
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

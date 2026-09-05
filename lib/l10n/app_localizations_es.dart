@@ -1362,6 +1362,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toolSelectServiceType => 'Seleccionar tipo de servicio';
 
   @override
+  String get toolCostEstimatorPickerBody =>
+      'Las plantillas detalladas del estimador están disponibles para pintura, gabinetes, drywall y lavado a presión. Para otros servicios, usa plantillas de cotización o una cotización manual por ahora.';
+
+  @override
+  String get instantPriceAvailable => 'Precio instantáneo disponible';
+
+  @override
   String get toolActionUnlock => 'Desbloquear';
 
   @override
@@ -4185,6 +4192,73 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get smartRequestSubmitRequest => 'Enviar solicitud';
+
+  @override
+  String get invoiceClientSheetTitle => 'Cliente';
+
+  @override
+  String get invoiceClientSelectHint => 'Selecciona o escribe el cliente...';
+
+  @override
+  String get invoiceClientNameLabel => 'Nombre del cliente';
+
+  @override
+  String get invoiceClientEmailLabel => 'Correo electrónico (opcional)';
+
+  @override
+  String get invoiceClientPhoneLabel => 'Teléfono (opcional)';
+
+  @override
+  String get invoiceClientAddressLabel => 'Dirección (opcional)';
+
+  @override
+  String get invoiceClientInvalidEmail =>
+      'Ingresa un correo electrónico válido.';
+
+  @override
+  String get invoiceClientInvalidPhone =>
+      'Ingresa un número de teléfono válido.';
+
+  @override
+  String get invoiceClientHelperTitle => '¿Necesitas un cliente?';
+
+  @override
+  String get invoiceClientHelperBody =>
+      'Escribe un cliente rápido aquí antes de previsualizar. Cuando empiezas desde un lead desbloqueado o trabajo, ProServe puede llenar estos datos.';
+
+  @override
+  String get invoiceClientEditAction => 'Agregar o editar cliente';
+
+  @override
+  String get paymentHistoryTitle => 'Historial de pagos';
+
+  @override
+  String get paymentHistorySignIn =>
+      'Inicia sesión para ver el historial de pagos.';
+
+  @override
+  String get paymentHistoryAsCustomer => 'Como cliente';
+
+  @override
+  String get paymentHistoryAsContractor => 'Como contratista';
+
+  @override
+  String get paymentHistoryNoCustomerPayments => 'Aún no hay pagos de cliente';
+
+  @override
+  String get paymentHistoryNoContractorPayments =>
+      'Aún no hay pagos de contratista';
+
+  @override
+  String get paymentHistoryLoadFailedTitle => 'No se cargaron los pagos';
+
+  @override
+  String get paymentHistoryLoadFailedBody =>
+      'No pudimos cargar este historial de pagos ahora. Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get paymentHistoryEmptyBody =>
+      'Los pagos, reembolsos y registros relacionados con cobros aparecerán aquí después de que se registre actividad.';
 
   @override
   String get boostListingTitle => 'Impulsar perfil';

@@ -3,21 +3,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
+
 class PaymentHistoryScreen extends StatelessWidget {
   const PaymentHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payment History')),
-        body: const Center(child: Text('Please sign in')),
+        appBar: AppBar(title: Text(l10n.paymentHistoryTitle)),
+        body: Center(child: Text(l10n.paymentHistorySignIn)),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment History')),
+      appBar: AppBar(title: Text(l10n.paymentHistoryTitle)),
       body: _PaymentsTab(uid: user.uid),
     );
   }
@@ -30,29 +33,30 @@ class _PaymentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         _PaymentsSection(
-          title: 'As Customer',
+          title: l10n.paymentHistoryAsCustomer,
           stream: FirebaseFirestore.instance
               .collection('payments')
               .where('customerId', isEqualTo: uid)
               .orderBy('createdAt', descending: true)
               .limit(50)
               .snapshots(),
-          emptyText: 'No customer payments yet.',
+          emptyText: l10n.paymentHistoryNoCustomerPayments,
         ),
         const SizedBox(height: 16),
         _PaymentsSection(
-          title: 'As Contractor',
+          title: l10n.paymentHistoryAsContractor,
           stream: FirebaseFirestore.instance
               .collection('payments')
               .where('contractorId', isEqualTo: uid)
               .orderBy('createdAt', descending: true)
               .limit(50)
               .snapshots(),
-          emptyText: 'No contractor payments yet.',
+          emptyText: l10n.paymentHistoryNoContractorPayments,
         ),
       ],
     );
@@ -95,6 +99,7 @@ class _PaymentsSectionState extends State<_PaymentsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -110,10 +115,9 @@ class _PaymentsSectionState extends State<_PaymentsSection> {
                 if (snapshot.hasError) {
                   return _PaymentStateCard(
                     icon: Icons.wifi_off_rounded,
-                    title: 'Payments did not load',
-                    body:
-                        'We could not load this payment history right now. Check your connection and try again.',
-                    actionLabel: 'Retry',
+                    title: l10n.paymentHistoryLoadFailedTitle,
+                    body: l10n.paymentHistoryLoadFailedBody,
+                    actionLabel: l10n.retry,
                     onAction: () => setState(() => _reloadKey++),
                   );
                 }
@@ -127,8 +131,7 @@ class _PaymentsSectionState extends State<_PaymentsSection> {
                   return _PaymentStateCard(
                     icon: Icons.receipt_long_outlined,
                     title: widget.emptyText,
-                    body:
-                        'Payments, refunds, and payout-related records will appear here after activity is recorded.',
+                    body: l10n.paymentHistoryEmptyBody,
                   );
                 }
 

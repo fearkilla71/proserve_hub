@@ -2486,6 +2486,18 @@ abstract class AppLocalizations {
   /// **'Select Service Type'**
   String get toolSelectServiceType;
 
+  /// No description provided for @toolCostEstimatorPickerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed estimator templates are available for painting, cabinets, drywall, and pressure washing. For other services, use quote templates or a manual quote for now.'**
+  String get toolCostEstimatorPickerBody;
+
+  /// No description provided for @instantPriceAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant price available'**
+  String get instantPriceAvailable;
+
   /// No description provided for @toolActionUnlock.
   ///
   /// In en, this message translates to:
@@ -7315,6 +7327,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submit Request'**
   String get smartRequestSubmitRequest;
+
+  /// No description provided for @invoiceClientSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get invoiceClientSheetTitle;
+
+  /// No description provided for @invoiceClientSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select or type client...'**
+  String get invoiceClientSelectHint;
+
+  /// No description provided for @invoiceClientNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client name'**
+  String get invoiceClientNameLabel;
+
+  /// No description provided for @invoiceClientEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (optional)'**
+  String get invoiceClientEmailLabel;
+
+  /// No description provided for @invoiceClientPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get invoiceClientPhoneLabel;
+
+  /// No description provided for @invoiceClientAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address (optional)'**
+  String get invoiceClientAddressLabel;
+
+  /// No description provided for @invoiceClientInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get invoiceClientInvalidEmail;
+
+  /// No description provided for @invoiceClientInvalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number.'**
+  String get invoiceClientInvalidPhone;
+
+  /// No description provided for @invoiceClientHelperTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Need a client?'**
+  String get invoiceClientHelperTitle;
+
+  /// No description provided for @invoiceClientHelperBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a quick client here before previewing. When you start from an unlocked lead or job, ProServe can prefill these details.'**
+  String get invoiceClientHelperBody;
+
+  /// No description provided for @invoiceClientEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or edit client'**
+  String get invoiceClientEditAction;
+
+  /// No description provided for @paymentHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment History'**
+  String get paymentHistoryTitle;
+
+  /// No description provided for @paymentHistorySignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view payment history.'**
+  String get paymentHistorySignIn;
+
+  /// No description provided for @paymentHistoryAsCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'As customer'**
+  String get paymentHistoryAsCustomer;
+
+  /// No description provided for @paymentHistoryAsContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'As contractor'**
+  String get paymentHistoryAsContractor;
+
+  /// No description provided for @paymentHistoryNoCustomerPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No customer payments yet'**
+  String get paymentHistoryNoCustomerPayments;
+
+  /// No description provided for @paymentHistoryNoContractorPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No contractor payments yet'**
+  String get paymentHistoryNoContractorPayments;
+
+  /// No description provided for @paymentHistoryLoadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments did not load'**
+  String get paymentHistoryLoadFailedTitle;
+
+  /// No description provided for @paymentHistoryLoadFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this payment history right now. Check your connection and try again.'**
+  String get paymentHistoryLoadFailedBody;
+
+  /// No description provided for @paymentHistoryEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments, refunds, and payout-related records will appear here after activity is recorded.'**
+  String get paymentHistoryEmptyBody;
 
   /// No description provided for @boostListingTitle.
   ///
