@@ -32,12 +32,7 @@ const _defaultGuidance = ServiceGuidance(
     'Close-up of the issue or surface',
     'Any access points, measurements, or existing materials',
   ],
-  quoteLineItems: [
-    'Labor',
-    'Materials',
-    'Setup and cleanup',
-    'Warranty or follow-up',
-  ],
+  quoteLineItems: ['Labor', 'Materials', 'Setup and cleanup', 'Warranty'],
   matchSignals: [
     'Offers this service',
     'Works in your area',

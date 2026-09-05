@@ -59,7 +59,7 @@ class _PaymentsTab extends StatelessWidget {
   }
 }
 
-class _PaymentsSection extends StatelessWidget {
+class _PaymentsSection extends StatefulWidget {
   final String title;
   final Stream<QuerySnapshot<Map<String, dynamic>>> stream;
   final String emptyText;
@@ -69,6 +69,13 @@ class _PaymentsSection extends StatelessWidget {
     required this.stream,
     required this.emptyText,
   });
+
+  @override
+  State<_PaymentsSection> createState() => _PaymentsSectionState();
+}
+
+class _PaymentsSectionState extends State<_PaymentsSection> {
+  int _reloadKey = 0;
 
   String _formatTimestamp(dynamic ts) {
     if (ts is Timestamp) {
@@ -94,13 +101,21 @@ class _PaymentsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: stream,
+              key: ValueKey(_reloadKey),
+              stream: widget.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return const Text('Error loading payments');
+                  return _PaymentStateCard(
+                    icon: Icons.wifi_off_rounded,
+                    title: 'Payments did not load',
+                    body:
+                        'We could not load this payment history right now. Check your connection and try again.',
+                    actionLabel: 'Retry',
+                    onAction: () => setState(() => _reloadKey++),
+                  );
                 }
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -109,7 +124,12 @@ class _PaymentsSection extends StatelessWidget {
                 final docs = snapshot.data!.docs;
 
                 if (docs.isEmpty) {
-                  return Text(emptyText);
+                  return _PaymentStateCard(
+                    icon: Icons.receipt_long_outlined,
+                    title: widget.emptyText,
+                    body:
+                        'Payments, refunds, and payout-related records will appear here after activity is recorded.',
+                  );
                 }
 
                 return Column(
@@ -144,6 +164,66 @@ class _PaymentsSection extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaymentStateCard extends StatelessWidget {
+  const _PaymentStateCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(body, style: theme.textTheme.bodySmall),
+                if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton(
+                    onPressed: onAction,
+                    child: Text(actionLabel!),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

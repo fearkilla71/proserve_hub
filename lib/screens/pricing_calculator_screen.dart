@@ -224,17 +224,20 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
 
       if (mounted) {
         final canCreateInvoice = _calculateTotalCost() > 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Estimate saved!'),
-            action: canCreateInvoice
-                ? SnackBarAction(
-                    label: 'Create invoice',
-                    onPressed: _createInvoiceFromEstimate,
-                  )
-                : null,
-          ),
-        );
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text('Estimate saved!'),
+              duration: const Duration(seconds: 4),
+              action: canCreateInvoice
+                  ? SnackBarAction(
+                      label: 'Create invoice',
+                      onPressed: _createInvoiceFromEstimate,
+                    )
+                  : null,
+            ),
+          );
       }
     } catch (e) {
       if (mounted) {

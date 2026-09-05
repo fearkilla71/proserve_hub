@@ -1163,6 +1163,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Required before you can receive escrow payouts and invoice payments.';
 
   @override
+  String get toolsPayoutSetupOpening => 'Opening payout setup...';
+
+  @override
   String get toolsPayoutSetupOpenFailed =>
       'Could not open payout setup. Try again.';
 

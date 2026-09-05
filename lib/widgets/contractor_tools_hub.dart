@@ -121,6 +121,14 @@ class ContractorToolsHub extends StatelessWidget {
   Future<void> _startPayoutSetup(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     try {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.toolsPayoutSetupOpening),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       await ConnectService().startOnboarding();
     } catch (e) {
       if (!context.mounted) return;

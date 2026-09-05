@@ -14,6 +14,7 @@ import 'job_feed_page.dart';
 import '../l10n/app_localizations.dart';
 import '../constants/release_flags.dart';
 import '../services/lead_iap_service.dart';
+import '../services/connect_service.dart';
 import '../services/fcm_service.dart';
 import '../services/escrow_service.dart';
 import '../services/stripe_service.dart';
@@ -290,6 +291,36 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _startPayoutSetup() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.toolsPayoutSetupOpening),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      await ConnectService().startOnboarding();
+    } catch (e) {
+      if (!mounted) return;
+      final message = e
+          .toString()
+          .replaceFirst(RegExp(r'^Exception:\s*'), '')
+          .trim();
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              message.isEmpty ? l10n.toolsPayoutSetupOpenFailed : message,
+            ),
+          ),
+        );
     }
   }
 
@@ -591,6 +622,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 color: payoutReady
                     ? ProServeColors.accent
                     : ProServeColors.warning,
+                onTap: payoutReady
+                    ? () => context.push('/payment-history')
+                    : _startPayoutSetup,
               ),
             ],
           ),
@@ -668,7 +702,9 @@ class _ContractorPortalPageState extends State<ContractorPortalPage> {
                 value: payoutValue,
                 icon: Icons.attach_money_rounded,
                 accent: ProServeColors.accent2,
-                onTap: () => context.push('/payment-history'),
+                onTap: payoutReady
+                    ? () => context.push('/payment-history')
+                    : _startPayoutSetup,
               ),
             ),
           ],
@@ -1546,15 +1582,17 @@ class _ProfessionalStatusChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
@@ -1574,6 +1612,21 @@ class _ProfessionalStatusChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) return chip;
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: chip,
+        ),
       ),
     );
   }

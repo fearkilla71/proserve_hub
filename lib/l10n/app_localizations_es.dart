@@ -1171,6 +1171,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Necesario para recibir pagos de depósito seguro y facturas.';
 
   @override
+  String get toolsPayoutSetupOpening => 'Abriendo configuración de pagos...';
+
+  @override
   String get toolsPayoutSetupOpenFailed =>
       'No se pudo abrir la configuración de pagos. Inténtalo de nuevo.';
 

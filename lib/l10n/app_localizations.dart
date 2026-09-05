@@ -2150,6 +2150,12 @@ abstract class AppLocalizations {
   /// **'Required before you can receive escrow payouts and invoice payments.'**
   String get toolsPayoutSetupReason;
 
+  /// No description provided for @toolsPayoutSetupOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening payout setup...'**
+  String get toolsPayoutSetupOpening;
+
   /// No description provided for @toolsPayoutSetupOpenFailed.
   ///
   /// In en, this message translates to:
