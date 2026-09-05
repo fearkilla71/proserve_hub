@@ -1897,7 +1897,7 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
 // Helper Widgets
 // ═══════════════════════════════════════════════════════════════
 
-class _ServiceCatalogPicker extends StatelessWidget {
+class _ServiceCatalogPicker extends StatefulWidget {
   const _ServiceCatalogPicker({
     required this.services,
     required this.query,
@@ -1911,11 +1911,49 @@ class _ServiceCatalogPicker extends StatelessWidget {
   final ValueChanged<_ServiceCatalogEntry> onSelected;
 
   @override
+  State<_ServiceCatalogPicker> createState() => _ServiceCatalogPickerState();
+}
+
+class _ServiceCatalogPickerState extends State<_ServiceCatalogPicker> {
+  String? _expandedCategory;
+  bool _collapsedAllCategories = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandedCategory = _selectedCategory();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ServiceCatalogPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedType != widget.selectedType) {
+      _expandedCategory = _selectedCategory() ?? _expandedCategory;
+      _collapsedAllCategories = false;
+    }
+  }
+
+  String? _selectedCategory() {
+    for (final service in widget.services) {
+      if (service.type == widget.selectedType) return service.category;
+    }
+    return null;
+  }
+
+  String? _selectedServiceIn(List<_ServiceCatalogEntry> services) {
+    for (final service in services) {
+      if (service.type == widget.selectedType) return service.name;
+    }
+    return null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final normalizedQuery = serviceKey(query);
-    final filtered = services
+    final normalizedQuery = serviceKey(widget.query);
+    final hasSearch = normalizedQuery.isNotEmpty;
+    final filtered = widget.services
         .where((service) {
           if (normalizedQuery.isEmpty) return true;
           return serviceKey(service.name).contains(normalizedQuery) ||
@@ -1948,6 +1986,16 @@ class _ServiceCatalogPicker extends StatelessWidget {
     for (final service in filtered) {
       byCategory.putIfAbsent(service.category, () => []).add(service);
     }
+    final selectedCategory = _selectedCategory();
+    final fallbackCategory =
+        (selectedCategory != null && byCategory.containsKey(selectedCategory))
+        ? selectedCategory
+        : byCategory.keys.first;
+    final activeExpandedCategory = _collapsedAllCategories
+        ? null
+        : _expandedCategory != null && byCategory.containsKey(_expandedCategory)
+        ? _expandedCategory
+        : fallbackCategory;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1976,25 +2024,137 @@ class _ServiceCatalogPicker extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         for (final entry in byCategory.entries) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 8),
-            child: Text(
-              entry.key,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: scheme.primary,
+          _ServiceCategoryHeader(
+            title: entry.key,
+            count: entry.value.length,
+            expanded: hasSearch || activeExpandedCategory == entry.key,
+            selectedService: _selectedServiceIn(entry.value),
+            onTap: hasSearch
+                ? null
+                : () {
+                    setState(() {
+                      if (activeExpandedCategory == entry.key) {
+                        _expandedCategory = null;
+                        _collapsedAllCategories = true;
+                      } else {
+                        _expandedCategory = entry.key;
+                        _collapsedAllCategories = false;
+                      }
+                    });
+                  },
+          ),
+          if (hasSearch || activeExpandedCategory == entry.key)
+            ...entry.value.map(
+              (service) => _ServiceCatalogTile(
+                service: service,
+                selected: widget.selectedType == service.type,
+                onTap: () {
+                  setState(() {
+                    _expandedCategory = service.category;
+                    _collapsedAllCategories = false;
+                  });
+                  widget.onSelected(service);
+                },
               ),
             ),
-          ),
-          ...entry.value.map(
-            (service) => _ServiceCatalogTile(
-              service: service,
-              selected: selectedType == service.type,
-              onTap: () => onSelected(service),
-            ),
-          ),
         ],
       ],
+    );
+  }
+}
+
+class _ServiceCategoryHeader extends StatelessWidget {
+  const _ServiceCategoryHeader({
+    required this.title,
+    required this.count,
+    required this.expanded,
+    required this.onTap,
+    this.selectedService,
+  });
+
+  final String title;
+  final int count;
+  final bool expanded;
+  final VoidCallback? onTap;
+  final String? selectedService;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final subtitle = selectedService == null
+        ? l10n.smartRequestServiceGroupCount(count)
+        : l10n.smartRequestSelectedServiceInGroup(selectedService!);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: expanded
+                    ? scheme.primary.withValues(alpha: 0.65)
+                    : scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: scheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  expanded
+                      ? l10n.smartRequestHideServices
+                      : l10n.smartRequestShowServices,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

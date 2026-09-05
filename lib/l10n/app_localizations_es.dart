@@ -4020,6 +4020,22 @@ class AppLocalizationsEs extends AppLocalizations {
       'Elige el servicio más cercano. Los servicios con precio instantáneo pueden mostrar precio de IA; los demás se envían como solicitud de cotización.';
 
   @override
+  String get smartRequestShowServices => 'Mostrar';
+
+  @override
+  String get smartRequestHideServices => 'Ocultar';
+
+  @override
+  String smartRequestServiceGroupCount(int count) {
+    return '$count servicios';
+  }
+
+  @override
+  String smartRequestSelectedServiceInGroup(String service) {
+    return 'Seleccionado: $service';
+  }
+
+  @override
   String get smartRequestInstantPriceChip => 'Precio instantáneo + pros';
 
   @override

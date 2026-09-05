@@ -7010,6 +7010,30 @@ abstract class AppLocalizations {
   /// **'Choose the closest service. Instant-price services can show an AI price; all other services become quote requests sent to matching pros.'**
   String get smartRequestChooseClosestService;
 
+  /// No description provided for @smartRequestShowServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get smartRequestShowServices;
+
+  /// No description provided for @smartRequestHideServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get smartRequestHideServices;
+
+  /// No description provided for @smartRequestServiceGroupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} services'**
+  String smartRequestServiceGroupCount(int count);
+
+  /// No description provided for @smartRequestSelectedServiceInGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {service}'**
+  String smartRequestSelectedServiceInGroup(String service);
+
   /// No description provided for @smartRequestInstantPriceChip.
   ///
   /// In en, this message translates to:

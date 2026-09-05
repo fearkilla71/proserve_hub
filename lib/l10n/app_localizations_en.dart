@@ -3986,6 +3986,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the closest service. Instant-price services can show an AI price; all other services become quote requests sent to matching pros.';
 
   @override
+  String get smartRequestShowServices => 'Show';
+
+  @override
+  String get smartRequestHideServices => 'Hide';
+
+  @override
+  String smartRequestServiceGroupCount(int count) {
+    return '$count services';
+  }
+
+  @override
+  String smartRequestSelectedServiceInGroup(String service) {
+    return 'Selected: $service';
+  }
+
+  @override
   String get smartRequestInstantPriceChip => 'Instant price + pro matching';
 
   @override
