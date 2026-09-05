@@ -614,10 +614,9 @@ service cloud.firestore {
           isContractor()
           && resource.data.claimed != true
           && resource.data.launchRegion == 'houston_metro'
-          // Contractors must have credits (or be invited) to view open lead metadata.
-          // Contact/payment fields are not stored on this public document; those stay
-          // behind job_requests/{jobId}/private/contact and server-controlled fields.
-          && (hasLeadCredits() || isInvitedToBid(jobId))
+          // Contractors can browse public lead metadata before buying credits.
+          // Contact/payment fields stay behind job_requests/{jobId}/private/contact
+          // and lead unlock Cloud Functions still require credits.
           // Exclusive leads: once unlocked by someone else, it should not appear in the feed.
           && (
             !('leadUnlockedBy' in resource.data)

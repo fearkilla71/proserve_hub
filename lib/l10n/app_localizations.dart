@@ -3224,6 +3224,42 @@ abstract class AppLocalizations {
   /// **'You are set up to browse leads. New customer requests will appear here when they are posted.'**
   String get leadMarketEmptyMarketSubtitle;
 
+  /// No description provided for @leadMarketEmptyZipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your ZIP to see nearby leads'**
+  String get leadMarketEmptyZipTitle;
+
+  /// No description provided for @leadMarketEmptyZipSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contractor ZIP is missing, so the feed cannot check which Houston-area leads are close to you.'**
+  String get leadMarketEmptyZipSubtitle;
+
+  /// No description provided for @leadMarketEmptyServiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No leads match your services yet'**
+  String get leadMarketEmptyServiceTitle;
+
+  /// No description provided for @leadMarketEmptyServiceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only leads matching {services} are shown. Clear filters to see all Houston leads.'**
+  String leadMarketEmptyServiceSubtitle(String services);
+
+  /// No description provided for @leadMarketEmptyRadiusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No leads inside your service radius'**
+  String get leadMarketEmptyRadiusTitle;
+
+  /// No description provided for @leadMarketEmptyRadiusSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing leads within {radius} miles of ZIP {zip}. Expand your radius or clear filters to check the full Houston market.'**
+  String leadMarketEmptyRadiusSubtitle(String radius, String zip);
+
   /// No description provided for @leadMarketCreditBalance.
   ///
   /// In en, this message translates to:
@@ -3379,6 +3415,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect payouts before accepting paid jobs. You can still review market demand and buy credits.'**
   String get leadMarketPayoutBlockedExplain;
+
+  /// No description provided for @leadMarketFreshLeadsImmediate.
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh leads show immediately'**
+  String get leadMarketFreshLeadsImmediate;
+
+  /// No description provided for @leadMarketFiltersActiveShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters active'**
+  String get leadMarketFiltersActiveShort;
 
   /// No description provided for @leadCreditActivityTitle.
   ///

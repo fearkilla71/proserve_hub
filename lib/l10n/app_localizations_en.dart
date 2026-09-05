@@ -1759,6 +1759,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are set up to browse leads. New customer requests will appear here when they are posted.';
 
   @override
+  String get leadMarketEmptyZipTitle => 'Add your ZIP to see nearby leads';
+
+  @override
+  String get leadMarketEmptyZipSubtitle =>
+      'Your contractor ZIP is missing, so the feed cannot check which Houston-area leads are close to you.';
+
+  @override
+  String get leadMarketEmptyServiceTitle => 'No leads match your services yet';
+
+  @override
+  String leadMarketEmptyServiceSubtitle(String services) {
+    return 'Only leads matching $services are shown. Clear filters to see all Houston leads.';
+  }
+
+  @override
+  String get leadMarketEmptyRadiusTitle =>
+      'No leads inside your service radius';
+
+  @override
+  String leadMarketEmptyRadiusSubtitle(String radius, String zip) {
+    return 'Showing leads within $radius miles of ZIP $zip. Expand your radius or clear filters to check the full Houston market.';
+  }
+
+  @override
   String leadMarketCreditBalance(int count) {
     return '$count lead credits available';
   }
@@ -1856,6 +1880,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get leadMarketPayoutBlockedExplain =>
       'Connect payouts before accepting paid jobs. You can still review market demand and buy credits.';
+
+  @override
+  String get leadMarketFreshLeadsImmediate => 'Fresh leads show immediately';
+
+  @override
+  String get leadMarketFiltersActiveShort => 'Filters active';
 
   @override
   String get leadCreditActivityTitle => 'Lead credit activity';

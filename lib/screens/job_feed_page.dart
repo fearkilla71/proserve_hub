@@ -18,7 +18,6 @@ import '../services/location_service.dart';
 import '../utils/geo_utils.dart';
 import '../utils/app_error_handler.dart';
 import '../theme/proserve_theme.dart';
-import '../widgets/contractor_portal_helpers.dart';
 import '../widgets/lead_pack_purchase_sheet.dart';
 
 class JobFeedPage extends StatelessWidget {
@@ -186,10 +185,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   String? _currentZip;
   bool _loadingLocation = false;
 
-  // ─── Enterprise early access ──
-  String _userTier = 'basic';
-  bool get _isEnterprise => _userTier == 'enterprise';
-
   // ─── My services filter ──
   List<String> _myServices = [];
   bool _matchMyServices = true; // ON by default – only show relevant leads
@@ -230,14 +225,12 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
           .get();
       final contractorData = contractorDoc.data() ?? <String, dynamic>{};
       final zip = (data['zip'] as String?)?.trim();
-      final tier = effectiveSubscriptionTier(data);
       final services = contractorServicesFromData({...data, ...contractorData});
       final profileRadius =
           (contractorData['radius'] as num?)?.toDouble() ??
           (data['radius'] as num?)?.toDouble();
       if (!mounted) return;
       setState(() {
-        _userTier = tier;
         _myServices = services;
         // If the contractor has no services selected, disable the filter
         // so they still see all leads.
@@ -484,6 +477,53 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         _datePostedDays > 0;
   }
 
+  String _servicesSummary() {
+    if (_myServices.isEmpty) return '';
+    final visible = _myServices.take(3).join(', ');
+    final hidden = _myServices.length - 3;
+    if (hidden <= 0) return visible;
+    return '$visible +$hidden';
+  }
+
+  String _leadMarketEmptyTitle(AppLocalizations l10n, bool hasZip) {
+    if (!hasZip) return l10n.leadMarketEmptyZipTitle;
+    if (_matchMyServices && _myServices.isNotEmpty) {
+      return l10n.leadMarketEmptyServiceTitle;
+    }
+    if (_serviceFilter != null ||
+        _minPrice != null ||
+        _maxPrice != null ||
+        _datePostedDays > 0) {
+      return l10n.leadMarketEmptyFiltersTitle;
+    }
+    if (_distanceEnabled) return l10n.leadMarketEmptyRadiusTitle;
+    return l10n.leadMarketEmptyMarketTitle;
+  }
+
+  String _leadMarketEmptySubtitle(
+    AppLocalizations l10n,
+    bool hasZip,
+    String? zip,
+  ) {
+    if (!hasZip) return l10n.leadMarketEmptyZipSubtitle;
+    if (_matchMyServices && _myServices.isNotEmpty) {
+      return l10n.leadMarketEmptyServiceSubtitle(_servicesSummary());
+    }
+    if (_serviceFilter != null ||
+        _minPrice != null ||
+        _maxPrice != null ||
+        _datePostedDays > 0) {
+      return l10n.leadMarketEmptyFiltersSubtitle;
+    }
+    if (_distanceEnabled) {
+      return l10n.leadMarketEmptyRadiusSubtitle(
+        _distanceMiles.toStringAsFixed(0),
+        zip ?? '',
+      );
+    }
+    return l10n.leadMarketEmptyMarketSubtitle;
+  }
+
   void _clearAdvancedFilters() {
     setState(() {
       _matchMyServices = false;
@@ -541,18 +581,12 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hasFilters
-                            ? l10n.leadMarketEmptyFiltersTitle
-                            : l10n.leadMarketEmptyMarketTitle,
+                        _leadMarketEmptyTitle(l10n, hasZip),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        hasFilters
-                            ? l10n.leadMarketEmptyFiltersSubtitle
-                            : l10n.leadMarketEmptyMarketSubtitle,
-                      ),
+                      Text(_leadMarketEmptySubtitle(l10n, hasZip, zip)),
                     ],
                   ),
                 ),
@@ -693,6 +727,10 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         : l10n.leadMarketSetZipShort,
                   ),
                   _LeadSignalChip(
+                    icon: Icons.flash_on_outlined,
+                    label: l10n.leadMarketFreshLeadsImmediate,
+                  ),
+                  _LeadSignalChip(
                     icon: Icons.handyman_outlined,
                     label: servicesCount == 0
                         ? l10n.leadMarketAddServices
@@ -706,6 +744,11 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                         ? l10n.leadMarketPayoutsReadyShort
                         : l10n.leadMarketPayoutsBlockedShort,
                   ),
+                  if (_hasActiveFilters())
+                    _LeadSignalChip(
+                      icon: Icons.filter_alt_outlined,
+                      label: l10n.leadMarketFiltersActiveShort,
+                    ),
                 ],
               ),
               if (!payoutsReady) ...[
@@ -1023,21 +1066,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
   }
 
   bool _passesAdvancedFilters(Map<String, dynamic> data) {
-    // ── Enterprise early-access gate ──
-    // Non-Enterprise users only see jobs older than 30 minutes.
-    if (!_isEnterprise) {
-      final createdAt = data['createdAt'];
-      if (createdAt is Timestamp) {
-        final postedDate = createdAt.toDate();
-        final earlyAccessCutoff = DateTime.now().subtract(
-          const Duration(minutes: 30),
-        );
-        if (postedDate.isAfter(earlyAccessCutoff)) {
-          return false; // Job is too fresh for non-Enterprise users.
-        }
-      }
-    }
-
     // ── My-services filter ──
     if (_matchMyServices && _myServices.isNotEmpty) {
       final svc = (data['service'] ?? '').toString();
@@ -1150,16 +1178,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
         data['instantBook'] == true ||
         (data['escrowId'] ?? '').toString().isNotEmpty;
 
-    // Early access badge for Enterprise users — show on jobs < 30 min old.
-    final bool isEarlyAccess;
-    if (_isEnterprise && createdAt is Timestamp) {
-      isEarlyAccess = created.isAfter(
-        DateTime.now().subtract(const Duration(minutes: 30)),
-      );
-    } else {
-      isEarlyAccess = false;
-    }
-
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1204,36 +1222,6 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                if (isEarlyAccess) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.amber.shade600, Colors.orange.shade600],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.bolt, size: 12, color: Colors.white),
-                        const SizedBox(width: 3),
-                        Text(
-                          l10n.leadMarketEarlyAccess,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -2120,76 +2108,23 @@ class _JobFeedBodyState extends State<_JobFeedBody> {
               builder: (context, userSnap) {
                 final userData = userSnap.data?.data() ?? <String, dynamic>{};
 
-                // Keep tier and services in sync reactively.
-                final latestTier = effectiveSubscriptionTier(userData);
+                // Keep services in sync reactively.
                 final latestServices = contractorServicesFromData(userData);
-                if (latestTier != _userTier ||
-                    latestServices.length != _myServices.length) {
+                if (latestServices.length != _myServices.length) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
                       setState(() {
-                        _userTier = latestTier;
                         _myServices = latestServices;
                       });
                     }
                   });
                 }
 
-                final role =
-                    (userData['role'] as String?)?.trim().toLowerCase() ?? '';
                 final neRaw = userData['leadCredits'] ?? userData['credits'];
                 final neCredits = neRaw is num ? neRaw.toInt() : 0;
                 final exRaw = userData['exclusiveLeadCredits'];
                 final exCredits = exRaw is num ? exRaw.toInt() : 0;
                 final totalCredits = neCredits + exCredits;
-
-                final isContractor = role == 'contractor';
-
-                if (isContractor && totalCredits <= 0) {
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      invitedSection(uid: user.uid),
-                      unlockedLeadsSection(uid: user.uid),
-                      submittedQuotesSection(uid: user.uid),
-                      _leadCreditActivitySection(uid: user.uid),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.leadMarketBuyLeadsToSeeJobs,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.leadMarketCreditsRequiredBody,
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton(
-                                  onPressed: showLeadPackSheet,
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.leadMarketBuyLeads,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
 
                 return StreamBuilder<QuerySnapshot>(
                   stream: _baseQuery()

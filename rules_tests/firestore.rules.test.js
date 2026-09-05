@@ -248,7 +248,7 @@ describe('Firestore user security rules', () => {
     )));
   });
 
-  it('blocks contractors without credits from listing the open lead feed', async () => {
+  it('allows contractors without credits to browse open lead metadata but not private contact', async () => {
     await seed(['users', 'contractorA'], {
       uid: 'contractorA',
       role: 'contractor',
@@ -266,13 +266,23 @@ describe('Firestore user security rules', () => {
       paidBy: [],
       createdAt: new Date(),
     });
+    await seed(['job_requests', 'openJobA', 'private', 'contact'], {
+      requesterUid: 'customerA',
+      name: 'Customer A',
+      email: 'customer@example.com',
+      phone: '555-0100',
+    });
 
-    await assertFails(getDocs(query(
+    await assertSucceeds(getDocs(query(
       collection(db('contractorA'), 'job_requests'),
       where('launchRegion', '==', 'houston_metro'),
       where('claimed', '==', false),
       where('leadUnlockedBy', '==', null),
       limit(10),
+    )));
+    await assertFails(getDoc(doc(
+      db('contractorA'),
+      'job_requests/openJobA/private/contact',
     )));
   });
 
