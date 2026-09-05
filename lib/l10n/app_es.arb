@@ -1208,6 +1208,7 @@
   "smartRequestLeadDetailsFilled": "Estos detalles estructurados se mostrarán a los contratistas compatibles.",
   "smartRequestMissingHelpfulDetails": "Detalles útiles faltantes: {fields}",
   "smartRequestSummarySize": "Tamaño",
+  "smartRequestSummarySizeNotProvided": "No proporcionado",
   "smartRequestSummaryProperty": "Propiedad",
   "smartRequestSummaryCondition": "Condición",
   "smartRequestSummaryBudget": "Presupuesto",

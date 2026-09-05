@@ -1543,6 +1543,7 @@
   "smartRequestMissingHelpfulDetails": "Missing helpful details: {fields}",
   "@smartRequestMissingHelpfulDetails": { "placeholders": { "fields": { "type": "String" } } },
   "smartRequestSummarySize": "Size",
+  "smartRequestSummarySizeNotProvided": "Not provided",
   "smartRequestSummaryProperty": "Property",
   "smartRequestSummaryCondition": "Condition",
   "smartRequestSummaryBudget": "Budget",

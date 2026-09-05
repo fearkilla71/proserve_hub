@@ -13,6 +13,49 @@ void main() {
       }
     });
 
+    test('every catalog service can produce a complete lead payload', () {
+      for (final service in kContractorServiceCatalog) {
+        final definition = intakeDefinitionForService(service);
+        final answers = _sampleAnswersFor(definition);
+        final missing = requiredMissingFields(definition, answers);
+        final score = leadQualityScore(
+          definition: definition,
+          answers: answers,
+          photoCount: 3,
+          zip: '77093',
+          timeline: 'asap',
+          budgetPreference: 'recommended',
+        );
+        final brief = contractorBriefForLead(
+          service: service,
+          definition: definition,
+          answers: answers,
+          photoCount: 3,
+          zip: '77093',
+          timeline: 'asap',
+          notes: 'QA request for service intake coverage.',
+        );
+        final tags = matchTagsForAnswers(definition, answers);
+
+        expect(missing, isEmpty, reason: service);
+        expect(score, greaterThanOrEqualTo(75), reason: service);
+        expect(
+          leadQualityLabel(score, missing),
+          'Strong lead',
+          reason: service,
+        );
+        expect(serviceSlug(service), isNotEmpty, reason: service);
+        expect(brief, contains(service), reason: service);
+        expect(brief, contains('77093'), reason: service);
+        expect(tags, isNotEmpty, reason: service);
+
+        final expectedRoute = supportsInstantPrice(service)
+            ? 'ai-price-offer'
+            : 'recommended-pros';
+        expect(expectedRoute, isNotEmpty, reason: service);
+      }
+    });
+
     test('release-priority services have specific required fields', () {
       for (final service in [
         'Interior Painting',
@@ -114,4 +157,20 @@ void main() {
       expect(cleaningTags, contains('recurring'));
     });
   });
+}
+
+Map<String, dynamic> _sampleAnswersFor(ServiceIntakeDefinition definition) {
+  return {
+    for (final question in definition.questions)
+      question.id: switch (question.type) {
+        ServiceIntakeQuestionType.choice =>
+          question.options.isNotEmpty ? question.options.first : 'Repair',
+        ServiceIntakeQuestionType.multiChoice =>
+          question.options.take(2).toList(growable: false),
+        ServiceIntakeQuestionType.number => 3,
+        ServiceIntakeQuestionType.text =>
+          'Customer supplied clear project notes.',
+        ServiceIntakeQuestionType.yesNo => true,
+      },
+  };
 }

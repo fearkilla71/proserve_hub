@@ -171,6 +171,26 @@ final List<Map<String, dynamic>> _fallbackServices = kQuickServices.entries
     )
     .toList(growable: false);
 
+List<Map<String, dynamic>> _dedupeServiceCards(
+  Iterable<Map<String, dynamic>> services,
+) {
+  final seen = <String>{};
+  final deduped = <Map<String, dynamic>>[];
+  for (final service in services) {
+    final name = canonicalServiceName((service['name'] ?? '').toString());
+    if (name.trim().isEmpty) continue;
+    final key = serviceKey(name);
+    if (!seen.add(key)) continue;
+    final rawType = (service['type'] ?? '').toString().trim();
+    deduped.add({
+      'name': name,
+      'icon': service['icon'] ?? _iconNameForService(serviceSlug(name), name),
+      'type': rawType.isEmpty ? serviceSlug(name) : rawType,
+    });
+  }
+  return deduped;
+}
+
 class ServiceSelectPage extends StatelessWidget {
   const ServiceSelectPage({super.key});
 
@@ -216,9 +236,9 @@ class ServiceSelectPage extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           // Build list from Firestore or fallback.
-          final List<Map<String, dynamic>> services;
+          final List<Map<String, dynamic>> rawServices;
           if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            services = snapshot.data!.docs.map((doc) {
+            rawServices = snapshot.data!.docs.map((doc) {
               final data = doc.data()! as Map<String, dynamic>;
               return <String, dynamic>{
                 'name': data['name'] ?? doc.id,
@@ -227,8 +247,9 @@ class ServiceSelectPage extends StatelessWidget {
               };
             }).toList();
           } else {
-            services = _fallbackServices;
+            rawServices = _fallbackServices;
           }
+          final services = _dedupeServiceCards(rawServices);
 
           return Padding(
             padding: const EdgeInsets.all(16),

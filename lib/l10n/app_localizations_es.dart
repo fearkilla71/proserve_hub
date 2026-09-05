@@ -4159,6 +4159,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get smartRequestSummarySize => 'Tamaño';
 
   @override
+  String get smartRequestSummarySizeNotProvided => 'No proporcionado';
+
+  @override
   String get smartRequestSummaryProperty => 'Propiedad';
 
   @override

@@ -7262,6 +7262,12 @@ abstract class AppLocalizations {
   /// **'Size'**
   String get smartRequestSummarySize;
 
+  /// No description provided for @smartRequestSummarySizeNotProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'Not provided'**
+  String get smartRequestSummarySizeNotProvided;
+
   /// No description provided for @smartRequestSummaryProperty.
   ///
   /// In en, this message translates to:

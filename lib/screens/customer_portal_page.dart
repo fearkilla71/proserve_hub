@@ -1025,7 +1025,7 @@ class _CustomerPortalPageState extends State<CustomerPortalPage>
               .where((doc) => _hasProtectedPayment(doc.data()))
               .length,
           reviewCount: docs.where((doc) => _canLeaveReview(doc.data())).length,
-          onNewProject: () => context.push('/select-service'),
+          onNewProject: () => context.push('/smart-request'),
         ),
         const SizedBox(height: 12),
         _ProjectFilterBar(
@@ -2910,8 +2910,7 @@ class _HiredProCard extends StatelessWidget {
                     Expanded(
                       child: FilledButton.tonalIcon(
                         onPressed: () {
-                          // Rebook — go to service select
-                          context.push('/select-service');
+                          context.push('/smart-request');
                         },
                         icon: const Icon(Icons.replay, size: 16),
                         label: Text(l10n.rebook),

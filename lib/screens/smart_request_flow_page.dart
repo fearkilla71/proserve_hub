@@ -1707,7 +1707,9 @@ class _SmartRequestFlowPageState extends State<SmartRequestFlowPage> {
                 _summaryRow(l10n.zipCode, _zipController.text),
                 _summaryRow(
                   l10n.smartRequestSummarySize,
-                  '${_sqftController.text} sqft',
+                  _sqftController.text.trim().isEmpty
+                      ? l10n.smartRequestSummarySizeNotProvided
+                      : '${_sqftController.text.trim()} sqft',
                 ),
                 _summaryRow(
                   l10n.smartRequestSummaryProperty,
